@@ -1,0 +1,56 @@
+{% comment %}
+    Renders a block logo
+
+    Accepts:
+    - enable_footer: {Boolean} Show on the footer
+    - footer_password_page: {Boolean} Show on the password footer
+    - show_currency_selector: {Boolean} Show currency selector. Default: true 
+    - show_language_selector: {Boolean} Show language selector. Default: true
+    - show_social_icons: {Boolean} Show social icons. Default: true
+    - mobile: {Boolean} Classes are displayed on mobile
+    - logo_above: {Boolean} Logo above
+    Usage:
+    {% render 'toolbar' %}
+{% endcomment %}
+{%- liquid 
+  assign show_selectors = false  
+  assign currency_selector = false
+  assign locale_selector = false
+  if show_currency_selector and shop.enabled_currencies.size > 1
+    assign currency_selector = true
+    assign show_selectors = true
+  endif
+  if show_language_selector and shop.enabled_locales.size > 1 
+    assign locale_selector = true
+    assign show_selectors = true
+  endif
+  if currency_selector or locale_selector
+    assign class_border_left = " border-l ml-5 pl-4"
+    assign class_border_right = " lg:border-r lg:pr-5 lg:mr-3"
+  endif
+-%}
+{%- if show_social_icons or show_selectors -%} 
+  <div id="selector-social" class="{% if logo_above %}top-0 inline-flex left-0 lg:flex-row-reverse lg:items-center{% else %}{% if enable_footer %} flex flex-col {% unless social_icons_layout == 'vertical' %}items-center{% else %}items-start{% endunless %} md:items-start{% unless show_social_icons %} md:flex md:items-center{% endunless %}{% else %} flex lg:items-center lg:justify-end relative{% unless header or mobile_nav_bottom %} py-1.5{% endunless %}{% endif %}{% endif %}{% unless mobile or menu_drawer %} mx-auto{% endunless %}{% if menu_drawer %} pr-1 rtl:pr-0 rtl:pl-1{% endif %}">
+    {% if show_social_icons %}
+      <ul class="social-list flex {% if social_icons_layout == 'vertical' %}flex-col{% endif %} flex-wrap{% if enable_footer %} py-2.5 gap-2 justify-center md:justify-start{% else %} opacity-70{% if logo_above or toolbar_align == 'left' %}{{ class_border_left }}{% else %}{{ class_border_right }}{% endif %}{% unless show_social_icons %} hidden{% endunless %}{% endif %}{% if footer_password_page %} justify-center{% endif %}" role="list">
+        {%- render 'social-icons',
+          footer: enable_footer,
+          layout: social_icons_layout,
+          animation_class: 'icon-animation'
+        -%}
+      </ul>
+    {% endif %} 
+    {%- if show_selectors -%}
+      {%- render 'multi-selectors', 
+        locale_selector: locale_selector, 
+        currency_selector: currency_selector, 
+        toolbar_location: toolbar_location, 
+        enable_footer: enable_footer, 
+        logo_above: logo_above, 
+        show_social: show_social_icons,
+        mobile: mobile,
+        menu_drawer: menu_drawer
+      -%}
+    {%- endif -%}
+  </div>
+{%- endif -%}

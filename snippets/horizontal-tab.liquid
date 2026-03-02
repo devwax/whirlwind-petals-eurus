@@ -1,0 +1,240 @@
+{%- liquid
+  assign first_tab = 0
+  if block.settings.show_in_tab
+    if block.settings.show_custom_2 and block.settings.heading_custom_2 != blank
+      assign first_tab = 4
+    endif
+    if block.settings.show_custom_1 and block.settings.heading_custom_1 != blank
+      assign first_tab = 3
+    endif
+    if block.settings.show_specifications and block.settings.heading_specification != blank 
+      assign first_tab = 2
+    endif
+    if block.settings.show_description and block.settings.heading_description != blank
+      assign first_tab = 1
+    endif
+  endif
+  assign count_tab = 0
+  if block.settings.show_description and block.settings.heading_description != blank
+    assign count_tab = count_tab | plus: 1
+  endif
+  if block.settings.show_specifications and block.settings.heading_specification != blank
+    assign count_tab = count_tab | plus: 1
+  endif
+  if block.settings.show_custom_1 and block.settings.heading_custom_1 != blank
+    assign count_tab = count_tab | plus: 1
+  endif
+  if block.settings.show_custom_2 and block.settings.heading_custom_2 != blank
+    assign count_tab = count_tab | plus: 1
+  endif
+-%}
+{% if count_tab > 0 %}
+  {% style %}
+    .x-block-horizontal-tab:has(.empty-content-custom-tab-1) .custom-tab-1-header-{{ block.id }}, .x-block-horizontal-tab:has(.empty-content-custom-tab-2) .custom-tab-2-header-{{ block.id }}, 
+    .x-block-horizontal-tab:has(.empty-content-tab-specifications) .custom-tab-specifications-header-{{ block.id }} {
+      display: none
+    }
+  {% endstyle %}
+  <div class="mb-4 md:mb-6" x-data="{active_tab: {{ first_tab }}}">
+    <div class="x-block-horizontal-tab-headers text-[rgb(var(--colors-text))] flex w-full gap-1 justify-{{ block.settings.tab_alignment }}">
+      {% if block.settings.show_description and block.settings.heading_description != blank and product.description != blank %}
+        <div class="cursor-pointer leading-normal p-break-words font-semibold w-fit max-w-[calc(100%/{{ count_tab }})] line-clamp-1 border-b-2 border-solid border-[rgba(var(--colors-text),1)] pt-1 pb-0.5 pl-3 pr-3" :class="active_tab == 1 ? 'opacity-100' : 'opacity-70'" @click="active_tab = 1">{{ block.settings.heading_description | escape }}</div>
+      {% endif %}
+      {% if block.settings.show_specifications and block.settings.heading_specification != blank and block.settings.details != blank %}
+        <div class="cursor-pointer leading-normal custom-tab-specifications-header-{{ block.id }} p-break-words font-semibold w-fit max-w-[calc(100%/{{ count_tab }})] line-clamp-1 border-b-2 border-solid border-[rgba(var(--colors-text),1)] pt-1 pb-0.5 pl-3 pr-3" :class="active_tab == 2 ? 'opacity-100' : 'opacity-70'" @click="active_tab = 2">{{ block.settings.heading_specification | escape }}</div>
+      {% endif %}
+      {% if block.settings.show_custom_1 and block.settings.heading_custom_1 != blank and block.settings.text_custom_1 != blank or block.settings.content_page_1 != blank %}
+        <div class="cursor-pointer leading-normal custom-tab-1-header-{{ block.id }} p-break-words font-semibold w-fit max-w-[calc(100%/{{ count_tab }})] line-clamp-1 border-b-2 border-solid border-[rgba(var(--colors-text),1)] pt-1 pb-0.5 pl-3 pr-3" :class="active_tab == 3 ? 'opacity-100' : 'opacity-70'" @click="active_tab = 3">{{ block.settings.heading_custom_1 | escape }}</div>
+      {% endif %}
+      {% if block.settings.show_custom_2 and block.settings.heading_custom_2 != blank and block.settings.text_custom_2 != blank or block.settings.content_page_2 != blank %}
+        <div class="cursor-pointer leading-normal custom-tab-2-header-{{ block.id }} p-break-words font-semibold w-fit max-w-[calc(100%/{{ count_tab }})] line-clamp-1 border-b-2 border-solid border-[rgba(var(--colors-text),1)] pt-1 pb-0.5 pl-3 pr-3" :class="active_tab == 4 ? 'opacity-100' : 'opacity-70'" @click="active_tab = 4">{{ block.settings.heading_custom_2 | escape }}</div>
+      {% endif %}
+    </div>
+    <div class="x-block-horizontal-tab-content text-{{ block.settings.content_alignment }} rtl:text-{% if block.settings.content_alignment == 'center' %}center{% elsif block.settings.content_alignment == 'left' %}right{% else %}left{% endif %}">
+      {%- if block.settings.show_description and block.settings.heading_description != blank and product.description != blank -%}
+        <div x-show="active_tab == 1" {% if first_tab != 1 %}x-cloak{% endif %} x-intersect.once="if (!$el.classList.contains('is-visible')) { $el.classList.add('is-visible'); setTimeout(() => { $el.classList.remove('anm-fade-element') }, 600) }" class="x-block-description anm-fade-element overflow-auto rte mt-2">
+          {%- assign block_id = 'description' | append: block.id -%}
+          {%- render 'truncate-text', 
+            number_of_lines_shown: block.settings.number_of_lines_shown 
+            blockID: block_id,
+            content: product.description,
+            read_more_label: block.settings.read_more_label,
+            see_less_label: block.settings.see_less_label
+          -%}
+        </div>
+      {%- endif -%}
+      {%- if block.settings.show_specifications and block.settings.heading_specification != blank and block.settings.details != blank -%}
+        <div x-show="active_tab == 2" {% if first_tab != 2 %}x-cloak{% endif %} x-intersect.once="if (!$el.classList.contains('is-visible')) { $el.classList.add('is-visible'); setTimeout(() => { $el.classList.remove('anm-fade-element') }, 600) }" class="x-block-specifications anm-fade-element overflow-auto">
+          {%- if block.settings.left_label != blank or block.settings.right_label != blank or block.settings.details != blank or block.settings.extra_details != blank -%}
+            <div class="table_info-content mt-2{% if block.settings.use_secondary_background %} bg-theme-secondary pb-4 pt-4 pr-5 pl-5{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% endif %}"
+            >
+              <div class="{% unless block.settings.use_secondary_background %}pt-2 pb-2{% endunless %}">
+                {% if block.settings.left_label != blank or block.settings.right_label != blank %}
+                  <span class="table_info_label font-medium">
+                    <p class="text-left rtl:text-right">{{ block.settings.left_label }}</p>
+                    <p class="text-right rtl:text-left">{{ block.settings.right_label }}</p>
+                  </span>
+                {% endif %}
+                {% liquid
+                  if block.settings.details != blank
+                    assign details = block.settings.details | remove: '<div class="metafield-rich_text_field">' | remove: '</div>' | remove: '<p>' | split: '</p>'
+                    assign strip_specifications_details = block.settings.details | strip_html | remove: ':'
+                  endif
+
+                  assign is_specifications_details_available = false
+                  if strip_specifications_details != blank
+                    assign is_specifications_details_available = true
+                  endif
+                %}
+                {% if is_specifications_details_available == false %}
+                  <span class="empty-content-tab-specifications"></span>
+                {% endif %}
+                {% for table in details %}
+                  <ul class="table_info_details table_info_details-{{ section.id }}">
+                    {% liquid 
+                      assign rows = table | newline_to_br | strip_newlines | replace: '<br />', '<br/>' | replace: '<br/ >', '<br/>' | split: '<br/>'
+                    %}
+                    {% for row in rows %}
+                      {% if row != blank %}
+                        <li>
+                          {% liquid 
+                            assign first_charactor = row | split: ':' | first | slice: 0, 1
+                            assign row_length = row | split: ':' | size  
+                          %}
+                          <p class="rte text-left rtl:text-right{% if first_charactor == '-' %} pl-4 rtl:pl-0 rtl:pr-4{% endif %}">{{ row | split: ':' | first | remove_first: '-' }}</p>
+                          {% if row_length > 1 %}
+                            {% assign detail_value = row | strip | strip_html | split: ':' | last | default: "" %}
+                            {% assign option_key_metafields = detail_value | split: "|" %}
+                            {% if option_key_metafields.size > 1 %}
+                              <p class="rte text-right rtl:text-left{% if option_key_metafields.size > 1 %} custom-metafield{% endif %}">
+                                {% for option in option_key_metafields %}
+                                  {% assign option_key_metafield = option | remove: " " | split: "." %}
+                                  {% assign option_value_metafield = product.selected_or_first_available_variant.metafields[option_key_metafield.first][option_key_metafield.last].value %}
+                                  {% if forloop.index > 1 %}x{% endif %}
+                                  {% if option_value_metafield %}  
+                                      {{ option_value_metafield }}
+                                  {% else %}
+                                    {{ block.settings.text_to_use_for_empty_fields }}
+                                  {% endif %}
+                                {% endfor %}
+                              </p>
+                            {% else %}
+                              {% assign option_key_metafield = detail_value | remove: " " | split: "." %}
+                              {% assign option_value_metafield = product.selected_or_first_available_variant.metafields[option_key_metafield.first][option_key_metafield.last].value %}
+                              {% assign option_value_metafield_product = product.metafields[option_key_metafield.first][option_key_metafield.last].value %}
+                              <p class="rte text-right rtl:text-left{% if option_value_metafield %} custom-metafield{% endif %}"> 
+                                {% if option_value_metafield %}
+                                  {{ option_value_metafield }}
+                                {% elsif option_value_metafield_product %}
+                                  {{ option_value_metafield_product }}
+                                {% elsif detail_value contains "custom." %}
+                                  {{ block.settings.text_to_use_for_empty_fields }}
+                                {% else %}
+                                  {{ row | split: ':' | last }}
+                                {% endif %}
+                              </p>
+                            {% endif %}
+                          {% endif %}
+                        </li>
+                      {% endif %}
+                    {% endfor %}
+                  </ul>
+                {% endfor %}
+              </div>
+            </div>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+      {%- if block.settings.show_custom_1 and block.settings.heading_custom_1 != blank -%}
+        {% if block.settings.text_custom_1 != blank or block.settings.content_page_1 != blank %}
+          {%- liquid 
+            assign block_id = 'custom_1' | append: block.id
+            if block.settings.content_page_1 != blank
+              assign content = block.settings.content_page_1.content
+            else
+              assign content = block.settings.text_custom_1
+              assign mtf_data = false
+              if content contains 'custom.'
+                assign split_text = content | newline_to_br | strip_newlines | replace: '<br />', '<br/> ' | replace: '<br/ >', '<br/> ' | replace: '<br/>', '<br/> ' | replace: '<p>', ' <p>' | split: ' '
+                for mtf_text in split_text
+                  if mtf_text contains 'custom.'
+                    assign key_metafield = mtf_text | remove: " " | remove: "<p>" | remove: "</p>" | remove: "<strong>" | remove: "</strong>"
+                    assign option_key_metafield = key_metafield | split: '.'
+                    assign option_value_metafield = product.selected_or_first_available_variant.metafields[option_key_metafield.first][option_key_metafield.last] | metafield_tag
+                    assign option_value_metafield_product = product.metafields[option_key_metafield.first][option_key_metafield.last] | metafield_tag
+                    if option_value_metafield != blank 
+                      assign content = content | replace: key_metafield, option_value_metafield
+                    elsif option_value_metafield_product != blank
+                      assign content = content | replace: key_metafield, option_value_metafield_product
+                    else
+                      assign content = content | replace: mtf_text, ''
+                    endif
+                    assign mtf_data = true
+                  endif
+                endfor
+              endif
+            endif
+          -%}
+          <div x-show="active_tab == 3" {% if first_tab != 3 %}x-cloak{% endif %} x-intersect.once="if (!$el.classList.contains('is-visible')) { $el.classList.add('is-visible'); setTimeout(() => { $el.classList.remove('anm-fade-element') }, 600) }" class="x-block-custom1 anm-fade-element overflow-auto rte{% if mtf_data %} horizontab-{{ section.id }}{% endif %}">
+            {% if content != blank %}
+              {%- render 'truncate-text', 
+                number_of_lines_shown: block.settings.number_of_lines_shown_custom_1 
+                blockID: block_id,
+                content: content,
+                read_more_label: block.settings.read_more_label_custom_1,
+                see_less_label: block.settings.see_less_label_custom_1
+              -%}
+            {% else %}
+              <span class="empty-content-custom-tab-1"></span>
+            {% endif %}
+          </div>
+        {% endif %}
+      {%- endif -%}
+      {%- if block.settings.show_custom_2 and block.settings.heading_custom_2 != blank -%}
+        {% if block.settings.text_custom_2 != blank or block.settings.content_page_2 != blank %}
+          {%- liquid 
+            assign block_id = 'custom_2' | append: block.id
+            if block.settings.content_page_2 != blank
+              assign content = block.settings.content_page_2.content
+            else
+              assign content = block.settings.text_custom_2
+              assign mtf_data = false
+              if content contains 'custom.'
+                assign split_text = content | newline_to_br | strip_newlines | replace: '<br />', '<br/> ' | replace: '<br/ >', '<br/> ' | replace: '<br/>', '<br/> ' | replace: '<p>', ' <p>' | split: ' '
+                for mtf_text in split_text
+                  if mtf_text contains 'custom.'
+                    assign key_metafield = mtf_text | remove: " " | remove: "<p>" | remove: "</p>" | remove: "<strong>" | remove: "</strong>"
+                    assign option_key_metafield = key_metafield | split: '.'
+                    assign option_value_metafield = product.selected_or_first_available_variant.metafields[option_key_metafield.first][option_key_metafield.last] | metafield_tag
+                    assign option_value_metafield_product = product.metafields[option_key_metafield.first][option_key_metafield.last] | metafield_tag
+                    if option_value_metafield != blank 
+                      assign content = content | replace: key_metafield, option_value_metafield
+                    elsif option_value_metafield_product != blank
+                      assign content = content | replace: key_metafield, option_value_metafield_product
+                    else
+                      assign content = content | replace: mtf_text, ''
+                    endif
+                    assign mtf_data = true
+                  endif
+                endfor
+              endif
+            endif
+          -%}
+          <div x-show="active_tab == 4" {% if first_tab != 4 %}x-cloak{% endif %} x-intersect.once="if (!$el.classList.contains('is-visible')) { $el.classList.add('is-visible'); setTimeout(() => { $el.classList.remove('anm-fade-element') }, 600) }" class="x-block-custom2 anm-fade-element overflow-auto rte{% if mtf_data %} horizontab-{{ section.id }}{% endif %}">
+            {% if content != blank %}
+              {%- render 'truncate-text', 
+                number_of_lines_shown: block.settings.number_of_lines_shown_custom_2 
+                blockID: block_id,
+                content: content,
+                read_more_label: block.settings.read_more_label_custom_2,
+                see_less_label: block.settings.see_less_label_custom_2
+              -%}
+            {% else %}
+              <span class="empty-content-custom-tab-2"></span>
+            {% endif %}
+          </div>
+        {%- endif -%}
+      {%- endif -%}
+    </div>
+  </div>
+{% endif %}

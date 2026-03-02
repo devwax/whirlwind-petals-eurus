@@ -1,0 +1,172 @@
+{% liquid 
+  assign title_size = title_size | times: settings.heading_base_size | times: 0.0000875 | times: 1.1
+  assign text_size = text_size | times: settings.text_base_size | times: 0.0000875
+%}
+{%- style -%}
+  .collection-card-{{ block.id }} .image-overlay {
+    {% if content_position == 'center' %}
+      opacity: {{ image_overlay_opacity }}%;
+    {% else %}
+      background: linear-gradient(to{% if content_position == 'bottom' %} bottom{% elsif content_position == 'top' %} top{% endif %}, transparent 0%, rgba({{ settings.colors_image_treatment_overlay.red }}, {{ settings.colors_image_treatment_overlay.green }}, {{ settings.colors_image_treatment_overlay.blue }}, {{ image_overlay_opacity }}%) 100%);
+    {% endif %}
+  }
+  .dark .collection-card-{{ block.id }} .image-overlay {
+    {% if content_position == 'center' %}
+      opacity: {{ image_overlay_opacity }}%;
+    {% else %}
+      background: linear-gradient(to{% if content_position == 'bottom' %} bottom{% elsif content_position == 'top' %} top{% endif %}, transparent 0%, rgba({{ settings.colors_dark_image_treatment_overlay.red }}, {{ settings.colors_dark_image_treatment_overlay.green }}, {{ settings.colors_dark_image_treatment_overlay.blue }}, {{ image_overlay_opacity }}%) 100%);
+    {% endif %}
+  }
+  .collection-card-{{ block.id }} .collection-item-title {
+    font-size: {{ title_size | times: 0.9 }}rem;
+  }
+  .collection-card-{{ block.id }} .collection-item-text {
+    font-size: {{ text_size | times: 0.9 }}rem;
+  }
+  @media screen and (min-width: 768px) {
+    .collection-card-{{ block.id }} .collection-item-title {
+      font-size: {{ title_size }}rem;
+    }
+    .collection-card-{{ block.id }} .collection-item-text {
+      font-size: {{ text_size }}rem;
+    }
+  }
+{%- endstyle -%}
+{%- if image == blank and card_collection.featured_image or collection_metafield != blank and card_collection.metafields.custom[collection_metafield] != nil -%}
+  {% liquid
+    if collection_metafield != blank and card_collection.metafields.custom[collection_metafield]
+      assign collection_featured_image = card_collection.metafields.custom[collection_metafield]
+    else
+      assign collection_featured_image = card_collection.featured_image
+    endif
+  %}
+{% endif %}
+<a {% if card_collection == blank %} role="link" aria-disabled="true"{% else %} href="{{ card_collection.url }}"{% endif %} class="collection-card collection-card-{{ block.id }} group disable-effect card relative h-full flex flex-row md:flex-col{% if section.settings.product_card_edges == 'rounded_corners' or section.settings.product_card_edges == 'adapt' and settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %} gap-5{% unless text_overlay %} pl-3 pr-3 pb-3 pt-3 md:pl-0 md:pr-0 md:pb-0 md:pt-0 md:bg-transparent bg-[rgba(var(--colors-background-secondary))]{% endunless %}">
+  <div 
+    x-intersect.once.margin.-20px.0px.-20px.0px="$el.querySelector('.animate_transition_card__image')?.classList.add('active')"
+    class="md:w-full relative overflow-hidden z-0{% if text_overlay %} w-full{% else %} w-[120px]{% endif %} h-auto{% if section.settings.product_card_edges == 'rounded_corners' or section.settings.product_card_edges == 'adapt' and settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+    style="aspect-ratio: {% if ratio != 'auto' %}{{ ratio }}{% else %}{% if image != blank %}{{ image.aspect_ratio }}{% else %}{{ collection_featured_image.aspect_ratio }}{% endif %}{% endif %}">
+    {%- if card_collection != blank -%}
+      <div class="block{% if section.settings.product_card_edges == 'rounded_corners' or section.settings.product_card_edges == 'adapt' and settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+        {%- capture section_desktop_width -%}
+          {%- if section.settings.full_width -%}
+            {%- if section.settings.padding_full_width -%}
+              100vw - 40px
+            {%- else -%}
+              100vw
+            {%- endif -%}
+          {%- else -%}
+            {{ settings.page_width }}px
+          {%- endif -%}
+        {% endcapture %}
+        {%- capture mobile_width -%}
+          {% if text_overlay %}
+            calc(100vw - 40px)
+          {% else %}
+            120px
+          {% endif %}
+        {%- endcapture -%}
+        {%- capture sizes -%}
+          {%- if desktop_size == 'small' -%}
+            (min-width: 768px) calc({{ section_desktop_width }} * 2/5), (min-width: 1024px) calc({{ section_desktop_width }} * 2/5 - 96px), (min-width: 1280px) calc({{ section_desktop_width }} * 2/5 - 160px), (min-width: 1536px) calc({{ section_desktop_width }} * 2/5 - 288px), {{ mobile_width }}
+          {%- elsif desktop_size == 'medium' -%}
+            (min-width: 768px) calc({{ section_desktop_width }} * 2/5), (min-width: 1024px) calc({{ section_desktop_width }} * 2/5 - 64px), (min-width: 1280px) calc({{ section_desktop_width }} * 2/5 - 160px), {{ mobile_width }}
+          {%- else -%}
+            (min-width: 768px) calc({{ section_desktop_width }} * 2/5), {{ mobile_width }}
+          {%- endif -%}
+        {%- endcapture -%}
+        {%- if image != blank -%}
+          <div class="w-full h-full top-0 left-0 absolute overflow-hidden animate_transition_card__image -z-10">
+            {% # theme-check-disable ImgLazyLoading %}
+            <img
+              srcset="{{ image | image_url: width: 225 }} 225w,
+              {{ image | image_url: width: 375 }} 375w,
+              {{ image | image_url: width: 450 }} 450w,
+              {{ image | image_url: width: 750 }} 750w,
+              {{ image | image_url: width: 900 }} 900w,
+              {{ image | image_url: width: 1100 }} 1100w,
+              {{ image | image_url: width: 1500 }} 1500w,
+              {{ image | image_url: width: 1780 }} 1780w,
+              {{ image | image_url: width: 2000 }} 2000w,
+              {{ image | image_url: width: 3000 }} 3000w,
+              {{ image | image_url: width: 3840 }} 3840w"
+              src="{{ image | image_url: width: 3840 }}"
+              sizes="{{ sizes }}"
+              alt="{{ image.alt | escape }}"
+              height="{{ image.height }}"
+              width="{{ image.width }}"
+              {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %} 
+              class="animate_transition_image w-full h-full object-cover z-10 object-center image-hover animate-Xpulse skeleton-image"
+              onload="this?.classList.add('active'); this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image'); setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);"
+            >
+            {% # theme-check-enable ImgLazyLoading %}
+          </div>
+        {%- elsif card_collection.featured_image or collection_metafield != blank and card_collection.metafields.custom[collection_metafield] != nil -%}
+          {% liquid
+            if collection_metafield != blank and card_collection.metafields.custom[collection_metafield]
+              assign collection_featured_image = card_collection.metafields.custom[collection_metafield]
+            else
+              assign collection_featured_image = card_collection.featured_image
+            endif
+          %}
+          <div class="w-full h-full top-0 left-0 absolute overflow-hidden animate_transition_card__image -z-10">
+            {% # theme-check-disable ImgLazyLoading %}
+            <img
+              srcset="{{ collection_featured_image | image_url: width: 225 }} 225w,
+              {{ collection_featured_image | image_url: width: 375 }} 375w,
+              {{ collection_featured_image | image_url: width: 450 }} 450w,
+              {{ collection_featured_image | image_url: width: 750 }} 750w,
+              {{ collection_featured_image | image_url: width: 900 }} 900w,
+              {{ collection_featured_image | image_url: width: 1100 }} 1100w,
+              {{ collection_featured_image | image_url: width: 1500 }} 1500w,
+              {{ collection_featured_image | image_url: width: 1780 }} 1780w,
+              {{ collection_featured_image | image_url: width: 2000 }} 2000w,
+              {{ collection_featured_image | image_url: width: 3000 }} 3000w,
+              {{ collection_featured_image | image_url: width: 3840 }} 3840w"
+              src="{{ collection_featured_image | image_url: width: 3840 }}"
+              sizes="{{ sizes }}"
+              alt="{{ collection_featured_image.alt | escape }}"
+              height="{{ collection_featured_image.height }}"
+              width="{{ collection_featured_image.width }}"
+              {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %} 
+              class="animate_transition_image w-full h-full object-cover z-10 object-center image-hover animate-Xpulse skeleton-image"
+              onload="this?.classList.add('active'); this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image'); setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);"
+            >
+            {% # theme-check-enable ImgLazyLoading %}
+          </div>
+        {%- else -%}
+          <div class="flex{% unless ratio == "auto" %} absolute{% endunless %} top-0 left-0 w-full h-full items-center bg-[#c9c9c9]">
+            {% render 'icon-placeholder', icon: 'icon-collection' , class: 'text-[#acacac] w-full h-full' -%}
+          </div>
+        {%- endif -%}
+      </div>
+    {%- else -%}
+      <div class='flex{% unless ratio == "auto" %} absolute{% endunless %} top-0 left-0 w-full h-full items-center bg-[#c9c9c9]'>
+        {% render 'icon-placeholder', icon: 'icon-collection' , class: 'text-[#acacac] w-full h-full' -%}
+      </div>
+    {%- endif -%}
+  </div>
+  {% if text_overlay %}
+    <div class="image-overlay absolute top-0 bottom-0 h-full w-full image-treatment-overlay z-10{% if section.settings.product_card_edges == 'rounded_corners' or section.settings.product_card_edges == 'adapt' and settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"></div>
+  {% endif %}
+  <div class="text-{{ content_alignment }} rtl:text-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif %} flex flex-col justify-center w-full z-20{% if text_overlay %} pl-2 pr-2 absolute{% if content_position == 'top' %} top-0{% elsif content_position == 'center' %} top-1/2 -translate-y-1/2{% else %} bottom-0{% endif %}{% else %} relative{% endif %}">
+    <div class="collection-item-title leading-tight mt-2 mb-2 font-medium">
+      {%- if card_collection != blank -%}
+        <p class="text-[rgba(var(--colors-heading))] p-break-words transition duration-200">
+          {%- if card_collection.title != blank -%}
+            {{- card_collection.title | escape -}}
+          {%- else -%}
+            {{ 'onboarding.collection_title' | t }}
+          {%- endif -%}
+        </p>
+      {%- else -%}
+        <p class="text-[rgba(var(--colors-heading))]">{{ 'sections.collection_list.collection_title' | t }}</p>
+      {%- endif -%}
+    </div>
+    {%- if show_item_count and card_collection != blank -%}
+      <p class="collection-item-text text-[rgba(var(--colors-text))] mb-2">
+        {{ card_collection.all_products_count }}{% if card_collection.all_products_count > 1 %} {{ 'sections.collection_list.items' | t }} {% else %} {{ 'sections.collection_list.item' | t }}{% endif %}
+      </p>
+    {%- endif -%}
+  </div>
+</a>

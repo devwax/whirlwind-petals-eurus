@@ -1,0 +1,43 @@
+{% comment %}
+  Renders product variant options
+
+  Accepts:
+  - itemOrder: {Object} Order item object.
+
+  Usage:
+  {% render 're-order', itemOrder: item %}
+{% endcomment %}
+
+{%- capture data_order_item -%}
+  [
+    {%- for item in itemOrder.line_items -%}
+      {
+        "id": "{{ item.id }}",
+        "image": "{% if item.image %}{{ item.image | image_url: width: 375 }}{% endif %}",
+        "quantity": "{{ item.quantity }}",
+        "title": "{{ item.title | escape }}",
+        "variant_id": "{{ item.variant.id }}",
+        "variant_available": {{ item.variant.available | default: false }},
+        "product_id": "{{ item.product.id }}",
+        "url": "{{ item.url }}",
+        "available": {{ all_products[item.product.handle].available | default: false }},
+        "properties": {{ item.properties | json }}
+      }
+      {%- unless forloop.last -%},{%- endunless -%}
+    {%- endfor -%}
+  ]
+{%- endcapture %}
+{%- unless settings.hide_cart -%} 
+  <div class="re-order-action">
+    <div 
+      class="hidden x-order-data"
+      x-order-data="{{ data_order_item | escape }}"
+    >
+    </div>
+    <button type="button" class="button button-solid pt-2.5 pb-2.5 pl-5 pr-5" @click="$store.xReOrder.load($el, '{{ itemOrder.name }}')">
+      {% assign button_label = 'customer.orders.reorder' | t %}
+      {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+    </button>
+  </div>
+  <script src="{{ 're-order.js' | asset_url }}" defer></script>
+{%- endunless -%}

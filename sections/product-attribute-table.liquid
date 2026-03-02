@@ -1,0 +1,892 @@
+{% liquid
+  assign variants = ';'
+  assign base_size_heading = settings.heading_base_size | times: 0.0225 
+  assign font_size_heading = section.settings.heading_size | times: 0.01 | times: base_size_heading
+%}
+{% style %}
+  .heading-{{ section.id }} {
+    font-size: {{ font_size_heading | times: 0.60 }}rem; 
+  }
+  {% if section.settings.background_color_light.alpha != 0.0 %}
+  .product-table-{{ section.id }} {
+    background: {{ section.settings.background_color_light }};
+  }
+  {% endif %}
+  .dark .product-table-{{ section.id }} {
+    {% if section.settings.background_color_dark.alpha != 0.0 %}
+      background: {{ section.settings.background_color_dark }};
+    {% else %}
+      background: transparent;
+    {% endif %}
+  }
+  .active-col.bg-hightlight-{{ section.id }} {
+    background: {{ section.settings.hightlight_light }};
+  }
+  .dark .active-col.bg-hightlight-{{ section.id }} {
+    {% if section.settings.hightlight_dark.alpha != 0.0 %}
+      background: {{ section.settings.hightlight_dark }};
+    {% else %}
+      background: transparent;
+    {% endif %}
+  }  
+  {% if section.settings.line_border_light.alpha != 0.0 %}
+    .product-table-{{ section.id }} {
+      --colors-line-and-border: {{ section.settings.line_border_light.red }},{{ section.settings.line_border_light.green }},{{ section.settings.line_border_light.blue }}; 
+    }
+  {% endif %}
+  .dark .product-table-{{ section.id }} {
+    {% if section.settings.line_border_dark.alpha != 0.0 %}
+      --colors-line-and-border: {{ section.settings.line_border_dark.red }},{{ section.settings.line_border_dark.green }},{{ section.settings.line_border_dark.blue }}; 
+    {% else %}
+      --colors-line-and-border: {{ settings.colors_dark_line_and_borders.red }}, {{ settings.colors_dark_line_and_borders.green }}, {{ settings.colors_dark_line_and_borders.blue }};
+    {% endif %}
+  }
+  {% if section.settings.text_light.alpha != 0.0 %}
+    .color-text--{{ section.id }} {
+      --colors-text: {{ section.settings.text_light.red }},{{ section.settings.text_light.green }},{{ section.settings.text_light.blue }};
+    }
+  {% endif %}
+  .dark .color-text--{{ section.id }} {
+    {% if section.settings.text_dark.alpha != 0.0 %}
+      --colors-text: {{ section.settings.text_dark.red }},{{ section.settings.text_dark.green }},{{ section.settings.text_dark.blue }};
+    {% else %}        
+      --colors-text: var(--colors-text);
+    {% endif %}
+  }
+  .header-table-{{ section.id }} {
+    background: rgba(var(--colors-line-and-border),1);
+  }
+  .product-table-{{ section.id }}, .product-table-{{ section.id }} *:before {
+    {% if section.settings.button_light.alpha != 0.0 %}
+      --colors-button: {{ section.settings.button_light.red }}, {{ section.settings.button_light.green }}, {{ section.settings.button_light.blue }};
+    {% endif %}
+    {% if section.settings.button_text_light.alpha != 0.0 %}
+      --colors-button-text: {{ section.settings.button_text_light.red }}, {{ section.settings.button_text_light.green }}, {{ section.settings.button_text_light.blue }};
+    {% endif %}
+    {% if section.settings.button_hover_light.alpha != 0.0 %}
+      --colors-button-hover: rgb({{ section.settings.button_hover_light.red }}, {{ section.settings.button_hover_light.green }}, {{ section.settings.button_hover_light.blue }});
+    {% endif %}
+    {% if section.settings.button_text_hover_light.alpha != 0.0 %}
+      --colors-button-text-hover: {{ section.settings.button_text_hover_light.red }}, {{ section.settings.button_text_hover_light.green }}, {{ section.settings.button_text_hover_light.blue }};
+    {% endif %}
+  }
+  .dark .product-table-{{ section.id }}, .dark .product-table-{{ section.id }} *:before {
+    {% if section.settings.button_dark.alpha != 0.0 %}
+      --colors-button: {{ section.settings.button_dark.red }}, {{ section.settings.button_dark.green }}, {{ section.settings.button_dark.blue }};
+    {% else %}  
+      --colors-button: {{ settings.colors_dark_button.red }}, {{ settings.colors_dark_button.green }}, {{ settings.colors_dark_button.blue }};
+    {% endif %}
+    {% if section.settings.button_text_dark.alpha != 0.0 %}
+      --colors-button-text: {{ section.settings.button_text_dark.red }}, {{ section.settings.button_text_dark.green }}, {{ section.settings.button_text_dark.blue }};
+    {% else %} 
+      --colors-button-text: {{ settings.colors_dark_button_text.red }}, {{ settings.colors_dark_button_text.green }}, {{ settings.colors_dark_button_text.blue }}; 
+    {% endif %}
+    {% if section.settings.button_hover_dark.alpha != 0.0 %}
+      --colors-button-hover: rgb({{ section.settings.button_hover_dark.red }}, {{ section.settings.button_hover_dark.green }}, {{ section.settings.button_hover_dark.blue }});
+    {% else %}  
+      --colors-button-hover: rgb({{ settings.colors_dark_button_hover.red }}, {{ settings.colors_dark_button_hover.green }}, {{ settings.colors_dark_button_hover.blue }});
+    {% endif %}
+    {% if section.settings.button_text_hover_dark.alpha != 0.0 %}
+      --colors-button-text-hover: {{ section.settings.button_text_hover_dark.red }}, {{ section.settings.button_text_hover_dark.green }}, {{ section.settings.button_text_hover_dark.blue }};
+    {% else %}  
+      --colors-button-text-hover: {{ settings.colors_dark_button_text_hover.red }}, {{ settings.colors_dark_button_text_hover.green }}, {{ settings.colors_dark_button_text_hover.blue }};
+    {% endif %}
+  }
+  @media (min-width: 1024px){
+    .heading-{{ section.id }} {
+      font-size: {{ font_size_heading }}rem;
+    }
+  }
+  @media (min-width: 768px){
+    .active-row .bg-hightlight-{{ section.id }} {
+      background: {{ section.settings.hightlight_light }};
+    }
+    .dark .active-row .bg-hightlight-{{ section.id }} {
+      {% if section.settings.hightlight_dark.alpha != 0.0 %}
+        background: {{ section.settings.hightlight_dark }};
+      {% else %}
+        background: transparent;
+      {% endif %}
+    }  
+  }
+  {% if section.settings.cell_light.alpha != 0.0 %}
+    .bg-cell-{{ section.id }} {
+      background: {{ section.settings.cell_light }};
+    }
+  {% endif %}
+  
+  .dark .bg-cell-{{ section.id }} {
+    {% if section.settings.cell_dark.alpha != 0.0 %}
+      background: {{ section.settings.cell_dark }};
+    {% else %}
+      background: transparent;
+    {% endif %}
+  }
+  .rte.conclusion-container * {
+    flex: 1;
+    margin-top: 0;
+  }
+{% endstyle %}
+  {% render 'section-divider' %}
+  
+  <div x-data="{ active: 1 }" class="{% if section.index == 1 %}preload-image {% endif %}product-table-{{ section.id }} product-attribute-table color-text--{{ section.id }} relative bg-{{ section.id }} mx-auto pt-[{{ section.settings.padding_top_mobile }}px] md:pt-[{{ section.settings.padding_top }}px] pb-[{{ section.settings.padding_bottom_mobile }}px] md:pb-[{{ section.settings.padding_bottom }}px]">
+    <div class="text-[rgb(var(--colors-text))]{% if section.settings.full_width %} full-width{% else %} x-pgw page-width{% endif %}">
+      {%- if section.settings.subheading != blank or section.settings.heading != blank -%}
+        <div class="pb-5 md:pb-8 empty:hidden text-{{ section.settings.heading_alignment }} rtl:text-{% if section.settings.heading_alignment == 'center' %}center{% elsif section.settings.heading_alignment == 'left' %}right{% else %}left{% endif %}">
+          {%- if section.settings.subheading != blank -%}
+            <div class="mb-1.5{% unless settings.disable_heading_animation %} overflow-hidden{% endunless %}"{% unless settings.disable_heading_animation %} x-intersect.once="$el.querySelector('.anm-move-up')?.classList.add('active-anm-heading')"{% endunless %}>
+              <p class="rte{% unless settings.disable_heading_animation %} anm-move-up{% endunless %}">{{ section.settings.subheading }}</p>
+            </div>
+          {% endif %}
+          {% if section.settings.heading != blank %}
+            {% render 'heading-highlight',
+              headingId: section.id,
+              heading: section.settings.heading,
+              highlight_type: section.settings.highlight_type,
+              class: 'h2 block empty:hidden leading-tight p-break-words',
+              heading_tag: section.settings.heading_tag,
+              animation_heading: true
+            %}
+          {% endif %}
+        </div>
+      {% endif %}
+      <div x-intersect.once='$el.classList.add("is-ready-to-animate")' class="x-block-attribute-images overflow-hidden flex flex-wrap justify-center{% if section.settings.content_layout_mobile == 'vertical' %} mb-5{% else %} mb-3{% endif %} md:mb-10" :class="active==0 && 'active-image'">
+        {%- capture onload -%}
+          this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');
+        {%- endcapture -%}
+        {% for block in section.blocks %}
+          {% style %}
+            .x-slide-animation-duration-{{ forloop.index }} {
+              --delay-time: {{ forloop.index0 | times: 100 | append: 'ms' }}
+            }
+          {% endstyle %}
+          {% liquid
+            if block.settings.product != blank
+              if section.settings.criteria_option == 'product_specs'
+                if block.settings.product.metafields.custom.product_specs.value != blank
+                  if section.settings.list_option_show != blank
+                    assign check_limit = true
+                    assign limit_option = ';' | append: section.settings.list_option_show | newline_to_br | strip_newlines | replace: '<br />' , ';' | append: ';'
+                  endif
+                  for option in block.settings.product.metafields.custom.product_specs.value
+                    assign value = option.specs
+                    assign vl = ';' | append: value | append: ';'
+                    if check_limit
+                      if limit_option contains vl
+                        unless variants contains vl
+                          assign variants = variants | append: ';' | append: value | append: ';'
+                        endunless
+                      endif
+                    else
+                      unless variants contains vl
+                        assign variants = variants | append: ';' | append: value | append: ';'
+                      endunless
+                    endif
+                  endfor
+                endif
+              else
+                for option in block.settings.product.options_with_values
+                  if section.settings.criteria_option contains option.name
+                    for value in option.values
+                      assign vl = ';' | append: value | append: ';'
+                      unless variants contains vl
+                        assign variants = variants | append: ';' | append: value | append: ';'
+                      endunless
+                    endfor
+                  endif
+                endfor
+              endif
+            endif
+          %}
+          <div class="{% unless settings.disable_carousel_animation %}x-slide-animation x-slide-animation-duration-{{ forloop.index }}{% endunless %} w-1/{{ section.blocks.size }} md:w-[14%] w-1/{{ section.blocks.size }} md:w-[14%] pl-[5px] pr-[5px] lg:pl-3.5 lg:pr-5 lg:min-w-[180px] xxl:min-w-[300px] flex items-end">
+            <div class="" x-on:mouseover="active={{ forloop.index }}" x-on:click="active={{ forloop.index }}" :class="active!={{ forloop.index }} && 'opacity-50 image-table'">
+              <div class="overflow-hidden{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">
+                {% if block.settings.product == blank and block.settings.image == blank %}
+                  <div class='bg-[#c9c9c9] flex justify-center w-full'>
+                    {%- render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}
+                  </div>
+                {% else %}
+                  {% liquid
+                    if settings.enable_lazy_loading_image
+                      assign loading = 'lazy'
+                    else
+                      assign loading = 'eager'
+                    endif
+                  %}
+                  {% if block.settings.image != blank %}
+                    <div class="w-full animate_transition_slide__image animate-Xpulse skeleton-image" x-intersect.once="$el.classList.add('active')">
+                      {{ block.settings.image | image_url: width: 375 | image_tag: widths: '375', loading: loading, onload: onload }}
+                    </div>
+                  {% else %}
+                    {% if block.settings.product.featured_media != blank %}
+                      <div class="w-full animate_transition_slide__image animate-Xpulse skeleton-image" x-intersect.once="$el.classList.add('active')">
+                        {{ block.settings.product.featured_media | image_url: width: 375 | image_tag: widths: '375', loading: loading, onload: onload }}
+                      </div>
+                    {% else %}
+                      <div class='bg-[#c9c9c9] flex justify-center w-full animate_transition_slide__image' x-intersect.once="$el.classList.add('active')">
+                        {%- render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}
+                      </div>
+                    {% endif %}
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+        {% if section.settings.content_layout_mobile == 'horizontal' %}
+          {% for block in section.blocks %}
+            <div class="w-1/{{ section.blocks.size }} md:hidden pl-[5px] pr-[5px] text-center mt-2" x-on:mouseover="active={{ forloop.index }}" x-on:click="active={{ forloop.index }}" :class="active!={{ forloop.index }} && 'opacity-50 image-table'">
+              <div class="product-table-table text-center md:hidden p-break-words">
+                {% if block.settings.product != blank %}
+                  <a class="inline-block" href="{{ block.settings.product.url }}">
+                    {{ block.settings.product.title | escape }}
+                  </a>
+                {% else %}
+                {{ 'onboarding.product_title' | t }}
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+      <div>
+        {% liquid 
+          if variants == ';'
+            assign variants = ' ; ; '
+            assign option_blank = true
+          endif
+          assign index = 0
+        %}
+        {% assign attributes = variants | split: ';' %}
+
+        {% comment %}table layout horizontal{% endcomment %}
+        <div class="table-content {% if section.settings.content_layout_mobile == 'vertical' %} hidden{% else %} block{% endif %}{% if section.settings.content_layout_desktop == 'vertical' %} lg:hidden{% else %} lg:block{% endif %}">
+          <div class="flex w-full flex-col md:flex-row min-h-[55px] option-table-{{ section.id }}" :class="active && `active-${active}`">
+            <div class="basis-52 xl:min-w-[20rem] xl:basis-[0] grow hidden md:flex"></div>
+            {% for atb in attributes %}
+              {% assign index_option = forloop.index %}
+              {% if atb != '' %}
+                {% assign index = index | plus: 1 %}
+                <div class="options-{{ index_option }} pl-10 md:pl-0 pr-5 md:pr-0 min-h-[55px] flex p-break-words grow md:basis-[0] justify-start md:justify-center items-center text-center md:ml-1 header-table-{{ section.id }} mt-0.5 md:mt-0">
+                  <span class="w-6 h-6 min-w-[24px] icon-tick opacity-70 hidden md:hidden">{% render 'icon-alls', icon: 'icon-tick-table' %}</span>
+                  <span class="text-left md:text-center pb-2 pt-2 pl-1 pr-1 md:pt-1 md:pb-1{% if option_blank %} w-1/2 h-3 bg-[#c9c9c9]{% endif %}">{{ atb }}</span>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+          {% for block in section.blocks %}
+            {% liquid
+              assign first = false 
+              if forloop.first
+              assign first = true
+              endif
+              assign index_block = forloop.index
+            %}
+            {% comment %}theme-check-disable{% endcomment %}
+            <div class="md:min-h-[55px] hidden md:flex w-full" x-on:mouseover="active={{ forloop.index }}" :class="active=={{ forloop.index }} && ' active-row'">
+              <div class="p-break-words hidden md:flex grow mb-[1px] items-center justify-center text-center basis-52 xl:min-w-[20rem] xl:basis-[0] bg-hightlight-{{ section.id }} header-table-{{ section.id }} mt-0.5 {% if first %} md:mt-0.5{% else %} md:mt-[1px]{% endif %}">
+                {% if block.settings.product != blank %}
+                  <a class="pl-1 pr-1 pt-2 pb-2" href="{{ block.settings.product.url }}">
+                    {{ block.settings.product.title | escape }}
+                  </a>
+                {% else %}
+                  <span class="w-1/2 h-3 bg-[#c9c9c9]"></span>
+                {% endif %}
+              </div>
+              {% for atb in attributes %}
+                {% assign index_option = forloop.index %}
+                {% if atb != '' %}
+                  <div class="hidden md:flex grow basis-[0] justify-center ml-1 bg-cell-{{ section.id }} bg-hightlight-{{ section.id }} items-center border-solid border-b{% if first %} border-t mt-0.5{% endif %}">
+                    {% if section.settings.criteria_option == 'product_specs' %}
+                      {% if block.settings.product.metafields.custom.product_specs.value != blank %}
+                          {% assign is_value = false %}
+                          {% for option in block.settings.product.metafields.custom.product_specs.value %}
+                            {% assign value = option.specs %}
+                            {% if value == atb and is_value == false %}
+                              {% assign is_value = true %}
+                              {% style %}
+                               @media (max-width: 767px) {
+                                  .option-table-{{ section.id }}.active-{{ index_block }} .options-{{ index_option }} {
+                                    background: {{ section.settings.hightlight_light }};
+                                    padding: 0 1rem;
+                                  }
+                                  .option-table-{{ section.id }}.active-{{ index_block }} .options-{{ index_option }} .icon-tick{
+                                    display: block;
+                                  }
+                                  .dark .option-table-{{ section.id }}.active-{{ index_block }} .options-{{ index_option }} {
+                                    {% if section.settings.hightlight_dark.alpha != 0.0 %}
+                                      background: {{ section.settings.hightlight_dark }};
+                                    {% else %}
+                                      background: transparent;
+                                    {% endif %}
+                                  }
+                                }
+                              {% endstyle %}
+                              <span class="inline-block w-6 h-6 icon-tick opacity-70">{% render 'icon-alls', icon: 'icon-tick-table' %}</span>
+                            {% endif %}
+                          {% endfor %}
+                        
+                      {% endif %}
+                    {% else %}
+                      {% for option in block.settings.product.options_with_values %}
+                        {% if section.settings.criteria_option contains option.name %}
+                          {% for value in option.values %}
+                            {% if value == atb %}
+                              {% style %}
+                                @media (max-width: 767px) {
+                                  .option-table-{{ section.id }}.active-{{ index_block }} .options-{{ index_option }} {
+                                    background: {{ section.settings.hightlight_light }};
+                                    padding: 0 1rem;
+                                  }
+                                  .option-table-{{ section.id }}.active-{{ index_block }} .options-{{ index_option }} .icon-tick{
+                                    display: block;
+                                  }
+                                  .dark .option-table-{{ section.id }}.active-{{ index_block }} .options-{{ index_option }} {
+                                    {% if section.settings.hightlight_dark.alpha != 0.0 %}
+                                      background: {{ section.settings.hightlight_dark }};
+                                    {% else %}
+                                      background: transparent;
+                                    {% endif %}
+                                  }
+                                }
+                              {% endstyle %}
+                              <span class="inline-block w-6 h-6 icon-tick opacity-70">{% render 'icon-alls', icon: 'icon-tick-table' %}</span>
+                            {% endif %}
+                          {% endfor %}
+                        {% endif %}
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+              {% endif %}
+              {% endfor %}
+            </div>
+            {% comment %}theme-check-enable{% endcomment %}
+          {% endfor %}
+        </div>
+
+        {% comment %}table layout vertical{% endcomment %}
+        <div class="{% if section.settings.content_layout_mobile == 'vertical' %} block{% else %} hidden{% endif %}{% if section.settings.content_layout_desktop == 'vertical' %} lg:block{% else %} lg:hidden{% endif %}">
+          <div class="flex w-full min-h-[55px] option-table-{{ section.id }}" :class="active && `active-${active}`">
+            <div class="basis-32 lg:basis-52 xl:min-w-[20rem] xl:basis-[0] grow md:flex"></div>
+            {% for block in section.blocks %}
+              <div class="flex p-break-words ml-1 grow basis-[0] items-center justify-center text-center bg-hightlight-{{ section.id }} header-table-{{ section.id }} mb-0.5" x-on:mouseover="active={{ forloop.index }}" :class="active=={{ forloop.index }} && ' active-col'">
+                {% if block.settings.product != blank %}
+                  <a class="pl-1 pr-1 pt-2 pb-2" href="{{ block.settings.product.url }}">
+                    {{ block.settings.product.title | escape }}
+                  </a>
+                {% else %}
+                  <span class="w-1/2 h-3 bg-[#c9c9c9]"></span>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+          <div>
+            {% assign attribute_count = 0 %}
+            {% for atb in attributes %}
+              {% if atb != '' %}
+                {% assign attribute_count = attribute_count | plus: 1 %}
+                {% assign index_option = forloop.index %}
+                <div class="flex w-full min-h-[55px]">
+                  <div class="p-break-words flex grow mb-[1px] items-center justify-center text-center basis-32 lg:basis-52 xl:min-w-[20rem] xl:basis-[0] header-table-{{ section.id }} mt-0.5{% if first %} md:mt-0.5{% else %} md:mt-[1px]{% endif %}">
+                    {% assign index = index | plus: 1 %}
+                    <div class="options-{{ index_option }} flex p-break-words justify-center items-center text-center{% if index != 1 %} ml-0.5{% endif %} md:ml-1 header-table-{{ section.id }}"><span class="pl-1 pr-1 pt-1 pb-1{% if option_blank %} w-1/2 h-3 bg-[#c9c9c9]{% endif %}">{{ atb }}</span></div>
+                  </div>
+                {% for block in section.blocks %}
+                  <div class="flex grow basis-[0] justify-center ml-1 bg-cell-{{ section.id }} bg-hightlight-{{ section.id }} items-center mt-[1px] border-solid border-b{% if attribute_count == 1 %} border-t md:mt-[1px]{% else %} md:mt-0.5{% endif %}" x-on:mouseover="active={{ forloop.index }}" :class="active=={{ forloop.index }} && ' active-col'">
+                    {% assign index_block = forloop.index %}
+                    {% if section.settings.criteria_option == 'product_specs' %}
+                      {% if block.settings.product.metafields.custom.product_specs.value != blank %}
+                        {% assign is_value = false %}
+                        {% for option in block.settings.product.metafields.custom.product_specs.value %}
+                          {% assign value = option.specs %}
+                          {% if value == atb and is_value == false %}
+                            {% assign is_value = true %}
+                            {% style %}
+                              @media (max-width: 767px) {
+                                .option-table-{{ section.id }}.active-{{ index_block }} .options-{{ index_option }} {
+                                  background: {{ section.settings.hightlight_light }};
+                                }
+                                .dark .option-table-{{ section.id }}.active-{{ index_block }} .options-{{ index_option }} {
+                                  {% if section.settings.hightlight_dark.alpha != 0.0 %}
+                                    background: {{ section.settings.hightlight_dark }};
+                                  {% else %}
+                                    background: transparent;
+                                  {% endif %}
+                                }
+                              }
+                            {% endstyle %}
+                            <span class="inline-block w-6 h-6 icon-tick opacity-70">{% render 'icon-alls', icon: 'icon-tick-table' %}</span>
+                          {% endif %}
+                        {% endfor %}
+                      {% endif %}
+                    {% else %}
+                      {% for option in block.settings.product.options_with_values %}
+                        {% if section.settings.criteria_option contains option.name %}
+                          {% for value in option.values %}
+                            {% if value == atb %}
+                              {% style %}
+                                @media (max-width: 767px) {
+                                  .option-table-{{ section.id }}.active-{{ index_block }} .options-{{ index_option }} {
+                                    background: {{ section.settings.hightlight_light }};
+                                  }
+                                  .dark .option-table-{{ section.id }}.active-{{ index_block }} .options-{{ index_option }} {
+                                    {% if section.settings.hightlight_dark.alpha != 0.0 %}
+                                      background: {{ section.settings.hightlight_dark }};
+                                    {% else %} 
+                                      background: transparent
+                                    {% endif %}
+                                  }
+                                }
+                              {% endstyle %}
+                              <span class="inline-block w-6 h-6 icon-tick opacity-70">{% render 'icon-alls', icon: 'icon-tick-table' %}</span>
+                            {% endif %}
+                          {% endfor %}
+                        {% endif %}
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                {% endfor %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {%- if section.settings.conclusion != blank -%}
+        <div class="flex flex-col md:flex-row gap-5 md:gap-8 mt-10 md:mt-10">
+          <h3 class="h3 font-bold text-[rgba(var(--colors-text))]">{{ 'product-table.conclusion' | t }}</h3>
+          <div class="rte flex flex-col md:flex-row break-all gap-5 md:gap-8 conclusion-container">
+            {{ section.settings.conclusion }}
+          </div>
+        </div>
+      {%- endif -%}
+      {%- if section.settings.button_label != blank -%}
+        <div class="flex justify-center">
+          <a{% if section.settings.button_link != blank %} href="{{ section.settings.button_link }}"{% if section.settings.open_new_window_button %} target="_blank"{% endif %}{% else %} role="link" aria-disabled="true"{% endif %} class="button button--{{ section.id }} button-solid p-break-words border inline-block empty:hidden mt-7 md:mt-10 lg:mt-6 pl-6 pr-6 lg:pl-8 lg:pr-8 pt-2.5 pb-2.5 leading-normal md:pt-3 md:pb-3 cursor-pointer pointer-events-auto{% if section.settings.button_link == blank %} hover:cursor-not-allowed disable-btn-animation opacity-70{%- endif -%}">
+            {% render 'button-label', button_label: section.settings.button_label, show_button_style: 'primary' %}
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% schema %}
+{
+  "name": "t:sections.product-table.name",
+  "tag": "section",
+  "class": "section x-section x-section-product-attribute-table",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer",
+      "aside"
+    ]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.section_and_blocks.product_attribute_table"
+    },
+    {
+      "type": "text",
+      "id": "criteria_option",
+      "label": "t:sections.product-table.settings.criteria_option.label",
+      "info": "t:sections.product-table.settings.criteria_option.info"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.product-table.settings.note"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.product-table.settings.note_1"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.product-table.settings.note_2"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.product-table.settings.note_3"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.product-table.settings.note_4"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.product-table.settings.note_5"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.product-table.settings.note_6"
+    },
+    {
+      "type": "textarea",
+      "id": "list_option_show",
+      "label": "t:sections.product-table.settings.list_option_show.label",
+      "info": "t:sections.product-table.settings.list_option_show.info",
+      "placeholder": "Small \nMedium \nLarge"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:sections.all.text.heading",
+      "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+    },
+    {
+      "type": "select",
+      "id": "highlight_type",
+      "default": "underline",
+      "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+      "options": [
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        },
+        {
+          "value": "font_highlight",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 50,
+      "max": 200,
+      "unit": "%",
+      "step": 10,
+      "default": 100,
+      "label": "t:sections.all.text.heading_size"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "default": "h2",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "p",
+          "label": "p"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "default": "center",
+      "label": "t:sections.all.text.heading_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "t:sections.all.text.subheading"
+    },
+    {
+      "type": "richtext",
+      "id": "conclusion",
+      "label": "t:sections.product-table.settings.conclusion.label"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:sections.all.button.label"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:sections.all.button.link"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_new_window_button",
+      "default": false,
+      "label": "t:sections.all.open_new_window.label"
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.colors.name"
+    },
+    {
+      "type": "color",
+      "id": "background_color_light",
+      "label": "t:sections.all.background.background_color_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "text_light",
+      "label": "t:sections.all.text.color",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "hightlight_light",
+      "label": "t:sections.product-table.settings.hightlight_light.label",
+      "default": "#C8B89F"
+    },
+    {
+      "type": "color",
+      "id": "line_border_light",
+      "label": "t:sections.all.text.line_border",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "cell_light",
+      "label": "t:sections.product-table.settings.cell_light.label",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_light",
+      "label": "t:sections.all.button.primary_button_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_text_light",
+      "label": "t:sections.all.button.primary_button_text_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_light",
+      "label": "t:sections.all.button.primary_button_hover_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_text_hover_light",
+      "label": "t:sections.all.button.primary_button_hover_text_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "label": "t:sections.all.background.background_color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "text_dark",
+      "label": "t:sections.all.text.color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "hightlight_dark",
+      "label": "t:sections.product-table.settings.hightlight_dark.label",
+      "default": "#C8B89F"
+    },
+    {
+      "type": "color",
+      "id": "line_border_dark",
+      "label": "t:sections.all.text.line_border_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "cell_dark",
+      "label": "t:sections.product-table.settings.cell_dark.label",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_dark",
+      "label": "t:sections.all.button.primary_button_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_text_dark",
+      "label": "t:sections.all.button.primary_button_text_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_dark",
+      "label": "t:sections.all.button.primary_button_hover_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_text_hover_dark",
+      "label": "t:sections.all.button.primary_button_hover_text_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "select",
+      "id": "content_layout_desktop",
+      "options": [
+        {
+          "value": "horizontal",
+          "label": "t:sections.featured-collection.settings.slider_style.options__1"
+        },
+        {
+          "value": "vertical",
+          "label": "t:sections.featured-collection.settings.slider_style.options__2"
+        }
+      ],
+      "default": "horizontal",
+      "label": "t:sections.product-table.settings.content_layout.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "default": false,
+      "label": "t:sections.all.full_width.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_bottom"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "select",
+      "id": "content_layout_mobile",
+      "options": [
+        {
+          "value": "horizontal",
+          "label": "t:sections.featured-collection.settings.slider_style.options__1"
+        },
+        {
+          "value": "vertical",
+          "label": "t:sections.featured-collection.settings.slider_style.options__2"
+        }
+      ],
+      "default": "horizontal",
+      "label": "t:sections.product-table.settings.content_layout.label"
+    },
+    {
+      "id": "show_section_divider_mobile",
+      "type": "checkbox",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_bottom"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "t:settings_schema.cart.product",
+      "limit": 5,
+      "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "t:settings_schema.cart.product"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.product-table.settings.image.label"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.product-table.name",
+      "category": "t:categories.products",
+      "blocks": [
+        {
+          "type": "product"
+        },
+        {
+          "type": "product"
+        },
+        {
+          "type": "product"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,60 @@
+{% if settings.gift_wrapping_product.selected_or_first_available_variant.available and product.selected_or_first_available_variant.available %}
+  {% style %}
+    {% if color_icon_light.alpha != 0.0 %}
+      .icon-gift-{{ product_form_id }} {
+        color: {{ color_icon_light }};
+      }
+    {% endif %}
+    .dark .icon-gift-{{ product_form_id }} {
+      {% if color_icon_dark.alpha != 0.0 %}
+        color: {{ color_icon_dark }};
+      {% else %}
+        color: var(--colors-text);
+      {% endif %}
+    }
+    {% if show_border %}
+      .border-{{ section.id }}-{{ block_id }} {
+        {% if border_color_light.alpha != 0.0 %}
+          --colors-line-and-border: {{ border_color_light.red }}, {{ border_color_light.green }}, {{ border_color_light.blue }};
+        {% else %}
+          --colors-line-and-border: {{ settings.colors_line_and_borders.red }}, {{ settings.colors_line_and_borders.green }}, {{ settings.colors_line_and_borders.blue }};
+        {% endif %}
+      }
+      .dark .border-{{ section.id }}-{{ block_id }} {
+        {% if border_color_dark.alpha != 0.0 %}
+          --colors-line-and-border: {{ border_color_dark.red }}, {{ border_color_dark.green }}, {{ border_color_dark.blue }};
+        {% else %}
+          --colors-line-and-border: {{ settings.colors_dark_line_and_borders.red }}, {{ settings.colors_dark_line_and_borders.green }}, {{ settings.colors_dark_line_and_borders.blue }};
+        {% endif %}
+      }
+    {% endif %}
+  {% endstyle %}
+  {% liquid 
+    assign gift_wrapping_label =  'products.product.gift_wrapping_label' | t | default: 'Gift wrap this product'
+    if settings.gift_wrapping_label != blank
+      assign gift_wrapping_label = settings.gift_wrapping_label
+    endif 
+    if gift_label != blank
+      assign gift_wrapping_label = gift_label 
+    endif 
+  %}
+  <div 
+    class="x-gift-wrapping w-full flex{% if show_content_center %} justify-center{% endif %} relative items-center mb-4 md:mb-6 eurus{% if show_border %} pt-4 pb-4 pl-4 pr-4 border border-solid border-{{ section.id }}-{{ block_id }}{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}{% endif %}" {{ block.shopify_attributes }}>
+    <input
+      id="x-gift-wrapping-{{ product_form_id }}"
+      form="{{ product_form_id }}"
+      name="properties[{{ gift_wrapping_label }}]"
+      value="{{ 'products.product.gift_wrapping_property_value' | t }}"
+      x-ref="gift_wrapping_checkbox"
+      class="checkbox checkbox-checked bg-[rgba(var(--background-color),1)] mr-2 rtl:ml-2 rtl:mr-0 w-5 h-5 min-w-[20px] md:h-6 md:w-6 md:min-w-[24px] border-2 checked:border-[rgba(var(--colors-text-link))] checked:bg-[rgba(var(--colors-text-link))] relative cursor-pointer{% if settings.edges_type == 'rounded_corners' %} rounded{% else %} rounded-none{% endif %}" 
+      type="checkbox"
+    />
+    <label for="x-gift-wrapping-{{ product_form_id }}" class="gift-wrapping-label flex items-center cursor-pointer">
+      <span class="icon-gift-{{ product_form_id }} text-[rgba(var(--colors-text))] inline-block min-w-[20px] w-5 h-5 mr-1 rtl:ml-1 rtl:mr-0">
+        {% render 'icon-alls', icon: 'icon-gift' %}
+      </span>
+      <span class="text-[rgba(var(--colors-text))] h4 text-default pt-1">{{ gift_wrapping_label }}</span>
+    </label>
+  </div>
+  <p class="empty:hidden mb-2 mt-2 pl-4 pr-4 pt-3 pb-3 bg-[rgba(var(--color-error),0.2)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" x-ref="gift_wrapping_error"></p>
+{% endif %}

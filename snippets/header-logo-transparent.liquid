@@ -1,0 +1,130 @@
+{% comment %}
+    Renders a block logo
+
+    Accepts:
+    - logo_above: {Boolean} Logo above
+    - class_logo: {Object} The class of logo
+    Usage:
+    {% render 'header-logo-block' %}
+{% endcomment %}
+{%- liquid 
+  assign logo_alt = section.settings.logo.alt | default: shop.name | escape
+  assign logo_alt_dark = section.settings.logo_dark.alt | default: shop.name | escape
+  assign logo_alt_transparent = logo_transparent.alt | default: shop.name | escape
+
+  assign logo_pos = 'left'
+  if section.settings.logo_position == 'above-center' or section.settings.logo_position == 'center-left'
+    assign logo_pos = 'center'
+  endif
+
+  assign enable_compact_menu = false
+  if section.settings.enable_hamburger_menu or section.settings.enable_hamburger_menu == false and section.settings.enable_drawer_menu
+    assign enable_compact_menu = true
+  endif
+
+  if section.settings.logo_position == 'left-left' or enable_compact_menu and logo_pos == 'left'
+    if section.blocks.size > 0 
+      assign show_border = true
+    elsif section.settings.menu != blank
+      assign show_border = true
+    endif
+  endif
+
+  assign class_logo_dark ="header-logo hidden absolute dark:block dark:relative mx-auto"
+  assign class_logo_light ="header-logo block dark:hidden dark:absolute mx-auto"
+  if logo_above 
+    assign class_logo_dark = class_logo_dark | append: " md:mx-auto"
+    assign class_logo_light = class_logo_light | append: " md:mx-auto"
+  else
+    assign class_logo_dark = class_logo_dark | append: " md:ml-0"
+    assign class_logo_light = class_logo_light | append: " md:ml-0"
+  endif
+-%}
+{%- capture sizes -%}
+  (min-width: 768px) {{ section.settings.logo_width }}px, {{ section.settings.logo_width_mobile }}px
+{%- endcapture -%}
+<div class="flex {% if logo_above %} lg:py-2 items-center{% endif %}{% if show_border %}{% if settings.lang_direction contains request.locale.iso_code %} lg:ml-3 {% unless enable_hamburger %}lg:border-l lg:pl-5{% else %}lg:pl-11{% endunless %}{% else %} lg:mr-3 {% unless enable_hamburger %}lg:border-r lg:pr-5{% else %}lg:pr-11{% endunless %}{% endif %}{% endif %}"
+  x-data='{
+    logo_src: `{{ logo_transparent | image_url: width: 3000 | image_tag: loading: 'lazy', sizes: sizes, widths: '50, 100, 150, 200, 250, 300, 400, 500 600', class: class_logo_light, alt: logo_alt_transparent }}`,
+    logo_dark_src: `{{ logo_transparent | image_url: width: 3000 | image_tag: loading: 'lazy', sizes: sizes, widths: '50, 100, 150, 200, 250, 300, 400, 500 600', class: class_logo_dark, alt: logo_alt_transparent }}`,
+    setLogo() {
+      if($store.xHeaderMenu.isSticky == false && $store.xHeaderMenu.showLogoTransparent) {
+        if ($store.xHeaderMenu.isTouch) {
+          if ($store.xHeaderMenu.clickedHeader == false) {
+            this.logo_src = `{{ logo_transparent | image_url : width: 3000 | image_tag: loading: 'lazy', sizes: sizes, widths: '50, 100, 150, 200, 250, 300, 400, 500 600', class: class_logo_light, alt: logo_alt_transparent }}`
+            this.logo_dark_src = `{{ logo_transparent | image_url: width: 3000 | image_tag: loading: 'lazy', sizes: sizes, widths: '50, 100, 150, 200, 250, 300, 400, 500 600', class: class_logo_dark, alt: logo_alt_transparent }}`
+          } else {
+            this.logo_src = `{{ section.settings.logo | image_url: width: 3000 | image_tag: loading: 'lazy', sizes: sizes, widths: '50, 100, 150, 200, 250, 300, 400, 500 600', class: class_logo_light, alt: logo_alt }}`
+            this.logo_dark_src = `{{ section.settings.logo_dark | image_url: width: 3000 | image_tag: loading: 'lazy', sizes: sizes, widths: '50, 100, 150, 200, 250, 300, 400, 500 600', class: class_logo_dark, alt: logo_alt_dark }}`
+          }
+        } else {
+          if($store.xHeaderMenu.showLogoTransparent) {
+            this.logo_src = `{{ logo_transparent | image_url : width: 3000 | image_tag: loading: 'lazy', sizes: sizes, widths: '50, 100, 150, 200, 250, 300, 400, 500 600', class: class_logo_light, alt: logo_alt_transparent }}`
+            this.logo_dark_src = `{{ logo_transparent | image_url: width: 3000 | image_tag: loading: 'lazy', sizes: sizes, widths: '50, 100, 150, 200, 250, 300, 400, 500 600', class: class_logo_dark, alt: logo_alt_transparent }}`
+          }
+        }
+      }
+
+      if($store.xHeaderMenu.isSticky || !$store.xHeaderMenu.showLogoTransparent) {
+        this.logo_src = `{{ section.settings.logo | image_url: width: 3000 | image_tag: loading: 'lazy', sizes: sizes, widths: '50, 100, 150, 200, 250, 300, 400, 500 600', class: class_logo_light, alt: logo_alt }}`
+        this.logo_dark_src = `{{ section.settings.logo_dark | image_url: width: 3000 | image_tag: loading: 'lazy', sizes: sizes, widths: '50, 100, 150, 200, 250, 300, 400, 500 600', class: class_logo_dark, alt: logo_alt_dark }}`
+      }
+    }
+  }'
+  x-effect="setLogo()"
+>
+  <a href="{{ routes.root_url }}" class="{{ class_logo }} disable-effect inline-block">
+    {%- if section.settings.logo_dark != blank -%}
+      <span x-html="logo_dark_src">
+        <img
+          src="{{ logo_transparent | image_url: width: logo_transparent.width }}"
+          alt="{{ logo_alt_transparent }}"
+          sizes="(min-width: 768px) {{ section.settings.logo_width }}px, {{ section.settings.logo_width_mobile }}px"
+          srcset="{{ logo_transparent | image_url: width: 50 }} 50w,
+            {{ logo_transparent | image_url: width: 100 }} 100w,
+            {{ logo_transparent | image_url: width: 150 }} 150w,
+            {{ logo_transparent | image_url: width: 200 }} 200w,
+            {{ logo_transparent | image_url: width: 250 }} 250w,
+            {{ logo_transparent | image_url: width: 300 }} 300w,
+            {{ logo_transparent | image_url: width: 400 }} 400w,
+            {{ logo_transparent | image_url: width: 500 }} 500w,
+            {{ logo_transparent | image_url: width: 600 }} 600w"
+          width="{{ logo_transparent.width }}"
+          height="{{ logo_transparent.height }}"
+          class="header-logo hidden absolute dark:block dark:relative mx-auto{% if logo_above %} md:mx-auto{% else %} md:ml-0{% endif %}"
+          loading="eager"
+          fetchpriority="high"
+          decoding="sync"
+        />
+      </span>
+    {%- else -%}
+      <span class="hidden dark:block h-0 dark:h-auto mx-auto{% if logo_above %} md:mx-auto{% else %} md:ml-0{% endif %}">{{ shop.name }}</span>
+    {%- endif -%}
+    {%- if section.settings.logo != blank -%}
+      <span x-html="logo_src">
+        <img
+          src="{{ logo_transparent | image_url: width: logo_transparent.width }}"
+          alt="{{ logo_alt_transparent }}"
+          sizes="(min-width: 768px) {{ section.settings.logo_width }}px, {{ section.settings.logo_width_mobile }}px"
+          srcset="{{ logo_transparent | image_url: width: 50 }} 50w,
+            {{ logo_transparent | image_url: width: 100 }} 100w,
+            {{ logo_transparent | image_url: width: 150 }} 150w,
+            {{ logo_transparent | image_url: width: 200 }} 200w,
+            {{ logo_transparent | image_url: width: 250 }} 250w,
+            {{ logo_transparent | image_url: width: 300 }} 300w,
+            {{ logo_transparent | image_url: width: 400 }} 400w,
+            {{ logo_transparent | image_url: width: 500 }} 500w,
+            {{ logo_transparent | image_url: width: 600 }} 600w"
+          width="{{ logo_transparent.width }}"
+          height="{{ logo_transparent.height }}"
+          class="header-logo block dark:hidden dark:absolute mx-auto{% if logo_above %} md:mx-auto{% else %} md:ml-0{% endif %}"
+          loading="eager"
+          fetchpriority="high"
+          decoding="sync"
+        />
+      </span>
+    {%- else -%}
+      <span class="block dark:hidden dark:max-h-0 mx-auto{% if logo_above %} md:mx-auto{% else %} md:ml-0{% endif %}">{{ shop.name }}</span>
+    {%- endif -%}
+  </a>
+</div>

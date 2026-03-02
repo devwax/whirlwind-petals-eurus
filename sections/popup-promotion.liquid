@@ -1,0 +1,1927 @@
+{% liquid
+  if section.settings.show_for_guests_only and shop.customer_accounts_enabled and customer.id != blank
+    assign show_popup = false
+  else
+    assign show_popup = true
+  endif
+  assign show_countdown = false
+  for block in section.blocks
+    if block.type == 'countdown_timer'
+      assign show_countdown = true
+      assign block_countdown = block
+    endif
+  endfor
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+  assign popup_position = section.settings.popup_position
+  if is_rtl
+    if popup_position contains 'left'
+      assign popup_position = popup_position | replace: 'left', 'right'
+    elsif popup_position contains 'right'
+      assign popup_position = popup_position | replace: 'right', 'left'
+    endif
+  endif
+%}
+{% style %}
+  .background-{{ section.id }} {
+    {% if section.settings.background_color_light.alpha != 0.0 -%}
+      background: {{ section.settings.background_color_light }};
+    {%- else -%}
+      background: rgb(var(--colors-background-secondary));
+    {%- endif %}
+   }
+  .dark .background-{{ section.id }} {
+    {% if section.settings.background_color_dark.alpha != 0.0 -%}
+      background: {{ section.settings.background_color_dark }};
+    {%- else -%}
+      background: rgb(var(--colors-background-secondary));
+    {%- endif %}
+   }
+  {% if section.settings.text_color_light.alpha != 0 -%}
+    .content-text-{{ section.id }}, .background-{{ section.id }} {
+      color: {{ section.settings.text_color_light }};
+      --colors-text: {{ section.settings.text_color_light.red }}, {{ section.settings.text_color_light.green }}, {{ section.settings.text_color_light.blue }};
+    }
+    .border-text-{{ section.id }} {
+      border-color: {{ section.settings.text_color_light }};
+    }
+  {%- else -%}
+    .content-text-{{ section.id }} {
+      color: rgb(var(--colors-text-secondary));
+    }
+    .border-text-{{ section.id }} {
+      border-color: rgb(var(--colors-text));
+    }
+  {%- endif %}
+  .dark .content-text-{{ section.id }}, .dark .background-{{ section.id }} {
+    {% if section.settings.text_color_dark.alpha != 0 -%}
+      color: {{ section.settings.text_color_dark }};
+      --colors-text: {{ section.settings.text_color_dark.red }}, {{ section.settings.text_color_dark.green }}, {{ section.settings.text_color_dark.blue }};
+    {%- else -%}
+    color: rgb(var(--colors-text-secondary));
+    {% endif -%}
+  }
+  .dark .border-text-{{ section.id }} {
+    {% if section.settings.text_color_dark.alpha != 0 -%}
+      border-color: {{ section.settings.text_color_dark }};
+    {%- else -%}
+      border-color: rgb(var(--colors-text));
+    {% endif -%}
+  }
+{% endstyle %}
+{% capture popup_animation %}
+  {% if popup_position contains 'left' %}
+    x-transition:enter="transition-all ease-in-out duration-500"
+    x-transition:enter-start="opacity-0 transform translate-y-1/3 md:translate-y-0 md:-translate-x-1/3"
+    x-transition:enter-end="opacity-100 transform translate-y-0 md:translate-x-0"
+    x-transition:leave="transition-all ease-in-out duration-500"
+    x-transition:leave-end="opacity-0 transform translate-y-1/3 md:translate-y-0 md:-translate-x-1/3"
+  {% elsif popup_position contains 'right' %}
+    x-transition:enter="transition-all ease-in-out duration-500"
+    x-transition:enter-start="opacity-0 transform translate-y-1/3 md:translate-y-0 md:translate-x-1/3"
+    x-transition:enter-end="opacity-100 transform translate-y-0 md:translate-x-0"
+    x-transition:leave="transition-all ease-in-out duration-500"
+    x-transition:leave-end="opacity-0 transform translate-y-1/3 md:translate-y-0 md:translate-x-1/3"
+  {% else %}
+    x-transition:enter="transition-all ease-in-out duration-500"
+    x-transition:enter-start="opacity-0 transform translate-y-1/3"
+    x-transition:enter-end="opacity-100 transform translate-y-0"
+    x-transition:leave="transition-all ease-in-out duration-500"
+    x-transition:leave-end="opacity-0 transform translate-y-1/3"
+  {% endif %}
+{% endcapture %}
+{% if show_popup %}
+  <div 
+    x-data='xPopups({
+      "sectionId": "{{ section.id }}",
+      "name": "popup-promotion",
+      "delays": {{ section.settings.delay }},
+      "delayDays": {{ section.settings.reappear_after }},
+      "show_popup": {{ show_popup }},
+      "showOnMobile": {{ section.settings.show_on_mobile }},
+      "schedule_enabled": {{ section.settings.schedule_enabled }},
+      "showCountdown": {{ show_countdown }},
+      "overlay": {{ settings.show_popup_overlay }},
+      "showMinimal": {{ section.settings.enable_desktop }},
+      "showMinimalMobile": {{ section.settings.enable_mobile }},
+      "default_style": "{{ section.settings.default_style }}",
+      "default_style_mobile": "{{ section.settings.default_style_mobile }}",
+      "trigger_intent": "{{ section.settings.trigger_intent }}",
+      "scroll_height": {{ section.settings.scroll_height | divided_by: 100.0 }}
+    })'
+  >
+    <template x-teleport="#eurus-popup">
+      {% if show_countdown %}
+        {%- capture count_down_popup -%}
+          {
+            "blockId": "{{ block_countdown.id }}",
+            "schedule_enabled": {{ section.settings.schedule_enabled | default: false }},
+            "timezone": {{ block_countdown.settings.timezone | default: 0 }},
+            "start_year": {{ block_countdown.settings.start_year | default: 0 }},
+            "start_month": {{ block_countdown.settings.start_month | default: 0 }},
+            "start_day": {{ block_countdown.settings.start_day | default: 0 }},
+            "start_hour": {{ block_countdown.settings.start_hour | default: 0 }},
+            "start_minute": {{ block_countdown.settings.start_minute | default: 0 }},
+            "end_year": {{ block_countdown.settings.end_year | default: 0 }},
+            "end_month": {{ block_countdown.settings.end_month | default: 0 }},
+            "end_day": {{ block_countdown.settings.end_day | default: 0 }},
+            "end_hour": {{ block_countdown.settings.end_hour | default: 0 }},
+            "end_minute": {{ block_countdown.settings.end_minute | default: 0 }},
+            "reset": {% if block_countdown.settings.countdown_type == 'evergreen' %}true{% else %}false{% endif %},
+            "duration": {% if block_countdown.settings.interval_unit == 'day' %}{{ block_countdown.settings.countdown_interval | times: 86400000 }}{% else %}{{ block_countdown.settings.countdown_interval | times: 3600000 }}{% endif %}
+          }
+        {%- endcapture -%}
+      {% endif %}
+      <div @click.stop class="overflow-hidden pointer-events-auto">
+        <div 
+          id="x-promo-popup-{{ section.id }}"
+          class="promo-popup w-full relative z-[60] md:absolute md:promotion-alignment--{{ popup_position }} pointer-events-auto
+            {%- if section.settings.image %} md:w-[700px] lg:w-[810px]{% else %} min-w-[300px] max-w-[500px]{% endif -%}
+            {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px] md:overflow-hidden{% endif -%}
+            {%- unless section.settings.show_on_mobile %} hidden md:block{% endunless -%}"
+          {% if request.design_mode %} x-init="show && load();" {% else %} x-init="load()"{% endif %}
+          x-cloak
+          x-intersect.full="$store.xModal.focus('x-promo-popup-{{ section.id }}', 'PromotionPopupClose-{{ section.id }}'); $store.xCartAnalytics.viewCart();"
+        >
+          {% style %}
+            #x-promo-popup-{{ section.id }} .background-{{ section.id }}{
+              will-change: transform, opacity
+            }
+          {% endstyle %}
+          <div class="relative background-{{ section.id }} shadow-md{%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}"
+            {% if show_countdown and request.design_mode == false %} x-show="show && enable" {% else %} x-show="show" {% endif %}
+            {{ popup_animation }}
+          >
+            <button id="PromotionPopupClose-{{ section.id }}" aria-label="{{ 'accessibility.close' | t }}"
+              class="rounded-full hidden md:block group-close-btn absolute cursor-pointer top-2 right-2 rtl:right-auto rtl:left-2 z-10 focus-visible:outline-none"
+              @click.prevent="$store.xModal.removeFocus(); close();"
+            >
+              <span class="block icon-close-container w-fit rounded-full">
+                {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+              </span>
+            </button>
+            <button id="PromotionPopupClose-{{ section.id }}" aria-label="{{ 'accessibility.close' | t }}"
+              class="rounded-full block md:hidden group-close-btn {% if section.settings.image != blank %}absolute{% else %} w-full pt-2 pr-2 pl-2 pb-2 flex justify-end{% endif %} cursor-pointer top-2 right-2 rtl:right-auto rtl:left-2 z-10 focus-visible:outline-none"
+              @click.prevent="$store.xModal.removeFocus(); close();"
+            >
+              <span class="block icon-close-container w-fit rounded-full">
+                {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+              </span>
+            </button>
+            <div class="flex{% if is_rtl %} ltr{% endif -%}
+              {%- if section.settings.image != blank %} flex-col-reverse md:flex-row{% endif -%}
+              {%- if section.settings.content_position == 'right' %} flex-col-reverse md:flex-row-reverse rtl:md:flex-row{% else %} flex-col-reverse md:flex-row rtl:md:flex-row-reverse{% endif %}"
+            >
+              <div class="content-text-{{ section.id }}{% if is_rtl %} rtl{% endif %} flex-1 pb-6 px-6 md:pt-10 lg:px-14 lg:py-12 ltr promotion--has-image:w-[54%] overflow-y-auto scrollbar-body max-h-[calc(75vh-96px)] md:max-h-[85vh] 2xl:max-h-[77vh] text-{{ section.settings.content_alignment }} rtl:text-{% if section.settings.content_alignment == 'center' %}center{% elsif section.settings.content_alignment == 'left' %}right{% else %}left{% endif %}">
+                <div id="x-promotion-{{ section.id }}" class="promotion"
+                  {% if show_countdown %}
+                    x-data="{ loading: true, textLoad: '-', days: 0, hours: 0, minutes: 0, seconds: 0 }"
+                    x-countdown-data='{{ count_down_popup }}'
+                    x-intersect='$nextTick(() => {
+                    if (!{{ section.settings.show_on_mobile }} && window.innerWidth < 768) return;
+                      $store.xHelper.countdown({{ count_down_popup }}, (canShow, s, m, h, d) => {
+                        days = d;
+                        hours = h;
+                        minutes = m;
+                        seconds = s;
+                        loading = false;
+                      })
+                    })' 
+                  {% endif %}
+                >
+                  {%- for block in section.blocks -%}
+                    {% case block.type %}
+                      {%- when 'heading' -%}
+                        {% liquid assign minimal_default_text = block.settings.heading %}
+                        {%- if block.settings.heading != blank or block.settings.subheading != blank -%}
+                          <div class="block-{{ section.id }} mt-6 md:mt-0" {{ block.shopify_attributes }}>
+                            {%- if block.settings.subheading != blank -%}
+                              <p class="mt-2 font-bold">{{ block.settings.subheading }}</p>
+                            {%- endif -%}
+                            {%- if block.settings.heading != blank -%}
+                              {%- style -%}
+                                .heading-{{ section.id }} {
+                                  {%- if block.settings.heading_color.alpha != 0 -%}
+                                      color: {{ block.settings.heading_color }};
+                                  {%- else -%}
+                                      color: rgb(var(--colors-heading))
+                                  {%- endif -%}
+                                }
+                                .dark .heading-{{ section.id }} {
+                                  {%- if block.settings.heading_color_dark.alpha != 0 -%}
+                                    color: {{ block.settings.heading_color_dark }};
+                                  {%- else -%}
+                                    color: rgb(var(--colors-heading));
+                                  {%- endif -%}
+                                }
+                                .heading-minimal-{{ section.id }} {
+                                  font-weight: var(--font-heading-weight);
+                                  {%- if block.settings.heading_color.alpha != 0 -%}
+                                    color: {{ block.settings.heading_color }};
+                                  {%- else -%}
+                                    color: rgb(var(--colors-heading-secondary));
+                                  {%- endif -%}
+                                }
+                                .dark .heading-minimal-{{ section.id }} {
+                                  {%- if block.settings.heading_color_dark.alpha != 0 -%}
+                                    color: {{ block.settings.heading_color_dark }};
+                                  {%- else -%}
+                                    color: rgb(var(--colors-heading-secondary));
+                                  {%- endif -%}
+                                }
+                              {%- endstyle -%}
+                              <p class="heading-{{ section.id }} text-xl md:text-2xl mt-2 md:mt-3 font-bold">
+                                {% render 'heading-highlight',
+                                  headingId: block.id,
+                                  heading: block.settings.heading,
+                                  highlight_type: block.settings.highlight_type
+                                %}
+                              </p>
+                            {%- endif -%}
+                          </div>
+                        {%- endif -%}
+                      {%- when 'text' -%}
+                        {% if block.settings.text != blank %}
+                          {% if block.settings.coupon_code != blank and block.settings.text contains 'coupon_code' %}
+                            {% style %}
+                              .block-{{ section.id }}.rte p {
+                                display: inline;
+                              }
+                              {%- if block.settings.coupon_color.alpha != 0 -%}
+                                .promo-popup .border-text-{{ block.id }} {
+                                  border-color: {{ block.settings.coupon_color }};
+                                  color: {{ block.settings.coupon_color }};
+                                }
+                              {%- endif -%}
+                              .dark .promo-popup .border-text-{{ block.id }} {
+                                {%- if block.settings.coupon_color_dark.alpha != 0 -%}
+                                  border-color: {{ block.settings.coupon_color_dark }};
+                                  color: {{ block.settings.coupon_color_dark }};
+                                {%- else -%}
+                                  {%- if section.settings.text_color_dark.alpha != 0 -%}
+                                    color: {{ section.settings.text_color_dark }};
+                                    border-color: {{ section.settings.text_color_dark }};
+                                  {%- else -%}
+                                    color: rgb(var(--colors-text));
+                                    border-color: rgb(var(--colors-text));
+                                  {%- endif -%}
+                                {%- endif -%}
+                              }
+                            {% endstyle %}
+                            {% capture coupon_code %}
+                              <div 
+                                :title="copySuccess?'{{ 'general.global.copied' | t }}':'{{ 'general.global.copy_code' | t }}'" 
+                                x-data='xCouponCode'
+                                x-on:click="copyCode()"
+                                class="button-coupon--{{ block.id }} border-text-{{ section.id }} border-text-{{ block.id }} mx-1 cursor-pointer border rounded-full border-dashed overflow-hidden items-center w-fit inline-flex btn--{{ block.id }} none_transition empty:hidden center pt-2 pb-2 pr-6 pl-6"
+                              >
+                                <span class="leading-none h-3 coupon-code font-bold" x-ref="code_value">
+                                  {{ block.settings.coupon_code | escape }}
+                                </span>
+                                <div class="ml-3 flex items-center">
+                                  <span class="w-3 h-3" x-cloak x-show="!copySuccess"
+                                    x-transition:enter="transition-all absolute ease-in-out duration-300"
+                                    x-transition:enter-start="opacity-0 absolute transform translate-y-full"
+                                    x-transition:enter-end="opacity-100 absolute transform translate-y-0"
+                                    x-transition:leave="transition-all absolute ease-in-out duration-300"
+                                    x-transition:leave-end="opacity-0 transform absolute -translate-y-full"
+                                  >
+                                    {% render 'icon-alls', icon: 'icon-copy' %}
+                                  </span>
+                                  <span class="w-3 h-3" x-cloak x-show="copySuccess"
+                                    x-transition:enter="transition-all ease-in-out duration-300"
+                                    x-transition:enter-start="opacity-0 transform translate-y-full"
+                                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                                    x-transition:leave="transition ease-in-out duration-300"
+                                    x-transition:leave-end="opacity-0 transform -translate-y-full"
+                                  >
+                                    {% render 'icon-alls', icon: 'icon-check' %}
+                                  </span>
+                                </div>
+                              </div>
+                            {% endcapture %}
+                          {% else %}
+                            {% capture coupon_code %}
+                            {% endcapture %}
+                          {% endif %}
+                          {% assign text = block.settings.text | replace: "coupon_code", coupon_code %}
+                          <div class="block-{{ section.id }} text-[rgb(var(--colors-text))] p-break-words rte {% unless forloop.first %} mt-5 lg:mt-7 {% endunless %} leading-tight rte" {{ block.shopify_attributes }}>
+                            {{ text }}
+                          </div>
+                          {% if block.settings.coupon_code != blank and block.settings.text contains 'coupon_code' %}
+                            <script src="{{ 'coupon-code.js' | asset_url }}" defer></script>
+                          {% endif %}
+                        {% endif %}
+                      {%- when 'button' -%}
+                        {%- style -%}
+                          .button.button--{{ block.id }}, .button.button--{{ block.id }}:before {
+                            {%- if block.settings.button_text_color.alpha != 0.0 -%}
+                              --colors-button-text: {{ block.settings.button_text_color.red }}, {{ block.settings.button_text_color.green }}, {{ block.settings.button_text_color.blue }};
+                            {%- endif -%}
+                            {%- if block.settings.button_color.alpha != 0.0 -%}
+                              --colors-button: {{ block.settings.button_color.red }}, {{ block.settings.button_color.green }}, {{ block.settings.button_color.blue }};
+                              border-color: {{ block.settings.button_color }};
+                            {%- endif -%}
+                            {% if block.settings.button_color_hover.alpha != 0.0 %}
+                              --colors-button-hover: rgb({{ block.settings.button_color_hover.red }}, {{ block.settings.button_color_hover.green }}, {{ block.settings.button_color_hover.blue }});
+                            {% endif %}
+                            {%- if block.settings.button_text_color_hover.alpha != 0.0 -%}
+                              --colors-button-text-hover: {{ block.settings.button_text_color_hover.red }}, {{ block.settings.button_text_color_hover.green }}, {{ block.settings.button_text_color_hover.blue }};
+                            {%- endif -%}
+                          }
+                          .dark .button.button--{{ block.id }}, .dark .button.button--{{ block.id }}:before {
+                            {%- if block.settings.button_text_color_dark.alpha != 0.0 -%}
+                              --colors-button-text: {{ block.settings.button_text_color_dark.red }}, {{ block.settings.button_text_color_dark.green }}, {{ block.settings.button_text_color_dark.blue }};
+                            {%- else -%}
+                              --colors-button-text: {{ settings.colors_dark_button_text.red }}, {{ settings.colors_dark_button_text.green }}, {{ settings.colors_dark_button_text.blue }};
+                            {%- endif -%}
+                            {%- if block.settings.button_color_dark.alpha != 0.0 -%}
+                              --colors-button: {{ block.settings.button_color_dark.red }}, {{ block.settings.button_color_dark.green }}, {{ block.settings.button_color_dark.blue }};
+                              border-color: {{ block.settings.button_color_dark }};
+                            {%- else -%}
+                              --colors-button: {{ settings.colors_dark_button.red }}, {{ settings.colors_dark_button.green }}, {{ settings.colors_dark_button.blue }};
+                            {%- endif -%}
+                            {%- if block.settings.button_color_hover_dark.alpha != 0.0 -%}
+                              --colors-button-hover: rgb({{ block.settings.button_color_hover_dark.red }}, {{ block.settings.button_color_hover_dark.green }}, {{ block.settings.button_color_hover_dark.blue }});
+                              border-color: {{ block.settings.button_color_hover_dark }};
+                            {%- else -%}
+                              --colors-button-hover: rgb({{ settings.colors_dark_button_hover.red }}, {{ settings.colors_dark_button_hover.green }}, {{ settings.colors_dark_button_hover.blue }});
+                            {%- endif -%}
+                            {%- if block.settings.button_text_color_hover_dark.alpha != 0.0 -%}
+                              --colors-button-text-hover: {{ block.settings.button_text_color_hover_dark.red }}, {{ block.settings.button_text_color_hover_dark.green }}, {{ block.settings.button_text_color_hover_dark.blue }};
+                              border-color: {{ block.settings.button_text_color_hover_dark }};
+                            {%- else -%}
+                              --colors-button-text-hover: {{ settings.colors_dark_button_text_hover.red }}, {{ settings.colors_dark_button_text_hover.green }}, {{ settings.colors_dark_button_text_hover.blue }};
+                            {%- endif -%}
+                          }
+                        {%- endstyle -%}
+                        {%- if block.settings.button_label != blank -%}
+                          <a
+                            {% if block.settings.button_link %} href="{{ block.settings.button_link }}"{% if block.settings.open_new_window %} target="_blank"{% endif %}{% else %} role="link" aria-disabled="true"{% endif %} 
+                            class="block-{{ section.id }} {% unless forloop.first %} mt-5 lg:mt-7 {% endunless %} text-center w-full md:w-fit button button-solid border button--{{ block.id }} inline-block ml-0.5 mr-0.5 mb-0.5 empty:hidden {% unless block.settings.button_link %} hover:cursor-not-allowed disable-btn-animation opacity-70{% endunless %}"
+                            {{ block.shopify_attributes }} 
+                          >
+                            <div class="block-{{ section.id }} button button-solid border button--{{ block.id }} inline-block md:block empty:hidden pl-6 pr-6 lg:pl-9 lg:pr-9 pt-2.5 pb-2.5 md:pt-3 md:pb-3 leading-normal{% unless block.settings.button_link %} hover:cursor-not-allowed disable-btn-animation opacity-70{% endunless %}">
+                              {% render 'button-label', button_label: block.settings.button_label, show_button_style: 'primary' %}
+                            </div> 
+                          </a> 
+                        {%- endif -%}
+                      {%- when 'countdown_timer' -%}
+                        {%- style -%}
+                          .background-countdown-{{ block.id }} {
+                            font-size: var(--font-size-normal);
+                            {%- if block.settings.background_color.alpha != 0 -%}
+                              background: {{ block.settings.background_color }};
+                            {%- endif -%}
+                            {%- if block.settings.text_color.alpha != 0 -%}
+                              color: {{ block.settings.text_color }};
+                              border-color: {{ block.settings.text_color }};
+                            {%- endif -%}
+                          }
+                          .dark .background-countdown-{{ block.id }} {
+                            {%- if block.settings.background_color_dark.alpha != 0 -%}
+                              background: {{ block.settings.background_color_dark }};
+                            {%- else -%}
+                              background: transparent;
+                            {%- endif -%}
+                            {%- if block.settings.text_color_dark.alpha != 0 -%}
+                              color: {{ block.settings.text_color_dark }};
+                              border-color: {{ block.settings.text_color_dark }};
+                            {%- else -%}
+                              color: rgba(var(--colors-text));
+                              border-color: rgba(var(--colors-text));
+                            {%- endif -%}
+                          }
+                          .timer-countdown-{{ block.id }} {
+                            font-size: var(--font-size-large);
+                            {%- if block.settings.time_color.alpha != 0 -%}
+                              color: {{ block.settings.time_color }}
+                            {%- else -%}
+                              color: var(--colors-button-hover);
+                            {%- endif -%}
+                          }
+                          .dark .timer-countdown-{{ block.id }} {
+                            {%- if block.settings.time_color_dark.alpha != 0 -%}
+                              color: {{ block.settings.time_color_dark }}
+                            {%- else -%}
+                              color: var(--colors-button-hover);
+                            {%- endif -%}
+                          }
+                        {%- endstyle -%}
+                        <div id="x-countdown-popup-{{ section.id }}"
+                          class="block-{{ section.id }} x-countdown w-full inline-block md:block {% unless forloop.first %} mt-5 lg:mt-7 {% endunless %}"
+                          {{ block.shopify_attributes }}
+                        >
+                          <div id="x-popup-countdown-{{ block.id }}" class="x-content-popup-countdown grid grid-cols-4 justify-center gap-3{% if section.settings.image != blank %} md:gap-3{% else %} md:gap-2.5{% endif %}">
+                            <div class="flex flex-col items-center background-countdown-{{ block.id }} border pl-1 pr-1 pt-2.5 pb-2.5 md:min-w-[70px] lg:min-w-[74px]{% if settings.edges_type == 'rounded_corners' %} rounded{% endif %}"><span class="timer-countdown-{{ block.id }} font-bold h4" x-html="loading?textLoad:days"></span><span class="p-break-words">{{ 'sections.popup.days' | t }}</span></div>
+                            <div class="flex flex-col items-center background-countdown-{{ block.id }} border pl-1 pr-1 pt-2.5 pb-2.5 md:min-w-[70px] lg:min-w-[74px]{% if settings.edges_type == 'rounded_corners' %} rounded{% endif %}"><span class="timer-countdown-{{ block.id }} font-bold h4" x-html="loading?textLoad:hours"></span><span class="p-break-words">{{ 'sections.popup.hours' | t }}</span></div>
+                            <div class="flex flex-col items-center background-countdown-{{ block.id }} border pl-1 pr-1 pt-2.5 pb-2.5 md:min-w-[70px] lg:min-w-[74px]{% if settings.edges_type == 'rounded_corners' %} rounded{% endif %}"><span class="timer-countdown-{{ block.id }} font-bold h4" x-html="loading?textLoad:minutes"></span><span class="p-break-words">{{ 'sections.popup.mins' | t }}</span></div>
+                            <div class="flex flex-col items-center background-countdown-{{ block.id }} border pl-1 pr-1 pt-2.5 pb-2.5 md:min-w-[70px] lg:min-w-[74px]{% if settings.edges_type == 'rounded_corners' %} rounded{% endif %}"><span class="timer-countdown-{{ block.id }} font-bold h4" x-html="loading?textLoad:seconds"></span><span class="p-break-words">{{ 'sections.popup.secs' | t }}</span></div>
+                          </div>
+                        </div>
+                      {%- when 'email_form' -%}
+                        <div {{ block.shopify_attributes }}>
+                          {%- assign newsletter_form_id = 'newsletter-' | append: section.id -%}
+                          {%- form 'customer', id: newsletter_form_id -%}
+                            {%- unless form.posted_successfully? -%}
+                              <input type="hidden" aria-hidden="true" name="contact[tags]" value="newsletter">
+                              <div class="flex {% unless forloop.first %} mt-5 lg:mt-7 {% endunless %} border{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}{% if is_rtl %} rtl{% endif %}">
+                                <div class="relative w-full selection:bg-[rgba(var(--colors-text),0.2)]">
+                                  <input
+                                    id="Email--{{ section.id }}"
+                                    type="email"
+                                    name="contact[email]"
+                                    class="w-full input pl-5 pr-5 pt-5 pb-1.5 lg:pb-2 lg:pt-6 focus:outline-none focus:border-current bg-transparent placeholder:opacity-0"
+                                    value="{% if customer %}{{ customer.email }}{% endif %}"
+                                    aria-required="true"
+                                    autocorrect="off"
+                                    autocapitalize="off"
+                                    autocomplete="email"
+                                    placeholder="{{ 'newsletter.label' | t }}"
+                                    required
+                                  >
+                                  <label 
+                                    for="Email--{{ section.id }}"
+                                    class="duration-150 absolute top-1/2 left-5 rtl:left-auto rtl:right-5 -translate-y-1/2 input_focus:text-xs input_focus:top-2.5 lg:input_focus:top-3.5 input_not_empty:top-2.5 lg:input_not_empty:top-3.5 input_not_empty:text-xs" 
+                                  >
+                                    {{ 'newsletter.label' | t }}
+                                  </label>
+                                </div>
+                                  <button 
+                                    type="submit"
+                                    class="w-14 flex justify-end items-center pt-3 pb-3 lg:pt-3.5 lg:pb-3.5 cursor-pointer empty:hidden lg:pr-5 rtl:lg:pr-0 rtl:lg:pl-5 pr-4 rtl:pr-0 rtl:pl-4 rtl:rotate-180" 
+                                    name="commit" 
+                                    aria-label="{{ 'newsletter.button_label' | t }}"
+                                  >
+                                    {% render 'icon-alls', icon: 'icon-arrow', enable_email_footer: true %}
+                                  </button>
+                              </div>
+                            {%- else -%}
+                              <div 
+                                id="Newsletter-success--{{ section.id }}" 
+                                class="newsletter-message flex items-center text-left pl-4 pr-4 pt-3.5 pb-3.5 mt-5 bg-[rgba(var(--color-success),0.1)] focus:shadown-none focus-visible:outline-none focus:outline-none focus-visible:shadow-none" 
+                                tabindex="-1" 
+                                autofocus
+                              >
+                                <span class="inline-block w-5 mr-2 selection:bg-[rgba(var(--color-success),0.2)] text-[rgba(var(--color-success))]">
+                                  {%- render 'icon-alls', icon: 'icon-success' %}
+                                </span>
+                                <p class="flex-1">{{ 'newsletter.success' | t }}</p>
+                              </div>
+                            {%- endunless -%}
+                            {%- if form.errors -%}
+                              <div 
+                                id="Newsletter-error--{{ section.id }}"
+                                class="newsletter-message flex items-center text-left pl-4 pr-4 pt-3.5 pb-3.5 mt-5 bg-[rgba(var(--color-error),0.1)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"
+                              >
+                                <span class="inline-block w-5 mr-2 text-[rgba(var(--color-error))]  selection:bg-[rgba(var(--color-error),0.2)]">{% render 'icon-alls', icon: 'icon-error' %} </span>
+                                <p class="flex-1">{{ form.errors.translated_fields['email'] | capitalize }} {{ form.errors.messages['email'] }}</p>
+                              </div>
+                            {%- endif -%}
+                          {%- endform -%}
+                        </div>
+                      {%- when 'social-icons' -%}
+                        <ul class="block-{{ section.id }} -ml-4 -mr-3 md:flex flex-wrap mt-3 lg:mt-5 justify-{{ section.settings.content_alignment }} rtl:justify-{% if section.settings.content_alignment == 'center' %}center{% elsif section.settings.content_alignment == 'left' %}right{% else %}left{% endif -%}
+                          {%- unless block.settings.show_on_mobile %} hidden{% else %} flex{% endunless %}"
+                          {{ block.shopify_attributes }}
+                        >
+                          {%- render 'social-icons' -%}
+                        </ul>
+                    {% endcase %}
+                  {%- endfor -%}
+                </div>
+              </div>
+              {%- if section.settings.image != blank -%}
+                {% liquid
+                  if settings.enable_lazy_loading_image
+                    assign loading = 'lazy'
+                  else
+                    assign loading = 'eager'
+                  endif
+                %}
+                <div class="block w-full {% if settings.edges_type == 'rounded_corners' %}rounded-t-lg md:rounded-t-none{% endif %} h-52 md:h-auto md:w-[46%] relative overflow-hidden">
+                  {%- capture sizes -%} (min-width: {{ settings.page_width }}px) calc((1000px) / 2) , (min-width: 768px) calc((100vw) / 2), 100vw{%- endcapture -%}
+                  {{ section.settings.image | image_url: width: 1500 | image_tag: loading: loading, sizes: sizes, widths: '450, 750, 900, 1100, 1500, 1780, 2000, 3000, 3840', class: 'h-full w-full object-cover z-0 relative md:absolute inset-0 image-hover' }}
+                </div>
+              {%- endif -%}
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    {% if section.settings.enable_desktop or section.settings.enable_mobile %}
+      {% liquid 
+        assign class_show_minimal = ' '
+        unless section.settings.enable_desktop
+          assign class_show_minimal = 'md:hidden '
+        else 
+          assign class_show_minimal = 'md:block '
+        endunless
+        if section.settings.enable_mobile == false or section.settings.show_on_mobile == false
+          assign class_show_minimal = class_show_minimal | append: 'hidden '
+        endif
+      %}
+      <template x-teleport="#popup-minimal-{{ settings.position_minimal }}">
+        <div class="relative mb-2" x-show="showMinimal" x-cloak
+          x-transition:enter="transition-all ease-in-out duration-500"
+          x-transition:enter-start="opacity-0 transform{% if settings.position_minimal == 'left' %} -translate-x-1/3 rtl:translate-x-1/3{% else %} translate-x-1/3 rtl:-translate-x-1/3{% endif %}"
+          x-transition:enter-end="opacity-100 transform translate-x-0"
+          x-transition:leave="transition-all ease-in-out duration-500"
+          x-transition:leave-end="opacity-0 transform{% if settings.position_minimal == 'left' %} -translate-x-1/3 rtl:translate-x-1/3{% else %} translate-x-1/3 rtl:-translate-x-1/3{% endif %}"
+        >
+          <div 
+            class="w-full pb-3 p-4 pt-3.5 md:pb-4 md:p-5 background-{{ section.id }} {{ class_show_minimal }}hover:cursor-pointer shadow-md{% if settings.edges_type == 'rounded_corners' %} rounded-[10px] overflow-hidden{% endif %}"
+            aria-label="{{ 'products.modal.label' | t }}"
+            @click.prevent="clickMinimal()"
+          >
+            <div class="content-text-{{ section.id }} mr-7 rtl:mr-0 rtl:ml-7 leading-5 min-h-[1.25rem]">
+              {% if section.settings.minimal_subtitle != blank %}
+                <p class="text-[85%]">{{ section.settings.minimal_subtitle }}</p>
+              {% endif %}
+              {% if section.settings.minimal_title != blank %}
+                <p class="heading-minimal-{{ section.id }}">{{ section.settings.minimal_title }}</p>
+              {% endif %}
+              {% if section.settings.minimal_subtitle == blank and section.settings.minimal_title == blank %}
+                <p class="heading-minimal-{{ section.id }}">
+                  {% if minimal_default_text != blank %}
+                    {{ minimal_default_text | remove: '[' | remove: ']' }}
+                  {% else %}
+                    {{ 'sections.popup.popup_minimal' | t }}
+                  {% endif %}
+                </p>
+              {% endif %}
+            </div>
+          </div>
+          <button aria-label="{{ 'accessibility.close' | t }}"
+            class="cursor-pointer p-2 absolute right-2 rtl:right-auto rtl:left-2 top-[0.625rem] md:top-4 content-text-{{ section.id }} {{ class_show_minimal }}"
+            @click.prevent="closeMinimal()"
+          >
+            <span class="block rounded-full h-3 w-3">
+              {% render 'icon-alls', icon: 'icon-close' %}
+            </span>
+          </button>
+        </div>
+      </template>
+    {% endif %}
+  </div>
+  <script src="{{ 'popup.js' | asset_url }}" defer></script>
+  <script src="{{ 'coupon-code.js' | asset_url }}" defer></script>
+{% endif %}
+{% schema %}
+{
+  "name": "t:settings_schema.cart.settings.cart_type.popup.label",
+  "tag": "section",
+  "class": "section-promotion-popup",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer"
+    ]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.overlay_group.popup"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.promotion-popup.settings.info.label"
+    },
+    {
+      "type": "select",
+      "id": "popup_position",
+      "options": [
+        {
+          "value": "top-left",
+          "label": "t:sections.all.content_position.options__1.label"
+        },
+        {
+          "value": "top-center",
+          "label": "t:sections.all.content_position.options__2.label"
+        },
+        {
+          "value": "top-right",
+          "label": "t:sections.all.content_position.options__3.label"
+        },
+        {
+          "value": "center-left",
+          "label": "t:sections.all.content_position.options__4.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_position.options__5.label"
+        },
+        {
+          "value": "center-right",
+          "label": "t:sections.all.content_position.options__6.label"
+        },
+        {
+          "value": "bottom-left",
+          "label": "t:sections.all.content_position.options__7.label"
+        },
+        {
+          "value": "bottom-center",
+          "label": "t:sections.all.content_position.options__8.label"
+        },
+        {
+          "value": "bottom-right",
+          "label": "t:sections.all.content_position.options__9.label"
+        }
+      ],
+      "default": "bottom-left",
+      "label": "t:sections.promotion-popup.settings.popup_position.label",
+      "info": "t:settings_schema.cart.settings.cart_page_layout.info"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:sections.all.image.label",
+      "info": "t:sections.all.image.note_image_size"
+    },
+    {
+      "type": "select",
+      "id": "content_position",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ],
+      "default": "left",
+      "label": "t:sections.all.content_position.label",
+      "info": "t:sections.all.content_position.note"
+    },
+    {
+      "type": "select",
+      "id": "content_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ],
+      "default": "center",
+      "label": "t:sections.all.content_alignment.label"
+    },
+    {
+      "type": "color",
+      "id": "background_color_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_light"
+    },
+    {
+      "type": "color",
+      "id": "text_color_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.text.color"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "label": "t:sections.all.background.background_color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "text_color_dark",
+      "label": "t:sections.all.text.color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.promotion-popup.settings.popup_triggers.content"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.promotion-popup.settings.popup_triggers.info"
+    },
+    {
+      "type": "select",
+      "id": "trigger_intent",
+      "label": "t:sections.promotion-popup.settings.trigger_intent.label",
+      "info": "t:sections.promotion-popup.settings.trigger_intent.info",
+      "options": [
+        {
+          "value": "delay",
+          "label": "t:sections.promotion-popup.settings.trigger_intent.option__1.label"
+        },
+        {
+          "value": "exit",
+          "label": "t:sections.promotion-popup.settings.trigger_intent.option__2.label"
+        },
+        {
+          "value": "copy_to_clipboard",
+          "label": "t:sections.promotion-popup.settings.trigger_intent.option__3.label"
+        },
+        {
+          "value": "scroll",
+          "label": "t:sections.promotion-popup.settings.trigger_intent.option__4.label"
+        }
+      ],
+      "default": "delay"
+    },
+    {
+      "type": "range",
+      "id": "delay",
+      "min": 2,
+      "max": 60,
+      "step": 1,
+      "unit": "s",
+      "label": "t:settings_schema.cookie_banner.settings.delay.label",
+      "info": "t:sections.promotion-popup.settings.delay.info",
+      "default": 5,
+      "visible_if": "{{ section.settings.trigger_intent == 'delay' }}"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.promotion-popup.settings.delay_note",
+      "visible_if": "{{ section.settings.trigger_intent == 'delay' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_height",
+      "min": 25,
+      "max": 100,
+      "step": 25,
+      "unit": "%",
+      "label": "t:sections.promotion-popup.settings.scroll_height.label",
+      "info": "t:sections.promotion-popup.settings.scroll_height.info",
+      "default": 25,
+      "visible_if": "{{ section.settings.trigger_intent == 'scroll' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.promotion-popup.settings.header.content"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_for_guests_only",
+      "default": true,
+      "label": "t:sections.promotion-popup.settings.show_for_guests_only.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_on_mobile",
+      "default": false,
+      "label": "t:sections.promotion-popup.settings.show_on_mobile.label",
+      "info": "t:sections.promotion-popup.settings.show_on_mobile.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "schedule_enabled",
+      "default": false,
+      "label": "t:sections.product-labels-and-badges.blocks.schedule_enabled.label",
+      "info": "t:sections.promotion-popup.settings.schedule_enabled.info"
+    },
+    {
+      "type": "range",
+      "id": "reappear_after",
+      "min": 1,
+      "max": 30,
+      "step": 1,
+      "unit": "day",
+      "label": "t:sections.age-verification-popup.settings.reappear-after.label",
+      "default": 7
+    },
+    {
+      "type": "header",
+      "content": "t:sections.promotion-popup.settings.minimal_popup.header",
+      "info": "t:sections.promotion-popup.settings.minimal_popup.note"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_desktop",
+      "default": true,
+      "label": "t:settings_schema.scroll_top.enable_desktop"
+    },
+    {
+      "type": "select",
+      "id": "default_style",
+      "label": "t:sections.promotion-popup.settings.minimal_popup.default_style.label",
+      "options": [
+        {
+          "value": "full",
+          "label": "t:sections.promotion-popup.settings.minimal_popup.default_style.full_label"
+        },
+        {
+          "value": "minimal",
+          "label": "t:sections.promotion-popup.settings.minimal_popup.default_style.minimal_label"
+        }
+      ],
+      "default": "minimal"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_mobile",
+      "default": false,
+      "label": "t:settings_schema.scroll_top.enable_mobile"
+    },
+    {
+      "type": "select",
+      "id": "default_style_mobile",
+      "label": "t:sections.promotion-popup.settings.minimal_popup.default_style.label_mobile",
+      "options": [
+        {
+          "value": "full",
+          "label": "t:sections.promotion-popup.settings.minimal_popup.default_style.full_label"
+        },
+        {
+          "value": "minimal",
+          "label": "t:sections.promotion-popup.settings.minimal_popup.default_style.minimal_label"
+        }
+      ],
+      "default": "minimal"
+    },
+    {
+      "type": "text",
+      "id": "minimal_title",
+      "label": "t:sections.all.text.title"
+    },
+    {
+      "type": "text",
+      "id": "minimal_subtitle",
+      "label": "t:sections.rich-text.blocks.caption.settings.text_style.options__1.label"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "countdown_timer",
+      "name": "t:sections.announcement-bar.blocks.announcement.countdown-timer.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "countdown_type",
+          "options": [
+            {
+              "value": "standard",
+              "label": "t:sections.promotion-banner.blocks.countdown.settings.countdown_type.standard"
+            },
+            {
+              "value": "evergreen",
+              "label": "t:sections.promotion-banner.blocks.countdown.settings.countdown_type.evergreen"
+            }
+          ],
+          "default": "standard",
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.countdown_type.label",
+          "info": "t:sections.promotion-banner.blocks.countdown.settings.countdown_type.info"
+        },
+        {
+          "type": "range",
+          "id": "countdown_interval",
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.countdown_interval.label",
+          "default": 7,
+          "max": 30,
+          "min": 1,
+          "step": 1,
+          "visible_if": "{{ block.settings.countdown_type == 'evergreen' }}"
+        },
+        {
+          "type": "select",
+          "id": "interval_unit",
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.interval_unit.label",
+          "options": [
+            {
+              "label": "t:sections.promotion-banner.blocks.countdown.settings.interval_unit.options.days",
+              "value": "day"
+            },
+            {
+              "label": "t:sections.promotion-banner.blocks.countdown.settings.interval_unit.options.hours",
+              "value": "hour"
+            }
+          ],
+          "default": "day",
+          "visible_if": "{{ block.settings.countdown_type == 'evergreen' }}"
+        },
+        {
+          "type": "select",
+          "id": "timezone",
+          "options": [
+            {
+              "value": "-12",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-12.label"
+            },
+            {
+              "value": "-11",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-11.label"
+            },
+            {
+              "value": "-10",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-10.label"
+            },
+            {
+              "value": "-9",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-9.label"
+            },
+            {
+              "value": "-8",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-8.label"
+            },
+            {
+              "value": "-7",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-7.label"
+            },
+            {
+              "value": "-6",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-6.label"
+            },
+            {
+              "value": "-5",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-5.label"
+            },
+            {
+              "value": "-4",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-4.label"
+            },
+            {
+              "value": "-3",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-3.label"
+            },
+            {
+              "value": "-2",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-2.label"
+            },
+            {
+              "value": "-1",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__-1.label"
+            },
+            {
+              "value": "0",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__0.label"
+            },
+            {
+              "value": "1",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__1.label"
+            },
+            {
+              "value": "2",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__2.label"
+            },
+            {
+              "value": "3",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__3.label"
+            },
+            {
+              "value": "4",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__4.label"
+            },
+            {
+              "value": "5",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__5.label"
+            },
+            {
+              "value": "5.5",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__15.label"
+            },
+            {
+              "value": "6",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__6.label"
+            },
+            {
+              "value": "7",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__7.label"
+            },
+            {
+              "value": "8",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__8.label"
+            },
+            {
+              "value": "9",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__9.label"
+            },
+            {
+              "value": "10",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__10.label"
+            },
+            {
+              "value": "11",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__11.label"
+            },
+            {
+              "value": "12",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__12.label"
+            },
+            {
+              "value": "13",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__13.label"
+            },
+            {
+              "value": "14",
+              "label": "t:sections.announcement-bar.blocks.timezone.options__14.label"
+            }
+          ],
+          "default": "-4",
+          "label": "t:sections.announcement-bar.blocks.timezone.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.event-calendar.blocks.event.settings.start_date.content",
+          "info": "t:sections.promotion-popup.blocks.countdown_timer.settings.schedule_start_time.info"
+        },
+        {
+          "type": "number",
+          "id": "start_year",
+          "default": 2024,
+          "label": "t:sections.product-labels-and-badges.blocks.start_year.label"
+        },
+        {
+          "type": "select",
+          "id": "start_month",
+          "options": [
+            {
+              "value": "1",
+              "label": "t:sections.announcement-bar.blocks.month.options__1.label"
+            },
+            {
+              "value": "2",
+              "label": "t:sections.announcement-bar.blocks.month.options__2.label"
+            },
+            {
+              "value": "3",
+              "label": "t:sections.announcement-bar.blocks.month.options__3.label"
+            },
+            {
+              "value": "4",
+              "label": "t:sections.announcement-bar.blocks.month.options__4.label"
+            },
+            {
+              "value": "5",
+              "label": "t:sections.announcement-bar.blocks.month.options__5.label"
+            },
+            {
+              "value": "6",
+              "label": "t:sections.announcement-bar.blocks.month.options__6.label"
+            },
+            {
+              "value": "7",
+              "label": "t:sections.announcement-bar.blocks.month.options__7.label"
+            },
+            {
+              "value": "8",
+              "label": "t:sections.announcement-bar.blocks.month.options__8.label"
+            },
+            {
+              "value": "9",
+              "label": "t:sections.announcement-bar.blocks.month.options__9.label"
+            },
+            {
+              "value": "10",
+              "label": "t:sections.announcement-bar.blocks.month.options__10.label"
+            },
+            {
+              "value": "11",
+              "label": "t:sections.announcement-bar.blocks.month.options__11.label"
+            },
+            {
+              "value": "12",
+              "label": "t:sections.announcement-bar.blocks.month.options__12.label"
+            }
+          ],
+          "default": "1",
+          "label": "t:sections.product-labels-and-badges.blocks.start_month.label"
+        },
+        {
+          "type": "select",
+          "id": "start_day",
+          "options": [
+            {
+              "value": "1",
+              "label": "1"
+            },
+            {
+              "value": "2",
+              "label": "2"
+            },
+            {
+              "value": "3",
+              "label": "3"
+            },
+            {
+              "value": "4",
+              "label": "4"
+            },
+            {
+              "value": "5",
+              "label": "5"
+            },
+            {
+              "value": "6",
+              "label": "6"
+            },
+            {
+              "value": "7",
+              "label": "7"
+            },
+            {
+              "value": "8",
+              "label": "8"
+            },
+            {
+              "value": "9",
+              "label": "9"
+            },
+            {
+              "value": "10",
+              "label": "10"
+            },
+            {
+              "value": "11",
+              "label": "11"
+            },
+            {
+              "value": "12",
+              "label": "12"
+            },
+            {
+              "value": "13",
+              "label": "13"
+            },
+            {
+              "value": "14",
+              "label": "14"
+            },
+            {
+              "value": "15",
+              "label": "15"
+            },
+            {
+              "value": "16",
+              "label": "16"
+            },
+            {
+              "value": "17",
+              "label": "17"
+            },
+            {
+              "value": "18",
+              "label": "18"
+            },
+            {
+              "value": "19",
+              "label": "19"
+            },
+            {
+              "value": "20",
+              "label": "20"
+            },
+            {
+              "value": "21",
+              "label": "21"
+            },
+            {
+              "value": "22",
+              "label": "22"
+            },
+            {
+              "value": "23",
+              "label": "23"
+            },
+            {
+              "value": "24",
+              "label": "24"
+            },
+            {
+              "value": "25",
+              "label": "25"
+            },
+            {
+              "value": "26",
+              "label": "26"
+            },
+            {
+              "value": "27",
+              "label": "27"
+            },
+            {
+              "value": "28",
+              "label": "28"
+            },
+            {
+              "value": "29",
+              "label": "29"
+            },
+            {
+              "value": "30",
+              "label": "30"
+            },
+            {
+              "value": "31",
+              "label": "31"
+            }
+          ],
+          "default": "1",
+          "label": "t:sections.product-labels-and-badges.blocks.start_day.label"
+        },
+        {
+          "type": "select",
+          "id": "start_hour",
+          "options": [
+            {
+              "value": "0",
+              "label": "12 AM"
+            },
+            {
+              "value": "1",
+              "label": "01 AM"
+            },
+            {
+              "value": "2",
+              "label": "02 AM"
+            },
+            {
+              "value": "3",
+              "label": "03 AM"
+            },
+            {
+              "value": "4",
+              "label": "04 AM"
+            },
+            {
+              "value": "5",
+              "label": "05 AM"
+            },
+            {
+              "value": "6",
+              "label": "06 AM"
+            },
+            {
+              "value": "7",
+              "label": "07 AM"
+            },
+            {
+              "value": "8",
+              "label": "08 AM"
+            },
+            {
+              "value": "9",
+              "label": "09 AM"
+            },
+            {
+              "value": "10",
+              "label": "10 AM"
+            },
+            {
+              "value": "11",
+              "label": "11 AM"
+            },
+            {
+              "value": "12",
+              "label": "12 PM"
+            },
+            {
+              "value": "13",
+              "label": "01 PM"
+            },
+            {
+              "value": "14",
+              "label": "02 PM"
+            },
+            {
+              "value": "15",
+              "label": "03 PM"
+            },
+            {
+              "value": "16",
+              "label": "04 PM"
+            },
+            {
+              "value": "17",
+              "label": "05 PM"
+            },
+            {
+              "value": "18",
+              "label": "06 PM"
+            },
+            {
+              "value": "19",
+              "label": "07 PM"
+            },
+            {
+              "value": "20",
+              "label": "08 PM"
+            },
+            {
+              "value": "21",
+              "label": "09 PM"
+            },
+            {
+              "value": "22",
+              "label": "10 PM"
+            },
+            {
+              "value": "23",
+              "label": "11 PM"
+            }
+          ],
+          "default": "0",
+          "label": "t:sections.product-labels-and-badges.blocks.start_hour.label"
+        },
+        {
+          "type": "select",
+          "id": "start_minute",
+          "options": [
+            {
+              "value": "0",
+              "label": "00"
+            },
+            {
+              "value": "15",
+              "label": "15"
+            },
+            {
+              "value": "30",
+              "label": "30"
+            },
+            {
+              "value": "45",
+              "label": "45"
+            }
+          ],
+          "default": "0",
+          "label": "t:sections.product-labels-and-badges.blocks.start_minute.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.event-calendar.blocks.event.settings.end_date.content",
+          "info": "t:sections.promotion-popup.blocks.countdown_timer.settings.schedule_end_time.info",
+          "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+        },
+        {
+          "type": "number",
+          "id": "end_year",
+          "default": 2024,
+          "label": "t:sections.product-labels-and-badges.blocks.end_year.label",
+          "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+        },
+        {
+          "type": "select",
+          "id": "end_month",
+          "options": [
+            {
+              "value": "1",
+              "label": "t:sections.announcement-bar.blocks.month.options__1.label"
+            },
+            {
+              "value": "2",
+              "label": "t:sections.announcement-bar.blocks.month.options__2.label"
+            },
+            {
+              "value": "3",
+              "label": "t:sections.announcement-bar.blocks.month.options__3.label"
+            },
+            {
+              "value": "4",
+              "label": "t:sections.announcement-bar.blocks.month.options__4.label"
+            },
+            {
+              "value": "5",
+              "label": "t:sections.announcement-bar.blocks.month.options__5.label"
+            },
+            {
+              "value": "6",
+              "label": "t:sections.announcement-bar.blocks.month.options__6.label"
+            },
+            {
+              "value": "7",
+              "label": "t:sections.announcement-bar.blocks.month.options__7.label"
+            },
+            {
+              "value": "8",
+              "label": "t:sections.announcement-bar.blocks.month.options__8.label"
+            },
+            {
+              "value": "9",
+              "label": "t:sections.announcement-bar.blocks.month.options__9.label"
+            },
+            {
+              "value": "10",
+              "label": "t:sections.announcement-bar.blocks.month.options__10.label"
+            },
+            {
+              "value": "11",
+              "label": "t:sections.announcement-bar.blocks.month.options__11.label"
+            },
+            {
+              "value": "12",
+              "label": "t:sections.announcement-bar.blocks.month.options__12.label"
+            }
+          ],
+          "default": "1",
+          "label": "t:sections.product-labels-and-badges.blocks.end_month.label",
+          "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+        },
+        {
+          "type": "select",
+          "id": "end_day",
+          "options": [
+            {
+              "value": "1",
+              "label": "1"
+            },
+            {
+              "value": "2",
+              "label": "2"
+            },
+            {
+              "value": "3",
+              "label": "3"
+            },
+            {
+              "value": "4",
+              "label": "4"
+            },
+            {
+              "value": "5",
+              "label": "5"
+            },
+            {
+              "value": "6",
+              "label": "6"
+            },
+            {
+              "value": "7",
+              "label": "7"
+            },
+            {
+              "value": "8",
+              "label": "8"
+            },
+            {
+              "value": "9",
+              "label": "9"
+            },
+            {
+              "value": "10",
+              "label": "10"
+            },
+            {
+              "value": "11",
+              "label": "11"
+            },
+            {
+              "value": "12",
+              "label": "12"
+            },
+            {
+              "value": "13",
+              "label": "13"
+            },
+            {
+              "value": "14",
+              "label": "14"
+            },
+            {
+              "value": "15",
+              "label": "15"
+            },
+            {
+              "value": "16",
+              "label": "16"
+            },
+            {
+              "value": "17",
+              "label": "17"
+            },
+            {
+              "value": "18",
+              "label": "18"
+            },
+            {
+              "value": "19",
+              "label": "19"
+            },
+            {
+              "value": "20",
+              "label": "20"
+            },
+            {
+              "value": "21",
+              "label": "21"
+            },
+            {
+              "value": "22",
+              "label": "22"
+            },
+            {
+              "value": "23",
+              "label": "23"
+            },
+            {
+              "value": "24",
+              "label": "24"
+            },
+            {
+              "value": "25",
+              "label": "25"
+            },
+            {
+              "value": "26",
+              "label": "26"
+            },
+            {
+              "value": "27",
+              "label": "27"
+            },
+            {
+              "value": "28",
+              "label": "28"
+            },
+            {
+              "value": "29",
+              "label": "29"
+            },
+            {
+              "value": "30",
+              "label": "30"
+            },
+            {
+              "value": "31",
+              "label": "31"
+            }
+          ],
+          "default": "1",
+          "label": "t:sections.product-labels-and-badges.blocks.end_day.label",
+          "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+        },
+        {
+          "type": "select",
+          "id": "end_hour",
+          "options": [
+            {
+              "value": "0",
+              "label": "12 AM"
+            },
+            {
+              "value": "1",
+              "label": "01 AM"
+            },
+            {
+              "value": "2",
+              "label": "02 AM"
+            },
+            {
+              "value": "3",
+              "label": "03 AM"
+            },
+            {
+              "value": "4",
+              "label": "04 AM"
+            },
+            {
+              "value": "5",
+              "label": "05 AM"
+            },
+            {
+              "value": "6",
+              "label": "06 AM"
+            },
+            {
+              "value": "7",
+              "label": "07 AM"
+            },
+            {
+              "value": "8",
+              "label": "08 AM"
+            },
+            {
+              "value": "9",
+              "label": "09 AM"
+            },
+            {
+              "value": "10",
+              "label": "10 AM"
+            },
+            {
+              "value": "11",
+              "label": "11 AM"
+            },
+            {
+              "value": "12",
+              "label": "12 PM"
+            },
+            {
+              "value": "13",
+              "label": "01 PM"
+            },
+            {
+              "value": "14",
+              "label": "02 PM"
+            },
+            {
+              "value": "15",
+              "label": "03 PM"
+            },
+            {
+              "value": "16",
+              "label": "04 PM"
+            },
+            {
+              "value": "17",
+              "label": "05 PM"
+            },
+            {
+              "value": "18",
+              "label": "06 PM"
+            },
+            {
+              "value": "19",
+              "label": "07 PM"
+            },
+            {
+              "value": "20",
+              "label": "08 PM"
+            },
+            {
+              "value": "21",
+              "label": "09 PM"
+            },
+            {
+              "value": "22",
+              "label": "10 PM"
+            },
+            {
+              "value": "23",
+              "label": "11 PM"
+            }
+          ],
+          "default": "0",
+          "label": "t:sections.product-labels-and-badges.blocks.end_hour.label",
+          "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+        },
+        {
+          "type": "select",
+          "id": "end_minute",
+          "options": [
+            {
+              "value": "0",
+              "label": "00"
+            },
+            {
+              "value": "15",
+              "label": "15"
+            },
+            {
+              "value": "30",
+              "label": "30"
+            },
+            {
+              "value": "45",
+              "label": "45"
+            }
+          ],
+          "default": "0",
+          "label": "t:sections.product-labels-and-badges.blocks.end_minute.label",
+          "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+        },
+        {
+          "type": "header",
+          "content": "t:settings_schema.colors.name"
+        },
+        {
+          "type": "color",
+          "id": "background_color",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.background.background_color_light"
+        },
+        {
+          "type": "color",
+          "id": "time_color",
+          "default": "#FB8500",
+          "label": "t:sections.promotion-popup.blocks.countdown_timer.settings.time_color.label"
+        },
+        {
+          "type": "color",
+          "id": "text_color",
+          "default": "#999999",
+          "label": "t:sections.all.text.color"
+        },
+        {
+          "type": "color",
+          "id": "background_color_dark",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.background.background_color_dark"
+        },
+        {
+          "type": "color",
+          "id": "time_color_dark",
+          "default": "#FB8500",
+          "label": "t:sections.promotion-popup.blocks.countdown_timer.settings.time_color_dark.label"
+        },
+        {
+          "type": "color",
+          "id": "text_color_dark",
+          "default": "#FFFFFF",
+          "label": "t:sections.all.text.color_dark"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "name": "t:sections.all.text.heading",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "subheading",
+          "label": "t:sections.all.text.subheading"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "$10 off your first order",
+          "label": "t:sections.all.text.heading",
+          "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+        },
+        {
+          "type": "select",
+          "id": "highlight_type",
+          "default": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+          "options": [
+            {
+              "value": "underline",
+              "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+            },
+            {
+              "value": "font_highlight",
+              "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+            }
+          ]
+        },
+        {
+          "type": "color",
+          "id": "heading_color",
+          "default": "#000000",
+          "label": "t:sections.all.text.color_heading_light"
+        },
+        {
+          "type": "color",
+          "id": "heading_color_dark",
+          "default": "#FFFFFF",
+          "label": "t:sections.all.text.color_heading_dark"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "t:sections.all.text.text",
+      "limit": 3,
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "text",
+          "default": "<p>Simply enter code coupon_code at checkout</p>",
+          "label": "t:sections.all.text.text",
+          "info": "t:sections.promotion-popup.blocks.text.settings.text.info"
+        },
+        {
+          "type": "text",
+          "id": "coupon_code",
+          "default": "SIMPLY10",
+          "label": "t:sections.announcement-bar.blocks.promo_code.coupon_code.label"
+        },
+        {
+          "type": "color",
+          "id": "coupon_color",
+          "label": "t:sections.announcement-bar.blocks.promo_code.coupon_code.color_light",
+          "default": "rgba(0,0,0,0)"
+        },
+        {
+          "type": "color",
+          "id": "coupon_color_dark",
+          "label": "t:sections.announcement-bar.blocks.promo_code.coupon_code.color_dark",
+          "default": "rgba(0,0,0,0)"
+        }
+      ]
+    },
+    {
+      "type": "button",
+      "name": "t:settings_schema.colors.colors_button",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "button_label",
+          "default": "SHOP NOW",
+          "label": "t:sections.all.button.label"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "t:sections.all.button.link"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_new_window",
+          "default": false,
+          "label": "t:sections.all.open_new_window.label"
+        },
+        {
+          "type": "color",
+          "id": "button_color",
+          "label": "t:sections.all.button.color",
+          "default": "rgba(0,0,0,0)"
+        },
+        {
+          "type": "color",
+          "id": "button_text_color",
+          "label": "t:sections.all.button.color_text_button_light",
+          "default": "rgba(0,0,0,0)"
+        },
+        {
+          "type": "color",
+          "id": "button_color_hover",
+          "label": "t:sections.promotion-popup.blocks.button.settings.button_color_hover.label",
+          "default": "rgba(0,0,0,0)"
+        },
+        {
+          "type": "color",
+          "id": "button_text_color_hover",
+          "label": "t:sections.promotion-popup.blocks.button.settings.button_text_color_hover.label",
+          "default": "rgba(0,0,0,0)"
+        },
+        {
+          "type": "color",
+          "id": "button_color_dark",
+          "label": "t:sections.all.button.color_dark",
+          "default": "rgba(0,0,0,0)"
+        },
+        {
+          "type": "color",
+          "id": "button_text_color_dark",
+          "label": "t:sections.all.button.color_text_button_dark",
+          "default": "rgba(0,0,0,0)"
+        },
+        {
+          "type": "color",
+          "id": "button_color_hover_dark",
+          "label": "t:sections.promotion-popup.blocks.button.settings.button_color_hover_dark.label",
+          "default": "rgba(0,0,0,0)"
+        },
+        {
+          "type": "color",
+          "id": "button_text_color_hover_dark",
+          "label": "t:sections.promotion-popup.blocks.button.settings.button_text_color_hover_dark.label",
+          "default": "rgba(0,0,0,0)"
+        }
+      ]
+    },
+    {
+      "type": "email_form",
+      "name": "t:sections.header.blocks.contact_menu.settings.email_form.content",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.newsletter.info"
+        }
+      ]
+    },
+    {
+      "type": "social-icons",
+      "name": "t:sections.mobile-navigation.blocks.social.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "show_on_mobile",
+          "default": false,
+          "label": "t:sections.promotion-popup.settings.show_on_mobile.label"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:settings_schema.cart.settings.cart_type.popup.label",
+      "category": "t:categories.utilities_and_layout",
+      "blocks": [
+        {
+          "type": "heading"
+        },
+        {
+          "type": "text"
+        },
+        {
+          "type": "button"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

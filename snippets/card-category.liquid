@@ -1,0 +1,124 @@
+{% comment %}
+    Renders a category card
+
+    Accepts:
+    - card_collection: {Object} Collection Liquid object
+    - image_ratio: {String} Size of the product image card. Values are "square", "rectangle", "round", "natural". Default is "square" (optional) 
+    - columns_desktop: {Number} 
+    - collection_metafield: {String} Collection Metafield
+    - show_item_count: {Boolean} Show item count
+    Usage:
+    {% render 'card-collection' %}
+{% endcomment %}
+{% liquid 
+  assign corner_image = false
+  if settings.edges_type == 'rounded_corners'
+    assign corner_image = true 
+  endif 
+%}
+<div 
+  :class="defaultHover ? {% if card_index == 1 %}'lg:border-[rgba(var(--colors-line-and-border))]'{% else %}'lg:border-[rgba(var(--colors-line-and-border),0.7)] lg:group-hover:border-[rgba(var(--colors-line-and-border))]'{% endif %} : 'lg:border-[rgba(var(--colors-line-and-border),0.7)] lg:group-hover:border-[rgba(var(--colors-line-and-border))]'"
+  class="x-category-block border-[rgba(var(--colors-line-and-border))] pb-6 {% if show_line_border %}border-b{% endif %} {% if card_index == 1 %}pt-0{% else %}pt-6{% endif %} flex justify-between {% if content_position == 'right' %}flex-row-reverse{% else %}flex-row{% endif %}"
+>
+  <div
+    :class="defaultHover ? {% if card_index == 1 %}'lg:opacity-100'{% else %}'lg:opacity-70 lg:group-hover:opacity-100'{% endif %} : 'lg:opacity-70 lg:group-hover:opacity-100'" 
+    class="flex opacity-100 flex-col w-[calc(100%-150px-16px)] md:w-[calc(100%-250px-20px)]{% if card_collection != blank %}{% if show_item_count %} justify-between{% else %} justify-center{% endif %}{% else %} justify-center{% endif %} text-{{ content_alignment }} rtl:text-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif %} transition-opacity duration-300"
+  >
+    <a {% if card_collection == blank %} role="link" aria-disabled="true"{% else %} href="{{ card_collection.url }}"{% endif %}  
+      class="text-[rgb(var(--colors-heading))] break-words heading-category-{{ section.id }} category-title">
+      {%- if block.settings.category_title != blank -%}
+        {{- block.settings.category_title | escape -}}
+      {% else %}
+        {%- if card_collection.title != blank -%}
+          {{- card_collection.title | escape -}}
+        {%- endif -%}
+      {%- endif -%}
+    </a>
+    {%- if card_collection != blank and show_item_count -%}
+      <p class="text-[rgba(var(--colors-text))]">
+        {% if card_collection.all_products_count > 1 %}
+          {{ 'products.facets.product_count_simple.other' | t: count: card_collection.all_products_count }}
+        {% else %}
+          {{ 'products.facets.product_count_simple.one' | t: count: card_collection.all_products_count }}
+        {% endif %}
+      </p>
+    {%- endif -%}
+  </div>
+  {%- capture sizes -%}
+    (max-width: 768px) {{ image_width_mobile }}px, {{ image_width }}px
+  {%- endcapture -%}
+  <a {% if card_collection == blank %} role="link" aria-disabled="true"{% else %} href="{{ card_collection.url }}"{% endif %}
+    aria-label="category card url" 
+    class="w-[{{ image_width_mobile }}px] md:w-[{{ image_width }}px] category-card category-card-{{ section.id }} group disable-effect card relative h-full block"
+  >
+    <div 
+      x-intersect.once.margin.-20px.0px.-20px.0px="$el.querySelector('.animate_transition_card__image')?.classList.add('active')"
+      class="w-full relative overflow-hidden z-0 before:h-0 before:block
+        {%- if corner_image and image_style != "round" %} rounded-[10px]{% endif -%}
+        {% if image_style == "round" %} rounded-full{%- endif -%}"
+      {% unless image_ratio == "auto" %} style="padding-bottom: {{ ratio }}%;"{% endunless %}
+      {% if image_ratio == "auto" and card_collection.featured_image %} style="height:0; padding-bottom: {{ 100 | divided_by: card_collection.featured_image.aspect_ratio }}%;"{% endif %}
+    >
+      {%- if card_collection != blank -%}
+        <div class="block{% if image_style == "round" %} rounded-full{% endif %}{% if corner_image and image_style != "round" %} rounded-[10px]{% endif %}">
+          {%- if image != blank -%}
+            <div class="w-full h-full top-0 left-0 absolute overflow-hidden animate_transition_card__image -z-10 img-bg-{{ section.id }}">
+              {% # theme-check-disable ImgLazyLoading %}
+              <img
+                srcset="{{ image | image_url: width: image_width_mobile }} {{ image_width_mobile }}w,
+                {{ image | image_url: width: image_width }} {{ image_width }}w"
+                src="{{ image | image_url: width: image_width }}"
+                sizes="{{ sizes }}"
+                alt="{{ image.alt | escape }}"
+                height="{{ image.height }}"
+                width="{{ image.width }}"
+                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                :class="defaultHover ? {% if card_index == 1 %}'lg:mix-blend-normal'{% else %}'lg:mix-blend-luminosity lg:group-hover:mix-blend-normal'{% endif %} : 'lg:mix-blend-luminosity lg:group-hover:mix-blend-normal'"
+                class="animate_transition_image mix-blend-normal aspect-{{ image_ratio }} aspect-[{{ image_ratio }}] w-full {% if image_ratio == 'auto' %}h-full{% else %}h-auto{% endif %} object-cover z-10 object-center image-hover animate-Xpulse skeleton-image
+                  {%- if image_style == "round" %} rounded-full{% endif -%}
+                "
+                onload="this?.classList.add('active'); 
+                  this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');
+                  setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);
+                "
+              >
+              {% # theme-check-enable ImgLazyLoading %}
+            </div>
+          {%- elsif card_collection.featured_image -%}
+            {% liquid
+              assign collection_featured_image = card_collection.featured_image
+            %}
+            <div class="w-full h-full top-0 left-0 absolute overflow-hidden animate_transition_card__image -z-10 img-bg-{{ section.id }}">
+              {% # theme-check-disable ImgLazyLoading %}
+              <img
+                srcset="{{ collection_featured_image | image_url: width: image_width_mobile }} {{ image_width_mobile }}w,
+                {{ collection_featured_image | image_url: width: image_width }} {{ image_width }}w"
+                src="{{ collection_featured_image | image_url: width: image_width }}"
+                sizes="{{ sizes }}"
+                alt="{{ collection_featured_image.alt | escape }}"
+                height="{{ collection_featured_image.height }}"
+                width="{{ collection_featured_image.width }}"
+                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                :class="defaultHover ? {% if card_index == 1 %}'lg:mix-blend-normal'{% else %}'lg:mix-blend-luminosity lg:group-hover:mix-blend-normal'{% endif %} : 'lg:mix-blend-luminosity lg:group-hover:mix-blend-normal'"
+                class="animate_transition_image mix-blend-normal aspect-{{ image_ratio }} aspect-[{{ image_ratio }}] w-full {% if image_ratio == 'auto' %}h-full{% else %}h-auto{% endif %} object-cover z-10 object-center image-hover animate-Xpulse skeleton-image{% if image_style == "round" %} rounded-full{% endif %}"
+                onload="this?.classList.add('active'); 
+                  this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');
+                  setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);
+                "
+              >
+              {% # theme-check-enable ImgLazyLoading %}
+            </div>
+          {%- else -%}
+            <div class="flex{% unless image_ratio == "auto" %} absolute{% endunless %} top-0 left-0 w-full h-full items-center bg-[#c9c9c9]">
+              {% render 'icon-placeholder', icon: 'icon-collection' , class: 'text-[#acacac] w-full h-full' -%}
+            </div>
+          {%- endif -%}
+        </div>
+      {%- else -%}
+        <div class='flex{% unless image_ratio == "auto" %} absolute{% endunless %} top-0 left-0 w-full h-full items-center bg-[#c9c9c9]'>
+          {% render 'icon-placeholder', icon: 'icon-collection' , class: 'text-[#acacac] w-full h-full' -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </a>
+</div>

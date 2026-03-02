@@ -1,0 +1,677 @@
+{% liquid 
+  assign cart_amount = 0
+  assign cart_qty = 0
+
+  if block.settings.calculation_method == 'product'
+    for item in cart.items
+      if item.product_id == product.id
+        assign cart_amount = cart_amount | plus: item.original_line_price
+        assign cart_qty = cart_qty | plus: item.quantity
+      endif
+    endfor
+  else
+    if block.settings.applied_products != blank 
+      assign applied_product_ids = block.settings.applied_products | map: 'id' | join: ','
+      for item in cart.items
+        if applied_product_ids contains item.product_id
+          assign cart_amount = cart_amount | plus: item.original_line_price
+          assign cart_qty = cart_qty | plus: item.quantity
+        endif
+      endfor
+    elsif block.settings.applied_collections != blank
+      assign applied_collection_ids = block.settings.applied_collections | map: 'id' | join: ','
+      for item in cart.items
+        for collection in item.product.collections
+          if applied_collection_ids contains collection.id
+            assign cart_amount = cart_amount | plus: item.original_line_price
+            assign cart_qty = cart_qty | plus: item.quantity
+            break
+          endif
+        endfor
+      endfor
+    else
+      for item in cart.items
+        assign cart_amount = cart_amount | plus: item.original_line_price
+        assign cart_qty = cart_qty | plus: item.quantity
+      endfor
+    endif
+  endif
+  assign is_rtl = false
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  endif
+%}
+{% style %}
+  .size-icon-{{ block.id }} {
+    width: 34px;
+    height: 34px;
+  }
+  @media (min-width: 768px) {
+    .size-icon-{{ block.id }} {
+      width: {{ block.settings.icon_size }}px;
+      height: {{ block.settings.icon_size }}px;
+    }
+  }
+  #discount-progress-bar-{{ section.id }}:after {
+    width: calc((var(--quantity) / var(--max-goal) * 100)%);
+    max-width: 100%;
+  }
+  .progress-bar-item-container-{{ section.id }}:before {
+    content: var(--tw-content);
+    position: absolute;
+    width: 100%;
+    z-index: 0;
+    {% unless block.settings.show_table %}
+      top: calc(50% + 0.5em);
+    {% else %}
+      top: calc(50% - 14px);
+    {% endunless %}
+    border-top-width: 2px;
+    {% if block.settings.color_line_and_border.alpha != 0.0 %}
+      --colors-line-and-border: {{ block.settings.color_line_and_border.red }}, {{ block.settings.color_line_and_border.green }}, {{ block.settings.color_line_and_border.blue }};
+    {% else %}
+      --colors-line-and-border: {{ settings.colors_line_and_borders.red }}, {{ settings.colors_line_and_borders.green }}, {{ settings.colors_line_and_borders.blue }};
+    {% endif %}
+    border-color: rgba(var(--colors-line-and-border));
+    --tw-translate-x: 0;
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  }
+  .dark .progress-bar-item-container-{{ section.id }}:before {
+    {% if block.settings.color_line_and_border_dark.alpha != 0.0 %}
+      --colors-line-and-border: {{ block.settings.color_line_and_border_dark.red }}, {{ block.settings.color_line_and_border_dark.green }}, {{ block.settings.color_line_and_border_dark.blue }};
+    {% else %}
+      --colors-line-and-border: {{ settings.colors_dark_line_and_borders.red }}, {{ settings.colors_dark_line_and_borders.green }}, {{ settings.colors_dark_line_and_borders.blue }};
+    {% endif %}
+  }
+  .progress-bar-item-container-{{ section.id }}.full:after {
+    content: var(--tw-content);
+    position: absolute;
+    width: 100%;
+    z-index: 10;
+    {% unless block.settings.show_table %}
+      top: calc(50% + 0.5em);
+    {% else %}
+      top: calc(50% - 14px);
+    {% endunless %}
+    border-top-width: 2px;
+    border-color: rgba(var(--color-highlight));
+    --tw-translate-x: 0;
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  }
+  .discount-progress-bar-item-{{ block.id }}:before {
+    content: var(--tw-content);
+    position: absolute;
+    width: var(--before-width);
+    z-index: 0;
+    {% if is_rtl %}
+      right: 50%;
+    {% else %}
+      left: 50%;
+    {% endif %}
+    {% unless block.settings.show_table %}
+      top: calc(50% + 0.5em);
+    {% else %}
+      top: calc(50% - 14px);
+    {% endunless %}
+    border-top-width: 2px;
+    {% if block.settings.color_line_and_border.alpha != 0.0 %}
+      --colors-line-and-border: {{ block.settings.color_line_and_border.red }}, {{ block.settings.color_line_and_border.green }}, {{ block.settings.color_line_and_border.blue }};
+    {% else %}
+      --colors-line-and-border: {{ settings.colors_line_and_borders.red }}, {{ settings.colors_line_and_borders.green }}, {{ settings.colors_line_and_borders.blue }};
+    {% endif %}
+    border-color: rgba(var(--colors-line-and-border));
+    {% if is_rtl %}
+      --tw-translate-x: 100%;
+    {% else %}
+      --tw-translate-x: -100%;
+    {% endif %}
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  }
+  .dark .discount-progress-bar-item-{{ block.id }}:before {
+    {% if block.settings.color_line_and_border_dark.alpha != 0.0 %}
+      --colors-line-and-border: {{ block.settings.color_line_and_border_dark.red }}, {{ block.settings.color_line_and_border_dark.green }}, {{ block.settings.color_line_and_border_dark.blue }};
+    {% else %}
+      --colors-line-and-border: {{ settings.colors_dark_line_and_borders.red }}, {{ settings.colors_dark_line_and_borders.green }}, {{ settings.colors_dark_line_and_borders.blue }};
+    {% endif %}
+  }
+  .discount-progress-bar-item-{{ block.id }}:after {
+    content: var(--tw-content);
+    position: absolute;
+    width: var(--after-width);
+    z-index: 10;
+    {% if is_rtl %}
+      right: 50%;
+    {% else %}
+      left: 50%;
+    {% endif %}
+    {% unless block.settings.show_table %}
+      top: calc(50% + 0.5em);
+    {% else %}
+      top: calc(50% - 14px);
+    {% endunless %}
+    border-top-width: 2px;
+    border-color: rgba(var(--color-highlight));
+    {% if is_rtl %}
+      --tw-translate-x: 100%;
+    {% else %}
+      --tw-translate-x: -100%;
+    {% endif %}
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  }
+  .discount-progress-bar-item-{{ block.id }}.partial:after {
+    {% if is_rtl %}
+      right: var(--after-left);
+    {% else %}
+      left: var(--after-left);
+    {% endif %}
+  }
+  .discount-progress-bar-item-{{ block.id }} .icon-progress {
+    display: flex;
+  }
+  .discount-progress-bar-item-{{ block.id }} .icon-reached {
+    display: none;
+  }
+  .discount-progress-bar-item-{{ block.id }}.passed-goal .icon-progress {
+    display: none;
+  }
+  .discount-progress-bar-item-{{ block.id }}.passed-goal .icon-reached {
+    display: flex;
+  }
+{% endstyle %}
+{% liquid
+  assign goal_num = 0
+  
+  if block.settings.discount_type == 'amount'
+    for i in (1..5)
+      assign goal = 0
+      assign goal_config = "goal_" | append: i
+      assign goals = block.settings[goal_config] | newline_to_br | strip_newlines | split: '<br />'
+      
+      for goal in goals
+        unless goal contains ':' 
+          if goal != blank 
+            assign check_currency = goal | remove: "0" | remove: "1" | remove: "2" | remove: "3" | remove: "4" | remove: "5" | remove: "6" | remove: "7" | remove : "8" | remove: "9" | remove: ":" | remove: " "
+            if check_currency == '' or check_currency == '.'
+              assign goal_all = goal | strip | plus: 0
+            endif
+          endif
+        else 
+          assign check_currency_first = goal | split: ":" | first 
+          assign check_currency_last = goal | split: ":" | last 
+          assign check_currency = goal | remove_first: check_currency_first | remove: check_currency_last
+          if check_currency == ':'
+            if check_currency_first == cart.currency.iso_code
+              assign goal_currency = check_currency_last | strip | plus: 0
+            endif 
+          else
+            assign check_currency_country = check_currency | remove: ":"
+            if check_currency_first == localization.country.iso_code and check_currency_country == cart.currency.iso_code
+              assign goal_country = check_currency_last | strip | plus: 0
+            endif
+          endif 
+        endunless
+      endfor
+      if goal_all != blank or goal_currency != blank or goal_country != blank
+        assign goal_num = goal_num | plus: 1
+      endif
+
+      assign check_currency_first = ''
+      assign check_currency_country = ''
+      assign goal_all = ''
+      assign goal_currency = ''
+      assign goal_country = ''
+    endfor
+  else
+    for i in (1..5)
+      assign goal_config = "goal_" | append: i
+      if block.settings[goal_config] != blank
+        assign goal_num = goal_num | plus: 1
+      endif
+    endfor
+  endif
+%}
+{% if block.settings.heading != blank %}
+  <div class="h4 x-block-heading leading-normal font-medium rte">{{ block.settings.heading }}</div>
+  <div class="pb-4">({{ 'discount_progress_bar.click_to_applt_qty' | t }})</div>
+{% endif %}
+{% if block.settings.show_table %}
+  <table role="table" class="x-block-table w-full flex flex-col mt-0.5">
+    <thead class="w-full">
+      <tr class="w-full flex justify-between gap-4">
+        <th class="empty:hidden font-normal text-left max-w-[50%] rte">{{ block.settings.left_col_label }}</th>
+        <th class="empty:hidden font-normal text-right max-w-[50%] rte">{{ block.settings.right_col_label }}</th>
+      </tr>
+    </thead>
+    <tbody class="progress-bar-table-{{ block.id }} w-full grid grid-cols-1 gap-x-10">
+      {%- for i in (1..5) -%}
+        {% liquid 
+          assign goal_config = "goal_" | append: i
+          assign label = "goal_" | append: i | append: "_label"
+
+          assign goal_display = ''
+
+          if block.settings.discount_type == 'amount'
+            assign goals = block.settings[goal_config] | newline_to_br | strip_newlines | split: '<br />'
+      
+            for goal in goals
+              unless goal contains ':' 
+                if goal != blank 
+                  assign check_currency = goal | remove: "0" | remove: "1" | remove: "2" | remove: "3" | remove: "4" | remove: "5" | remove: "6" | remove: "7" | remove : "8" | remove: "9" | remove: ":" | remove: " "
+                  if check_currency == '' or check_currency == '.'
+                    assign goal_all = goal | strip | plus: 0
+                  endif
+                endif
+              else 
+                assign check_currency_first = goal | split: ":" | first 
+                assign check_currency_last = goal | split: ":" | last 
+                assign check_currency = goal | remove_first: check_currency_first | remove: check_currency_last
+
+                if check_currency == ':'
+                  if check_currency_first == cart.currency.iso_code
+                    assign goal_currency = check_currency_last | strip | plus: 0
+                  endif 
+                else
+                  assign check_currency_country = check_currency | remove: ":"
+                  if check_currency_first == localization.country.iso_code and check_currency_country == cart.currency.iso_code
+                    assign goal_country = check_currency_last | strip | plus: 0
+                  else
+                    assign goal_currency = ''
+                  endif
+                endif 
+              endunless
+            endfor
+
+            if goal_all != blank
+              assign goal_display = goal_all | times: 100 | money
+            endif 
+            if goal_currency != blank
+              assign goal_display = goal_currency | times: 100 | money
+            endif 
+            if goal_country != blank
+              assign goal_display = goal_country | times: 100 | money
+            endif 
+
+            assign check_currency_first = ''
+            assign check_currency_country = ''
+            assign goal_all = ''
+            assign goal_currency = ''
+            assign goal_country = ''
+          else
+            assign goal_display = block.settings[goal_config]
+          endif
+        %}
+        {% if block.settings[goal_config] != blank and goal_display != blank %}
+          <tr class="flex justify-between pt-2.5 pb-2.5 border-b">
+            <td class="max-w-[50%] cursor-pointer" 
+              @click='document.dispatchEvent(new CustomEvent(`eurus:product:quantity-changed-{{ section.id }}`, {
+                detail: {
+                  quantity: {{ goal_display }}
+                }
+              }));'
+            >
+              {{ goal_display }}
+            </td>
+            <td class="max-w-[50%]">
+              {{ block.settings[label] }}
+            </td>
+          </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+<div
+  id="discount-progress-bar-{{ section.id }}" 
+  class="mt-4"
+  {% if block.settings.discount_type == 'amount' %}
+    {% liquid
+      assign goal_string = ''
+      for i in (1..5)
+        assign goal_config = "goal_" | append: i
+        assign goals = block.settings[goal_config] | newline_to_br | strip_newlines | split: '<br />'
+
+        for goal in goals
+          unless goal contains ':' 
+            if goal != blank 
+              assign check_currency = goal | remove: "0" | remove: "1" | remove: "2" | remove: "3" | remove: "4" | remove: "5" | remove: "6" | remove: "7" | remove : "8" | remove: "9" | remove: ":" | remove: " "
+              if check_currency == '' or check_currency == '.'
+                assign goal_all = goal | strip | plus: 0
+              endif
+            endif
+          else 
+            assign check_currency_first = goal | split: ":" | first 
+            assign check_currency_last = goal | split: ":" | last 
+            assign check_currency = goal | remove_first: check_currency_first | remove: check_currency_last
+            if check_currency == ':'
+              if check_currency_first == cart.currency.iso_code
+                assign goal_currency = check_currency_last | strip | plus: 0
+              endif 
+            else
+              assign check_currency_country = check_currency | remove: ":"
+              if check_currency_first == localization.country.iso_code and check_currency_country == cart.currency.iso_code
+                assign goal_country = check_currency_last | strip | plus: 0
+              endif
+            endif 
+          endunless
+        endfor
+
+        assign goal = 0
+        if goal_all != blank
+          assign goal = goal_all | times: 100
+        endif 
+        if goal_currency != blank
+          assign goal = goal_currency | times: 100
+        endif 
+        if goal_country != blank
+          assign goal = goal_country | times: 100
+        endif
+
+        assign goal_string = goal_string | append: goal | append: ','
+
+        assign check_currency_first = ''
+        assign check_currency_country = ''
+        assign goal_all = ''
+        assign goal_currency = ''
+        assign goal_country = ''
+      endfor
+
+      assign goal_array = goal_string | remove_last: ',' | split: ','
+
+      assign array_size = goal_array.size | minus: 1
+    %}
+    x-data="xDiscountBar([{% for i in (0..array_size) %}{{ goal_array[i] | times: 1 }}{% unless forloop.last %},{% endunless %}{% endfor %}])" 
+  {% else %}
+    x-data="xDiscountBar([{{ block.settings.goal_1 | times: 1 }}, {{ block.settings.goal_2 | times: 1 }}, {{ block.settings.goal_3 | times: 1 }}, {{ block.settings.goal_4 | times: 1 }}, {{ block.settings.goal_5 | times: 1 }}])" 
+  {% endif %}
+  x-init="(() => {
+    setOrder();
+    document.addEventListener('eurus:cart:items-changed', () => {
+      updateProgressBar('{{ section.id }}', '{{ product.url }}', '{{ product.selected_or_first_available_variant.id }}');
+    });
+  })
+  " 
+>
+  <div>
+    {%- for i in (1..5) -%}
+      {% liquid 
+        assign pregoal_message = "goal_" | append: i | append: "_pregoal_message"
+        assign postgoal_message = "goal_" | append: i | append: "_postgoal_message"
+        assign label = "goal_" | append: i | append: "_label"
+        assign goal_config = "goal_" | append: i
+
+        if block.settings.discount_type == 'amount'
+          assign goals = block.settings[goal_config] | newline_to_br | strip_newlines | split: '<br />'
+
+          for goal in goals
+            unless goal contains ':' 
+              if goal != blank 
+                assign check_currency = goal | remove: "0" | remove: "1" | remove: "2" | remove: "3" | remove: "4" | remove: "5" | remove: "6" | remove: "7" | remove : "8" | remove: "9" | remove: ":" | remove: " "
+                if check_currency == '' or check_currency == '.'
+                  assign goal_all = goal | strip | plus: 0
+                endif
+              endif
+            else 
+              assign check_currency_first = goal | split: ":" | first 
+              assign check_currency_last = goal | split: ":" | last 
+              assign check_currency = goal | remove_first: check_currency_first | remove: check_currency_last
+              if check_currency == ':'
+                if check_currency_first == cart.currency.iso_code
+                  assign goal_currency = check_currency_last | strip | plus: 0
+                endif 
+              else
+                assign check_currency_country = check_currency | remove: ":"
+                if check_currency_first == localization.country.iso_code and check_currency_country == cart.currency.iso_code
+                  assign goal_country = check_currency_last | strip | plus: 0
+                endif
+              endif 
+            endunless
+          endfor
+
+          assign goal = 0
+          if goal_all != blank
+            assign goal = goal_all | times: 100
+          endif 
+          if goal_currency != blank
+            assign goal = goal_currency | times: 100
+          endif 
+          if goal_country != blank
+            assign goal = goal_country | times: 100
+          endif
+
+          assign check_currency_first = ''
+          assign check_currency_country = ''
+          assign goal_all = ''
+          assign goal_currency = ''
+          assign goal_country = ''
+
+          assign to_next_goal = goal | minus: cart_amount
+          assign to_next_goal_display = to_next_goal | money
+        else
+          assign to_next_goal = block.settings[goal_config] | times: 1 | minus: cart_qty
+          assign to_next_goal_display = to_next_goal
+        endif
+      %}
+      {% if to_next_goal < 0 and forloop.last == false %}
+        {% continue %}
+      {% endif %}
+      {% if to_next_goal <= 0 %} 
+        <div class="postgoal-message">{{ block.settings[postgoal_message] | replace: '[x]', to_next_goal_display | replace: '[goal_label]', block.settings[label] }}</div>
+      {% else %}
+        <div class="pregoal-message">{{ block.settings[pregoal_message] | replace: '[x]', to_next_goal_display | replace: '[goal_label]', block.settings[label] }}</div>
+      {% endif %}
+      {% if to_next_goal >= 0 %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div x-init="setGoal({% if block.settings.discount_type == 'amount'  %}{{ cart_amount }}{% else %}{{ cart_qty }}{% endif %})" class="progress-bar-item-container-{{ section.id }}{% if block.settings.show_table %} mt-4{% else %} mt-1{% endif %} relative grid grid-cols-{{ goal_num }} overflow-hidden">
+    {%- for i in (1..5) -%}
+      {% liquid
+        assign goal_config = "goal_" | append: i
+        assign label = "goal_" | append: i | append: "_label"
+        assign icon = "icon_" | append: i
+        assign another_icon = "another_icon_" | append: i
+        assign custom_image = "custom_image_" | append: i
+        assign custom_icon = "custom_icon_" | append: i
+        assign icon_reached = "icon_" | append: i | append: '_reached'
+        assign another_icon_reached = "another_icon_" | append: i | append: '_reached'
+        assign custom_image_reached = "custom_image_" | append: i | append: '_reached'
+        assign custom_icon_reached = "custom_icon_" | append: i | append: '_reached'
+
+        if block.settings.discount_type == 'amount'
+          assign goals = block.settings[goal_config] | newline_to_br | strip_newlines | split: '<br />'
+
+          for goal in goals
+            unless goal contains ':' 
+              if goal != blank 
+                assign check_currency = goal | remove: "0" | remove: "1" | remove: "2" | remove: "3" | remove: "4" | remove: "5" | remove: "6" | remove: "7" | remove : "8" | remove: "9" | remove: ":" | remove: " "
+                if check_currency == '' or check_currency == '.'
+                  assign goal_all = goal | strip | plus: 0
+                endif
+              endif
+            else 
+              assign check_currency_first = goal | split: ":" | first 
+              assign check_currency_last = goal | split: ":" | last 
+              assign check_currency = goal | remove_first: check_currency_first | remove: check_currency_last
+              if check_currency == ':'
+                if check_currency_first == cart.currency.iso_code
+                  assign goal_currency = check_currency_last | strip | plus: 0
+                endif 
+              else
+                assign check_currency_country = check_currency | remove: ":"
+                if check_currency_first == localization.country.iso_code and check_currency_country == cart.currency.iso_code
+                  assign goal_country = check_currency_last | strip | plus: 0
+                endif
+              endif 
+            endunless
+          endfor
+
+          assign goal = ''
+          if goal_all != blank
+            assign goal = goal_all | times: 100
+          endif 
+          if goal_currency != blank
+            assign goal = goal_currency | times: 100
+          endif 
+          if goal_country != blank
+            assign goal = goal_country | times: 100
+          endif
+
+          assign check_currency_first = ''
+          assign check_currency_country = ''
+          assign goal_all = ''
+          assign goal_currency = ''
+          assign goal_country = ''
+        else
+          assign goal = block.settings[goal_config]
+        endif
+      %}
+      {% if block.settings[goal_config] != blank and goal != blank %}
+        <div 
+          x-init="$nextTick(() => { 
+            calculateWidth($el, {% if block.settings.discount_type == 'amount'  %}{{ cart_amount }}, {{ goal | times: 1 }}{% else %}{{ cart_qty }}, {{ block.settings[goal_config] | times: 1 }}{% endif %}, index[{{ i }}]{% if is_rtl %}, true{% endif %});
+            if (!window._resizeListenerAdded) {
+              const handler = () => {
+                calculateWidth($el, {% if block.settings.discount_type == 'amount'  %}{{ cart_amount }}, {{ goal | times: 1 }}{% else %}{{ cart_qty }}, {{ block.settings[goal_config] | times: 1 }}{% endif %}, index[{{ i }}]{% if is_rtl %}, true{% endif %});
+              };
+              window.addEventListener('resize', handler);
+              window._resizeListenerAdded = true;
+            }
+          });"
+          :class="`order-${index[{{ i }}]} bar-item-${index[{{ i }}]}`" 
+          class="discount-progress-bar-item-{{ block.id }} flex flex-col items-center gap-y-1.5 grow justify-between relative"
+        >
+          {% unless block.settings.show_table %}
+            <div class="flex items-end h-[2.5em] max-h-[2.5em] pl-1 pr-1"><span class="line-clamp-2 text-center">{{ block.settings[label] }}</span></div>
+          {% endunless %}
+          {% if block.settings.show_progress_bar_icons and block.settings[icon] != 'none' %}
+            {% unless block.settings[custom_image] == blank and block.settings[custom_icon] == blank and block.settings[another_icon] == blank and block.settings[icon] == 'another_icon' %}
+              <div class="icon-progress flex justify-center w-full{% if block.settings.show_table %} h-full items-center{% endif %}">
+                <span class="z-20 inline-block relative size-icon-{{ block.id }} pt-1.5 pb-1.5 pl-1.5 pr-1.5 rounded-full text-[rgba(var(--color-highlight))] border border-[rgba(var(--color-highlight))] bg-[rgba(var(--colors-background-secondary))]">
+                  {% if block.settings[custom_image] != blank %}
+                    {% # theme-check-disable ImgLazyLoading %}
+                    <img 
+                      src="{{ block.settings[custom_image] | image_url: width: icon_size }}"
+                      alt="{{ block.settings[custom_image].alt | escape }}"
+                      {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %} 
+                      width="{{ block.settings[custom_image].width }}"
+                      height="{{ block.settings[custom_image].height }}"
+                      style="object-position: {{ block.settings[custom_image].presentation.focal_point }}"
+                      class="object-cover absolute top-0 left-0 pt-1.5 pb-1.5 pl-1.5 pr-1.5 w-full h-full rounded-full"
+                    >
+                    {% # theme-check-enable ImgLazyLoading %}
+                  {% else %}
+                    {% if block.settings[custom_icon] == blank %}
+                      {% if block.settings[another_icon] != blank and block.settings[icon] == 'another_icon' %}
+                        {% render 'icon-new-alls', icon: block.settings[another_icon] %}
+                      {% else %}
+                        {% render 'icon-labels-bags', icon: block.settings[icon] %}
+                      {% endif %}
+                    {% else %}
+                      {{ block.settings[custom_icon] }}
+                    {% endif %}
+                  {% endif %}
+                </span>
+              </div>
+            {% endunless %}
+          {% else %}
+            <div class="icon-progress flex w-full justify-center{% if block.settings.show_table %} h-full items-center{% endif %}">
+              <span class="z-20 inline-block relative{% if block.settings.show_table %} h-0 w-0{% endif %} pt-2 pb-2 pl-2 pr-2 rounded-full border border-[rgba(var(--color-highlight))] bg-[rgba(var(--colors-background-secondary))]">
+              </span>
+            </div>
+          {% endif %}
+          {% if block.settings.show_progress_bar_icons and block.settings[icon_reached] != 'none' %}
+            {% unless block.settings[custom_image_reached] == blank and block.settings[custom_icon_reached] == blank and block.settings[another_icon_reached] == blank and block.settings[icon_reached] == 'another_icon' %}
+              <div class="icon-reached flex justify-center w-full{% if block.settings.show_table %} h-full items-center{% endif %}">
+                <span class="z-20 inline-block relative size-icon-{{ block.id }} pt-1.5 pb-1.5 pl-1.5 pr-1.5 rounded-full text-[rgba(var(--colors-background))] border border-[rgba(var(--color-highlight))] bg-[rgba(var(--color-highlight))]">
+                  {% if block.settings[custom_image_reached] != blank %}
+                    {% # theme-check-disable ImgLazyLoading %}
+                    <img 
+                      src="{{ block.settings[custom_image_reached] | image_url: width: icon_size }}"
+                      alt="{{ block.settings[custom_image_reached].alt | escape }}"
+                      {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %} 
+                      width="{{ block.settings[custom_image_reached].width }}"
+                      height="{{ block.settings[custom_image_reached].height }}"
+                      style="object-position: {{ block.settings[custom_image_reached].presentation.focal_point }}"
+                      class="object-cover absolute top-0 left-0 pt-1.5 pb-1.5 pl-1.5 pr-1.5 w-full h-full rounded-full"
+                    >
+                    {% # theme-check-enable ImgLazyLoading %}
+                  {% else %}
+                    {% if block.settings[custom_icon_reached] == blank %}
+                      {% if block.settings[another_icon_reached] != blank and block.settings[icon_reached] == 'another_icon' %}
+                        {% render 'icon-new-alls', icon: block.settings[another_icon_reached] %}
+                      {% else %}
+                        {% render 'icon-labels-bags', icon: block.settings[icon_reached] %}
+                      {% endif %}
+                    {% else %}
+                      {{ block.settings[custom_icon_reached] }}
+                    {% endif %}
+                  {% endif %}
+                </span>
+              </div>
+            {% endunless %}
+          {% else %}
+            <div class="icon-reached flex w-full justify-center{% if block.settings.show_table %} h-full items-center{% endif %}">
+              <span class="z-20 inline-block relative{% if block.settings.show_table %} h-0 w-0{% endif %} pt-2 pb-2 pl-2 pr-2 rounded-full border border-[rgba(var(--color-highlight))] bg-[rgba(var(--color-highlight))]">
+              </span>
+            </div>
+          {% endif %}
+          <div>
+            {% liquid 
+              assign goal_display = ''
+
+              if block.settings.discount_type == 'amount'
+                assign goals = block.settings[goal_config] | newline_to_br | strip_newlines | split: '<br />'
+          
+                for goal in goals
+                  unless goal contains ':' 
+                    if goal != blank 
+                      assign check_currency = goal | remove: "0" | remove: "1" | remove: "2" | remove: "3" | remove: "4" | remove: "5" | remove: "6" | remove: "7" | remove : "8" | remove: "9" | remove: ":" | remove: " "
+                      if check_currency == '' or check_currency == '.'
+                        assign goal_all = goal | strip | plus: 0
+                      endif
+                    endif
+                  else 
+                    assign check_currency_first = goal | split: ":" | first 
+                    assign check_currency_last = goal | split: ":" | last 
+                    assign check_currency = goal | remove_first: check_currency_first | remove: check_currency_last
+                    if check_currency == ':'
+                      if check_currency_first == cart.currency.iso_code
+                        assign goal_currency = check_currency_last | strip | plus: 0
+                      endif 
+                    else
+                      assign check_currency_country = check_currency | remove: ":"
+                      if check_currency_first == localization.country.iso_code and check_currency_country == cart.currency.iso_code
+                        assign goal_country = check_currency_last | strip | plus: 0
+                      endif
+                    endif 
+                  endunless
+                endfor
+
+                if goal_all != blank
+                  assign goal_display = goal_all | times: 100 | money
+                endif 
+                if goal_currency != blank
+                  assign goal_display = goal_currency | times: 100 | money
+                endif 
+                if goal_country != blank
+                  assign goal_display = goal_country | times: 100 | money
+                endif 
+                
+                assign check_currency_first = ''
+                assign check_currency_country = ''
+                assign goal_all = ''
+                assign goal_currency = ''
+                assign goal_country = ''
+              else
+                assign goal_display = block.settings[goal_config]
+              endif
+            %}
+            {{ goal_display }}
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+<script src="{{ 'discount-progress-bar.js' | asset_url }}" defer></script>

@@ -1,0 +1,521 @@
+{% liquid
+  assign side_bar_position = section.settings.side_bar_position
+  if settings.lang_direction contains request.locale.iso_code
+    if side_bar_position == 'left'
+      assign side_bar_position = 'right'
+    elsif side_bar_position == 'right'
+      assign side_bar_position = 'left'
+    endif
+  endif
+%}
+<div id="side-bar-template" class="hidden">
+  <div 
+    x-data="{ show: false }" 
+    class="side-bar-content side-bar-{{ side_bar_position }} lg:top-[var(--height-header)]{% if section.settings.enable_sticky_side_bar %} lg:sticky{% endif %}" 
+    data-position="{{ side_bar_position }}"
+    data-blocks="{{ section.blocks.size }}"
+    {% if section.settings.enable_sticky_side_bar %}
+    data-sticky="{{ section.settings.enable_sticky_side_bar }}"
+    {% endif %}
+  >
+    <div 
+      @click="show=true; $store.xPopup.open = true;" 
+      class="fixed lg:hidden z-10 top-1/2 -translate-y-1/2 bg-[rgba(var(--background-color))] border {{ side_bar_position }}-0 w-11 h-11 flex items-center justify-center pt-2.5 pb-2.5 rounded-full cursor-pointer opacity-60"> 
+      <span class="inline-block w-4 h-4{% if side_bar_position == "left" %} rotate-180{% endif %}">  
+        {% render 'icon-alls', icon: 'icon-side-bar' %}
+      </span>
+    </div>
+    <div
+      class="z-[100] fixed top-0 left-0 right-0 h-full w-full opacity-60 bg-black lg:hidden"
+      x-show="show"
+      x-cloak
+      @click="show=false; $store.xPopup.open = false;"
+    ></div>
+    <div 
+      class="z-[100] lg:z-10 side-bar menu-drawer fixed lg:relative top-0 bottom-0 w-10/12 max-w-sm motion-reduce lg:left-auto lg:bottom-auto lg:w-full lg:translate-x-0
+        {%- if side_bar_position == "right" %} translate-x-full{% else %} -translate-x-full{% endif -%}
+        {%- if settings.edges_type == "rounded_corners" %} mr-2.5 ml-2.5 mt-2.5 mb-2.5{% endif -%}" 
+      :class="{ 'menu-opening{%- if side_bar_position == "right" %} right-0{% else %} left-0{% endif -%}': show, '{%- if side_bar_position == "right" %}-right-2.5{% else %}-left-2.5{% endif -%}': !show}"
+    >
+      <div class="anm-fade-paragraph flex flex-col h-full pl-4 pr-4 pb-4 pt-16 lg:pr-0 lg:pl-0 lg:pt-0 lg:pb-0 gap-3 lg:gap-5 bg-[rgba(var(--background-color))] overflow-y-auto overflow-x-hidden lg:overflow-y-hidden scrollbar-body{%- if settings.edges_type == "rounded_corners" %} rounded-[10px]{% endif -%}">
+        <div class="bg-[rgba(var(--background-color))] ltr z-10 h-12 absolute top-0 left-0 right-0 flex items-center lg:hidden w-full px-2 rtl:justify-end{% if settings.edges_type == "rounded_corners" %} rounded-[10px]{% endif %}" aria-label="{{ 'accessibility.close' | t }}">
+          <span class="h3 inline-block pt-1.5 pb-1.5 pl-2.5 pr-2.5">{{- 'blogs.article.side_bar' | t }}</span>
+          <span
+            class="cursor-pointer absolute w-11 h-8 inline-block p-2 right-1.5 rtl:right-auto rtl:left-1.5"
+            @click="show=false; $store.xPopup.open = false;"
+          >{% render 'icon-alls', icon: 'icon-close' %}</span>
+        </div>
+        {%- for block in section.blocks -%}
+          {%- case block.type -%}
+            {%- when 'highlight_text' -%}
+              <div x-intersect.once="$el.classList.add('is-visible')" class="side-bar-block side-bar-text anm-fade-element w-full pt-7 pb-7 pr-7 pl-7 bg-theme-secondary{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% if settings.lang_direction contains request.locale.iso_code %} rtl{% endif %}" {{ block.shopify_attributes }}>
+                {%- if block.settings.title != blank -%}
+                  {% assign heading_size =  block.settings.title_size | times: settings.heading_base_size | times: 0.000225 %}
+                  {% style %}
+                    .heading-{{ block.id }} { font-size: {{ heading_size | times: 0.7 }}rem; }
+                    @media screen and (min-width: 1025px) {
+                      .heading-{{ block.id }} {
+                        font-size: {{ heading_size }}rem;
+                      }  
+                    }
+                  {% endstyle %}
+                  <div class="heading-{{ block.id }} h3 pt-0 pb-0{% if block.settings.text != blank %} mb-4{% endif %}">{{ block.settings.title | escape }}</div>
+                {%- endif -%}
+      
+                {%- if block.settings.text != blank -%}
+                  {%- liquid 
+                    assign text_size =  settings.text_base_size | times: block.settings.text_size | times: 0.0000875
+                  -%}
+                  {%- style -%}  
+                    .description--{{ block.id }} {
+                      font-size: {{ text_size | times: 0.9 }}rem;
+                    }
+                    @media (min-width: 767px){
+                      .description--{{ block.id }} {
+                        font-size: {{ text_size }}rem; 
+                      }
+                    }
+                  {%- endstyle -%}
+                  <div class="rte description--{{ block.id }}">{{ block.settings.text }}</div>
+                {%- endif -%}
+              </div>
+            {%- when 'product' -%}
+              <div x-intersect.once="$el.classList.add('is-visible')" class="side-bar-block side-bar-product ltr anm-fade-element bg-theme-secondary pt-7 pb-7 pr-5 pl-5{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% if settings.lang_direction contains request.locale.iso_code %} rtl{% endif %}" {{ block.shopify_attributes }}>
+                {%- if block.settings.heading != blank -%}
+                  {% assign heading_size =  block.settings.heading_size | times: settings.heading_base_size | times: 0.000225 %}
+                  {% style %}
+                    .heading-{{ block.id }} { font-size: {{ heading_size | times: 0.7 }}rem; }
+                    @media screen and (min-width: 1025px) {
+                      .heading-{{ block.id }} {
+                        font-size: {{ heading_size }}rem;
+                      }  
+                    }
+                  {% endstyle %}
+                  <div class="heading-{{ block.id }} h3 pl-2 pr-2{% if block.settings.product_list != blank %} mb-4{% endif %}{% if settings.lang_direction contains request.locale.iso_code %} rtl{% endif %}">{{ block.settings.heading | escape }}</div>
+                {%- endif -%}
+                {% if block.settings.product_list != blank %}
+                  <div class="flex flex-col gap-2.5">
+                    {% for product in block.settings.product_list %}
+                      {% render 'card-product-slideshow', 
+                        product: product, 
+                        show_rating: block.settings.show_rating, 
+                        product_count: block.settings.product_list.count, 
+                        index: forloop.index,
+                        sideBar: true
+                      %}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {%- when 'promotion-banner' -%}
+              <div x-intersect.once="$el.classList.add('is-visible')" class="side-bar-block anm-fade-element" {{ block.shopify_attributes }}>
+                <div class="relative h-full">
+                    {% style %}
+                      .image-{{ block.id }} {
+                        height: {{ block.settings.image_height }}px;
+                      }
+                    {% endstyle %}
+                    <div class="mega-menu-card w-full group relative{% unless block.settings.enable_text_overlay_1 %} background-color-{{ block.id }}{% endunless %}{% if block.settings.content_alignment == 'right' %} ltr{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                      {% render 'promotion-image',
+                        blockID: block.id,
+                        image: block.settings.image,
+                        enable_text_overlay: true,
+                        heading: block.settings.heading,
+                        content: block.settings.content,
+                        subheading: block.settings.subheading,
+                        button_label: block.settings.button_label,
+                        button_link: block.settings.button_link,
+                        content_alignment: block.settings.content_alignment,
+                        overlay_opacity: block.settings.overlay_opacity,
+                        show_button_style: block.settings.show_button_style,
+                        color_text: block.settings.color_text,
+                        color_button: block.settings.color_button,
+                        color_text_button: block.settings.color_text_button,
+                        color_button_hover: block.settings.color_button_hover,
+                        color_text_button_hover: block.settings.color_text_button_hover,
+                        color_button_secondary: block.settings.color_button_secondary,
+                        secondary_button_text: block.settings.secondary_button_text,
+                        heading_size: block.settings.heading_size,
+                        text_size: block.settings.text_size,
+                        content_position: block.settings.content_position,
+                        open_new_window : block.settings.open_new_window_button,
+                        colors_text_link: block.settings.colors_text_link,
+                        heading_highlight: true,
+                        color_heading_highlight_dark: block.settings.color_heading_highlight_dark,
+                        color_heading_highlight_light: block.settings.color_heading_highlight_light,
+                        highlight_type: block.settings.highlight_type
+                      %}
+                    </div>
+                  {% comment %} {%- endif -%}  {% endcomment %}
+                </div>
+              </div>
+            {%- when 'social_sharing' -%}
+              {%- if settings.share_facebook or settings.share_twitter or settings.share_pinterest -%}
+                <div x-intersect.once="$el.classList.add('is-visible')" class="side-bar-block anm-fade-element flex items-center toc h-fit pt-2 pb-2 md:pb-0 md:pt-0{% if settings.lang_direction contains request.locale.iso_code %} rtl{% endif %}{% if side_bar_position == "right" %} justify-end rtl:justify-start{% else %} rtl:justify-end{% endif %}" {{ block.shopify_attributes }}>
+                  <p class="mr-1">{{ 'products.product.share_social' | t }}</p>
+                  {% render 'social-sharing' %}
+                </div>
+              {%- endif -%}
+          {%- endcase -%}
+        {%- endfor -%}
+      </div>
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "t:sections.side-bar.name",
+  "tag": "section",
+  "class": "section section-side-bar x-section",
+  "enabled_on": {
+    "templates": [
+      "article"
+    ]
+  },
+  "limit": 1,
+  "settings": [
+    {
+      "type": "select",
+      "id": "side_bar_position",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ],
+      "default": "left",
+      "label": "t:sections.side-bar.settings.side_bar_position.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sticky_side_bar",
+      "default": true,
+      "label": "t:sections.side-bar.settings.enable_sticky_side_bar.label"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "highlight_text",
+      "name": "t:sections.side-bar.settings.highlight_text.label",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.all.text.title",
+          "default": "Side bar title"
+        },
+        {
+          "type": "range",
+          "id": "title_size",
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "default": 80,
+          "unit": "%",
+          "label": "t:sections.all.text.title_size"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "default": "<p>Add further details to enrich your blog post page</p>",
+          "label": "t:sections.all.text.text"
+        },
+        {
+          "type": "range",
+          "id": "text_size",
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "unit": "%",
+          "default": 100,
+          "label": "t:sections.all.text.text_size"
+        }
+      ]
+    },
+    {
+      "type": "product",
+      "name": "t:settings_schema.cart.product",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Shop the products in this post",
+          "label": "t:sections.all.text.heading"
+        },
+        {
+          "type": "range",
+          "id": "heading_size",
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "unit": "%",
+          "label": "t:sections.all.text.heading_size",
+          "default": 80
+        },
+        {
+          "type": "product_list",
+          "id": "product_list",
+          "label": "t:settings_schema.cart.product",
+          "limit": 10
+        },
+        {
+          "type": "checkbox",
+          "id": "show_rating",
+          "default": false,
+          "label": "t:sections.featured-collection.blocks.collection.settings.show_rating.label",
+          "info": "t:sections.featured-collection.blocks.collection.settings.show_rating.info"
+        }
+      ]
+    },
+    {
+      "type": "promotion-banner",
+      "name": "t:sections.promotion-banner.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.all.image.label",
+          "info": "t:sections.all.image.note_image_size"
+        },
+        {
+          "type": "range",
+          "id": "image_height",
+          "min": 70,
+          "max": 500,
+          "step": 10,
+          "unit": "px",
+          "default": 300,
+          "label": "t:sections.all.image.image_height"
+        },
+        {
+          "type": "range",
+          "id": "overlay_opacity",
+          "min": 0,
+          "max": 100,
+          "step": 10,
+          "unit": "%",
+          "label": "t:sections.all.overlay_opacity.label",
+          "default": 10,
+          "info": "t:sections.featured-collection.blocks.collection.settings.enable_text_overlay.info"
+        },
+        {
+          "type": "text",
+          "id": "subheading",
+          "label": "t:sections.all.text.subheading"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Promotion banner",
+          "label": "t:sections.all.text.heading",
+          "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+        },
+        {
+          "type": "select",
+          "id": "highlight_type",
+          "default": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+          "options": [
+            {
+              "value": "underline",
+              "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+            },
+            {
+              "value": "font_highlight",
+              "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+            }
+          ]
+        },
+        {
+          "type": "range",
+          "id": "heading_size",
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "unit": "%",
+          "default": 80,
+          "label": "t:sections.all.text.heading_size"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "default": "<p>Describe a promotion, make announcements about the promotion available in your store.</p>",
+          "label": "t:sections.all.text.text"
+        },
+        {
+          "type": "range",
+          "id": "text_size",
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "unit": "%",
+          "default": 100,
+          "label": "t:sections.all.text.text_size"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "t:sections.all.button.label"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "t:sections.all.button.link"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_new_window_button",
+          "default": false,
+          "label": "t:sections.all.open_new_window.label"
+        },
+        {
+          "type": "select",
+          "id": "show_button_style",
+          "options": [
+            {
+              "value": "primary",
+              "label": "t:sections.all.button.button_style.primary"
+            },
+            {
+              "value": "secondary",
+              "label": "t:sections.all.button.button_style.secondary"
+            },
+            {
+              "value": "text-link",
+              "label": "t:settings_schema.colors.colors_text_link"
+            }
+          ],
+          "label": "t:sections.all.button.button_style.label",
+          "default": "primary"
+        },
+        {
+          "type": "select",
+          "id": "content_alignment",
+          "options": [
+            {
+              "value": "left",
+              "label": "t:sections.all.content_alignment.options__1.label"
+            },
+            {
+              "value": "center",
+              "label": "t:sections.all.content_alignment.options__2.label"
+            },
+            {
+              "value": "right",
+              "label": "t:sections.all.content_alignment.options__3.label"
+            }
+          ],
+          "default": "left",
+          "label": "t:sections.all.content_alignment.label"
+        },
+        {
+          "type": "select",
+          "id": "content_position",
+          "options": [
+            {
+              "value": "top",
+              "label": "t:sections.all.content_position.options__11.label"
+            },
+            {
+              "value": "center",
+              "label": "t:sections.all.content_alignment.options__2.label"
+            },
+            {
+              "value": "bottom",
+              "label": "t:sections.all.content_position.options__12.label"
+            }
+          ],
+          "label": "t:sections.all.content_position.label",
+          "default": "bottom"
+        },
+        {
+          "type": "color",
+          "id": "color_text",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.text.color_text"
+        },
+        {
+          "type": "color",
+          "id": "color_heading_highlight_light",
+          "label": "t:sections.all.text.color_heading_highlight",
+          "default": "rgba(0,0,0,0)"
+        },
+        {
+          "type": "color",
+          "id": "color_button",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.color_button"
+        },
+        {
+          "type": "color",
+          "id": "color_text_button",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.color_text_button"
+        },
+        {
+          "type": "color",
+          "id": "color_button_hover",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.color_button_hover"
+        },
+        {
+          "type": "color",
+          "id": "color_text_button_hover",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.color_text_button_hover"
+        },
+        {
+          "type": "color",
+          "id": "color_button_secondary",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.colors_button_secondary"
+        },
+        {
+          "type": "color",
+          "id": "secondary_button_text",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.secondary_button_text"
+        },
+        {
+          "type": "color",
+          "id": "colors_text_link",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:settings_schema.colors.colors_text_link"
+        }
+      ]
+    },
+    {
+      "type": "social_sharing",
+      "name": "t:sections.featured-product.blocks.social_sharing.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.main-article.settings.general.no_config.content"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.side-bar.name",
+      "category": "t:categories.blog_and_page",
+      "blocks": [
+        {
+          "type": "highlight_text"
+        },
+        {
+          "type": "promotion-banner"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

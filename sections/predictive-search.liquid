@@ -1,0 +1,281 @@
+{% comment %}theme-check-disable ImgLazyLoading{% endcomment %}
+{%- if predictive_search.performed -%}
+  {% liquid 
+    assign resources_collections = predictive_search.resources.collections
+    assign exclude_id = settings.exclude_collections | map: 'id'
+    assign ratio = 1
+    case settings.product_image_ratio
+      when "portrait"
+        assign ratio = 1.5
+      when "landscape"
+        assign ratio = 0.75
+      when "wide"
+        assign ratio = 0.5625
+      when "3/4"
+        assign ratio = 1.33
+    endcase
+    if settings.exclude_collections != blank and settings.hide_product_in_exclude_collections
+      assign excluded_products_handles = ''
+      for exclude_collection_item in settings.exclude_collections
+        for product in exclude_collection_item.products
+          assign excluded_products_handles = excluded_products_handles | append: product.handle | append: ','
+        endfor
+      endfor
+      assign excluded_products = excluded_products_handles | split: ','
+    endif
+    if settings.exclude_collections != blank
+      assign excluded_collections_handles = ''
+      for exclude_collection_item in settings.exclude_collections
+        assign excluded_collections_handles = excluded_collections_handles | append: exclude_collection_item.handle | append: ','
+      endfor
+      assign excluded_collections = excluded_collections_handles | split: ','
+    endif
+    assign hide_gift_wrapping = false
+    assign hide_engraving = false
+    assign hide_insurance = false
+    if settings.gift_wrapping_product != blank and settings.hide_gift_wrapping
+      assign hide_gift_wrapping = true
+    endif
+    if settings.engraving_product != blank
+      assign hide_engraving = true
+    endif
+    if settings.product_shipping_insurance != blank
+      assign hide_insurance = true
+    endif
+    
+    assign results_size = predictive_search.resources.products.size | plus: resources_collections.size | plus: predictive_search.resources.pages.size | plus: predictive_search.resources.articles.size
+    if hide_gift_wrapping or hide_engraving or hide_insurance or settings.hide_product_in_exclude_collections
+      for product in predictive_search.resources.products
+        if hide_gift_wrapping and settings.gift_wrapping_product == product
+          assign results_size = results_size | minus: 1
+        endif
+        if hide_engraving and settings.engraving_product == product
+          assign results_size = results_size | minus: 1
+        endif
+        if hide_insurance and settings.product_shipping_insurance == product
+          assign results_size = results_size | minus: 1
+        endif
+        if excluded_products contains product.handle and settings.hide_product_in_exclude_collections
+          assign results_size = results_size | minus: 1
+        endif
+      endfor
+    endif
+    if settings.exclude_collections != blank
+      for collection in predictive_search.resources.collections
+        if excluded_collections contains collection.handle
+          assign results_size = results_size | minus: 1
+        endif
+      endfor
+    endif
+  %}
+<div class="background-header search-page:bg-[rgba(var(--background-color))] shadow-[0_0_6px_-4px_rgba(var(--colors-text))] pt-6{% unless settings.search_show_view_more and results_size > 0 %} pb-7{% endunless %}">
+  <div id="predictive-search-results" class="overflow-auto max-h-[60vh] mobile-dock:max-h-[40vh] search-page:max-h-[45vh] scrollbar-body"> 
+    <div {%- if results_size > 0 %} class="content-results-{{ settings.search_style }}"{% endif %}>
+      {%- if predictive_search.resources.queries.size > 0 or predictive_search.resources.pages.size > 0 -%}
+        <div class="predictive-search-results-list search-result-query-and-page grow{% if settings.search_style == 'vertical' %} lg:flex{% endif %}">
+          {%- if predictive_search.resources.queries.size > 0 -%}
+            <div class="query-and-page-content flex-1">
+              <h2 id="predictive-search-queries" class="predictive-search-heading pl-6 pr-6 lg:pl-10 lg:pr-10 pt-2 pb-5 uppercase text-[{{ settings.text_base_size | times: 0.007875 }}rem] md:text-[{{ settings.text_base_size | times: 0.00875 }}rem]">
+                {{- 'templates.search.suggestions' | t -}}
+              </h2>
+              <ul id="predictive-search-results-queries-list" class="predictive-result-item predictive-search-results-list{% if settings.search_style == 'horizontal' %} lg:flex{% else %} grid grid-cols-1{% endif %} gap-5 pl-6 pr-6 lg:pl-10 lg:pr-10 pb-7" role="group" aria-labelledby="predictive-search-queries">
+                {%- for query in predictive_search.resources.queries -%}
+                  <li id="predictive-search-option-query-{{ forloop.index }}" class="predictive-search__list-item" role="option" aria-selected="false">
+                    <a href="{{ query.url }}" class="search_heading predictive-search-item nav-link hover-text-link relative">
+                      {{ query.styled_text | strip_html }}
+                    </a>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            </div>
+          {%- endif -%}
+          {%- if results_size > 0 and predictive_search.resources.pages.size > 0 -%}
+            {%- if predictive_search.resources.queries.size > 0 and settings.search_style == 'vertical' -%}<div class="line-spacing flex-shrink-0 lg:mb-5"></div>{%- endif -%}
+            <div class="query-and-page-content flex-1">
+              <h2 id="predictive-search-pages" class="predictive-search-heading pl-6 pr-6 lg:pl-10 lg:pr-10 pb-2 md:pb-5 uppercase{% if predictive_search.resources.queries.size > 0 and settings.search_style == 'horizontal' %} border-t pt-6 lg:pt-7{% else %} pt-6 lg:pt-2{% endif %} text-[{{ settings.text_base_size | times: 0.007875 }}rem] md:text-[{{ settings.text_base_size | times: 0.00875 }}rem]">
+                {{ 'templates.search.pages' | t }}
+              </h2>
+              <div class="predictive-result-item pb-7 pl-6 pr-6 lg:pl-10 lg:pr-10 gap-5{% if settings.search_style == 'horizontal' %} flex{% endif %}">
+                {%- for page in predictive_search.resources.pages -%} 
+                  <div class="block">
+                    <a href="{{ page.url }}" class="search_heading predictive-search-item nav-link relative hover-text-link">
+                      {{ page.title | escape }}
+                    </a>
+                  </div>
+                {%- endfor -%}
+              </div>
+            </div>
+          {%- endif -%} 
+        </div>
+      {%- endif -%}
+      {%- if results_size > 0 -%}
+          {%- if predictive_search.resources.queries.size > 0 or predictive_search.resources.pages.size > 0 -%}<div class="{% if settings.search_style == 'vertical' %} border-t{% else %} border-t lg:border-l{% endif %} flex-shrink-0"></div>{%- endif -%}
+          <div class="predictive-search-results-list predictive-search-others{% if settings.search_style == 'vertical' %} lg:flex{% if predictive_search.resources.queries.size > 0 or predictive_search.resources.pages.size > 0 %} lg:pt-5{% endif %}{% else %} lg:w-3/4{% endif %}">
+        {%- if predictive_search.resources.products.size > 0 -%}
+          <div class="flex-1">
+            <h2 id="predictive-search-products" class="predictive-search-heading pl-6 pr-6 lg:pl-10 lg:pr-10{% if predictive_search.resources.queries.size > 0 and settings.search_style == 'vertical' or predictive_search.resources.pages.size > 0 and settings.search_style == 'vertical' %} pt-6 lg:pt-7{% else %} pt-6 md:pt-2{% endif %} pb-2 uppercase text-[{{ settings.text_base_size | times: 0.007875 }}rem] md:text-[{{ settings.text_base_size | times: 0.00875 }}rem]">
+              {{ 'templates.search.products' | t }}
+            </h2> 
+            <ul role="listbox" aria-labelledby="predictive-search-products" class="predictive-result-item grid grid-cols-1 gap-2 pl-6 pr-6 lg:pl-10 lg:pr-10 pb-2.5">
+              {%- for product in predictive_search.resources.products -%} 
+                {% liquid
+                  assign hide_product = false
+                  if settings.gift_wrapping_product != blank and settings.hide_gift_wrapping and settings.gift_wrapping_product.id == product.id
+                    assign hide_product = true
+                  endif
+                  if settings.engraving_product != blank and settings.engraving_product.id == product.id
+                    assign hide_product = true
+                  endif
+                  if settings.product_shipping_insurance != blank and settings.product_shipping_insurance.id == product.id
+                    assign hide_product = true
+                  endif
+                  if excluded_products contains product.handle and settings.hide_product_in_exclude_collections
+                    assign hide_product = true
+                  endif
+                  if hide_product 
+                    continue 
+                  endif
+                %}
+                <li id="predictive-search-option-{{ forloop.index }}" class="py-2" role="option" aria-selected="false">
+                  <a href="{{ product.url }}" class="flex gap-4 relative disable-effect h-full">
+                    <div class="w-24 relative">
+                      <div class="relative overflow-hidden w-full float-left before:h-0 before:block{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}{% unless settings.product_image_ratio == "natural" %} before:pb-[{{ ratio | times: 100.0 }}%]{% else %}{% if product.featured_media.media_type == "model" %} pb-[100%]{% endif %}{% endunless %}"{% if settings.product_image_ratio == "natural" and product.featured_media and product.featured_media.media_type != "model" %} style="padding-bottom: {{ 1 | divided_by: product.featured_media.aspect_ratio | times: 100 }}%;"{% endif %} >
+                        {%- if product.featured_media != blank -%}
+                          {% # theme-check-disable ImgLazyLoading %}
+                          <img
+                            src="{{ product.featured_media | image_url: width: 150 }}"
+                            alt="{{ product.featured_media.alt | split: "#" | first | escape }}"
+                            width="{{ product.featured_media.width }}"
+                            {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                            onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                            height="{{ product.featured_media.height }}"
+                            class="h-full w-full object-cover absolute top-0 left-0 image-hover z-0 animate-Xpulse skeleton-image"
+                          >
+                          {% # theme-check-enable ImgLazyLoading %}
+                        {%- else -%}
+                          <div class="bg-[#c9c9c9]{% unless settings.product_image_ratio == "natural" %} absolute{% endunless %} top-0 left-0 w-full h-full">{%- render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}</div>
+                        {%- endif -%}
+                      </div>
+                    </div>
+                    <div class="flex-1">
+                      {%- if settings.predictive_search_show_vendor -%} 
+                        <div class="leading-tight mb-2 uppercase p-break-words tracking-widest text-xs">{{ product.vendor }}</div>
+                      {%- endif -%}
+                      <div class="mb-2">
+                        <p class="p-break-words leading-tight duration-200 transition hover-text-link text-[rgba(var(--colors-heading))]">{{ product.title | escape }}</p> 
+                      </div>
+                      {%- if settings.predictive_search_show_price -%}
+                        {% render 'price', product: product, use_variant: true, show_badges: false %} 
+                      {%- endif -%}
+                    </div>
+                  </a>
+                </li>
+              {%- endfor -%}
+            </ul>
+          </div>
+        {%- endif -%}
+          {%- if resources_collections.size > 0 -%} 
+            {% liquid 
+              assign hide_all_collections = true
+              for collection in resources_collections
+                unless exclude_id contains collection.id
+                  assign hide_all_collections = false
+                endunless
+              endfor
+            %}
+            {% unless hide_all_collections %}
+              {%- if predictive_search.resources.products.size > 0 -%}<div class="line-spacing flex-shrink-0"></div>{%- endif -%}
+              <div class="flex-1">
+                <h2 id="predictive-search-collections" class="predictive-search-heading flex-1 pl-6 pr-6 lg:pl-10 lg:pr-10{% if predictive_search.resources.products.size > 0 %} pt-6 lg:pt-7{% else %} pt-3{% endif %} pb-2 uppercase text-[{{ settings.text_base_size | times: 0.007875 }}rem] md:text-[{{ settings.text_base_size | times: 0.00875 }}rem]">
+                  {{ 'templates.search.collections' | t }}
+                </h2>
+                <div class="predictive-result-item flex-1 pb-2.5 pl-6 pr-6 lg:pl-10 lg:pr-10 gap-2">
+                  {%- for collection in resources_collections -%} 
+                    {% unless exclude_id contains collection.id %}
+                      <div class="block py-2">
+                        <a href="{{ collection.url }}" class="flex relative disable-effect h-full">
+                          <div class="w-24 relative">
+                            <div class="relative overflow-hidden w-full float-left before:h-0 before:block before:pb-[75.0%]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">
+                              {%- if collection.featured_image != blank -%}
+                                {% # theme-check-disable ImgLazyLoading %}
+                                <img
+                                  src="{{ collection.featured_image | image_url: width: 300 }}"
+                                  alt="{{ collection.featured_image.alt }}"
+                                  width="{{ collection.featured_image.width }}"
+                                  {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                  onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                                  height="{{ collection.featured_image.height }}"
+                                  class="h-full w-full object-cover absolute top-0 left-0 z-0 image-hover animate-Xpulse skeleton-image"
+                                >
+                                {% # theme-check-enable ImgLazyLoading %}
+                              {%- else -%}
+                                <div class="bg-[#c9c9c9] absolute top-0 left-0 w-full h-full">{%- render 'icon-placeholder', icon: 'icon-collection', class: 'w-full h-full' %}</div>
+                              {%- endif -%}
+                            </div>
+                          </div>
+                            <div class="pt-2{% if settings.lang_direction contains request.locale.iso_code %} mr-5{% else %} ml-5{% endif %} flex-1">
+                            <p class="search_heading hover-text-link disable-effect p-break-words leading-tight duration-200 transition hover-text-link text-[rgba(var(--colors-heading))]">{{ collection.title | escape }}</p> 
+                          </div>
+                        </a>
+                      </div>
+                    {% endunless %}
+                  {%- endfor -%}
+                </div>
+              </div>
+            {% endunless %}
+          {%- endif -%}
+          {%- if predictive_search.resources.articles.size > 0 -%} 
+            {%- if predictive_search.resources.products.size > 0 or resources_collections.size > 0 -%}<div class="line-spacing flex-shrink-0"></div>{%- endif -%}
+            <div class="flex-1">
+              <h2 id="predictive-search-articles" class="predictive-search-heading pl-6 pr-6 lg:pl-10 lg:pr-10{% if predictive_search.resources.products.size > 0 or resources_collections.size > 0 %}  pt-6 lg:pt-7{% else %} pt-6 lg:pt-2{% endif %} pb-2 uppercase text-[{{ settings.text_base_size | times: 0.007875 }}rem] md:text-[{{ settings.text_base_size | times: 0.00875 }}rem]">
+                {{ 'templates.search.articles' | t }}
+              </h2>
+              <div class="predictive-result-item pb-2.5 pl-6 pr-6 lg:pl-10 lg:pr-10 gap-2">
+                {%- for article in predictive_search.resources.articles -%} 
+                  <div class="block py-2">
+                    <a href="{{ article.url }}" class="flex relative disable-effect h-full">
+                      <div class="w-24 relative">
+                        <div class="relative overflow-hidden w-full float-left before:h-0 before:block before:pb-[75.0%]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">
+                          {%- if article.image != blank -%}
+                            {% # theme-check-disable ImgLazyLoading %}
+                            <img
+                              src="{{ article.image.src | image_url: width: 300 }}"
+                              alt="{{ article.image.alt }}"
+                              width="{{ article.image.width }}"
+                              {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                              onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                              height="{{ article.image.height }}"
+                              class="h-full w-full object-cover absolute top-0 left-0 image-hover z-0 animate-Xpulse skeleton-image"
+                            >
+                            {% # theme-check-enable ImgLazyLoading %}
+                          {%- else -%}
+                            <div class="bg-[#c9c9c9] absolute top-0 left-0 w-full h-full">{%- render 'icon-placeholder', icon: 'icon-image', class: 'w-full h-full' %}</div>
+                          {%- endif -%}
+                        </div>
+                      </div>
+                      <div class="pt-2{% if settings.lang_direction contains request.locale.iso_code %} mr-5{% else %} ml-5{% endif %} flex-1">
+                        <p class="search_heading line-clamp-2 hover-text-link disable-effect p-break-words leading-tight duration-200 transition hover-text-link text-[rgba(var(--colors-heading))]">{{ article.title | escape }}</p> 
+                      </div>
+                    </a>
+                    
+                  </div>
+                {%- endfor -%}
+              </div>
+            </div>
+          {%- endif -%}
+        </div>
+      {%- else -%} 
+        <div class="text-center pt-5 pb-5 pl-5 pr-5" data-predictive-search-live-region-count-value>
+          {{ 'templates.search.no_results' | t: terms: predictive_search.terms }}  
+        </div>
+      {%- endif -%}
+    </div>
+    
+  </div>
+  {% if settings.search_show_view_more and results_size > 0 %}
+    <button class="background-header shadow-[0_0_6px_-4px_rgba(var(--colors-text))] pt-5 pb-5 pl-6 pr-6 lg:pl-9 lg:pr-9 border-solid rounded-none inline-block cursor-pointer hover-text-link text-center w-full text-current border-t">
+      {{ 'templates.search.view_all' | t }} 
+    </button>
+  {%- endif -%}
+</div>
+{%- endif -%}

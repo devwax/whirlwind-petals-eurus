@@ -1,0 +1,42 @@
+{% comment %}
+    Renders a highlighted features text
+
+    Accepts:
+    - card_product: {Object} Product Liquid object (optional)
+    Usage:
+    {% render 'highlighted-features', card_product: card_product %}
+{% endcomment %}
+ 
+{% liquid
+  assign text = settings.highlighted_features_content
+  if text != blank
+    if text contains 'custom.'
+      assign split_text = text | newline_to_br | strip_newlines | replace: '<br/>', ' ' | replace: '<br />', '<br/> ' | replace: '<br/ >', '<br/> ' | replace: '<br/>', '<br/> ' | replace: '<p>', ' <p>' | split: ' '
+      for mtf_text in split_text
+        if mtf_text contains 'custom.'
+          assign key_metafield = mtf_text | remove: " " | remove: "<p>" | remove: "</p>" | remove: "<strong>" | remove: "</strong>"
+          assign content_key_metafield = key_metafield | split: '.'
+
+          assign content_metafield_product = card_product.metafields[content_key_metafield.first][content_key_metafield.last]
+
+          if content_metafield_product.type == 'single_line_text_field' or content_metafield_product.type == 'multi_line_text_field' or content_metafield_product.type == 'rich_text_field'
+            assign content_value_metafield_product = content_metafield_product | metafield_tag
+          else
+            assign content_value_metafield_product = blank
+          endif
+
+          if content_value_metafield_product != blank
+            assign text = text | replace: key_metafield, content_value_metafield_product
+          else
+            assign text = text | replace: mtf_text, ''
+          endif
+        endif
+      endfor
+    endif
+  endif
+%}
+{% if text != blank %}
+  <div class="x-card-highlighted-featured {% if product_complementary %}mb-2{% else %}mb-2.5{% endif %} break-words">
+    <div class="rte">{{ text }}</div>
+  </div>
+{% endif %}

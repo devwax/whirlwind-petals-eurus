@@ -1,0 +1,1552 @@
+{% liquid 
+  assign heading_base_size =  settings.heading_base_size | times: 0.0225
+  assign heading_size =  section.settings.heading_size | times: 0.01 | times: heading_base_size
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+%} 
+{%- style -%}
+  #shopify-section-{{ section.id }}{
+    background: {{ section.settings.background_color_light }};
+  }
+  .dark #shopify-section-{{ section.id }}{
+    {%- if section.settings.background_color_dark == blank -%}
+      background: transparent;
+    {%- else -%}
+      background: {{ section.settings.background_color_dark }};
+    {%- endif -%}
+  }
+  .heading-{{ section.id }} {
+    font-size: {{ heading_size | times: 0.6 }}rem;
+  }
+  .font-title-category-{{ section.id }} {
+    font-size: {{ settings.text_base_size | times: 1.1 | times: 0.00875 }}rem;
+  }
+  @media (min-width: 768px) {
+    .heading-{{ section.id }} {
+      font-size: {{ heading_size }}rem;
+    }
+  }
+{%- endstyle -%}
+
+{% render 'section-divider' %}
+
+<div class="faq-container{% if section.settings.desktop_layout == "1" and section.settings.image == blank %}{% if section.settings.make_full_page_width %} x-pgw page-width{% else %} max-w-3xl lg:pl-0 lg:pr-0{% endif %} pr-5 pl-5{% else %} x-pgw page-width{% endif %} ml-auto mr-auto relative pb-[{{ section.settings.padding_bottom_mobile }}px] pt-[{{ section.settings.padding_top_mobile }}px] md:pb-[{{ section.settings.padding_bottom }}px] md:pt-[{{ section.settings.padding_top }}px]">
+  {% if section.settings.image != blank %}
+    {% # theme-check-disable UnclosedHTMLElement %}
+    <div class="flex gap-y-7 lg:gap-5{% if is_rtl %} ltr{% endif -%}
+      {%- if section.settings.image_alignment == "right" %} lg:flex-row-reverse rtl:lg:flex-row{% else %} lg:flex-row rtl:lg:flex-row-reverse{% endif -%}
+      {%- if section.settings.image_alignment_mobile == "right" %} flex-col-reverse{% else %} flex-col{% endif %}"
+    >
+    {% # theme-check-enable UnclosedHTMLElement %}
+      {%- style -%}
+        {% if section.settings.desktop_height == 'auto' %}
+          @media screen and (min-width: 1024px) {
+            .natural-image-{{ section.id }} {
+              height: 0;
+              padding-bottom: {{ 1 | divided_by: section.settings.image.aspect_ratio | times: 100 }}%
+            }
+          }
+        {% endif %}
+        {% if section.settings.mobile_height == 'auto' %}
+          @media screen and (max-width: 1024px) {
+            .natural-image-mobile-{{ section.id }} {
+              height: 0;
+              padding-bottom: {{ 1 | divided_by: section.settings.image.aspect_ratio | times: 100 }}%
+            }
+          }
+        {% endif %}
+      {%- endstyle -%}
+      <div class="faq-image{% if section.settings.desktop_layout == "1" %} lg:w-1/2{% else %} lg:w-1/3{% endif %}">
+        <div class="relative {% if section.settings.mobile_height == 'auto' %}natural-image-mobile-{{ section.id }}{% endif %}{% if section.settings.desktop_height == 'auto' %} natural-image-{{ section.id }}{% endif %} h-[{{ section.settings.mobile_height }}] lg:h-[{{ section.settings.desktop_height }}]{% if section.settings.desktop_height == 'adapt' %} lg:h-full{% endif %}">
+          <div class="overflow-hidden absolute top-0 left-0 h-full w-full{% if section.settings.full_width %} md:rounded-none{% else %}{% if settings.edges_type == 'rounded_corners' %} md:rounded-[10px]{% endif %}{% endif %}{% unless section.settings.full_width_mobile %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% endunless %}">
+            {% # theme-check-disable ImgLazyLoading %}
+            <parallax-image class="h-full w-full">
+              <parallax-movement x-data="xParallax" x-intersect.once.margin.200px="load({{ settings.disable_parallax_effect }})">
+                <img
+                  class="w-full h-full object-cover  animate-Xpulse skeleton-image"
+                  srcset="{{ section.settings.image | image_url: width: 450 }} 450w,
+                  {{ section.settings.image | image_url: width: 750 }} 750w,
+                  {{ section.settings.image | image_url: width: 900 }} 900w,
+                  {{ section.settings.image | image_url: width: 1100 }} 1100w,
+                  {{ section.settings.image | image_url: width: 1500 }} 1500w,
+                  {{ section.settings.image | image_url }} {{ section.settings.image.width }}w"
+                  src="{{ section.settings.image | image_url: width: 1500 }}"
+                  {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                  onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                  sizes="(min-width: 1024px){% if section.settings.full_width %} 35vw{% else %} {{ settings.page_width | divided_by: 3 }}px{% endif %}, (min-width: 768px) 50vw, 100vw"
+                  width="{{ section.settings.image.width }}"
+                  height="{{ section.settings.image.height }}"
+                  alt="{{ section.settings.image.alt | escape }}"
+                  style="object-position: {{ section.settings.image.presentation.focal_point }}"
+                >
+              </parallax-movement>
+            </parallax-image>
+            {% # theme-check-enable ImgLazyLoading %}
+          </div>
+        </div>
+      </div>
+  {% endif %}
+  <div class="faq-wrapper{% if is_rtl %} rtl{% endif %}{% if section.settings.image != blank %}{% if section.settings.desktop_layout == "1" %} lg:w-1/2{% else %} lg:w-2/3{% endif %}{% endif %}">
+    <div class="x-block-faq-header mb-5 empty:hidden
+      {%- unless section.settings.heading_alignment contains 'center' %} flex items-center justify-between{% endunless -%}
+      {%- if section.settings.heading_alignment == 'center' %} heading-center
+        {%- elsif is_rtl %}{% if section.settings.heading_alignment == 'left' %} heading-right{% else %} heading-left{% endif -%}
+        {%- else %} heading-{{ section.settings.heading_alignment }}{% endif -%}"
+    >
+      {%- if section.settings.heading != blank -%}
+        {% render 'heading-highlight',
+          headingId: section.id,
+          heading: section.settings.heading,
+          highlight_type: section.settings.highlight_type,
+          class: 'h2 block leading-tight p-break-words',
+          heading_tag: section.settings.heading_tag,
+          animation_heading: true
+        %}
+      {%- endif -%}
+      {%- if section.settings.show_view_all and section.settings.view_all_position == 'top' -%}
+        <div class="flex justify-center pt-0.5 pb-0.5 md:pb-2.5 md:pt-2.5">
+          <a {% if section.settings.button_link %} href="{{ section.settings.button_link }}"{% if section.settings.open_new_window %} target="_blank"{% endif %}{% else %} role="link" aria-disabled="true"{% endif %}
+            class="nav-link font-medium effect-inline relative flex items-center hover-text-link empty:hidden cursor-pointer{% if section.settings.button_link == blank %} opacity-70 hover:cursor-not-allowed{% endif %}">
+            {{ 'sections.question_and_answer.view_all' | t }}<span class="w-2 h-2 inline-block ml-1.5 mt-0.5 rtl:rotate-180 rtl:mr-1.5 rtl:ml-0 rtl:mt-0">{% render 'icon-alls' , icon: 'icon-double-arrow' %}</span>
+          </a>
+        </div>
+      {%- endif -%}
+    </div>
+
+    {% if section.settings.desktop_layout == "2" %}
+      {%- for block in section.blocks -%}
+        {%- case block.type -%}
+          {% when 'category' %}
+            {%- if block.settings.title != blank -%}
+              {% unless forloop.first %}
+                {% # theme-check-disable UnclosedHTMLElement %}
+                </div>
+                {% # theme-check-enable UnclosedHTMLElement %}
+              {% endunless %}
+              <div 
+                class="x-block-faq-category-{{ forloop.index }} faq-category{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}" 
+                {{ block.shopify_attributes }}
+              >
+                <div class="px-3 md:px-4 lg:px-5 faq-category-content flex bg-transparent {% if section.settings.row_background %} border-0{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% endif %}">
+                  {% assign is_icon = false %}
+                  {%- unless block.settings.icon == "none" -%}
+                    {% unless block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+                      {% assign is_icon = true %}
+                      {% style %}
+                        .faq-icon-size-{{ block.id }} {
+                          width: {{ block.settings.icon_size | times: 0.7 }}px;
+                          height: {{ block.settings.icon_size | times: 0.7 }}px;
+                          min-width: {{ block.settings.icon_size | times: 0.7 }}px;
+                          min-height: {{ block.settings.icon_size | times: 0.7 }}px;
+                        }
+                        @media (min-width: 768px) {
+                          .faq-icon-size-{{ block.id }} {
+                            width: {{ block.settings.icon_size }}px;
+                            height: {{ block.settings.icon_size }}px;
+                            min-width: {{ block.settings.icon_size }}px;
+                            min-height: {{ block.settings.icon_size }}px;
+                          }
+                        }
+                      {% endstyle %}
+                      <div class="flex items-center">
+                        <span class="faq-icon-size-{{ block.id }} text-[rgba(var(--colors-heading))] inline-block mr-2 md:mr-3 h-5 w-5 md:h-7 md:w-7 rtl:ml-2 rtl:mr-0">
+                          {% if block.settings.custom_icon == blank %}
+                            {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                              {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                            {% else %}
+                              {% render 'icon-labels-bags', icon: block.settings.icon %}
+                            {% endif %}
+                          {% else %}
+                            {{ block.settings.custom_icon }}
+                          {% endif %}
+                        </span>
+                      </div>
+                    {%- endunless -%}
+                  {%- endunless -%}
+                  <p class="h4 flex items-center min-h-[20px] md:min-h-[28px] font-title-category-{{ section.id }} max-w-full pr-6 rtl:pl-6 rtl:pr-0">
+                    {{ block.settings.title }}
+                  </p>
+                </div>
+              </div>
+              {% unless forloop.last %}
+                {% # theme-check-disable UnclosedHTMLElement %}
+                <div x-intersect.once.margin.200px="if($el.innerHTML.trim() === '') $el.remove();" x-data="{ current: -1, catIndex: {{ forloop.index }} }" class="x-block-faq-content grid grid-cols-1{% if section.settings.desktop_layout == "2" %} md:grid md:grid-cols-2{% endif %}{% if section.settings.show_border or section.settings.row_background %} gap-x-2.5 gap-y-2.5{% else %} gap-x-2.5{% endif %}">
+                {% # theme-check-enable UnclosedHTMLElement %}
+              {% endunless %}
+            {%- endif -%}
+          {% when 'frequently_asked_question' %}
+            {% if forloop.first %}
+              {% # theme-check-disable UnclosedHTMLElement %}
+              <div x-intersect.once.margin.200px="if($el.innerHTML.trim() === '') $el.remove();" x-data="{current: -1, catIndex: {{ forloop.index | minus: 1 }}}" class="x-block-faq-content grid grid-cols-1{% if section.settings.desktop_layout == "2" %} md:grid md:grid-cols-2{% endif %}{% if section.settings.show_border or section.settings.row_background %} gap-x-2.5 gap-y-2.5{% else %} gap-x-2.5{% endif %}">
+              {% # theme-check-enable UnclosedHTMLElement %}
+            {% endif %}
+            {% if block.settings.heading and block.settings.row_content %}
+              <div {% unless forloop.first %}{% unless section.settings.row_background %}x-intersect.once.margin.200px="if({{ forloop.index }} == catIndex + 1) $el.classList.add('border-t'); if({{ forloop.index }} == catIndex + 2) $el.classList.add('md:border-t')"{% endunless %}{% endunless %} class="x-block-faq-item-{{ forloop.index }} faq-item{% if section.settings.show_border %}{% unless section.settings.row_background %} border{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% endunless %}{% else %}{% unless section.settings.row_background %} border-b md:pt-0{% unless forloop.index > 1 %} border-t{% endunless %}{% if forloop.index == 2 and section.settings.desktop_layout == "2" %} md:border-t{% endif %}{% endunless %}{% endif %}" 
+                {% if section.settings.collapsible %}
+                  {% unless section.settings.show_border %}
+                  :class="{'border-[rgba(var(--colors-heading))]': (current === {{ forloop.index }}), 'md:border-b-[rgba(var(--colors-heading))]': (current === {{ forloop.index | plus: 2 }}), 'border-b-[rgba(var(--colors-heading))] md:border-b-[rgba(var(--colors-line-and-border))]': (current === {{ forloop.index | plus: 1 }})}"
+                  {% endunless %}
+                {% endif %}
+                {{ block.shopify_attributes }}
+              >
+                <div class="p-3 md:px-4 lg:px-5 lg:py-[22px]{% if section.settings.row_background %} border-0 bg-[rgba(var(--colors-text),0.05)]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% endif %}">
+                  <button 
+                    class="faq-collapsible relative text-left block w-full transition-all duration-400{% if section.settings.collapsible %} cursor-pointer{% endif %} flex items-center"
+                    {% if section.settings.collapsible %} 
+                      @click="(current === {{ forloop.index }}) ? current = -1 : current = {{ forloop.index }}"
+                    {% endif %}
+                  >
+                    {% assign is_icon = false %}
+                    {%- unless block.settings.icon == "none" -%}
+                      {% unless block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+                        {% assign is_icon = true %}
+                        <div class="flex items-center">
+                          <span class="inline-block mr-2 md:mr-3 h-5 w-5 md:h-7 md:w-7 rtl:ml-2 rtl:mr-0">
+                            {% if block.settings.custom_icon == blank %}
+                              {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                                {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                              {% else %}
+                                {% render 'icon-labels-bags', icon: block.settings.icon %}
+                              {% endif %}
+                            {% else %}
+                              {{ block.settings.custom_icon }}
+                            {% endif %}
+                          </span>
+                        </div>
+                      {%- endunless -%}
+                    {%- endunless -%}
+                    <p class="font-medium transition-all duration-300 {% if section.settings.desktop_layout == "1" and section.settings.image == blank and section.settings.make_full_page_width %} h3{% else %}md:text-[110%]{% endif %} min-h-[20px] md:min-h-[28px] flex items-center max-w-full{% if section.settings.collapsible %} pr-6 rtl:pl-6 rtl:pr-0{% endif %}"
+                      {% if section.settings.show_border and section.settings.row_background == false %}
+                        :class="(current === {{ forloop.index }}) ? 'opacity-0 h-auto' : 'opacity-100 h-auto'"
+                      {% endif %}
+                    >
+                      {{ block.settings.heading | default: block.settings.page.title }}
+                    </p>
+                    {% if section.settings.show_border and section.settings.row_background == false %}
+                      <p class="font-semibold transition-all duration-300 opacity-0 absolute rtl:left-auto{% if is_icon %} rtl:right-7 rtl:md:right-9{% endif %}{% if section.settings.desktop_layout == "1" and section.settings.image == blank and section.settings.make_full_page_width %} h3{% else %} md:text-[110%]{% endif %} min-h-[20px] md:min-h-[28px] flex items-center max-w-full{% if section.settings.collapsible %} pr-6 rtl:pl-6 rtl:pr-0{% endif %}{% if is_icon == true %} pl-10{% endif %}"
+                        :class="(current === {{ forloop.index }}) ? 'opacity-100 h-auto': 'opacity-0 h-0'"
+                      >
+                        {{ block.settings.heading | default: block.settings.page.title }}
+                      </p>
+                    {% endif %}
+                    {%- if section.settings.collapsible -%}
+                      <span class="w-2.5 duration-300 inline-block absolute{% if settings.lang_direction contains request.locale.iso_code %} left-2 md:left-4{% else %} right-2 md:right-4{% endif %}" :class="(current === {{ forloop.index }}) && 'rotate-180'">
+                        {% render 'icon-alls', icon: 'icon-caret' %}
+                      </span>
+                    {%- endif -%}
+                  </button>
+                  <div class="faq-content" 
+                    {% if section.settings.collapsible %}
+                      x-show="current === {{ forloop.index }}"
+                      x-cloak
+                      x-collapse
+                    {% endif %}
+                  >
+                    <div class="rte leading-normal pt-2 rte">
+                      {{ block.settings.row_content }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+            {% if forloop.last %}
+              {% # theme-check-disable UnclosedHTMLElement %}
+              </div>
+              {% # theme-check-enable UnclosedHTMLElement %}
+            {% endif %}
+        {%- endcase -%}
+      {%- endfor -%}
+    {% endif %}
+
+    {% if section.settings.desktop_layout == "1" %}
+      {% style %}
+        .faq-category + .faq-item {
+          border-top-width: 1px;
+        }
+      {% endstyle %}
+      <div x-data="{current: -1}" class="x-block-faq-content grid grid-cols-1{% if section.settings.desktop_layout == "2" %} md:grid md:grid-cols-2{% endif %}{% if section.settings.show_border or section.settings.row_background %} gap-x-2.5 gap-y-2.5{% else %} gap-x-2.5{% endif %}">
+        {%- for block in section.blocks -%}
+          {%- case block.type -%}
+            {% when 'frequently_asked_question' %}
+              {% if block.settings.heading and block.settings.row_content %}
+                <div class="x-block-faq-item-{{ forloop.index }} faq-item{% if section.settings.show_border %}{% unless section.settings.row_background %} border{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% endunless %}{% else %}{% unless section.settings.row_background %} border-b md:pt-0{% unless forloop.index > 1 %} border-t{% endunless %}{% if forloop.index == 2 and section.settings.desktop_layout == "2" %} md:border-t{% endif %}{% endunless %}{% endif %}" 
+                  {% if section.settings.collapsible %}
+                    {% unless section.settings.show_border %}
+                    :class="{'border-[rgba(var(--colors-heading))]': (current === {{ forloop.index }}), 'border-b-[rgba(var(--colors-heading))]': (current === {{ forloop.index | plus: 1 }})}"
+                    {% endunless %}
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  <div class="p-3 md:px-4 lg:px-5 lg:py-[22px]{% if section.settings.row_background %} border-0 bg-[rgba(var(--colors-text),0.05)]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% endif %}">
+                    <button 
+                      class="faq-collapsible relative text-left block w-full transition-all duration-400{% if section.settings.collapsible %} cursor-pointer{% endif %} flex items-center"
+                      {% if section.settings.collapsible %} 
+                        @click="(current === {{ forloop.index }}) ? current = -1 : current = {{ forloop.index }}"
+                      {% endif %}
+                    >
+                      {% assign is_icon = false %}
+                      {%- unless block.settings.icon == "none" -%}
+                        {% unless block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+                          {% assign is_icon = true %}
+                          <div class="flex items-center">
+                            <span class="inline-block mr-2 md:mr-3 h-5 w-5 md:h-7 md:w-7 rtl:ml-2 rtl:mr-0">
+                              {% if block.settings.custom_icon == blank %}
+                                {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                                  {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                                {% else %}
+                                  {% render 'icon-labels-bags', icon: block.settings.icon %}
+                                {% endif %}
+                              {% else %}
+                                {{ block.settings.custom_icon }}
+                              {% endif %}
+                            </span>
+                          </div>
+                        {%- endunless -%}
+                      {%- endunless -%}
+                      <p class="font-medium transition-all duration-300 {% if section.settings.desktop_layout == "1" and section.settings.image == blank and section.settings.make_full_page_width %} h3{% else %}md:text-[110%]{% endif %} min-h-[20px] md:min-h-[28px] flex items-center max-w-full{% if section.settings.collapsible %} pr-6 rtl:pl-6 rtl:pr-0{% endif %}"
+                        {% if section.settings.show_border and section.settings.row_background == false %}
+                          :class="(current === {{ forloop.index }}) ? 'opacity-0 h-auto' : 'opacity-100 h-auto'"
+                        {% endif %}
+                      >
+                        {{ block.settings.heading | default: block.settings.page.title }}
+                      </p>
+                      {% if section.settings.show_border and section.settings.row_background == false %}
+                        <p class="font-semibold transition-all duration-300 opacity-0 absolute rtl:left-auto{% if is_icon %} rtl:right-7 rtl:md:right-9{% endif %}{% if section.settings.desktop_layout == "1" and section.settings.image == blank and section.settings.make_full_page_width %} h3{% else %} md:text-[110%]{% endif %} min-h-[20px] md:min-h-[28px] flex items-center max-w-full{% if section.settings.collapsible %} pr-6 rtl:pl-6 rtl:pr-0{% endif %}{% if is_icon == true %} pl-10{% endif %}"
+                          :class="(current === {{ forloop.index }}) ? 'opacity-100 h-auto': 'opacity-0 h-0'"
+                        >
+                          {{ block.settings.heading | default: block.settings.page.title }}
+                        </p>
+                      {% endif %}
+                      {%- if section.settings.collapsible -%}
+                        <span class="w-2.5 duration-300 inline-block absolute{% if settings.lang_direction contains request.locale.iso_code %} left-2 md:left-4{% else %} right-2 md:right-4{% endif %}" :class="(current === {{ forloop.index }}) && 'rotate-180'">
+                          {% render 'icon-alls', icon: 'icon-caret' %}
+                        </span>
+                      {%- endif -%}
+                    </button>
+                    <div class="faq-content" 
+                      {% if section.settings.collapsible %}
+                        x-show="current === {{ forloop.index }}"
+                        x-cloak
+                        x-collapse
+                      {% endif %}
+                    >
+                      <div class="rte leading-normal pt-2 rte">
+                        {{ block.settings.row_content }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            {% when 'category' %}
+              {%- if block.settings.title != blank -%}
+                <div 
+                  class="x-block-faq-category-{{ forloop.index }} faq-category" 
+                  {{ block.shopify_attributes }}
+                >
+                  <div class="px-3 md:px-4 lg:px-5 faq-category-content flex">
+                    {% assign is_icon = false %}
+                    {%- unless block.settings.icon == "none" -%}
+                      {% unless block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+                        {% assign is_icon = true %}
+                        {% style %}
+                          .faq-icon-size-{{ block.id }} {
+                            width: {{ block.settings.icon_size | times: 0.7 }}px;
+                            height: {{ block.settings.icon_size | times: 0.7 }}px;
+                            min-width: {{ block.settings.icon_size | times: 0.7 }}px;
+                            min-height: {{ block.settings.icon_size | times: 0.7 }}px;
+                          }
+                          @media (min-width: 768px) {
+                            .faq-icon-size-{{ block.id }} {
+                              width: {{ block.settings.icon_size }}px;
+                              height: {{ block.settings.icon_size }}px;
+                              min-width: {{ block.settings.icon_size }}px;
+                              min-height: {{ block.settings.icon_size }}px;
+                            }
+                          }
+                        {% endstyle %}
+                        <div class="flex items-center">
+                          <span class="faq-icon-size-{{ block.id }} text-[rgba(var(--colors-heading))] inline-block mr-2 md:mr-3 h-5 w-5 md:h-7 md:w-7 rtl:ml-2 rtl:mr-0">
+                            {% if block.settings.custom_icon == blank %}
+                              {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                                {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                              {% else %}
+                                {% render 'icon-labels-bags', icon: block.settings.icon %}
+                              {% endif %}
+                            {% else %}
+                              {{ block.settings.custom_icon }}
+                            {% endif %}
+                          </span>
+                        </div>
+                      {%- endunless -%}
+                    {%- endunless -%}
+                    <p class="h4 flex items-center min-h-[20px] md:min-h-[28px] font-title-category-{{ section.id }} max-w-full pr-6 rtl:pl-6 rtl:pr-0">
+                      {{ block.settings.title }}
+                    </p>
+                  </div>
+                </div>
+              {%- endif -%}
+          {%- endcase -%}
+        {%- endfor -%}
+      </div>
+    {% endif %}
+    
+    {%- if section.settings.show_view_all and section.settings.view_all_position == 'bottom' -%}
+      <div class="flex justify-center pt-4 pb-0.5 md:pb-2.5 md:pt-7">
+        <a {% if section.settings.button_link %} href="{{ section.settings.button_link }}"{% if section.settings.open_new_window %} target="_blank"{% endif %}{% else %} role="link" aria-disabled="true"{% endif %}
+          class="nav-link font-medium effect-inline relative flex items-center hover-text-link empty:hidden cursor-pointer{% if section.settings.button_link == blank %} opacity-70 hover:cursor-not-allowed{% endif %}">
+          {{ 'sections.question_and_answer.view_all' | t }}<span class="w-2 h-2 inline-block ml-1.5 mt-0.5 rtl:rotate-180 rtl:mr-1.5 rtl:ml-0 rtl:mt-0">{% render 'icon-alls' , icon: 'icon-double-arrow' %}</span>
+        </a>
+      </div>
+    {%- endif -%}
+  </div>
+  {% # theme-check-disable UnclosedHTMLElement %}
+  {% if section.settings.image != blank %}</div>{% endif %}
+  {% # theme-check-enable UnclosedHTMLElement %}
+</div>
+
+{% if section.settings.enable_microdata_schema %}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {%- for block in section.blocks -%}
+          {%- if block.settings.heading and block.settings.row_content -%}
+            {
+              "@type": "Question",
+              "name": {{ block.settings.heading | json }},
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": {{ block.settings.row_content | strip_html | json }}
+              }
+            }{%- unless forloop.last -%},{%- endunless -%}
+          {%- endif -%}
+        {%- endfor -%}
+      ]
+    }
+  </script>
+{% endif %}
+
+{% schema %}
+{
+  "name": "t:sections.question_and_answer.name",
+  "tag": "section",
+  "class": "section section-faq x-section",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer",
+      "aside"
+    ]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.section_and_blocks.faq"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:sections.all.text.heading",
+      "default": "FAQs",
+      "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+    },
+    {
+      "type": "select",
+      "id": "highlight_type",
+      "default": "underline",
+      "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+      "options": [
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        },
+        {
+          "value": "font_highlight",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 50,
+      "max": 200,
+      "unit": "%",
+      "step": 10,
+      "default": 100,
+      "label": "t:sections.all.text.heading_size"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "default": "h2",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "p",
+          "label": "p"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "default": "center",
+      "label": "t:sections.all.text.heading_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border",
+      "default": false,
+      "label": "t:sections.question_and_answer.settings.show_border.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "row_background",
+      "default": false,
+      "label": "t:sections.question_and_answer.settings.row_background.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "collapsible",
+      "default": true,
+      "label": "t:sections.question_and_answer.settings.collapsible.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_all",
+      "default": true,
+      "label": "t:sections.collection-list.settings.show_view_all.label"
+    },
+    {
+      "type": "select",
+      "id": "view_all_position",
+      "default": "top",
+      "label": "t:sections.featured-collection.settings.view_all_position.label",
+      "options": [
+        {
+          "value": "top",
+          "label": "t:sections.all.content_position.options__11.label"
+        },
+        {
+          "value": "bottom",
+          "label": "t:sections.all.content_position.options__12.label"
+        }
+      ],
+      "visible_if": "{{ section.settings.show_view_all }}"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:sections.question_and_answer.settings.button_link.label",
+      "info": "t:sections.question_and_answer.settings.button_link.info",
+      "visible_if": "{{ section.settings.show_view_all }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_new_window",
+      "default": false,
+      "label": "t:sections.all.open_new_window.label",
+      "visible_if": "{{ section.settings.show_view_all }}"
+    },
+    {
+      "type": "color",
+      "id": "background_color_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_light"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_dark"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:sections.all.image.label",
+      "info": "t:sections.all.image.note_image_size"
+    },
+    {
+      "type": "header",
+      "content": "SEO"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_microdata_schema",
+      "default": false,
+      "label": "t:sections.question_and_answer.settings.enable_microdata_schema.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "select",
+      "id": "desktop_layout",
+      "label": "t:sections.all.padding.section_padding_heading",
+      "options": [
+        {
+          "value": "1",
+          "label": "t:sections.collection-list.settings.columns_desktop.options__1.label"
+        },
+        {
+          "value": "2",
+          "label": "t:settings_schema.search_navigation.settings.search_style.options__2"
+        }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "select",
+      "id": "image_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ],
+      "default": "left",
+      "label": "t:sections.testimonials.author_image.label"
+    },
+    {
+      "type": "select",
+      "id": "desktop_height",
+      "options": [
+        {
+          "value": "400px",
+          "label": "t:sections.image-with-text.settings.mobile_height.options__3.label"
+        },
+        {
+          "value": "450px",
+          "label": "t:sections.image-with-text.settings.height.options__1.label"
+        },
+        {
+          "value": "550px",
+          "label": "t:sections.image-with-text.settings.height.options__2.label"
+        },
+        {
+          "value": "auto",
+          "label": "t:sections.all.image_ratio.options__1.label"
+        },
+        {
+          "value": "adapt",
+          "label": "t:sections.question_and_answer.settings.height.options__5.label"
+        }
+      ],
+      "default": "400px",
+      "label": "t:sections.image-with-text.settings.height.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "make_full_page_width",
+      "default": false,
+      "label": "t:sections.question_and_answer.settings.make_full_page_width.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 28
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "select",
+      "id": "image_alignment_mobile",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.image-with-text.settings.image_alignment_mobile.options__1.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.image-with-text.settings.image_alignment_mobile.options__2.label"
+        }
+      ],
+      "default": "left",
+      "label": "t:sections.testimonials.author_image.label"
+    },
+    {
+      "type": "select",
+      "id": "mobile_height",
+      "options": [
+        {
+          "value": "250px",
+          "label": "t:sections.image-with-text.settings.mobile_height.options__1.label"
+        },
+        {
+          "value": "300px",
+          "label": "t:sections.image-with-text.settings.mobile_height.options__2.label"
+        },
+        {
+          "value": "400px",
+          "label": "t:sections.image-with-text.settings.mobile_height.options__3.label"
+        },
+        {
+          "value": "auto",
+          "label": "t:sections.all.image_ratio.options__1.label"
+        }
+      ],
+      "default": "250px",
+      "label": "t:sections.image-with-text.settings.mobile_height.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider_mobile",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 28
+    }
+  ],
+  "blocks": [
+    {
+      "type": "frequently_asked_question",
+      "name": "t:sections.question_and_answer.blocks.frequently_asked_question.name",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.all.icon.options.none"
+            },
+            {
+              "value": "faq",
+              "label": "t:sections.all.icon.options.faq"
+            },
+            {
+              "value": "another_icon",
+              "label": "t:sections.all.icon.another_icon_label"
+            },
+            {
+              "value": "activity",
+              "label": "t:sections.all.icon.options.activity"
+            },
+            {
+              "value": "archive",
+              "label": "t:sections.all.icon.options.archive"
+            },
+            {
+              "value": "arrow-down-cricle",
+              "label": "t:sections.all.icon.options.arrow-down-cricle"
+            },
+            {
+              "value": "arrow-left",
+              "label": "t:sections.all.icon.options.arrow-left"
+            },
+            {
+              "value": "arrow-left-circle",
+              "label": "t:sections.all.icon.options.arrow-left-circle"
+            },
+            {
+              "value": "arrow-right",
+              "label": "t:sections.all.icon.options.arrow-right"
+            },
+            {
+              "value": "arrow-right-circle",
+              "label": "t:sections.all.icon.options.arrow-right-circle"
+            },
+            {
+              "value": "arrow-up-circle",
+              "label": "t:sections.all.icon.options.arrow-up-circle"
+            },
+            {
+              "value": "chevron-left",
+              "label": "t:sections.all.icon.options.chevron-left"
+            },
+            {
+              "value": "trending-down",
+              "label": "t:sections.all.icon.options.trending-down"
+            },
+            {
+              "value": "tv",
+              "label": "t:sections.all.icon.options.tv"
+            },
+            {
+              "value": "trending-up",
+              "label": "t:sections.all.icon.options.trending-up"
+            },
+            {
+              "value": "zap",
+              "label": "t:sections.all.icon.options.zap"
+            },
+            {
+              "value": "1st-medal",
+              "label": "t:sections.all.icon.options.1st-medal"
+            },
+            {
+              "value": "award",
+              "label": "t:sections.all.icon.options.award"
+            },
+            {
+              "value": "bicycle",
+              "label": "t:sections.all.icon.options.bicycle"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.all.icon.options.box"
+            },
+            {
+              "value": "briefcase",
+              "label": "t:sections.all.icon.options.briefcase"
+            },
+            {
+              "value": "blink",
+              "label": "t:sections.all.icon.options.blink"
+            },
+            {
+              "value": "calendar",
+              "label": "t:sections.all.icon.options.calendar"
+            },
+            {
+              "value": "camera",
+              "label": "t:sections.all.icon.options.camera"
+            },
+            {
+              "value": "chat-bubble",
+              "label": "t:sections.all.icon.options.chat-bubble"
+            },
+            {
+              "value": "check-mark",
+              "label": "t:sections.all.icon.options.check-mark"
+            },
+            {
+              "value": "clock",
+              "label": "t:sections.all.icon.options.clock"
+            },
+            {
+              "value": "cloud-rain",
+              "label": "t:sections.all.icon.options.cloud-rain"
+            },
+            {
+              "value": "coffee",
+              "label": "t:sections.all.icon.options.coffee"
+            },
+            {
+              "value": "coin",
+              "label": "t:sections.all.icon.options.coin"
+            },
+            {
+              "value": "credit-card",
+              "label": "t:sections.all.icon.options.credit-card"
+            },
+            {
+              "value": "delivery-truck",
+              "label": "t:sections.all.icon.options.delivery-truck"
+            },
+            {
+              "value": "dollar-sign",
+              "label": "t:sections.all.icon.options.dollar-sign"
+            },
+            {
+              "value": "dna",
+              "label": "t:sections.all.icon.options.dna"
+            },
+            {
+              "value": "dark-mode",
+              "label": "t:sections.all.icon.options.dark-mode"
+            },
+            {
+              "value": "earth",
+              "label": "t:sections.all.icon.options.earth"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.all.icon.options.eye"
+            },
+            {
+              "value": "feather",
+              "label": "t:sections.all.icon.options.feather"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.all.icon.options.fire"
+            },
+            {
+              "value": "flower",
+              "label": "t:sections.all.icon.options.flower"
+            },
+            {
+              "value": "free-delivery",
+              "label": "t:sections.all.icon.options.free-delivery"
+            },
+            {
+              "value": "gift",
+              "label": "t:sections.all.icon.options.gift"
+            },
+            {
+              "value": "globe",
+              "label": "t:sections.all.icon.options.globe"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.all.icon.options.heart"
+            },
+            {
+              "value": "help",
+              "label": "t:sections.all.icon.options.help"
+            },
+            {
+              "value": "hot-sale",
+              "label": "t:sections.all.icon.options.hot-sale"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.all.icon.options.iron"
+            },
+            {
+              "value": "information",
+              "label": "t:sections.contact-form.settings.infomation.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.all.icon.options.leaf"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.all.icon.options.lock"
+            },
+            {
+              "value": "light-mode",
+              "label": "t:sections.all.icon.options.light-mode"
+            },
+            {
+              "value": "map-pin",
+              "label": "t:sections.all.icon.options.map-pin"
+            },
+            {
+              "value": "megaphone",
+              "label": "t:sections.all.icon.options.megaphone"
+            },
+            {
+              "value": "message-text",
+              "label": "t:sections.all.icon.options.message-text"
+            },
+            {
+              "value": "music",
+              "label": "t:sections.all.icon.options.music"
+            },
+            {
+              "value": "moon",
+              "label": "t:sections.all.icon.options.moon"
+            },
+            {
+              "value": "packages",
+              "label": "t:sections.all.icon.options.packages"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.all.icon.options.pants"
+            },
+            {
+              "value": "percent",
+              "label": "t:sections.all.icon.options.percent"
+            },
+            {
+              "value": "piggy-bank",
+              "label": "t:sections.all.icon.options.piggy-bank"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.all.icon.options.plane"
+            },
+            {
+              "value": "planet",
+              "label": "t:sections.all.icon.options.planet"
+            },
+            {
+              "value": "question-mark",
+              "label": "t:sections.all.icon.options.question-mark"
+            },
+            {
+              "value": "rocket",
+              "label": "t:sections.all.icon.options.rocket"
+            },
+            {
+              "value": "rulers",
+              "label": "t:sections.all.icon.options.rulers"
+            },
+            {
+              "value": "scissors",
+              "label": "t:sections.all.icon.options.scissors"
+            },
+            {
+              "value": "settings",
+              "label": "t:sections.all.icon.options.settings"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.all.icon.options.shirt"
+            },
+            {
+              "value": "shop-alt",
+              "label": "t:sections.all.icon.options.shop-alt"
+            },
+            {
+              "value": "shopping-bag",
+              "label": "t:sections.all.icon.options.shopping-bag"
+            },
+            {
+              "value": "shopping-cart",
+              "label": "t:sections.all.icon.options.shopping-cart"
+            },
+            {
+              "value": "smile",
+              "label": "t:sections.all.icon.options.smile"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.all.icon.options.star"
+            },
+            {
+              "value": "sun",
+              "label": "t:sections.all.icon.options.sun"
+            },
+            {
+              "value": "support",
+              "label": "t:sections.all.icon.options.support"
+            },
+            {
+              "value": "tag",
+              "label": "t:sections.all.icon.options.tag"
+            },
+            {
+              "value": "telephone",
+              "label": "t:sections.all.icon.options.telephone"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.all.icon.options.truck"
+            },
+            {
+              "value": "wallet",
+              "label": "t:sections.all.icon.options.wallet"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.all.icon.options.washing"
+            },
+            {
+              "value": "water",
+              "label": "t:sections.all.icon.options.water"
+            },
+            {
+              "value": "yoga",
+              "label": "t:sections.all.icon.options.yoga"
+            }
+          ],
+          "default": "heart",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "text",
+          "id": "another_icon",
+          "label": "t:sections.all.icon.another_icon_label",
+          "info": "t:sections.all.icon.another_icon_info",
+          "visible_if": "{{ block.settings.icon == 'another_icon' }}"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info",
+          "visible_if": "{{ block.settings.icon != 'none' }}"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Frequently asked question",
+          "label": "t:sections.question_and_answer.blocks.frequently_asked_question.settings.heading.label"
+        },
+        {
+          "type": "richtext",
+          "id": "row_content",
+          "default": "<p>Use this text to answer questions in as much detail as possible for your customers.</p>",
+          "label": "t:sections.question_and_answer.blocks.frequently_asked_question.settings.row_content.label"
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "name": "t:sections.featured-category.category_block.name",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.all.icon.options.none"
+            },
+            {
+              "value": "another_icon",
+              "label": "t:sections.all.icon.another_icon_label"
+            },
+            {
+              "value": "activity",
+              "label": "t:sections.all.icon.options.activity"
+            },
+            {
+              "value": "archive",
+              "label": "t:sections.all.icon.options.archive"
+            },
+            {
+              "value": "arrow-down-cricle",
+              "label": "t:sections.all.icon.options.arrow-down-cricle"
+            },
+            {
+              "value": "arrow-left",
+              "label": "t:sections.all.icon.options.arrow-left"
+            },
+            {
+              "value": "arrow-left-circle",
+              "label": "t:sections.all.icon.options.arrow-left-circle"
+            },
+            {
+              "value": "arrow-right",
+              "label": "t:sections.all.icon.options.arrow-right"
+            },
+            {
+              "value": "arrow-right-circle",
+              "label": "t:sections.all.icon.options.arrow-right-circle"
+            },
+            {
+              "value": "arrow-up-circle",
+              "label": "t:sections.all.icon.options.arrow-up-circle"
+            },
+            {
+              "value": "chevron-left",
+              "label": "t:sections.all.icon.options.chevron-left"
+            },
+            {
+              "value": "trending-down",
+              "label": "t:sections.all.icon.options.trending-down"
+            },
+            {
+              "value": "tv",
+              "label": "t:sections.all.icon.options.tv"
+            },
+            {
+              "value": "trending-up",
+              "label": "t:sections.all.icon.options.trending-up"
+            },
+            {
+              "value": "zap",
+              "label": "t:sections.all.icon.options.zap"
+            },
+            {
+              "value": "1st-medal",
+              "label": "t:sections.all.icon.options.1st-medal"
+            },
+            {
+              "value": "award",
+              "label": "t:sections.all.icon.options.award"
+            },
+            {
+              "value": "bicycle",
+              "label": "t:sections.all.icon.options.bicycle"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.all.icon.options.box"
+            },
+            {
+              "value": "briefcase",
+              "label": "t:sections.all.icon.options.briefcase"
+            },
+            {
+              "value": "blink",
+              "label": "t:sections.all.icon.options.blink"
+            },
+            {
+              "value": "calendar",
+              "label": "t:sections.all.icon.options.calendar"
+            },
+            {
+              "value": "camera",
+              "label": "t:sections.all.icon.options.camera"
+            },
+            {
+              "value": "chat-bubble",
+              "label": "t:sections.all.icon.options.chat-bubble"
+            },
+            {
+              "value": "check-mark",
+              "label": "t:sections.all.icon.options.check-mark"
+            },
+            {
+              "value": "clock",
+              "label": "t:sections.all.icon.options.clock"
+            },
+            {
+              "value": "cloud-rain",
+              "label": "t:sections.all.icon.options.cloud-rain"
+            },
+            {
+              "value": "coffee",
+              "label": "t:sections.all.icon.options.coffee"
+            },
+            {
+              "value": "coin",
+              "label": "t:sections.all.icon.options.coin"
+            },
+            {
+              "value": "credit-card",
+              "label": "t:sections.all.icon.options.credit-card"
+            },
+            {
+              "value": "delivery-truck",
+              "label": "t:sections.all.icon.options.delivery-truck"
+            },
+            {
+              "value": "dollar-sign",
+              "label": "t:sections.all.icon.options.dollar-sign"
+            },
+            {
+              "value": "dna",
+              "label": "t:sections.all.icon.options.dna"
+            },
+            {
+              "value": "dark-mode",
+              "label": "t:sections.all.icon.options.dark-mode"
+            },
+            {
+              "value": "earth",
+              "label": "t:sections.all.icon.options.earth"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.all.icon.options.eye"
+            },
+            {
+              "value": "feather",
+              "label": "t:sections.all.icon.options.feather"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.all.icon.options.fire"
+            },
+            {
+              "value": "flower",
+              "label": "t:sections.all.icon.options.flower"
+            },
+            {
+              "value": "free-delivery",
+              "label": "t:sections.all.icon.options.free-delivery"
+            },
+            {
+              "value": "gift",
+              "label": "t:sections.all.icon.options.gift"
+            },
+            {
+              "value": "globe",
+              "label": "t:sections.all.icon.options.globe"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.all.icon.options.heart"
+            },
+            {
+              "value": "help",
+              "label": "t:sections.all.icon.options.help"
+            },
+            {
+              "value": "hot-sale",
+              "label": "t:sections.all.icon.options.hot-sale"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.all.icon.options.iron"
+            },
+            {
+              "value": "information",
+              "label": "t:sections.contact-form.settings.infomation.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.all.icon.options.leaf"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.all.icon.options.lock"
+            },
+            {
+              "value": "light-mode",
+              "label": "t:sections.all.icon.options.light-mode"
+            },
+            {
+              "value": "map-pin",
+              "label": "t:sections.all.icon.options.map-pin"
+            },
+            {
+              "value": "megaphone",
+              "label": "t:sections.all.icon.options.megaphone"
+            },
+            {
+              "value": "message-text",
+              "label": "t:sections.all.icon.options.message-text"
+            },
+            {
+              "value": "music",
+              "label": "t:sections.all.icon.options.music"
+            },
+            {
+              "value": "moon",
+              "label": "t:sections.all.icon.options.moon"
+            },
+            {
+              "value": "packages",
+              "label": "t:sections.all.icon.options.packages"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.all.icon.options.pants"
+            },
+            {
+              "value": "percent",
+              "label": "t:sections.all.icon.options.percent"
+            },
+            {
+              "value": "piggy-bank",
+              "label": "t:sections.all.icon.options.piggy-bank"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.all.icon.options.plane"
+            },
+            {
+              "value": "planet",
+              "label": "t:sections.all.icon.options.planet"
+            },
+            {
+              "value": "question-mark",
+              "label": "t:sections.all.icon.options.question-mark"
+            },
+            {
+              "value": "rocket",
+              "label": "t:sections.all.icon.options.rocket"
+            },
+            {
+              "value": "rulers",
+              "label": "t:sections.all.icon.options.rulers"
+            },
+            {
+              "value": "scissors",
+              "label": "t:sections.all.icon.options.scissors"
+            },
+            {
+              "value": "settings",
+              "label": "t:sections.all.icon.options.settings"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.all.icon.options.shirt"
+            },
+            {
+              "value": "shop-alt",
+              "label": "t:sections.all.icon.options.shop-alt"
+            },
+            {
+              "value": "shopping-bag",
+              "label": "t:sections.all.icon.options.shopping-bag"
+            },
+            {
+              "value": "shopping-cart",
+              "label": "t:sections.all.icon.options.shopping-cart"
+            },
+            {
+              "value": "smile",
+              "label": "t:sections.all.icon.options.smile"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.all.icon.options.star"
+            },
+            {
+              "value": "sun",
+              "label": "t:sections.all.icon.options.sun"
+            },
+            {
+              "value": "support",
+              "label": "t:sections.all.icon.options.support"
+            },
+            {
+              "value": "tag",
+              "label": "t:sections.all.icon.options.tag"
+            },
+            {
+              "value": "telephone",
+              "label": "t:sections.all.icon.options.telephone"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.all.icon.options.truck"
+            },
+            {
+              "value": "wallet",
+              "label": "t:sections.all.icon.options.wallet"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.all.icon.options.washing"
+            },
+            {
+              "value": "water",
+              "label": "t:sections.all.icon.options.water"
+            },
+            {
+              "value": "yoga",
+              "label": "t:sections.all.icon.options.yoga"
+            }
+          ],
+          "default": "none",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "text",
+          "id": "another_icon",
+          "label": "t:sections.all.icon.another_icon_label",
+          "info": "t:sections.all.icon.another_icon_info",
+          "visible_if": "{{ block.settings.icon == 'another_icon' }}"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info",
+          "visible_if": "{{ block.settings.icon != 'none' }}"
+        },
+        {
+          "type": "range",
+          "id": "icon_size",
+          "min": 20,
+          "max": 90,
+          "step": 1,
+          "unit": "px",
+          "label": "t:sections.multicolumn.settings.icon_size.label",
+          "default": 28,
+          "visible_if": "{{ block.settings.icon != 'none' }}"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.all.text.title",
+          "default": "Category"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.question_and_answer.name",
+      "category": "t:categories.storytelling",
+      "blocks": [
+        {
+          "type": "category"
+        },
+        {
+          "type": "frequently_asked_question"
+        },
+        {
+          "type": "frequently_asked_question"
+        },
+        {
+          "type": "frequently_asked_question"
+        },
+        {
+          "type": "frequently_asked_question"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %} 

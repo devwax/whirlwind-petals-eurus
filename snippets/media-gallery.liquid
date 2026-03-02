@@ -1,0 +1,1618 @@
+{% comment %}
+  Renders product media gallery
+
+  Accepts:
+  - product: {Object} Product Liquid object (optional)
+  - enable_sticky_image: {Boolean} Sticky content when scroll down. Default: true (optional)
+  - media_layout: {String} Product media layout type. Values are 'thumbnail_slider', 'stacked', '2_columns'
+  - show_thumbnail_desktop: {Boolean} Show thumnail on desktop.
+  - show_thumbnail_mobile: {Boolean} Show thumnail on mobile.
+  - quick-view: {Boolean} is Quick view.
+  - lazy_load: {Boolean} Images should be lazy loaded. Default: true (optional)
+
+  Usage:
+  {% render 'media-gallery', lazy_load: false %}
+{% endcomment %}
+{% style %}
+.transition-fade .x-splide-slide.is-active .image-detail,
+.transition-fade .x-splide-slide:first-child .image-detail, 
+.transition-fade .x-splide-slide.is-next .image-detail {
+  display: block;
+}
+.transition-fade .x-splide-slide .image-detail {
+  display: none;
+}
+{% endstyle %}
+{%- liquid
+  assign rounded_class = ''
+  if settings.edges_type == 'rounded_corners'
+    assign rounded_class = 'rounded-[10px]'
+  endif
+  assign ratio = 'pb-[100%]' 
+  case section.settings.image_ratio
+    when "portrait"
+      assign ratio = 'pb-[150%]'
+    when "landscape"
+      assign ratio = 'pb-[75%]'
+    when "wide"
+      assign ratio = 'pb-[56%]'
+    when "3/4"
+      assign ratio = 'pb-[133%]'
+  endcase
+
+  if section.settings.desktop_layout == "right"
+    assign margin_thumbnail = "mr-2 md:mr-0 md:ml-2"
+  else  
+    assign margin_thumbnail = "mr-2"
+  endif
+
+  assign one_media = false
+  if media_layout == 'stacked' and product.media.size == 1
+    assign one_media = true
+  endif
+
+  assign video_autoplay = section.settings.enable_video_autoplay
+  if media_layout != 'thumbnail_slider' and one_media == false
+    assign video_autoplay = false
+  endif
+  assign page_width = settings.page_width
+
+  assign show_media_with_tag_alt = false
+  for media in product.media
+    if media.preview_image.alt != blank and show_media_with_variant_selected and media.preview_image.alt contains "#" and show_media_with_tag_alt == false
+      assign show_media_with_tag_alt = true
+    endif
+  endfor
+
+  assign is_rtl = false
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  endif
+
+  assign zoom_effect = false
+  if section.settings.enable_image_zoom
+    assign zoom_effect = section.settings.zoom_effect
+  endif
+-%}
+{%- capture setting -%}
+  {
+    "section_id": "{{ section.id }}",
+    "thumbnail_direction": "{{ section.settings.thumbnail_position }}",
+    "video_autoplay": {{ video_autoplay | default: false }},
+    "video_loop": {{ section.settings.enable_video_loop | default: false }}
+  }
+{%- endcapture %}
+{%- capture sizes -%}
+  (min-width: {{ page_width }}px) {% if section.settings.full_width %}50vw{% else %}{% if section.settings.desktop_media_layout == "2_columns" %}{{ page_width | divided_by: 4 }}px{% else %}{{ page_width | divided_by: 2 }}px{% endif %}{% endif %}, (min-width: 767px) {% if section.settings.desktop_media_layout == "2_columns" %} 25vw{% else %} 50vw{% endif %}, 100vw
+{%- endcapture -%}
+{%- if lazy_load == false and product.media.first.media_type == 'image' -%}
+  <div class="hidden">
+    {{ product.media.first.preview_image | image_url: width: 1780 | image_tag: widths: '375, 450, 750, 900, 1100, 1500, 1780', preload: true, sizes: '50vw' }}
+  </div>
+{%- endif -%}
+<div
+  id="product-media-{{ section.id }}"
+  class="{% if enable_sticky_image %}sticky top-[calc(var(--height-header)+5rem)] quick-view:top-0{% else %}relative{% endif %}"
+  x-data='xProductMedia({{ setting }})'
+  {% if show_media_with_variant_selected and product.has_only_default_variant == false and product.media.size > 0 %}
+    data-media-with-variant-selected="true"
+  {% endif %}
+>
+  <a href="#ProductInfo-{{ section.id }}" class="skip-to-content not-icon absolute -z-10 mt-0.5 ml-0.5 hidden lg:block button button-solid pt-2.5 pb-2.5 pl-6 pr-6 lg:pt-3 lg:pb-3 leading-normal justify-center cursor-pointer focus-visible:z-20">
+    {{ 'accessibility.skip_to_product_info' | t }}
+  </a>
+  <div class="splide-image flex{% if section.settings.thumbnail_position == "horizontal" %} flex-col-reverse{% elsif section.settings.desktop_layout == "right" %} md:flex-row-reverse{% endif %}">
+    <div
+      id="x-product-thumbnail-{{ section.id }}"
+      class="select-none duration-150 overflow-auto hide-scrollbar scroll-smooth{% if is_rtl %} rtl{% endif %}{% unless show_thumbnail_mobile %} hidden{% endunless %}{% if show_thumbnail_desktop and product.media.size > 1 and media_layout == 'thumbnail_slider' %} md:block{% else %} md:hidden{% endif %}{% if section.settings.thumbnail_position == "vertical" %} relative w-[15%] min-w-[45px] md:min-w-[65px] max-w-[90px] lg:min-w-[85px] {{ margin_thumbnail }}{% else %} mt-2{% endif %}"
+      x-ref="thumbnail"
+      :class="thumbnailGrabbingClass"
+      x-on:mousedown="thumbnailHandleMouseDown($event)"
+      x-on:mousemove="thumbnailHandleMouseMove($event)"
+      x-on:mouseleave="thumbnailHandleMouseLeave()"
+      x-on:mouseup="thumbnailHandleMouseUp()"
+    >
+      <div class="flex flex-1 max-w-full gap-x-2 gap-y-1.5{% if section.settings.thumbnail_position == "vertical" %} flex-col absolute w-full{% else %} w-fit{% endif %}{% if show_thumbnail_mobile and section.settings.thumbnail_position == "horizontal" %} h-17{% endif %}">
+        {% if product.media.size > 0 %}
+          {% if product.selected_or_first_available_variant.featured_media.id and show_first_image_avaiable %}
+            {% liquid assign first_media = product.media | where : 'id', product.selected_or_first_available_variant.featured_media.id %}
+            {% for media in first_media %}
+              {% liquid
+                assign data_media_type = ""
+                if media.preview_image.alt != blank and show_media_with_variant_selected and media.preview_image.alt contains "#"
+                  assign data_variant_media = media.preview_image.alt | split: "#" | last | split: '_'
+                  for value in data_variant_media
+                    for option in media_with_option
+                      assign media_value = option | append: '-' | append: value | handle
+                      if option_with_value contains media_value
+                        assign data_media_type = data_media_type | append: '_' | append: media_value
+                        break
+                      endif
+                    endfor
+                  endfor
+                  assign first = data_media_type | slice: 0
+                  if first == '_'
+                    assign data_media_type = data_media_type | slice: 1, data_media_type.size
+                  endif
+                endif
+                assign first_media = product.media | where : 'id', product.selected_or_first_available_variant.featured_media.id 
+              %}
+              <div 
+                id="x-thumbnail-{{ section.id }}-{{ media.id }}"
+                {% if show_media_with_tag_alt %}
+                  data-media-option="{{ media_with_option | join: "_" | handle }}"
+                  data-media-type="{{ data_media_type }}"
+                {% elsif show_media_with_variant_selected and show_media_with_tag_alt == false %}
+                  data-media-option="{% if variant_images contains media.src %}{{ section.id }}-{{ media.id }}{% endif %}"
+                {% endif %}
+                data-media-id="{{ section.id }}-{{ media.id }}"
+                class="x-thumbnail media-thumbnail x-thumbnail-{{ section.id }}-{{ media.id }}{% if product.featured_media.id == media.id %} featured-image{% endif %} relative select-none opacity-30{% if section.settings.thumbnail_position == "horizontal" %} min-w-[50px] md:min-w-[65px] lg:min-w-[85px]{% endif %}"
+              >
+                <button class="relative block w-full h-full pb-[100%]{% if rounded_corner_image %} {% unless mobile_media_full %} rounded-[10px]{% endunless %} md:rounded-[10px] overflow-hidden{% endif %}" aria-label="image-thumbnai">
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <img
+                    src="{{ media.preview_image | image_url: width: 150 }}"
+                    alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    width="{{ media.preview_image.width }}"
+                    height="{{ media.preview_image.height }}"
+                    class="animate-Xpulse skeleton-image w-full object-cover absolute h-full select-none pointer-events-none animation-zoom-image"
+                    onload='this.classList.remove("animate-Xpulse", "skeleton-image");'
+                  >
+                  {% # theme-check-enable ImgLazyLoading %}
+                  {%- if media.media_type == 'video' or media.media_type == 'external_video' -%}
+                    <div class="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 w-6 h-6">
+                      <span class="w-6 h-6 inline-block p-1 bg-[rgba(var(--background-color),1)] rounded-full border">
+                        {%- render 'icon-media', icon: 'icon-play', class: 'w-full h-full' -%}
+                      </span>
+                    </div>
+                  {%- endif -%}
+                  {%- if media.media_type == 'model' -%}
+                    <div class="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 w-6 h-6">
+                      <span class="w-6 h-6 inline-block p-1 bg-[rgba(var(--background-color),1)] rounded-full border">
+                        {%- render 'icon-media', icon: 'icon-3d-model' -%}
+                      </span>
+                    </div>
+                  {%- endif -%}
+                </button>
+              </div>
+            {% endfor %}
+          {% endif %}
+          {% for media in product.media %}
+            {% liquid 
+              assign data_media_type = ""
+              if media.preview_image.alt and show_media_with_variant_selected and media.preview_image.alt contains "#"
+                assign data_variant_media = media.preview_image.alt | split: "#" | last | split: '_'
+                for value in data_variant_media
+                  for option in media_with_option
+                    assign media_value = option | append: '-' | append: value | handle
+                    if option_with_value contains media_value
+                      assign data_media_type = data_media_type | append: '_' | append: media_value
+                      break
+                    endif
+                  endfor
+                endfor
+                assign first = data_media_type | slice: 0
+                if first == '_'
+                  assign data_media_type = data_media_type | slice: 1, data_media_type.size
+                endif
+              endif
+              assign first_media = product.media | where : 'id', product.selected_or_first_available_variant.featured_media.id 
+            %}
+            {% if media.id != product.selected_or_first_available_variant.featured_media.id or show_first_image_avaiable == false %}
+              <div 
+                id="x-thumbnail-{{ section.id }}-{{ media.id }}"
+                {% if show_media_with_tag_alt %}
+                  data-media-option="{{ media_with_option | join: "_" | handle }}"
+                  data-media-type="{{ data_media_type }}"
+                {% elsif show_media_with_variant_selected and show_media_with_tag_alt == false %}
+                  data-media-option="{% if variant_images contains media.src %}{{ section.id }}-{{ media.id }}{% endif %}"
+                {% endif %}
+                data-media-id="{{ section.id }}-{{ media.id }}"
+                class="x-thumbnail media-thumbnail x-thumbnail-{{ section.id }}-{{ media.id }}{% if product.featured_media.id == media.id %} featured-image{% endif %} relative select-none opacity-30{% if section.settings.thumbnail_position == "horizontal" %} min-w-[50px] md:min-w-[65px] lg:min-w-[85px]{% endif %}"
+              >
+                <button class="relative block w-full h-full pb-[100%]{% if rounded_corner_image %} {% unless mobile_media_full %} rounded-[10px]{% endunless %} md:rounded-[10px] overflow-hidden{% endif %}" aria-label="image-thumbnai">
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <img
+                    src="{{ media.preview_image | image_url: width: 150 }}"
+                    alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    width="{{ media.preview_image.width }}"
+                    height="{{ media.preview_image.height }}"
+                    class="animate-Xpulse skeleton-image w-full object-cover absolute h-full select-none pointer-events-none"
+                    onload='this.classList.remove("animate-Xpulse", "skeleton-image");'
+                  >
+                  {% # theme-check-enable ImgLazyLoading %}
+                  {%- if media.media_type == 'video' or media.media_type == 'external_video' -%}
+                    <div class="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 w-6 h-6">
+                      <span class="w-6 h-6 inline-block p-1 bg-[rgba(var(--background-color),1)] rounded-full border">
+                        {%- render 'icon-media', icon: 'icon-play', class: 'w-full h-full' -%}
+                      </span>
+                    </div>
+                  {%- endif -%}
+                  {%- if media.media_type == 'model' -%}
+                    <div class="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 w-6 h-6">
+                      <span class="w-6 h-6 inline-block p-1 bg-[rgba(var(--background-color),1)] rounded-full border">
+                        {%- render 'icon-media', icon: 'icon-3d-model' -%}
+                      </span>
+                    </div>
+                  {%- endif -%}
+                </button>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="x-thumbnail media-thumbnail relative opacity-30{% if section.settings.thumbnail_position == "horizontal" %} min-w-[50px] md:min-w-[65px] lg:min-w-[85px]{% endif %}">
+            <div class="relative pb-[100%]">
+              {% render 'icon-placeholder', icon: 'icon-product', class: 'bg-[#c9c9c9] w-full h-full absolute' %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <div
+      id="x-product-{{ section.id }}"
+      class="x-splide transition-{{ transition_style }} disable-effect-hover flex-1 group splide swiper-product overflow-hidden visible{% if media_layout != 'thumbnail_slider' %} md:hidden{% endif %}{% if section.settings.thumbnail_position == "vertical" and show_thumbnail_desktop and product.media.size > 1 %} md:w-[85%]{% endif %}{% if section.settings.thumbnail_position == "vertical" and show_thumbnail_mobile and product.media.size > 1 %} w-[85%]{% else %} w-full{% endif %}"
+      x-intersect.once='$store.xSplide.load($el, {
+        "pagination": false,
+        "perPage": 1,
+        "perMove": 1,
+        "gap": 20,
+        {%- if transition_style == "default" %}
+          "type": "loop",
+        {%- else %}
+          "rewind": true,
+          "type": "fade",
+        {%- endif %}
+        "noDrag": "model-viewer",
+        {% if show_thumbnail_desktop or show_thumbnail_mobile %}
+          "thumbs": "x-product-thumbnail-{{ section.id }}",
+          "thumbs_direction": "{{ section.settings.thumbnail_position }}",
+        {% endif %}
+        "events": [
+          {
+            "event": "ready",
+            "callback": () => {
+              document.dispatchEvent(new CustomEvent("eurus:media-gallery-ready:{{ section.id }}"));
+            }
+          },
+          {
+            "event": "move",
+            "callback": () => {
+              const splideEl = document.getElementById("x-product-{{ section.id }}");
+              const externalVideos = splideEl.getElementsByClassName("external-video");
+              /** prevent instersect trigger */
+              if (externalVideos.length) {
+                for (let i = 0; i < externalVideos.length; i++) {
+                  externalVideos[i].classList.add("hidden");
+                }
+              }
+            }
+          },
+          {
+            "event": "visible",
+            "callback": () => {
+              const splideEl = document.getElementById("x-product-{{ section.id }}");
+              const externalVideos = splideEl.getElementsByClassName("external-video");
+              /** back to normal */
+              if (externalVideos.length) {
+                for (let i = 0; i < externalVideos.length; i++) {
+                  externalVideos[i].classList.remove("hidden");
+                  requestAnimationFrame(() => {
+                    if (!externalVideos[i].parentElement.getBoundingClientRect().height) {
+                      externalVideos[i].classList.add("hidden");
+                    }
+                  });
+                }
+              }
+            }
+          }
+        ]
+      })'
+    >
+      <div class="splide__track">
+        <div class="x-badges-container pointer-events-none z-10 text-sm x-badges-product-detail empty:h-0 empty:min-h-0 empty:mb-0 min-h-[45px] absolute w-full h-full items-center flex-wrap gap-x-1 gap-y-2 md:gap-y-4 mb-5"></div>
+        <div id="media_product-{{ section.id }}" class="splide__list flex">
+          {% if product.media.size > 0 %}
+            {%- assign media_index = 1 -%}
+            {% if product.selected_or_first_available_variant.featured_media.id and show_first_image_avaiable %}
+              {% liquid assign first_media = product.media | where : 'id', product.selected_or_first_available_variant.featured_media.id %}
+              {% for media in first_media %}
+                {%- render 'media',
+                  product: product,
+                  media: media,
+                  zoom_effect: zoom_effect,
+                  index: media_index,
+                  ratio: ratio,
+                  lazy_load: lazy_load,
+                  media_layout: 'thumbnail_slider',
+                  video_autoplay: video_autoplay,
+                  rounded_corner_image: rounded_corner_image,
+                  mobile_media_full: mobile_media_full,
+                  sizes: sizes,
+                  show_media_with_variant_selected: show_media_with_variant_selected,
+                  media_with_option: media_with_option,
+                  option_with_value: option_with_value,
+                  variant_images: variant_images,
+                  show_media_with_tag_alt: show_media_with_tag_alt
+                -%}
+                {%- assign media_index = media_index | plus: 1 -%}
+              {% endfor %}
+            {% endif %}
+            {% for media in product.media %}
+              {% if media.id != product.selected_or_first_available_variant.featured_media.id or show_first_image_avaiable == false %}
+                {%- render 'media',
+                  product: product,
+                  media: media,
+                  zoom_effect: zoom_effect,
+                  index: media_index,
+                  ratio: ratio,
+                  lazy_load: lazy_load,
+                  media_layout: 'thumbnail_slider',
+                  video_autoplay: video_autoplay,
+                  rounded_corner_image: rounded_corner_image,
+                  mobile_media_full: mobile_media_full,
+                  sizes: sizes,
+                  show_media_with_variant_selected: show_media_with_variant_selected,
+                  media_with_option: media_with_option,
+                  option_with_value: option_with_value,
+                  variant_images: variant_images,
+                  show_media_with_tag_alt: show_media_with_tag_alt
+                -%}
+                {%- assign media_index = media_index | plus: 1 -%}
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <div data-type="image" class="splide__slide x-splide-slide product-media product-media--image featured-image" index="0">     
+              <div class="relative overflow-hidden {{ ratio }} {{ rounded_class }}">
+                {% render 'icon-placeholder', icon: 'icon-product', class: 'bg-[#c9c9c9] text-[#acacac] w-full h-full absolute top-0 left-0' %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+      {% if show_thumbnail_desktop and show_arrow_button %}
+        <div class="splide__arrows gap-3 md:gap-0 md:mb-2 mb-1 md:mt-4 mt-3 flex justify-center w-full items-center lg:mb-0 lg:mt-0 md:hidden pointer-events-none{% if show_thumbnail_mobile %} hidden{% endif %}{% if product.media.size < 2 %} hidden{% else %} lg:block{% endif %}">
+          <button class="splide__arrow button-arrow w-11 h-11 lg:top-1/2 lg:absolute lg:-mt-6 p-3 lg:left-0 rtl:lg:group-hover:left-4 lg:bottom-0 transition-all ease-in-out lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:translate-x-2 lg:-translate-x-full z-10 lg:group-hover:disabled:opacity-30 disabled:opacity-30 disabled:cursor-not-allowed pointer-events-auto items-center justify-center duration-200 splide__arrow--prev rounded-full border border-solid md:border-none" aria-label="Go to last slide">
+            <span class="hidden">previous slide</span>
+            <span class="not-icon rounded-full hidden md:block">{% render 'icon-labels-bags', icon: 'chevron-left' %}</span>
+            <span class="block md:hidden">{% render 'icon-labels-bags', icon: 'chevron-left' %}</span>
+          </button>
+          <button class="splide__arrow button-arrow w-11 h-11 lg:top-1/2 lg:absolute lg:-mt-6 p-3 lg:right-0 rtl:lg:group-hover:right-4 lg:bottom-0 transition-all ease-in-out lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:-translate-x-2 lg:translate-x-full z-10 lg:group-hover:disabled:opacity-30 disabled:opacity-30 disabled:cursor-not-allowed pointer-events-auto items-center justify-center duration-200 splide__arrow--next rounded-full border border-solid md:border-none" aria-label="Next slide">
+            <span class="hidden">next slide</span>
+            <span class="not-icon rounded-full hidden md:block">{% render 'icon-labels-bags', icon: 'chevron-right' %}</span>
+            <span class="block md:hidden">{% render 'icon-labels-bags', icon: 'chevron-right' %}</span>
+          </button>
+        </div>
+      {% else %}
+        <div class="splide__arrows gap-3 md:mb-2 mb-1 md:mt-4 mt-3 flex justify-center w-full items-center{% if product.media.size < 2 %} hidden{% endif %}{% if show_thumbnail_desktop or show_arrow_button == false %} md:hidden{% elsif show_thumbnail_mobile and show_thumbnail_desktop == false %} hidden md:flex{% elsif show_thumbnail_mobile and show_thumbnail_desktop %} hidden{% endif %}">
+          <button class="splide__arrow flex p-3 w-11 h-11 z-10 disabled:opacity-30 disabled:cursor-not-allowed items-center justify-center duration-200 splide__arrow--prev rounded-full border border-solid" aria-label="Go to last slide">
+            <span class="hidden">previous slide</span>
+            {% render 'icon-labels-bags', icon: 'chevron-left' %}
+          </button>
+          <button class="splide__arrow flex p-3 w-11 h-11 z-10 disabled:opacity-30 disabled:cursor-not-allowed items-center justify-center duration-200 splide__arrow--next rounded-full border border-solid" aria-label="Next slide">
+            <span class="hidden">next slide</span>
+            {% render 'icon-labels-bags', icon: 'chevron-right' %}
+          </button>
+        </div>
+      {% endif %}
+    </div>
+    {% if media_layout != 'thumbnail_slider' %}
+      <div 
+        class="flex-wrap gap-2.5 hidden md:flex w-full h-full" 
+        id="stacked-{{ section.id }}"
+      >
+        {% if product.media.size > 0 %}
+          {%- assign media_index = 1 -%}
+          {% if product.selected_or_first_available_variant.featured_media.id and show_first_image_avaiable %}
+            {% liquid assign first_media = product.media | where : 'id', product.selected_or_first_available_variant.featured_media.id %}
+            {% for media in first_media %}
+              {% liquid 
+                assign data_media_type = ""
+                if media.preview_image.alt != blank and show_media_with_variant_selected and media.preview_image.alt contains "#"
+                  assign data_variant_media = media.preview_image.alt | split: "#" | last | split: '_'
+                  for value in data_variant_media
+                    for option in media_with_option
+                      assign media_value = option | append: '-' | append: value | handle
+                      if option_with_value contains media_value
+                        assign data_media_type = data_media_type | append: '_' | append: media_value
+                        break
+                      endif
+                    endfor
+                  endfor
+                  assign first = data_media_type | slice: 0
+                  if first == '_'
+                    assign data_media_type = data_media_type | slice: 1, data_media_type.size
+                  endif
+                endif
+              %}
+              <div 
+                id="postion-image-{{ section.id }}-{{ media.id }}"
+                class="product-media-item w-[calc(50%-5px)] postion-image-{{ section.id }}{% if product.featured_media.id == media.id %} featured-image{% endif %}{% if media_layout == 'stacked' %} relative first:w-full{% endif %}" 
+                data-media-id="{{ section.id }}-{{ media.id }}"
+                data-index="{{ media_index }}" 
+                {% if show_media_with_tag_alt %}
+                  data-media-option="{{ media_with_option | join: "_" | handle }}"
+                  data-media-type="{{ data_media_type }}"
+                {% elsif show_media_with_variant_selected and show_media_with_tag_alt == false %}
+                  data-media-option="{% if variant_images contains media.src %}{{ section.id }}-{{ media.id }}{% endif %}"
+                {% endif %}
+              >
+                <div x-init="document.addEventListener('eurus:badges:loaded', () => { requestAnimationFrame(() => { if ($el.innerHTML.trim() !== '') $el.closest('#product-media-{{ section.id }}').querySelector('.x-badges-container').innerHTML = $el.innerHTML; }) });" class="x-badges-container pointer-events-none z-10 text-sm x-badges-product-detail empty:h-0 empty:min-h-0 empty:mb-0 min-h-[45px] absolute w-full h-full items-center flex-wrap gap-x-1 gap-y-2 md:gap-y-4 mb-5"></div>
+                {%- render 'media', 
+                  media: media,
+                  zoom_effect: zoom_effect,
+                  index: media_index,
+                  stacked: true,
+                  ratio: ratio,
+                  lazy_load: lazy_load,
+                  media_layout: media_layout,
+                  video_autoplay: video_autoplay,
+                  rounded_corner_image: rounded_corner_image,
+                  mobile_media_full: mobile_media_full,
+                  sizes: sizes,
+                  show_media_with_variant_selected: show_media_with_variant_selected,
+                  media_with_option: media_with_option,
+                  option_with_value: option_with_value,
+                  variant_images: variant_images,
+                  show_media_with_tag_alt: show_media_with_tag_alt
+                -%}
+                {%- assign media_index = media_index | plus: 1 -%}
+              </div>
+            {% endfor %}
+          {% endif %}
+          {% for media in product.media %}
+            {% liquid 
+              assign data_media_type = ""
+              if media.preview_image.alt != blank and show_media_with_variant_selected and media.preview_image.alt contains "#"
+                assign data_variant_media = media.preview_image.alt | split: "#" | last | split: '_'
+                for value in data_variant_media
+                  for option in media_with_option
+                    assign media_value = option | append: '-' | append: value | handle
+                    if option_with_value contains media_value
+                      assign data_media_type = data_media_type | append: '_' | append: media_value
+                      break
+                    endif
+                  endfor
+                endfor
+                assign first = data_media_type | slice: 0
+                if first == '_'
+                  assign data_media_type = data_media_type | slice: 1, data_media_type.size
+                endif
+              endif
+              assign first_media = product.media | where : 'id', product.selected_or_first_available_variant.featured_media.id 
+            %}
+            {% if media.id != product.selected_or_first_available_variant.featured_media.id or show_first_image_avaiable == false %}
+              <div
+                id="postion-image-{{ section.id }}-{{ media.id }}"
+                class="product-media-item w-[calc(50%-5px)] postion-image-{{ section.id }}{% if product.featured_media.id == media.id %} featured-image{% endif %}{% if media_layout == 'stacked' %} relative first:w-full{% endif %}" 
+                data-media-id="{{ section.id }}-{{ media.id }}"
+                data-index="{{ media_index }}" 
+                {% if show_media_with_tag_alt %}
+                  data-media-option="{{ media_with_option | join: "_" | handle }}"
+                  data-media-type="{{ data_media_type }}"
+                {% elsif show_media_with_variant_selected and show_media_with_tag_alt == false %}
+                  data-media-option="{% if variant_images contains media.src %}{{ section.id }}-{{ media.id }}{% endif %}"
+                {% endif %}
+              >
+                <div x-init="document.addEventListener('eurus:badges:loaded', () => { requestAnimationFrame(() => { if ($el.innerHTML.trim() !== '') $el.closest('#product-media-{{ section.id }}').querySelector('.x-badges-container').innerHTML = $el.innerHTML; }) });" class="x-badges-container pointer-events-none z-10 text-sm x-badges-product-detail empty:h-0 empty:min-h-0 empty:mb-0 min-h-[45px] absolute w-full h-full items-center flex-wrap gap-x-1 gap-y-2 md:gap-y-4 mb-5"></div>
+                {%- render 'media', 
+                  media: media,
+                  zoom_effect: zoom_effect,
+                  index: media_index,
+                  stacked: true,
+                  ratio: ratio,
+                  lazy_load: lazy_load,
+                  media_layout: media_layout,
+                  video_autoplay: video_autoplay,
+                  rounded_corner_image: rounded_corner_image,
+                  mobile_media_full: mobile_media_full,
+                  sizes: sizes,
+                  show_media_with_variant_selected: show_media_with_variant_selected,
+                  media_with_option: media_with_option,
+                  option_with_value: option_with_value,
+                  variant_images: variant_images,
+                  show_media_with_tag_alt: show_media_with_tag_alt
+                -%}
+                {%- assign media_index = media_index | plus: 1 -%}
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <div data-type="image" class="product-media product-media--image w-full">      
+            <div class="relative overflow-hidden" >
+              {{ 'product-1' | placeholder_svg_tag: 'bg-neutral-200 w-full h-full' }}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+    {% if section.settings.enable_image_zoom %}
+      <template x-teleport="body">
+        <div
+          id="ProductModal-{{ section.id }}"
+          class="fixed top-0 left-0 w-full h-full z-[70] bg-[rgba(var(--background-color),1)]{% if zoom_effect == 'enlarge' %} overflow-y-scroll scrollbar-body{% endif %}"
+          x-show="zoomIsOpen"
+          x-transition:enter="transition-all ease-in-out duration-500"
+          x-transition:enter-start="opacity-0 transform translate-y-1/3"
+          x-transition:enter-end="opacity-100 transform translate-y-0"
+          x-transition:leave="transition-all ease-in-out duration-500"
+          x-transition:leave-end="opacity-0 transform translate-y-1/3"
+          x-intersect:leave="$store.xModal.removeFocus('postion-image-{{ section.id }}-{{ media.id }}')"
+          @keyup.escape="zoomClose()"
+        >
+          <div 
+            id="zoom-x-product-{{ section.id }}" 
+            class="w-full ml-auto mr-auto {% if zoom_effect != 'enlarge' %}h-full{% endif %}" 
+            tabindex="-1" 
+            role="dialog" 
+            aria-modal="true" 
+            aria-label="{{ 'products.modal.label' | t }}"
+          >
+            <div class="fixed top-4 right-4 overflow-hidden rounded-full z-50">
+              <button 
+                id="ProductModalClose-{{ section.id }}"
+                @click="zoomClose()" 
+                class="button icon-close-container rounded-full hover:border-0"
+                x-intersect.full="$store.xModal.focus('ProductModal-{{ section.id }}', 'ProductModalClose-{{ section.id }}');"
+                aria-label="close-zoom"
+              >
+                {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+              </button>
+            </div>
+            <div class="block{% if zoom_effect != 'enlarge' %} h-full{% endif %}">
+              {% if zoom_effect == 'enlarge' %}
+                {% if product.selected_or_first_available_variant.featured_media.id and show_first_image_avaiable %}
+                  {% liquid assign first_media = product.media | where : 'id', product.selected_or_first_available_variant.featured_media.id %}
+                  {% for media in first_media %}
+                    {% liquid 
+                      assign data_media_type = ""
+                      if media.preview_image.alt != blank and show_media_with_variant_selected and media.preview_image.alt contains "#"
+                        assign data_variant_media = media.preview_image.alt | split: "#" | last | split: '_'
+                        for value in data_variant_media
+                          for option in media_with_option
+                            assign media_value = option | append: '-' | append: value | handle
+                            if option_with_value contains media_value
+                              assign data_media_type = data_media_type | append: '_' | append: media_value
+                              break
+                            endif
+                          endfor
+                        endfor
+                        assign first = data_media_type | slice: 0
+                        if first == '_'
+                          assign data_media_type = data_media_type | slice: 1, data_media_type.size
+                        endif
+                      endif
+                    %}
+                    <div 
+                      id="{{ media.position }}-image-zoom-{{ section.id }}" 
+                      class="mb-3{% if product.featured_media.id == media.id %} featured-image{% endif %}"
+                      {% if show_media_with_tag_alt %}
+                        data-media-option="{{ media_with_option | join: "_" | handle }}"
+                        data-media-type="{{ data_media_type }}"
+                      {% elsif show_media_with_variant_selected and show_media_with_tag_alt == false %}
+                        data-media-option="{% if variant_images contains media.src %}{{ section.id }}-{{ media.id }}{% endif %}"
+                      {% endif %}
+                    >
+                      <div class="flex justify-center items-center">
+                        {% case media.media_type %}
+                          {% when 'image' %}
+                            {% # theme-check-disable ImgLazyLoading %}
+                            <img
+                              srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                              {{ media.preview_image | image_url: width: 450 }} 450w,
+                              {{ media.preview_image | image_url: width: 750 }} 750w,
+                              {{ media.preview_image | image_url: width: 900 }} 900w,
+                              {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                              {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                              {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                              {{ media.preview_image | image_url: width: 2000 }} 2000w,
+                              {{ media.preview_image | image_url: width: 3000 }} 3000w,
+                              {{ media.preview_image | image_url: width: 3840 }} 3840w,
+                              {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                              src="{{ media.preview_image | image_url: width: 1200 }}"
+                              alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                              {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                              sizes="100vw"
+                              width="{{ media.preview_image.width }}"
+                              height="{{ media.preview_image.height }}"
+                              class="w-full object-contain"
+                            >
+                            {% # theme-check-enable ImgLazyLoading %}
+                          {% when 'video' %}
+                            {% liquid
+                              if settings.enable_lazy_loading_image
+                                assign loading = 'lazy'
+                              else
+                                assign loading = 'eager'
+                              endif
+                            %}
+                            <div class="w-full relative pb-[50%] external-video" x-intersect:leave="$store.xVideo.pause($el)">
+                               <div @click.prevent="$store.xVideo.mp4Thumbnail($el)">
+                                {{ media | media_tag: image_size: '1024x', autoplay: false, loop: section.settings.enable_video_loop, controls: true, loading: loading, class: 'w-full h-full absolute video top-1/2 -translate-y-1/2' | replace: '<img ', '<img loading="lazy" alt="" ' }}
+                                <img
+                                  srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                                    {{ media.preview_image | image_url: width: 450 }} 450w,
+                                    {{ media.preview_image | image_url: width: 750 }} 750w,
+                                    {{ media.preview_image | image_url: width: 900 }} 900w,
+                                    {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                                    {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                                    {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                                    {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                                  src="{{ media.preview_image | image_url: width: 1780 }}"
+                                  alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                  sizes="{{ sizes }}"
+                                  {% if settings.enable_lazy_loading_image %}{{ loading }}{% else %}loading="eager"{% endif %}
+                                  width="{{ media.preview_image.width }}"
+                                  height="{{ media.preview_image.height }}"
+                                  class="img-thumbnail duration-300 absolute w-full h-full object-cover"
+                                >
+                                {% # theme-check-enable ImgLazyLoading %}
+                                <button 
+                                  class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                  aria-label="image-cover"
+                                >
+                                  <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" role="presentation" class="w-full h-full" fill="none" viewBox="0 0 10 14">
+                                      <path fill-rule="evenodd" clip-rule="evenodd" d="M1.48177 0.814643C0.81532 0.448245 0 0.930414 0 1.69094V12.2081C0 12.991 0.858787 13.4702 1.52503 13.0592L10.5398 7.49813C11.1918 7.09588 11.1679 6.13985 10.4965 5.77075L1.48177 0.814643Z" fill="currentColor"/>
+                                    </svg>
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                            <script src="{{ 'video.js' | asset_url }}" defer></script>
+                          {% when 'external_video' %}
+                            {%- if media.host == 'youtube' -%}
+                              <div x-intersect:leave="$store.xVideo.pause($el)" class="external-video w-full relative pb-[50%] h-0">
+                                {% # theme-check-disable %}
+                                <picture
+                                  class="cursor-pointer w-full h-full absolute top-0 left-0 video">
+                                  <source type="image/webp" srcset="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                  <source type="image/jpeg" srcset="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                  <img 
+                                    src="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}"
+                                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                    class="w-full h-full object-cover"
+                                    alt="{{ product.title | escape }}"
+                                    width="512"
+                                    height="288"
+                                  />
+                                </picture>
+                                {% # theme-check-enable %}
+                                <button 
+                                  class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                  @click.prevent="$store.xVideo.externalLoad($el, 'youtube', '{{ media.external_id }}', false, 'video-zoom-product')"
+                                  aria-label="image-cover"
+                                >
+                                  <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                    {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+                                  </span>
+                                </button>
+                              </div>
+                            {%- else -%}
+                              {%- capture options -%}
+                                {
+                                  'alt': '{{ media.preview_image | default: product.title | escape }}',
+                                  'width': 1280
+                                }
+                              {%- endcapture -%}
+                              <div x-intersect:leave="$store.xVideo.pause($el)" class="external-video w-full relative pb-[50%] h-0 overflow-hidden">
+                                <div x-intersect="$store.xVideo.renderVimeoFacade($el, '{{ media.external_id }}', {{ options }})"></div>
+                                <button 
+                                  class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                  @click.prevent="$store.xVideo.externalLoad($el, 'vimeo', '{{ media.external_id }}', false, 'video-zoom-product')"
+                                  aria-label="image-cover"
+                                >
+                                  <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                    {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+                                  </span>
+                                </button>
+                              </div>    
+                            {%- endif -%}
+                            <script src="{{ 'video.js' | asset_url }}" defer></script>
+                          {% when 'model' %}
+                            <div class="w-full">
+                              <div class="relative h-0 w-full pb-[100%] lg:pb-[55%]">
+                                <button
+                                  type="button"
+                                  data-media-id="{{ media.id }}"
+                                  @click="productModelLoadMedia"
+                                  class="absolute top-0 left-0 right-0 bottom-0"
+                                >
+                                  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                                    <span class="w-12 h-12 lg:w-16 lg:h-16 inline-block lg:p-4 p-2 bg-[rgba(var(--background-color),1)] rounded-full border">
+                                      {%- render 'icon-media', icon: 'icon-3d-model' -%}
+                                    </span>
+                                  </div>
+                                  {% # theme-check-disable ImgLazyLoading %}
+                                  <img
+                                    srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                                    {{ media.preview_image | image_url: width: 450 }} 450w,
+                                    {{ media.preview_image | image_url: width: 750 }} 750w,
+                                    {{ media.preview_image | image_url: width: 900 }} 900w,
+                                    {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                                    {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                                    {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                                    {{ media.preview_image | image_url: width: 2000 }} 2000w,
+                                    {{ media.preview_image | image_url: width: 3000 }} 3000w,
+                                    {{ media.preview_image | image_url: width: 3840 }} 3840w,
+                                      {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                                    src="{{ media | image_url: width: 1920 }}"
+                                    sizes="100vw"
+                                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                    width="{{ media.preview_image.width }}"
+                                    height="{{ media.preview_image.height }}"
+                                    alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                    class="w-full h-full object-cover"
+                                  >
+                                  {% # theme-check-enable ImgLazyLoading %}
+                                </button>
+                                <template>
+                                  {{ media | media_tag: image_size: "2048x", toggleable: true }}
+                                </template>
+                                <button
+                                  class="button button--full-width product__xr-button hidden"
+                                  type="button"
+                                  aria-label="{{ 'products.product.xr_button_label' | t }}"
+                                  data-shopify-xr
+                                  data-shopify-model3d-id="{{ media.id }}"
+                                  data-shopify-title="title"
+                                  data-shopify-xr-hidden
+                                >
+                                  {% render 'icon-media', icon: 'icon-3d-model' %}
+                                  {{ 'products.product.xr_button' | t }}
+                                </button>
+                              </div>
+                            </div>
+                        {% endcase %}
+                      </div>
+                    </div>
+                  {% endfor %}
+                {% endif %} 
+                {% for media in product.media %}
+                  {% liquid 
+                    assign data_media_type = ""
+                    if media.preview_image.alt != blank and show_media_with_variant_selected and media.preview_image.alt contains "#"
+                      assign data_variant_media = media.preview_image.alt | split: "#" | last | split: '_'
+                      for value in data_variant_media
+                        for option in media_with_option
+                          assign media_value = option | append: '-' | append: value | handle
+                          if option_with_value contains media_value
+                            assign data_media_type = data_media_type | append: '_' | append: media_value
+                            break
+                          endif
+                        endfor
+                      endfor
+                      assign first = data_media_type | slice: 0
+                      if first == '_'
+                        assign data_media_type = data_media_type | slice: 1, data_media_type.size
+                      endif
+                    endif
+                  %}
+                  {% if media.id != product.selected_or_first_available_variant.featured_media.id or show_first_image_avaiable == false %}
+                    <div 
+                      id="{{ media.position }}-image-zoom-{{ section.id }}" 
+                      class="mb-3{% if product.featured_media.id == media.id %} featured-image{% endif %}"
+                      {% if show_media_with_tag_alt %}
+                        data-media-option="{{ media_with_option | join: "_" | handle }}"
+                        data-media-type="{{ data_media_type }}"
+                      {% elsif show_media_with_variant_selected and show_media_with_tag_alt == false %}
+                        data-media-option="{% if variant_images contains media.src %}{{ section.id }}-{{ media.id }}{% endif %}"
+                      {% endif %}
+                    >
+                      <div class="flex justify-center items-center">
+                        {% case media.media_type %}
+                          {% when 'image' %}
+                            {% # theme-check-disable ImgLazyLoading %}
+                            <img
+                              srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                              {{ media.preview_image | image_url: width: 450 }} 450w,
+                              {{ media.preview_image | image_url: width: 750 }} 750w,
+                              {{ media.preview_image | image_url: width: 900 }} 900w,
+                              {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                              {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                              {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                              {{ media.preview_image | image_url: width: 2000 }} 2000w,
+                              {{ media.preview_image | image_url: width: 3000 }} 3000w,
+                              {{ media.preview_image | image_url: width: 3840 }} 3840w,
+                              {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                              src="{{ media.preview_image | image_url: width: 1200 }}"
+                              alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                              {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                              sizes="100vw"
+                              width="{{ media.preview_image.width }}"
+                              height="{{ media.preview_image.height }}"
+                              class="w-full object-contain"
+                            >
+                            {% # theme-check-enable ImgLazyLoading %}
+                          {% when 'video' %}
+                            {% liquid
+                              if settings.enable_lazy_loading_image
+                                assign loading = 'lazy'
+                              else
+                                assign loading = 'eager'
+                              endif
+                            %}
+                            <div class="w-full relative pb-[50%] external-video" x-intersect:leave="$store.xVideo.pause($el)">
+                               <div @click.prevent="$store.xVideo.mp4Thumbnail($el)">
+                                {{ media | media_tag: image_size: '1024x', autoplay: false, loop: section.settings.enable_video_loop, controls: true, loading: loading, class: 'w-full h-full absolute video top-1/2 -translate-y-1/2' | replace: '<img ', '<img loading="lazy" alt="" ' }}
+                                <img
+                                  srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                                    {{ media.preview_image | image_url: width: 450 }} 450w,
+                                    {{ media.preview_image | image_url: width: 750 }} 750w,
+                                    {{ media.preview_image | image_url: width: 900 }} 900w,
+                                    {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                                    {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                                    {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                                    {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                                  src="{{ media.preview_image | image_url: width: 1780 }}"
+                                  alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                  sizes="{{ sizes }}"
+                                  {% if settings.enable_lazy_loading_image %}{{ loading }}{% else %}loading="eager"{% endif %}
+                                  width="{{ media.preview_image.width }}"
+                                  height="{{ media.preview_image.height }}"
+                                  class="img-thumbnail duration-300 absolute w-full h-full object-cover"
+                                >
+                                {% # theme-check-enable ImgLazyLoading %}
+                                <button 
+                                  class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                  aria-label="image-cover"
+                                >
+                                  <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" role="presentation" class="w-full h-full" fill="none" viewBox="0 0 10 14">
+                                      <path fill-rule="evenodd" clip-rule="evenodd" d="M1.48177 0.814643C0.81532 0.448245 0 0.930414 0 1.69094V12.2081C0 12.991 0.858787 13.4702 1.52503 13.0592L10.5398 7.49813C11.1918 7.09588 11.1679 6.13985 10.4965 5.77075L1.48177 0.814643Z" fill="currentColor"/>
+                                    </svg>
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                            <script src="{{ 'video.js' | asset_url }}" defer></script>
+                          {% when 'external_video' %}
+                            {%- if media.host == 'youtube' -%}
+                              <div x-intersect:leave="$store.xVideo.pause($el)" class="external-video w-full relative pb-[50%] h-0">
+                                {% # theme-check-disable %}
+                                <picture
+                                  class="cursor-pointer w-full h-full absolute top-0 left-0 video">
+                                  <source type="image/webp" srcset="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                  <source type="image/jpeg" srcset="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                  <img
+                                    src="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}"
+                                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                    class="w-full h-full object-cover"
+                                    alt="{{ product.title | escape }}"
+                                    width="512"
+                                    height="288"
+                                  />
+                                </picture>
+                                {% # theme-check-enable %}
+                                <button 
+                                  class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                  @click.prevent="$store.xVideo.externalLoad($el, 'youtube', '{{ media.external_id }}', false, 'video-zoom-product')"
+                                  aria-label="image-cover"
+                                >
+                                  <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                    {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+                                  </span>
+                                </button>
+                              </div>
+                            {%- else -%}
+                              {%- capture options -%}
+                                {
+                                  'alt': '{{ media.preview_image | default: product.title | escape }}',
+                                  'width': 1280
+                                }
+                              {%- endcapture -%}
+                              <div x-intersect:leave="$store.xVideo.pause($el)" class="external-video w-full relative pb-[50%] h-0 overflow-hidden">
+                                <div x-intersect="$store.xVideo.renderVimeoFacade($el, '{{ media.external_id }}', {{ options }})"></div>
+                                <button 
+                                  class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                  @click.prevent="$store.xVideo.externalLoad($el, 'vimeo', '{{ media.external_id }}', false, 'video-zoom-product')"
+                                  aria-label="image-cover"
+                                >
+                                  <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                    {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+                                  </span>
+                                </button>
+                              </div>    
+                            {%- endif -%}
+                            <script src="{{ 'video.js' | asset_url }}" defer></script>
+                          {% when 'model' %}
+                            <div class="w-full">
+                              <div class="relative h-0 w-full pb-[100%] lg:pb-[55%]">
+                                <button
+                                  type="button"
+                                  data-media-id="{{ media.id }}"
+                                  @click="productModelLoadMedia"
+                                  class="absolute top-0 left-0 right-0 bottom-0"
+                                >
+                                  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                                    <span class="w-12 h-12 lg:w-16 lg:h-16 inline-block lg:p-4 p-2 bg-[rgba(var(--background-color),1)] rounded-full border">
+                                      {%- render 'icon-media', icon: 'icon-3d-model' -%}
+                                    </span>
+                                  </div>
+                                  {% # theme-check-disable ImgLazyLoading %}
+                                  <img
+                                    srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                                    {{ media.preview_image | image_url: width: 450 }} 450w,
+                                    {{ media.preview_image | image_url: width: 750 }} 750w,
+                                    {{ media.preview_image | image_url: width: 900 }} 900w,
+                                    {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                                    {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                                    {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                                    {{ media.preview_image | image_url: width: 2000 }} 2000w,
+                                    {{ media.preview_image | image_url: width: 3000 }} 3000w,
+                                    {{ media.preview_image | image_url: width: 3840 }} 3840w,
+                                      {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                                    src="{{ media | image_url: width: 1920 }}"
+                                    sizes="100vw"
+                                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                    width="{{ media.preview_image.width }}"
+                                    height="{{ media.preview_image.height }}"
+                                    alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                    class="w-full h-full object-cover"
+                                  >
+                                  {% # theme-check-enable ImgLazyLoading %}
+                                </button>
+                                <template>
+                                  {{ media | media_tag: image_size: "2048x", toggleable: true }}
+                                </template>
+                                <button
+                                  class="button button--full-width product__xr-button hidden"
+                                  type="button"
+                                  aria-label="{{ 'products.product.xr_button_label' | t }}"
+                                  data-shopify-xr
+                                  data-shopify-model3d-id="{{ media.id }}"
+                                  data-shopify-title="title"
+                                  data-shopify-xr-hidden
+                                >
+                                  {% render 'icon-media', icon: 'icon-3d-model' %}
+                                  {{ 'products.product.xr_button' | t }}
+                                </button>
+                              </div>
+                            </div>
+                        {% endcase %}
+                      </div>
+                    </div>
+                  {% endif %}
+                {% endfor %} 
+              {% else %}
+                <div class="inline-flex h-full w-full flex-col">
+                  <div
+                    id="media-gallery-{{ section.id }}"
+                    class="x-splide splide visible overflow-hidden flex flex-1"
+                    x-intersect.once='$store.xSplide.load($el, {
+                      "speed": 1000, 
+                      "pagination": false,
+                      "mediaQuery": "min", 
+                      "updateOnMove": "true",
+                      {% if zoom_effect == 'gallery' and product.media.size > 1 -%}
+                        "thumbs": "x-zoom-thumbnail-{{ section.id }}",
+                        "thumbs_direction": "horizontal",
+                      {%- endif %}
+                      {% if is_rtl -%}
+                        "direction": "rtl",
+                      {%- endif %}
+                      "breakpoints": {
+                        300: {
+                          "perPage": 1,
+                          "perMove": 1
+                        },
+                        768: {
+                          "perPage": 1,
+                          "perMove": 1
+                        },
+                        1024: {
+                          "perPage": 1,
+                          "perMove": 1,
+                        }
+                      },
+                      "classes": {
+                        "arrows" : "hidden", 
+                      },
+                      "events": [
+                        {
+                          "event": "ready",
+                          "callback": () => {
+                            document.dispatchEvent(new CustomEvent("eurus:zoom-image-ready:{{ section.id }}"));
+                          }
+                        }
+                      ]
+                    })'>
+                    {% if product.media.size > 1 %}
+                      <div class="splide__arrows block gap-3 lg:gap-0 mb-1 lg:mb-0 mt-5 lg:mt-0">
+                        <button
+                          class="splide__arrow splide__arrow--prev button-arrow block absolute top-1/2 -mt-6 pl-3 pr-3 pt-3 pb-3 rounded-full z-10 w-11 h-11 border border-solid lg:border-none rtl:rotate-180 after:text-[20px] left-0 rtl:left-auto rtl:right-0 duration-200 hover:opacity-100 disabled:cursor-not-allowed transition-all ease-in-out lg:-translate-x-full rtl:lg:translate-x-full disabled:opacity-30"
+                          aria-label="previous slide"
+                        >
+                          <span class="hidden">previous slide</span>
+                          {% render 'icon-labels-bags', icon: 'chevron-left' %}
+                        </button>
+                        <button
+                          class="splide__arrow splide__arrow--next button-arrow block absolute top-1/2 -mt-6 pl-3 pr-3 pt-3 pb-3 rounded-full z-10 w-11 h-11 border border-solid lg:border-none rtl:rotate-180 after:text-[20px] right-0 rtl:right-auto rtl:left-0 duration-200 hover:opacity-100 disabled:cursor-not-allowed transition-all ease-in-out lg:translate-x-full rtl:lg:-translate-x-full disabled:opacity-30"
+                          aria-label="next slide"
+                        >
+                          <span class="hidden">next slide</span>
+                          {% render 'icon-labels-bags', icon: 'chevron-right' %}
+                        </button>
+                      </div>
+                    {% endif %}
+                    <div class="splide__track pt-16 flex flex-1 {% if zoom_effect != 'gallery' %} pb-8{% endif %}">
+                      <div class="splide__list h-full w-full">
+                        {% if product.selected_or_first_available_variant.featured_media.id and show_first_image_avaiable %}
+                          {% liquid assign first_media = product.media | where : 'id', product.selected_or_first_available_variant.featured_media.id %}
+                          {% for media in first_media %}
+                            {% liquid 
+                              assign data_media_type = ""
+                              if media.preview_image.alt != blank and show_media_with_variant_selected and media.preview_image.alt contains "#"
+                                assign data_variant_media = media.preview_image.alt | split: "#" | last | split: '_'
+                                for value in data_variant_media
+                                  for option in media_with_option
+                                    assign media_value = option | append: '-' | append: value | handle
+                                    if option_with_value contains media_value
+                                      assign data_media_type = data_media_type | append: '_' | append: media_value
+                                      break
+                                    endif
+                                  endfor
+                                endfor
+                                assign first = data_media_type | slice: 0
+                                if first == '_'
+                                  assign data_media_type = data_media_type | slice: 1, data_media_type.size
+                                endif
+                              endif
+                            %}
+                            <div 
+                              x-slide-index="{{ media.position }}" class="image-zoom media-slide h-full relative splide__slide x-splide-slide {% if product.featured_media.id == media.id %} featured-image{% endif %}"
+                              id="{{ media.position }}-image-zoom-{{ section.id }}"
+                              {% if show_media_with_tag_alt %}
+                                data-media-option="{{ media_with_option | join: "_" | handle }}"
+                                data-media-type="{{ data_media_type }}"
+                              {% elsif show_media_with_variant_selected and show_media_with_tag_alt == false %}
+                                data-media-option="{% if variant_images contains media.src %}{{ section.id }}-{{ media.id }}{% endif %}"
+                              {% endif %}
+                              {{ block.shopify_attributes }}
+                            >
+                              <div class="flex justify-center items-center h-full">
+                                {% case media.media_type %}
+                                  {% when 'image' %}
+                                    {% # theme-check-disable ImgLazyLoading %}
+                                    <img
+                                      srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                                      {{ media.preview_image | image_url: width: 450 }} 450w,
+                                      {{ media.preview_image | image_url: width: 750 }} 750w,
+                                      {{ media.preview_image | image_url: width: 900 }} 900w,
+                                      {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                                      {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                                      {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                                      {{ media.preview_image | image_url: width: 2000 }} 2000w,
+                                      {{ media.preview_image | image_url: width: 3000 }} 3000w,
+                                      {{ media.preview_image | image_url: width: 3840 }} 3840w,
+                                      {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                                      src="{{ media.preview_image | image_url: width: 1200 }}"
+                                      alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                      {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                      sizes="100vw"
+                                      width="{{ media.preview_image.width }}"
+                                      height="{{ media.preview_image.height }}"
+                                      class="w-full object-contain h-full max-w-3xl"
+                                    >
+                                    {% # theme-check-enable ImgLazyLoading %}
+                                  {% when 'video' %}
+                                    {% liquid
+                                      if settings.enable_lazy_loading_image
+                                        assign loading = 'lazy'
+                                      else
+                                        assign loading = 'eager'
+                                      endif
+                                    %}
+                                    <div class="w-full max-w-3xl relative pb-[50%] external-video" x-intersect:leave="$store.xVideo.pause($el)">
+                                      <div @click.prevent="$store.xVideo.mp4Thumbnail($el)">
+                                        {{ media | media_tag: image_size: '1024x', autoplay: false, loop: section.settings.enable_video_loop, controls: true, loading: loading, class: 'w-full h-full absolute video top-1/2 -translate-y-1/2' | replace: '<img ', '<img loading="lazy" alt="" ' }}
+                                        <img
+                                          srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                                            {{ media.preview_image | image_url: width: 450 }} 450w,
+                                            {{ media.preview_image | image_url: width: 750 }} 750w,
+                                            {{ media.preview_image | image_url: width: 900 }} 900w,
+                                            {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                                            {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                                            {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                                            {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                                          src="{{ media.preview_image | image_url: width: 1780 }}"
+                                          alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                          sizes="{{ sizes }}"
+                                          {% if settings.enable_lazy_loading_image %}{{ loading }}{% else %}loading="eager"{% endif %}
+                                          width="{{ media.preview_image.width }}"
+                                          height="{{ media.preview_image.height }}"
+                                          class="img-thumbnail duration-300 absolute w-full h-full object-cover"
+                                        >
+                                        {% # theme-check-enable ImgLazyLoading %}
+                                        <button 
+                                          class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                          aria-label="image-cover"
+                                        >
+                                          <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                            <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" role="presentation" class="w-full h-full" fill="none" viewBox="0 0 10 14">
+                                              <path fill-rule="evenodd" clip-rule="evenodd" d="M1.48177 0.814643C0.81532 0.448245 0 0.930414 0 1.69094V12.2081C0 12.991 0.858787 13.4702 1.52503 13.0592L10.5398 7.49813C11.1918 7.09588 11.1679 6.13985 10.4965 5.77075L1.48177 0.814643Z" fill="currentColor"/>
+                                            </svg>
+                                          </span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <script src="{{ 'video.js' | asset_url }}" defer></script>
+                                  {% when 'external_video' %}
+                                    {%- if media.host == 'youtube' -%}
+                                      <div x-intersect:leave="$store.xVideo.pause($el)" class="external-video w-full relative pb-[50%] h-0 max-w-3xl">
+                                        {% # theme-check-disable %}
+                                        <picture
+                                          class="cursor-pointer w-full h-full absolute top-0 left-0 video">
+                                          <source type="image/webp" srcset="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                          <source type="image/jpeg" srcset="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                          <img
+                                            src="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}"
+                                            {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                            class="w-full h-full object-cover"
+                                            alt="{{ product.title | escape }}"
+                                            width="512"
+                                            height="288"
+                                          />
+                                        </picture>
+                                        {% # theme-check-enable %}
+                                        <button
+                                          class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                          @click.prevent="$store.xVideo.externalLoad($el, 'youtube', '{{ media.external_id }}', false, 'video-zoom-product')"
+                                          aria-label="image-cover"
+                                        >
+                                          <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                            {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+                                          </span>
+                                        </button>
+                                      </div>
+                                    {%- else -%}
+                                      {%- capture options -%}
+                                        {
+                                          'alt': '{{ media.preview_image | default: product.title | escape }}',
+                                          'width': 1280
+                                        }
+                                      {%- endcapture -%}
+                                      <div x-intersect:leave="$store.xVideo.pause($el)" class="external-video w-full relative pb-[50%] h-0 overflow-hidden">
+                                        <div x-intersect="$store.xVideo.renderVimeoFacade($el, '{{ media.external_id }}', {{ options }})"></div>
+                                        <button 
+                                          class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                          @click.prevent="$store.xVideo.externalLoad($el, 'vimeo', '{{ media.external_id }}', false, 'video-zoom-product')"
+                                          aria-label="image-cover"
+                                        >
+                                          <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                            {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+                                          </span>
+                                        </button>
+                                      </div>    
+                                    {%- endif -%}
+                                    <script src="{{ 'video.js' | asset_url }}" defer></script>
+                                  {% when 'model' %}
+                                    <div class="w-full max-w-3xl">
+                                      <div class="relative h-0 w-full pb-[100%] lg:pb-[55%]">
+                                        <button
+                                          type="button"
+                                          data-media-id="zoom-{{ media.id }}"
+                                          @click="productModelLoadMedia"
+                                          class="absolute top-0 left-0 right-0 bottom-0"
+                                        >
+                                          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                                            <span class="w-12 h-12 lg:w-16 lg:h-16 inline-block lg:p-4 p-2 bg-[rgba(var(--background-color),1)] rounded-full border">
+                                              {%- render 'icon-media', icon: 'icon-3d-model' -%}
+                                            </span>
+                                          </div>
+                                          {% # theme-check-disable ImgLazyLoading %}
+                                          <img
+                                            srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                                            {{ media.preview_image | image_url: width: 450 }} 450w,
+                                            {{ media.preview_image | image_url: width: 750 }} 750w,
+                                            {{ media.preview_image | image_url: width: 900 }} 900w,
+                                            {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                                            {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                                            {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                                            {{ media.preview_image | image_url: width: 2000 }} 2000w,
+                                            {{ media.preview_image | image_url: width: 3000 }} 3000w,
+                                            {{ media.preview_image | image_url: width: 3840 }} 3840w,
+                                              {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                                            src="{{ media | image_url: width: 1920 }}"
+                                            sizes="100vw"
+                                            {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                            width="{{ media.preview_image.width }}"
+                                            height="{{ media.preview_image.height }}"
+                                            alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                            class="w-full h-full object-cover"
+                                          >
+                                          {% # theme-check-enable ImgLazyLoading %}
+                                        </button>
+                                        <template>
+                                          {{ media | media_tag: image_size: "2048x", toggleable: true }}
+                                        </template>
+                                        <button
+                                          class="button button--full-width product__xr-button hidden"
+                                          type="button"
+                                          aria-label="{{ 'products.product.xr_button_label' | t }}"
+                                          data-shopify-xr
+                                          data-shopify-model3d-id="zoom-{{ media.id }}"
+                                          data-shopify-title="title"
+                                          data-shopify-xr-hidden
+                                        >
+                                          {% render 'icon-media', icon: 'icon-3d-model' %}
+                                          {{ 'products.product.xr_button' | t }}
+                                        </button>
+                                      </div>
+                                    </div>
+                                {% endcase %}
+                              </div>
+                            </div>
+                          {% endfor %}
+                        {% endif %}
+                        {% for media in product.media %}
+                          {% liquid 
+                            assign data_media_type = ""
+                            if media.preview_image.alt != blank and show_media_with_variant_selected and media.preview_image.alt contains "#"
+                              assign data_variant_media = media.preview_image.alt | split: "#" | last | split: '_'
+                              for value in data_variant_media
+                                for option in media_with_option
+                                  assign media_value = option | append: '-' | append: value | handle
+                                  if option_with_value contains media_value
+                                    assign data_media_type = data_media_type | append: '_' | append: media_value
+                                    break
+                                  endif
+                                endfor
+                              endfor
+                              assign first = data_media_type | slice: 0
+                              if first == '_'
+                                assign data_media_type = data_media_type | slice: 1, data_media_type.size
+                              endif
+                            endif
+                          %}
+                          {% if media.id != product.selected_or_first_available_variant.featured_media.id or show_first_image_avaiable == false %}
+                            <div 
+                              x-slide-index="{{ media.position }}" class="image-zoom media-slide h-full relative splide__slide x-splide-slide {% if product.featured_media.id == media.id %} featured-image{% endif %}"
+                              id="{{ media.position }}-image-zoom-{{ section.id }}"
+                              {% if show_media_with_tag_alt %}
+                                data-media-option="{{ media_with_option | join: "_" | handle }}"
+                                data-media-type="{{ data_media_type }}"
+                              {% elsif show_media_with_variant_selected and show_media_with_tag_alt == false %}
+                                data-media-option="{% if variant_images contains media.src %}{{ section.id }}-{{ media.id }}{% endif %}"
+                              {% endif %}
+                              {{ block.shopify_attributes }}
+                            >
+                              <div class="flex justify-center items-center h-full">
+                                {% case media.media_type %}
+                                  {% when 'image' %}
+                                    {% # theme-check-disable ImgLazyLoading %}
+                                    <img
+                                      srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                                      {{ media.preview_image | image_url: width: 450 }} 450w,
+                                      {{ media.preview_image | image_url: width: 750 }} 750w,
+                                      {{ media.preview_image | image_url: width: 900 }} 900w,
+                                      {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                                      {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                                      {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                                      {{ media.preview_image | image_url: width: 2000 }} 2000w,
+                                      {{ media.preview_image | image_url: width: 3000 }} 3000w,
+                                      {{ media.preview_image | image_url: width: 3840 }} 3840w,
+                                      {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                                      src="{{ media.preview_image | image_url: width: 1200 }}"
+                                      alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                      {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                      sizes="100vw"
+                                      width="{{ media.preview_image.width }}"
+                                      height="{{ media.preview_image.height }}"
+                                      class="w-full object-contain h-full max-w-3xl"
+                                    >
+                                    {% # theme-check-enable ImgLazyLoading %}
+                                  {% when 'video' %}
+                                    {% liquid
+                                      if settings.enable_lazy_loading_image
+                                        assign loading = 'lazy'
+                                      else
+                                        assign loading = 'eager'
+                                      endif
+                                    %}
+                                    <div class="w-full max-w-3xl relative pb-[50%] external-video" x-intersect:leave="$store.xVideo.pause($el)">
+                                      <div @click.prevent="$store.xVideo.mp4Thumbnail($el)">
+                                        {{ media | media_tag: image_size: '1024x', autoplay: false, loop: section.settings.enable_video_loop, controls: true, loading: loading, class: 'w-full h-full absolute video top-1/2 -translate-y-1/2' | replace: '<img ', '<img loading="lazy" alt="" ' }}
+                                        <img
+                                          srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                                            {{ media.preview_image | image_url: width: 450 }} 450w,
+                                            {{ media.preview_image | image_url: width: 750 }} 750w,
+                                            {{ media.preview_image | image_url: width: 900 }} 900w,
+                                            {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                                            {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                                            {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                                            {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                                          src="{{ media.preview_image | image_url: width: 1780 }}"
+                                          alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                          sizes="{{ sizes }}"
+                                          {% if settings.enable_lazy_loading_image %}{{ loading }}{% else %}loading="eager"{% endif %}
+                                          width="{{ media.preview_image.width }}"
+                                          height="{{ media.preview_image.height }}"
+                                          class="img-thumbnail duration-300 absolute w-full h-full object-cover"
+                                        >
+                                        {% # theme-check-enable ImgLazyLoading %}
+                                        <button 
+                                          class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                          aria-label="image-cover"
+                                        >
+                                          <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                            <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" role="presentation" class="w-full h-full" fill="none" viewBox="0 0 10 14">
+                                              <path fill-rule="evenodd" clip-rule="evenodd" d="M1.48177 0.814643C0.81532 0.448245 0 0.930414 0 1.69094V12.2081C0 12.991 0.858787 13.4702 1.52503 13.0592L10.5398 7.49813C11.1918 7.09588 11.1679 6.13985 10.4965 5.77075L1.48177 0.814643Z" fill="currentColor"/>
+                                            </svg>
+                                          </span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <script src="{{ 'video.js' | asset_url }}" defer></script>
+                                  {% when 'external_video' %}
+                                    {%- if media.host == 'youtube' -%}
+                                      <div x-intersect:leave="$store.xVideo.pause($el)" class="external-video w-full relative pb-[50%] h-0 max-w-3xl">
+                                        {% # theme-check-disable %}
+                                        <picture
+                                          class="cursor-pointer w-full h-full absolute top-0 left-0 video">
+                                          <source type="image/webp" srcset="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                          <source type="image/jpeg" srcset="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                          <img
+                                            src="{{ media.external_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}"
+                                            {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                            class="w-full h-full object-cover"
+                                            alt="{{ product.title | escape }}"
+                                            width="512"
+                                            height="288"
+                                          />
+                                        </picture>
+                                        {% # theme-check-enable %}
+                                        <button 
+                                          class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                          @click.prevent="$store.xVideo.externalLoad($el, 'youtube', '{{ media.external_id }}', false, 'video-zoom-product')"
+                                          aria-label="image-cover"
+                                        >
+                                          <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                            {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+                                          </span>
+                                        </button>
+                                      </div>
+                                    {%- else -%}
+                                      {%- capture options -%}
+                                        {
+                                          'alt': '{{ media.preview_image | default: product.title | escape }}',
+                                          'width': 1280
+                                        }
+                                      {%- endcapture -%}
+                                      <div x-intersect:leave="$store.xVideo.pause($el)" class="external-video w-full relative pb-[50%] h-0 overflow-hidden">
+                                        <div x-intersect="$store.xVideo.renderVimeoFacade($el, '{{ media.external_id }}', {{ options }})"></div>
+                                        <button 
+                                          class="button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.3)] bg-opacity-30 disabled:cursor-not-allowed"
+                                          @click.prevent="$store.xVideo.externalLoad($el, 'vimeo', '{{ media.external_id }}', false, 'video-zoom-product')"
+                                          aria-label="image-cover"
+                                        >
+                                          <span class="pointer-events-none duration-200 icon-button-play bg-button-play absolute w-6 h-6 md:w-10 md:h-10 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                            {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+                                          </span>
+                                        </button>
+                                      </div>    
+                                    {%- endif -%}
+                                    <script src="{{ 'video.js' | asset_url }}" defer></script>
+                                  {% when 'model' %}
+                                    <div class="w-full max-w-3xl">
+                                      <div class="relative h-0 w-full pb-[100%] lg:pb-[55%]">
+                                        <button
+                                          type="button"
+                                          data-media-id="zoom-{{ media.id }}"
+                                          @click="productModelLoadMedia"
+                                          class="absolute top-0 left-0 right-0 bottom-0"
+                                        >
+                                          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                                            <span class="w-12 h-12 lg:w-16 lg:h-16 inline-block lg:p-4 p-2 bg-[rgba(var(--background-color),1)] rounded-full border">
+                                              {%- render 'icon-media', icon: 'icon-3d-model' -%}
+                                            </span>
+                                          </div>
+                                          {% # theme-check-disable ImgLazyLoading %}
+                                          <img
+                                            srcset="{{ media.preview_image | image_url: width: 375 }} 375w,
+                                            {{ media.preview_image | image_url: width: 450 }} 450w,
+                                            {{ media.preview_image | image_url: width: 750 }} 750w,
+                                            {{ media.preview_image | image_url: width: 900 }} 900w,
+                                            {{ media.preview_image | image_url: width: 1100 }} 1100w,
+                                            {{ media.preview_image | image_url: width: 1500 }} 1500w,
+                                            {{ media.preview_image | image_url: width: 1780 }} 1780w,
+                                            {{ media.preview_image | image_url: width: 2000 }} 2000w,
+                                            {{ media.preview_image | image_url: width: 3000 }} 3000w,
+                                            {{ media.preview_image | image_url: width: 3840 }} 3840w,
+                                              {{ media.preview_image | image_url }} {{ media.preview_image.width }}w"
+                                            src="{{ media | image_url: width: 1920 }}"
+                                            sizes="100vw"
+                                            {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                            width="{{ media.preview_image.width }}"
+                                            height="{{ media.preview_image.height }}"
+                                            alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                            class="w-full h-full object-cover"
+                                          >
+                                          {% # theme-check-enable ImgLazyLoading %}
+                                        </button>
+                                        <template>
+                                          {{ media | media_tag: image_size: "2048x", toggleable: true }}
+                                        </template>
+                                        <button
+                                          class="button button--full-width product__xr-button hidden"
+                                          type="button"
+                                          aria-label="{{ 'products.product.xr_button_label' | t }}"
+                                          data-shopify-xr
+                                          data-shopify-model3d-id="zoom-{{ media.id }}"
+                                          data-shopify-title="title"
+                                          data-shopify-xr-hidden
+                                        >
+                                          {% render 'icon-media', icon: 'icon-3d-model' %}
+                                          {{ 'products.product.xr_button' | t }}
+                                        </button>
+                                      </div>
+                                    </div>
+                                {% endcase %}
+                              </div>
+                            </div>
+                          {% endif %}
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                  {% if zoom_effect == 'gallery' %}
+                    {% if product.media.size > 1 %}
+                      <div
+                        id="x-zoom-thumbnail-{{ section.id }}"
+                        class="select-none flex justify-center duration-150 overflow-auto pt-1 pb-3 md:pt-2 md:pb-8 hide-scrollbar scroll-smooth{% if is_rtl %} rtl{% endif %}{% if product.media.size > 1 %} block{% else %} md:hidden{% endif %}"
+                        x-ref="thumbnail"
+                        :class="thumbnailGrabbingClass"
+                        x-on:mousedown="thumbnailHandleMouseDown($event)"
+                        x-on:mousemove="thumbnailHandleMouseMove($event)"
+                        x-on:mouseleave="thumbnailHandleMouseLeave()"
+                        x-on:mouseup="thumbnailHandleMouseUp()"
+                      >
+                        <div class="w-fit max-w-full flex gap-x-1 md:gap-x-2 gap-y-1.5w-fit h-14 md:h-24">
+                          {% if product.media.size > 0 %}
+                            {% if product.selected_or_first_available_variant.featured_media.id and show_first_image_avaiable %}
+                              {% liquid assign first_media = product.media | where : 'id', product.selected_or_first_available_variant.featured_media.id %}
+                              {% for media in first_media %}
+                                {% liquid 
+                                  assign data_media_type = ""
+                                  if media.preview_image.alt != blank and show_media_with_variant_selected and media.preview_image.alt contains "#"
+                                    assign data_variant_media = media.preview_image.alt | split: "#" | last | split: '_'
+                                    for value in data_variant_media
+                                      for option in media_with_option
+                                        assign media_value = option | append: '-' | append: value | handle
+                                        if option_with_value contains media_value
+                                          assign data_media_type = data_media_type | append: '_' | append: media_value
+                                          break
+                                        endif
+                                      endfor
+                                    endfor
+                                    assign first = data_media_type | slice: 0
+                                    if first == '_'
+                                      assign data_media_type = data_media_type | slice: 1, data_media_type.size
+                                    endif
+                                  endif
+                                %}
+                                <div 
+                                  id="x-zoom-thumbnail-{{ section.id }}-{{ media.id }}"
+                                  {% if show_media_with_tag_alt %}
+                                    data-media-option="{{ media_with_option | join: "_" | handle }}"
+                                    data-media-type="{{ data_media_type }}"
+                                  {% elsif show_media_with_variant_selected and show_media_with_tag_alt == false %}
+                                    data-media-option="{% if variant_images contains media.src %}{{ section.id }}-{{ media.id }}{% endif %}"
+                                  {% endif %}
+                                  data-media-id="zoom-{{ section.id }}-{{ media.id }}"
+                                  class="x-thumbnail media-thumbnail x-thumbnail-{{ section.id }}-{{ media.id }}{% if product.featured_media.id == media.id %} featured-image{% endif %} relative select-none opacity-30 w-14 md:w-24 h-full"
+                                >
+                                  <button class="relative block w-14 md:w-24 h-full{% if rounded_corner_image %}{% unless mobile_media_full %} rounded-[10px]{% endunless %} md:rounded-[10px] overflow-hidden{% endif %}" aria-label="image-thumbnai">
+                                    {% # theme-check-disable ImgLazyLoading %}
+                                    <img
+                                      src="{{ media.preview_image | image_url: width: 150 }}"
+                                      alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                      {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                      width="{{ media.preview_image.width }}"
+                                      height="{{ media.preview_image.height }}"
+                                      class="animate-Xpulse skeleton-image w-full object-cover h-full select-none pointer-events-none"
+                                      onload='this.classList.remove("animate-Xpulse", "skeleton-image");'
+                                    >
+                                    {% # theme-check-enable ImgLazyLoading %}
+                                    {%- if media.media_type == 'video' or media.media_type == 'external_video' -%}
+                                      <div class="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 w-6 h-6">
+                                        <span class="w-6 h-6 inline-block p-1 bg-[rgba(var(--background-color),1)] rounded-full border">
+                                          {%- render 'icon-media', icon: 'icon-play', class: 'w-full h-full' -%}
+                                        </span>
+                                      </div>
+                                    {%- endif -%}
+                                    {%- if media.media_type == 'model' -%}
+                                      <div class="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 w-6 h-6">
+                                        <span class="w-6 h-6 inline-block p-1 bg-[rgba(var(--background-color),1)] rounded-full border">
+                                          {%- render 'icon-media', icon: 'icon-3d-model' -%}
+                                        </span>
+                                      </div>
+                                    {%- endif -%}
+                                  </button>
+                                </div>
+                              {% endfor %}
+                            {% endif %}
+                            {% for media in product.media %}
+                              {% liquid 
+                                assign data_media_type = ""
+                                if media.preview_image.alt and show_media_with_variant_selected and media.preview_image.alt contains "#"
+                                  assign data_variant_media = media.preview_image.alt | split: "#" | last | split: '_'
+                                  for value in data_variant_media
+                                    for option in media_with_option
+                                      assign media_value = option | append: '-' | append: value | handle
+                                      if option_with_value contains media_value
+                                        assign data_media_type = data_media_type | append: '_' | append: media_value
+                                        break
+                                      endif
+                                    endfor
+                                  endfor
+                                  assign first = data_media_type | slice: 0
+                                  if first == '_'
+                                    assign data_media_type = data_media_type | slice: 1, data_media_type.size
+                                  endif
+                                endif
+                              %}
+                              {% if media.id != product.selected_or_first_available_variant.featured_media.id or show_first_image_avaiable == false %}
+                                <div 
+                                  id="x-zoom-thumbnail-{{ section.id }}-{{ media.id }}"
+                                  {% if show_media_with_tag_alt %}
+                                    data-media-option="{{ media_with_option | join: "_" | handle }}"
+                                    data-media-type="{{ data_media_type }}"
+                                  {% elsif show_media_with_variant_selected and show_media_with_tag_alt == false %}
+                                    data-media-option="{% if variant_images contains media.src %}{{ section.id }}-{{ media.id }}{% endif %}"
+                                  {% endif %}
+                                  data-media-id="zoom-{{ section.id }}-{{ media.id }}"
+                                  class="x-thumbnail media-thumbnail x-thumbnail-{{ section.id }}-{{ media.id }}{% if product.featured_media.id == media.id %} featured-image{% endif %} relative select-none opacity-30 w-14 md:w-24 h-full"
+                                >
+                                  <button class="relative block w-14 md:w-24 h-full{% if rounded_corner_image %}{% unless mobile_media_full %} rounded-[10px]{% endunless %} md:rounded-[10px] overflow-hidden{% endif %}" aria-label="image-thumbnai">
+                                    {% # theme-check-disable ImgLazyLoading %}
+                                    <img
+                                      src="{{ media.preview_image | image_url: width: 150 }}"
+                                      alt="{{ media.preview_image.alt | split: "#" | first | escape }}"
+                                      {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                      width="{{ media.preview_image.width }}"
+                                      height="{{ media.preview_image.height }}"
+                                      class="animate-Xpulse skeleton-image w-full object-cover h-full select-none pointer-events-none"
+                                      onload='this.classList.remove("animate-Xpulse", "skeleton-image");'
+                                    >
+                                    {% # theme-check-enable ImgLazyLoading %}
+                                    {%- if media.media_type == 'video' or media.media_type == 'external_video' -%}
+                                      <div class="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 w-6 h-6">
+                                        <span class="w-6 h-6 inline-block p-1 bg-[rgba(var(--background-color),1)] rounded-full border">
+                                          {%- render 'icon-media', icon: 'icon-play', class: 'w-full h-full' -%}
+                                        </span>
+                                      </div>
+                                    {%- endif -%}
+                                    {%- if media.media_type == 'model' -%}
+                                      <div class="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 w-6 h-6">
+                                        <span class="w-6 h-6 inline-block p-1 bg-[rgba(var(--background-color),1)] rounded-full border">
+                                          {%- render 'icon-media', icon: 'icon-3d-model' -%}
+                                        </span>
+                                      </div>
+                                    {%- endif -%}
+                                  </button>
+                                </div>
+                              {% endif %}
+                            {% endfor %}
+                          {% else %}
+                            <div class="x-thumbnail media-thumbnail relative opacity-30 w-full aspect-square">
+                              <div class="relative pb-[100%]">
+                                {% render 'icon-placeholder', icon: 'icon-product', class: 'bg-[#c9c9c9] w-full h-full absolute' %}
+                              </div>
+                            </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </template>
+    {% endif %}
+  </div>
+</div>
+<script src="{{ 'product-media.js' | asset_url }}" defer></script>

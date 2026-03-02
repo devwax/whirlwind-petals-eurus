@@ -1,0 +1,262 @@
+{% comment %}
+    Renders the progress bar for volume pricing table
+
+    Accepts:
+    - block: {object} the block object of volume pricing table block
+    Usage:
+    {% render 'volume-pricing-progress-bar', block: block %}
+{% endcomment %}
+
+<div id="x-pricing-progress-bar-{{ section.id }}" class="x-pricing-progress-bar-container">
+  {% liquid
+    assign is_slider = false
+    if product.selected_or_first_available_variant.quantity_price_breaks.size > 3
+      assign is_slider = true
+    endif                                           
+    
+    assign text_size = settings.text_base_size | times: 0.00875
+    assign text_size_mobile = settings.text_base_size | times: 0.007875
+
+    assign product_quantity_in_cart = 0
+    for item in cart.items
+      if product.selected_or_first_available_variant.id == item.variant_id
+        assign product_quantity_in_cart = product_quantity_in_cart | plus: item.quantity
+      endif
+    endfor
+
+    assign goal_reached_message_show = false
+    assign goal_reached_value = 0  
+    assign next_goal_reached_needed = 0
+    assign next_goal_reached_value = 0
+    assign previous_price_break_min_msg = 0
+    for price_break in product.selected_or_first_available_variant.quantity_price_breaks
+      if product_quantity_in_cart >= price_break.minimum_quantity
+        if product_quantity_in_cart == price_break.minimum_quantity
+          assign goal_reached_message_show = true
+        endif
+        assign goal_reached_value = price_break.price | money
+      endif
+
+      assign current_min_qty_msg = price_break.minimum_quantity
+      
+
+      assign is_prev_goal_reached_msg = false
+      if product_quantity_in_cart >= previous_price_break_min_msg
+        assign is_prev_goal_reached_msg = true
+      endif
+
+      if is_prev_goal_reached_msg
+        assign range_msg = current_min_qty_msg | minus: previous_price_break_min_msg
+        assign progress_qty_msg = product_quantity_in_cart | minus: previous_price_break_min_msg
+        assign next_goal_reached_needed = range_msg | minus: progress_qty_msg
+        assign next_goal_reached_value = price_break.price | money
+      endif
+      assign previous_price_break_min_msg = current_min_qty_msg
+    endfor      
+    
+    assign previous_price_break_min = 0
+  %}        
+  {% if goal_reached_message_show or next_goal_reached_needed < 0 %}
+    {% liquid
+      assign goal_reached_value = goal_reached_value | append: '/ea'
+      assign post_message = block.settings.post_goal_msg | replace: '[goal_label]', goal_reached_value
+    %}
+    <div class="x-post-progress-msg mb-4 rte">{{ post_message }}</div>
+  {% else %}
+    {% liquid
+      assign next_goal_reached_value = next_goal_reached_value | append: '/ea'
+      assign pre_message = block.settings.pre_goal_msg | replace: '[x]', next_goal_reached_needed | replace: '[goal_label]', next_goal_reached_value
+    %}
+    <div class="x-pre-progress-msg mb-4 rte">{{ pre_message }}</div>
+  {% endif %}  
+  {%- style -%}
+    .icon-size-{{ block.id }} {
+      width: {{ block.settings.icon_size }}px;
+      height: {{ block.settings.icon_size }}px;
+      color: var(--color-highlight);
+      border-color: var(--color-highlight);
+    }
+    .icon-size-{{ block.id }}.goal-reached, .none-icon-{{ block.id }}.goal-reached {
+      background: var(--color-highlight);
+      color: rgba(var(--colors-background))
+    }
+    {% unless block.settings.goal_reached_icon == "none" and block.settings.goal_icon == "none"  %}
+      .none-icon-padding:has(.none-icon-{{ block.id }}) {
+        padding-top: calc(({{ block.settings.icon_size | minus: 16 }}px / 2));
+        padding-bottom: calc(({{ block.settings.icon_size | minus: 16 }}px / 2));
+      }
+    {% endunless %}
+    .none-icon-{{ block.id }} {
+      width: 16px;
+      height: 16px;
+      color: var(--color-highlight);
+      border-color: var(--color-highlight);
+    }    
+    .padding-text-pricing {
+      padding-bottom: {{ text_size_mobile | times: 1.375 | plus: 0.375 }}rem;
+      padding-top: {{ text_size_mobile | times: 1.375 | plus: 0.375 }}rem
+    }
+    @media (min-width: 768px) {
+      .padding-text-pricing {
+        padding-bottom: {{ text_size | times: 1.375 | plus: 0.375 }}rem;
+        padding-top: {{ text_size | times: 1.375 | plus: 0.375 }}rem
+      }
+    }    
+    .pricing-progress::after {
+      content: "";
+      position: absolute;
+      border-color: red;
+      border-top: 1px solid;
+      top: -1px;
+      width: var(--progress)
+    }                         
+  {%- endstyle -%}             
+  <div 
+    class="x-pricing-progress-bar-list x-splide splide visible"
+    id="x-pricing-progress-items-{{ section.id }}"
+    {% if is_slider -%}
+      x-intersect.once.margin.200px='$store.xSplide.load($el, {    
+        "speed": 1000, 
+        "pagination": false, 
+        "mediaQuery": "min", 
+        "updateOnMove": "true",
+        "pauseOnHover": true,
+        "pauseOnFocus": false,
+        "arrows": false,
+        "drag": true,
+        "autoWidth": true,
+        "gap": "0px",
+        "focus": "center",
+        "breakpoints": {
+          300: {          
+            "perPage": 3,
+            "perMove": 3
+          },
+          768: {
+            "perPage": 3,
+            "perMove": 3
+          },
+          1024: {
+            {% if product.selected_or_first_available_variant.quantity_price_breaks.size <= 5 -%} 
+              "destroy": true,
+            {% else -%}
+              "destroy": false,
+            {%- endif %}
+            "perPage": 5,
+            "perMove": 5
+          }
+        },
+        "events": [
+          {
+            "event": "ready",
+            "callback": () => {
+              document.dispatchEvent(new CustomEvent("eurus:{{ block.id }}:splide-ready"));
+            }
+          }
+        ]
+      })'
+    {%- endif -%}
+  >                            
+    <div class="{% if is_slider %} splide__track overflow-x-clip overflow-y-visible md:cursor-grab{% endif %}">
+      <div class="splide__list flex items-center">                              
+        {%- for price_break in product.selected_or_first_available_variant.quantity_price_breaks -%}
+          {% liquid
+            assign current_min_qty = price_break.minimum_quantity | times: 1.0
+            assign price_break_price = price_break.price | money
+
+            assign is_prev_goal_reached = false
+            if product_quantity_in_cart >= previous_price_break_min 
+              assign is_prev_goal_reached = true
+            endif
+
+            if is_prev_goal_reached
+              assign range = current_min_qty | minus: previous_price_break_min
+              assign progress_qty = product_quantity_in_cart | minus: previous_price_break_min
+
+              if progress_qty > range
+                assign process = 100
+              elsif progress_qty < 0
+                assign process = 0
+              else
+                assign process = progress_qty | times: 100 | divided_by: range
+              endif
+            else
+              assign process = 0
+            endif
+
+            assign previous_price_break_min = current_min_qty
+          %}
+          {% if is_slider %}
+            {% style %}
+              .x-pricing-progress-bar-item {
+                width: calc((100% / 3) - (2rem / {{ forloop.length | minus: 1 }}));
+              }
+              .x-pricing-progress-bar-item.last-item {
+                width: calc((100% / 3) + 2rem);
+              }            
+              @media (min-width: 1024px) {
+                .x-pricing-progress-bar-item {
+                  width: calc((100% / 5) - (2rem / {{ forloop.length | minus: 1 }}));
+                }
+                .x-pricing-progress-bar-item.last-item {
+                  width: calc((100% / 5) + 2rem);
+                }
+              }
+            {% endstyle %}
+          {% endif %}
+          <div class="x-pricing-progress-bar-item {% if forloop.last %}last-item{% endif %} {% unless is_slider %}flex-1{% endunless %} padding-text-pricing flex items-center splide__slide x-splide-slide">                          
+            <span class="border-t flex-1 pricing-progress relative" 
+              style="--progress: {{ process }}%"
+            ></span>
+            <div 
+              {% if is_slider %}
+                {% if product_quantity_in_cart >= price_break.minimum_quantity %}
+                  x-init="document.addEventListener(`eurus:{{ block.id }}:splide-ready`, () => {
+                    $el.closest('.x-pricing-progress-bar-list').splide.go({{ forloop.index }});
+                  });"
+                {% endif %} 
+                @click="$el.closest('.x-pricing-progress-bar-list').splide.go({{ forloop.index }})" 
+              {% endif %}
+              class="flex flex-col items-center relative none-icon-padding"
+            >
+              <span class="{% if product_quantity_in_cart >= price_break.minimum_quantity %}{% if block.settings.goal_reached_icon == "none" %}none-icon-{{ block.id }}{% else %}icon-size-{{ block.id }}{% endif %} goal-reached {% else %}{% if block.settings.goal_icon == "none" %}none-icon-{{ block.id }}{% else %}icon-size-{{ block.id }}{% endif %}{% endif %} p-1.5 border rounded-[999px]">
+                {% if product_quantity_in_cart >= price_break.minimum_quantity %}
+                  {% if block.settings.custom_goal_reached_icon == blank %}
+                    {% if block.settings.another_goal_reached_icon != blank and block.settings.goal_reached_icon == 'another_icon' %}
+                      {% render 'icon-new-alls', icon: block.settings.another_goal_reached_icon %}
+                    {% else %}
+                      {% render 'icon-labels-bags', icon: block.settings.goal_reached_icon %}
+                    {% endif %}
+                  {% else %}
+                    {{ block.settings.custom_goal_reached_icon }}
+                  {% endif %}
+                {% else %}
+                  {% if block.settings.custom_goal_icon == blank %}
+                    {% if block.settings.another_goal_icon != blank and block.settings.goal_icon == 'another_icon' %}
+                      {% render 'icon-new-alls', icon: block.settings.another_goal_icon %}
+                    {% else %}
+                      {% render 'icon-labels-bags', icon: block.settings.goal_icon %}
+                    {% endif %}
+                  {% else %}
+                    {{ block.settings.custom_goal_icon }}
+                  {% endif %}
+                {% endif %}
+              </span>
+              <span class="absolute top-full pt-1.5">                
+                {{- price_break.minimum_quantity -}}
+              </span>
+              <span class="absolute bottom-full pb-1.5">
+                {{- price_break_price -}}/ea
+              </span>
+            </div> 
+            {% if forloop.last %}
+              <span class="border-t w-8 pricing-progress relative" 
+                {% if product_quantity_in_cart >= price_break.minimum_quantity %} style="--progress: 100%" {% endif %}
+              ></span>  
+            {% endif %}
+          </div>
+        {%- endfor -%}
+      </div>
+    </div>
+  </div>
+</div>

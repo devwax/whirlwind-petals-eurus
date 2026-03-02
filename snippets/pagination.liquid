@@ -1,0 +1,122 @@
+{% comment %}
+    Renders a set of links for paginated results. Must be used within paginate tags.
+
+    Usage:
+    {% paginate results by 2 %}
+      {% render 'pagination', paginate: paginate, anchor: '#yourID' %}
+    {% endpaginate %}
+
+    Accepts:
+    - paginate: {Object}
+    - anchor: {String} (optional) This can be added so that on page reload it takes you to wherever you've placed your anchor tag.
+{% endcomment %}
+{%  liquid 
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+  assign count_item = paginate.current_offset | plus: products_per_page
+  if count_item > paginate.items
+    assign count_item = paginate.items
+  endif
+%}
+{%- if paginate.parts.size > 0 -%}
+  {% if pagination == 'click_to_load' %}
+    <div x-data="xPagination('{{ section.id }}')" id="btn-pagination-{{ section.id }}" class="w-full flex flex-col items-center justify-center">
+      <p class="mb-3">{{ 'general.global.showing_items' | t: item: count_item, total: paginate.items }}</p>
+      {%- if paginate.next -%}
+        <button class="button button-outline relative pl-9 pr-9 pt-3.5 pb-3.5" @click="loadData('{{ paginate.next.url }}{{ anchor }}')">
+          <span :class="loading && 'opacity-0'">{{ 'general.global.load_more' | t }}</span>
+          <div class="lg:inline-block animate-spin w-4 h-4 md:w-5 md:h-5 absolute top-[calc(50%-8px)] left-[calc(50%-8px)] md:top-[calc(50%-10px)] md:left-[calc(50%-10px)]" x-show="loading" x-cloak>
+            {% render 'icon-alls', icon: 'icon-loading' %}
+          </div>
+        </button>
+        <a href="{{ paginate.next.url }}{{ anchor }}" class="hidden">{{ 'general.pagination.next' | t }}</a>
+      {% endif %}
+    </div>
+    <script src="{{ 'pagination.js' | asset_url }}" defer></script>
+  {% elsif pagination == 'infinite_scroll' %}
+    <div x-data="xPagination('{{ section.id }}')" id="btn-pagination-{{ section.id }}" class="flex flex-col items-center justify-center">
+      <p class="mb-3">{{ 'general.global.showing_items' | t: item: count_item, total: paginate.items }}</p>
+      {%- if paginate.next -%}
+        <div class="lg:inline-block animate-spin w-4 h-4 md:w-5 md:h-5" x-show="loading" x-cloak>
+          {% render 'icon-alls', icon: 'icon-loading' %}
+        </div>
+        <a href="{{ paginate.next.url }}{{ anchor }}" aria-label="{{ 'general.pagination.next' | t }}" class="h-0.5 w-full opacity-0" x-intersect.once.margin.1000px="loadData('{{ paginate.next.url }}{{ anchor }}')"></a>
+      {% endif %}
+    </div>
+    <script src="{{ 'pagination.js' | asset_url }}" defer></script>
+  {% else %}
+    <div 
+    {% if focus_product %}x-init="if (localStorage.getItem('autofocus') === 'true') {$el.closest('.x-auto-focus').scrollIntoView({ behavior: 'smooth' });localStorage.setItem('autofocus', 'false');}"{% endif %}
+      class="md:max-w-[80%] flex items-center flex-wrap{% if blog_page %} justify-center md:justify-start{% endif %}{% if enable_blog_detail %} md:max-w-full justify-center border-t pt-3.5 md:pt-6 md:mt-1{% endif %}">
+      <nav class="pagination" role="navigation" aria-label="{{ 'general.pagination.label' | t }}">
+        <ul class="flex items-center justify-center lg:justify-start flex-wrap font-medium{% if paginate_type == 'underline' %} gap-2{% else %} gap-x-4{% endif %}" role="list">
+        {%- if paginate.previous -%}
+          <li class="{% if paginate_type == 'circle' %}rotate-180{% else %}{% if is_rtl %} ml-5{% else %} mr-5{% endif %} flex{% endif %}">
+            <a {% if focus_product %}@click="localStorage.setItem('autofocus', 'true');" {% endif %}href="{% if paginate.current_page == 2 %}{{ paginate.previous.url | replace: "page=1&", "" | replace: "?page=1", "" | replace: "&page=1", "" }}{% else %}{{ paginate.previous.url }}{{ anchor }}{% endif %}" class="{% if paginate_type == 'circle' %}md:p-4 p-3.5 block{% else %} flex items-center px-3 py-2 border-b-2 border-solid duration-200 paginate-underline{% endif %} disable-effect" aria-label="{{ 'general.pagination.previous' | t }}" data-instant-allow-query-string>
+              {% if paginate_type == 'underline' %}
+                <span class="h-2 w-3 inline-block rotate-90 rtl:-rotate-90">
+                  {% render 'icon-alls', icon: 'icon-caret' %}
+                </span>
+                <p class="{% if is_rtl %} mr-2{% else %} ml-2{% endif %}">{{ 'general.pagination.previous' | t }}</p>
+              {% else %}
+                <span class="w-4 h-4 block rtl:rotate-180">
+                  {% render 'icon-alls', icon: 'icon-arrow' %}
+                </span>
+              {% endif %}
+            </a>
+          </li>
+        {%- endif -%}
+        {%- for part in paginate.parts -%}
+          {% if part.title == 1 %}
+            {% assign first_part = part.url | replace: "page=1&", "" | replace: "?page=1", "" | replace: "&page=1", "" %}
+          {% endif %}
+          {% if paginate_type == 'circle' %}
+            <li class="my-1 md:w-14 md:h-14 flex items-center justify-center">
+              {%- if part.is_link -%}
+                <a {% if focus_product %}@click="localStorage.setItem('autofocus', 'true');" {% endif %}href="{% if part.title == 1 %}{{ first_part }}{% else %}{{ part.url }}{{ anchor }}{% endif %}" class="md:w-14 md:h-14 disable-effect bg-auto bg-none w-11 h-11 bg-[rgba(var(--colors-text),0.2)] rounded-full flex items-center justify-center" aria-label="{{ 'general.pagination.page' | t: number: part.title }}" data-instant-allow-query-string>{{ part.title }}</a>
+              {%- else -%}
+                {%- if part.title == paginate.current_page -%}
+                  <p aria-disabled="true" class="button button-action boder-none md:w-14 md:h-14 w-11 h-11 rounded-full flex items-center justify-center" aria-current="page" aria-label="{{ 'general.pagination.page' | t: number: part.title }}">{{ part.title }}</p>
+                {%- else -%}
+                  <span class="pagination__item">{{ part.title }}</span>
+                {%- endif -%}
+              {%- endif -%}
+            </li>
+          {% else %}
+            <li class="flex">
+              {%- if part.is_link -%}
+                <a {% if focus_product %}@click="localStorage.setItem('autofocus', 'true');" {% endif %}href="{% if part.title == 1 %}{{ first_part }}{% else %}{{ part.url }}{{ anchor }}{% endif %}" class="disable-effect px-4 py-2 border-b-2 border-solid paginate-underline duration-200" aria-label="{{ 'general.pagination.page' | t: number: part.title }}" data-instant-allow-query-string>{{ part.title }}</a>
+              {%- else -%}
+                {%- if part.title == paginate.current_page -%}
+                  <p aria-disabled="true" class="disable-effect px-4 py-2 border-b-2 border-solid paginate-underline-active" aria-current="page" aria-label="{{ 'general.pagination.page' | t: number: part.title }}">{{ part.title }}</p>
+                {%- else -%}
+                  <span class="px-4 py-2">{{ part.title }}</span>
+                {%- endif -%}
+              {%- endif -%}
+            </li>
+          {% endif %}
+        {%- endfor -%}
+        {%- if paginate.next -%}
+          <li class="{% if paginate_type == 'underline' %}{% if is_rtl %} mr-5{% else %} ml-5{% endif %} flex{% endif %}">
+            <a {% if focus_product %}@click="localStorage.setItem('autofocus', 'true');" {% endif %}href="{{ paginate.next.url }}{{ anchor }}" class="{% if paginate_type == 'circle' %}md:p-4 p-3.5 block{% if is_rtl %} rotate-180{% endif %}{% else %} flex items-center px-4 py-2 paginate-underline duration-200 border-b-2 border-solid{% endif %} disable-effect" aria-label="{{ 'general.pagination.next' | t }}" data-instant-allow-query-string>
+              {% if paginate_type == 'underline' %}
+                <p class="{% if is_rtl %} ml-2{% else %} mr-2{% endif %}">{{ 'general.pagination.next' | t }}</p>
+                <span class="h-2 w-3 inline-block -rotate-90 rtl:rotate-90">
+                  {% render 'icon-alls', icon: 'icon-caret' %}
+                </span>
+              {% else %}
+                <span class="w-4 h-4 block">
+                  {% render 'icon-alls', icon: 'icon-arrow' %}
+                </span>
+              {% endif %}
+            </a>
+          </li>
+        {%- endif -%}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+{%- endif -%}

@@ -1,0 +1,14 @@
+{% liquid
+  assign list_icon_cart_new = "||icon-cart||icon-hand-bag||icon-basket||"
+  assign item = '||' | append: icon | append: '||'
+
+  if settings.icon_options == "modern"
+    if list_icon_cart_new contains item
+      render 'icon-cart-all-new', icon: icon, animation_class: animation_class
+    else
+      render 'icon-cart-all-old', icon: icon, animation_class: animation_class
+    endif
+  else
+    render 'icon-cart-all-old', icon: icon, animation_class: animation_class
+  endif
+%}

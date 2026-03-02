@@ -1,0 +1,58 @@
+<ul class="toc:list-none toc:m-0 toc:p-0 flex flex-wrap">
+  {%- if settings.share_facebook -%}
+    <li class="toc:m-0 toc:w-8 toc:h-8 w-11 h-11 opacity-70 hover:opacity-100">
+      <button class="toc:pl-0 toc:pt-1.5 toc:pb-1.5 block pl-3 pr-3 pt-3 pb-3 disable-effect lg:hover:text-[rgb(var(--colors-text-link))]" aria-label="{{ 'general.social.alt_text.share_on_facebook' | t }}" onclick="window.open('//www.facebook.com/sharer.php?u={{ shop.url | append: share_permalink }}', '', `width=700, height=500, left=${(window.screen.width - 700)/2}, top=${(window.screen.height - 500)/2}`)">
+        <span aria-hidden="true" class="">{% render 'icon-media', icon: 'icon-facebook', animation_class: animation_class %}</span>
+      </button>
+    </li>
+  {% endif %}
+  {%- if settings.share_twitter -%}
+    <li class="toc:m-0 toc:w-8 toc:h-8 w-11 h-11 opacity-70 hover:opacity-100">
+      <button class="toc:pl-0 toc:pt-1.5 toc:pb-1.5 block pl-3 pr-3 pt-3 pb-3 disable-effect lg:hover:text-[rgb(var(--colors-text-link))]" aria-label="{{ 'general.social.alt_text.share_on_twitter' | t }}" onclick="window.open('//twitter.com/intent/tweet?text={{ share_title | url_encode }}&amp;url={{ shop.url | append: share_permalink }}', '', `width=700, height=500, left=${(window.screen.width - 700)/2}, top=${(window.screen.height - 500)/2}`)">
+        <span aria-hidden="true">{% render 'icon-media', icon: 'icon-twitter', animation_class: animation_class %}</span>
+      </button>
+    </li>
+  {% endif %}
+  {%- if settings.share_pinterest -%}
+    <li class="toc:m-0 toc:w-8 toc:h-8 w-11 h-11 opacity-70 hover:opacity-100">
+      <button class="toc:pl-0 toc:pt-1.5 toc:pb-1.5 block pl-3 pr-3 pt-3 pb-3 disable-effect lg:hover:text-[rgb(var(--colors-text-link))]" aria-label="{{ 'general.social.alt_text.share_on_pinterest' | t }}" onclick="window.open('//pinterest.com/pin/create/button/?url={{ shop.url | append: share_permalink }}&amp;media={{ share_image | image_url: width: 1024 }}&amp;description={{ share_title | url_encode }}', '', `width=700, height=500, left=${(window.screen.width - 700)/2}, top=${(window.screen.height - 500)/2}`)">
+        <span aria-hidden="true">{% render 'icon-media', icon: 'icon-pinterest', animation_class: animation_class %}</span>
+      </button>
+    </li>
+  {%- endif -%}
+  {%- if settings.share_whatsapp -%}
+    <li class="toc:m-0 toc:w-8 toc:h-8 w-11 h-11 opacity-70 hover:opacity-100">
+      <button class="toc:pl-0 toc:pt-1.5 toc:pb-1.5 block pl-3 pr-3 pt-3 pb-3 disable-effect lg:hover:text-[rgb(var(--colors-text-link))]" aria-label="{{ 'general.social.alt_text.share_on_whatsapp' | t }}" onclick="window.open('//wa.me/?text={{ share_title | url_encode }} {{ shop.url | append: share_permalink }}', '', `width=700, height=500, left=${(window.screen.width - 700)/2}, top=${(window.screen.height - 500)/2}`)">
+        <span aria-hidden="true">{% render 'icon-media', icon: 'icon-whatsapp', animation_class: animation_class %}</span>
+      </button>
+    </li>
+  {%- endif -%}
+  {%- if settings.share_telegram -%}
+    <li class="toc:m-0 toc:w-8 toc:h-8 w-11 h-11 opacity-70 hover:opacity-100">
+      <button class="toc:pl-0 toc:pt-1.5 toc:pb-1.5 block pl-3 pr-3 pt-3 pb-3 disable-effect lg:hover:text-[rgb(var(--colors-text-link))]" aria-label="{{ 'general.social.alt_text.share_on_telegram' | t }}" onclick="window.open('//t.me/share/url?text={{ share_title | url_encode }}&url={{ shop.url | append: share_permalink }}', '', `width=700, height=500, left=${(window.screen.width - 700)/2}, top=${(window.screen.height - 500)/2}`)">
+        <span aria-hidden="true">{% render 'icon-media', icon: 'icon-telegram', animation_class: animation_class %}</span>
+      </button>
+    </li>
+  {%- endif -%}
+  {%- if settings.share_line -%}
+    <li class="toc:m-0 toc:w-8 toc:h-8 w-11 h-11 opacity-70 hover:opacity-100">
+      <button class="toc:pl-0 toc:pt-1.5 toc:pb-1.5 block pl-3 pr-3 pt-3 pb-3 disable-effect lg:hover:text-[rgb(var(--colors-text-link))]" aria-label="{{ 'general.social.alt_text.share_on_line' | t }}" onclick="window.open('//social-plugins.line.me/lineit/share?url=https:{{ shop.url | append: share_permalink }}', '', `width=700, height=500, left=${(window.screen.width - 700)/2}, top=${(window.screen.height - 500)/2}`)">
+        <span aria-hidden="true">{% render 'icon-media', icon: 'icon-line', animation_class: animation_class %}</span>
+      </button>
+    </li>
+  {%- endif -%}
+  {%- if settings.share_email -%}
+    <li class="toc:m-0 toc:w-8 toc:h-8 w-11 h-11 opacity-70 hover:opacity-100">
+      <button class="toc:pl-0 toc:pt-1.5 toc:pb-1.5 block pl-3 pr-3 pt-3 pb-3 disable-effect lg:hover:text-[rgb(var(--colors-text-link))]" aria-label="{{ 'general.social.alt_text.share_on_email' | t }}" onclick="if(window.screen.width >= 1024) window.open('//mail.google.com/mail/?view=cm&fs=1&su={{ share_title | url_encode }}&body={{ shop.url | append: share_permalink }}', '', `width=700, height=500, left=${(window.screen.width - 700)/2}, top=${(window.screen.height - 500)/2}`); else { window.open('mailto:?subject={{ share_title | url_encode }}&amp;body={{ shop.url | append: share_permalink }}', '', `width=700, height=500, left=${(window.screen.width - 700)/2}, top=${(window.screen.height - 500)/2}`) }">
+        <span aria-hidden="true">{% render 'icon-media', icon: 'icon-email', animation_class: animation_class %}</span>
+      </button>
+    </li>
+  {%- endif -%}
+  {%- if settings.share_sms -%}
+    <li class="toc:m-0 toc:w-8 toc:h-8 md:hidden w-11 h-11 opacity-70 hover:opacity-100">
+        <button class="toc:pl-0 toc:pt-1.5 toc:pb-1.5 block pl-3 pr-3 pt-3 pb-3 disable-effect lg:hover:text-[rgb(var(--colors-text-link))]" aria-label="{{ 'general.social.alt_text.share_on_sms' | t }}" onclick="window.open('sms:?body={{ share_title | url_encode }} {{ shop.url | append: share_permalink }}', '', `width=700, height=500, left=${(window.screen.width - 700)/2}, top=${(window.screen.height - 500)/2}`)">
+          <span aria-hidden="true">{% render 'icon-media', icon: 'icon-sms', animation_class: animation_class %}</span>
+        </button>
+    </li>
+  {%- endif -%}
+</ul>

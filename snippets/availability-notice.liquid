@@ -1,0 +1,52 @@
+<div 
+  x-data='{ 
+    storeAvailabilites: {
+      {% for store in product.selected_or_first_available_variant.store_availabilities -%}
+        {%- if store.pick_up_enabled -%}
+          {{- store.location.name | escape | json }}: {{ store.available }}{% unless forloop.last %}, {% endunless -%}
+        {%- endif -%}
+      {%- endfor %}
+    },
+    pickupLocation: [
+      {% for store in product.selected_or_first_available_variant.store_availabilities -%}
+        {{- store.location.name | escape | json }}{% unless forloop.last %}, {% endunless -%}
+      {%- endfor %}
+    ]
+  }'
+  x-show="$store.xStoreSelector?.selectedStore && pickupLocation.includes($store.xStoreSelector?.getStore())"
+>
+  {% style %}
+    .text-available, .text-unavailable {
+      font-size: {{ settings.text_base_size | times: 0.00875 | times: 0.85 | times: 0.9 }}rem;
+      font-family: var(--font-body-family);
+    }
+
+    @media (min-width: 768px) {
+      .text-available, .text-unavailable {
+        font-size: {{ settings.text_base_size | times: 0.85 | times: 0.00875 }}rem;
+      }
+    }
+
+    .text-available {
+      color: {{ settings.in_stock_message_light }};
+    }
+
+    .dark .text-available {
+      color: {{ settings.in_stock_message_dark }};
+    }
+
+    .text-unavailable {
+      color: {{ settings.out_of_stock_message_light }};
+    }
+
+    .dark .text-unavailable {
+      color: {{ settings.out_of_stock_message_dark }};
+    }
+  {% endstyle %}
+  <div x-cloak x-show="$store.xStoreSelector?.checkAvailability(storeAvailabilites)" class="text-available flex flex-row items-center gap-[3px]">
+    <span class="flex h-4 w-4 relative">{% render 'icon-alls', icon: 'icon-store-available' %}</span><span x-text="'{{ 'store_selector.available' | t }} ' + $store.xStoreSelector?.getStoreText()"> </span>
+  </div>
+  <div x-cloak x-show="! $store.xStoreSelector?.checkAvailability(storeAvailabilites)" class="text-unavailable flex flex-row items-center gap-[3px]">
+    <span class="flex h-4 w-4 relative">{% render 'icon-alls', icon: 'icon-store-unavailable' %}</span><span x-text="'{{ 'store_selector.out_of_stock' | t }} ' + $store.xStoreSelector?.getStoreText()"> </span>
+  </div>
+</div>

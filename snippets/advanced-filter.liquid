@@ -1,0 +1,201 @@
+{% comment %}
+    Renders an article card for a given blog with settings to either show the image or not.
+
+    Accepts:
+    - filter_advanced_count: {Number} Number of filter to showed.
+    - hide_unavaiable_filter: {Boolean} Hide unvaiable filter.
+    - sorted_values: {Array} List value of filter.
+    - columns_desktop: {Number} Number of column filter.
+    - index: {Number} Index of filter in all filters.
+    - filter_type: {String} Type of filter (Above, Aside, Drawer)
+    - image_ratio: {String} Image ratio of filter image.
+    Usage:
+    {% render 'article-card', blog: blog, article: article %}
+{% endcomment %}
+{% liquid
+  assign swiper_on_tablet = true
+  assign swiper_on_mobile = true
+  assign filter_count = 0
+  assign show_filter_image = false
+  for value in sorted_values
+    if show_filter_image == false and value.display.type == 'image'
+      assign show_filter_image = true
+    endif
+  endfor
+  if hide_unavaiable_filter
+    for value in sorted_values
+      if value.count != 0
+        assign filter_count = filter_count | plus: 1
+      endif
+    endfor
+  else
+    assign filter_count = sorted_values.size
+  endif
+  assign ratio_class = 'pb-[100%]'
+  case advanced_filter_image_ratio
+    when "square"
+      assign ratio_class = 'pb-[100%]'
+    when "rectangle"
+      assign ratio_class = 'pb-[67%]'
+    when "landscape"
+      assign ratio_class = 'pb-[75%]'
+    when "wide"
+      assign ratio_class = 'pb-[56%]'
+  endcase
+  
+  assign rounded_filter = 'square'
+  if section.settings.filter_edge_style == 'rounded'
+    assign rounded_filter = 'rounded'
+  elsif section.settings.filter_edge_style == 'adapt'
+    if settings.buttons_type == 'mixed' or settings.buttons_type == 'rounded_corners'
+      assign rounded_filter = 'rounded_corners'
+    elsif settings.buttons_type == 'rounded'
+      assign rounded_filter = 'rounded'
+    endif
+  endif
+%}
+<div 
+  class="js-filter filter-advanced eurus pl-5 pr-5 mx-auto{% if full_width %} pl-5 pr-5{% else %} x-pgw page-width{% endif %}{% if show_filter_image %} contain-image{% endif %}" 
+  data-index="{{ filter_type }}-{{ index }}"
+>
+  {% liquid
+    if filter_count <= columns_desktop
+      assign enable_desktop_slider = false
+    endif
+    if filter_count < 5
+      assign swiper_on_tablet = false
+    endif
+    if filter_count < 3
+      assign swiper_on_mobile = false
+    endif
+  %}
+  {%- style -%}
+    .preload-slide--{{ section.id }}-{{ filter_advanced_count }} {
+      width: calc(((100% + 6px) / 2) - 6px);
+    }
+    @media (min-width: 768px){
+      .preload-slide--{{ section.id }}-{{ filter_advanced_count }} {
+        width: calc(((100% + 6px) / 4) - 6px);
+      }
+      .image-filter-{{ section.id }}-{{ filter_advanced_count }} {
+        max-width: {{ desktop_image_width }}px;
+        width: 100%;
+      }
+    }
+    @media (min-width: 1024px){
+      .preload-slide--{{ section.id }}-{{ filter_advanced_count }} {
+        {% if enable_desktop_slider %}
+          margin-right: 6px;
+        {% else %}
+          margin-right: 0px;
+        {% endif %}
+        width: calc(((100% + 20px) / {{ columns_desktop }}) - 20px);
+      }
+    }
+  {%- endstyle -%}
+  <div
+    id="x-collection-{{ section.id }}-{{ filter_advanced_count }}"
+    class="x-splide splide visible filter-advanced-{{ filter_advanced_count }} overflow-hidden{% if show_filter_image %} contain-image{% endif %}{% if filter_count > 0 %} block{% else %} hidden{% endif %}"
+    x-intersect.once.margin.200px='$store.xSplide.load($el, {
+      "speed": 1000, 
+      "pagination": false, 
+      "mediaQuery": "min", 
+      "updateOnMove": "true", 
+      "breakpoints": {
+        300: {
+          {% unless swiper_on_mobile -%} 
+            "destroy": true,
+          {%- endunless %}
+          "perPage": 2
+        },
+        768: {
+          {% if swiper_on_tablet -%} 
+            "destroy": false,
+          {%- else %}
+            "destroy": true,
+          {%- endif %}
+          "perPage": 4,
+          "padding": { left: 4, right: 16 },
+          "gap": "16px"
+        },
+        1024: {
+          {% if enable_desktop_slider -%} 
+            "destroy": false,
+          {%- else %}
+            "destroy": true,
+          {%- endif %}
+          "perPage": {{ columns_desktop }},
+          "padding": { left: 4, right: 16 },
+          "gap": "16px"
+        }
+      },
+      "classes": {
+        "arrows" : "block", 
+      }
+    })'
+  >
+    <div class="splide__track">
+      <div class="flex splide__list mt-0.5{% unless show_filter_image %} items-center{% endunless %}{% unless swiper_on_mobile %} justify-center gap-1.5{% endunless %}{% unless swiper_on_tablet %} md:flex-wrap md:justify-center md:gap-1.5{% endunless %}{% if enable_desktop_slider %} lg:flex-nowrap lg:justify-start lg:gap-0{% else %} lg:flex-wrap lg:justify-center lg:gap-4{% endif %}">
+        {%- for value in sorted_values -%}
+          {% if hide_unavaiable_filter == false or hide_unavaiable_filter and value.count != 0 %}
+            <div
+              id="Slide-{{ section.id }}-{{ forloop.index }}"
+              class="splide__slide x-splide-slide group relative text-center preload-slide--{{ section.id }}-{{ filter_advanced_count }}{% if show_filter_image and value.display.type != 'image' %} flex items-center justify-center{% endif %}"
+            >
+              <label 
+                for="Filter-{{ filter_type }}-{{ filter.label | escape | handle }}-{{ forloop.index }}"
+                class="relative{% if value.count == 0 %} opacity-40{% else %} cursor-pointer{% endif %}{% if value.display.type == 'image' %} inline-block w-full md:w-full h-full{% else %} filter-not-image gap-x-1.5 justify-center min-h-[50px] md:min-h-[68px] flex items-center pt-2 pb-2 lg:pt-3.5 lg:pb-3.5 pl-3 pr-3 lg:pl-5 lg:pr-5{% endif %}">
+                <input type="checkbox"
+                  id="Filter-{{ filter_type }}-{{ filter.label | escape | handle }}-{{ forloop.index }}"
+                  class="input-image-filter z-10 checkbox cursor-pointer{% if filter.operator == 'AND' %} filter-and{% endif %}{% if value.display.type != 'image' %} checkbox-checked relative transition duration-200 left-0 top-0 inline-block h-6 w-6 min-w-[24px] border checked:border-[rgba(var(--colors-text-link))] checked:bg-[rgba(var(--colors-text-link))]{% else %} absolute opacity-0{% endif %}{% if rounded_filter != 'square' %} rounded{% else %} rounded-none{% endif %} disabled:pointer-events-none"
+                  name="{{ value.param_name }}"
+                  value="{{ value.value }}"
+                  form="FacetFiltersForm"
+                  {% if value.active %}checked{% endif %}
+                  {% if value.count == 0 and value.active == false %}disabled{% endif %}
+                  @change="onSubmit()"
+                >
+                  {% if value.display.type == 'image' %}
+                    <div class="image-filter w-full md:w-full h-full inline-block{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                      <div class="image-filter-{{ section.id }}-{{ filter_advanced_count }} inline-flex flex-col w-full md:w-full">
+                        <div class="w-[calc(100%+8px)] relative h-0 {{ ratio_class }} inline-block overflow-hidden color-filter transition duration-200
+                          {%- if image_ratio == 'round' %} rounded-full{% elsif rounded_filter != 'square' %} rounded-[10px]{% endif %}"
+                        >
+                          <span class="icon-checkbox h-6 w-6 opacity-60 min-w-[24px] z-20 absolute bg-[rgba(var(--colors-background))] top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2{% if rounded_filter != 'square' %} rounded-md{% endif %}">
+                            <span class="icon-tick w-6 h-6 hidden text-[rgba(var(--colors-background))]">
+                              {% render 'icon-alls', icon: 'icon-tick' %}
+                            </span>
+                          </span>
+                          {%- capture onload -%}
+                            this.closest(".skeleton-image")?.classList.remove("animate-Xpulse", "skeleton-image");
+                          {%- endcapture -%}
+                          {{
+                            value.display.value
+                            | image_url: width: 300
+                            | image_tag: alt: value.display.value.alt, class: 'w-full h-full object-cover top-0 left-0 absolute animate-Xpulse skeleton-image', onload: onload
+                          }}
+                        </div>
+                        <span class="filter-label h5 text-default p-break-words inline-block w-full mt-2.5 font-normal">{{ value.label | escape }} ({{ value.count }})</span>
+                      </div>
+                    </div>
+                  {% else %}
+                    <span class="filter-label h5 text-default p-break-words inline-block font-normal{% if settings.edges_type == 'rounded_corners' %} after:rounded-[10px]{% endif %}">{{ value.label | escape }} ({{ value.count }})</span>
+                  {% endif %}
+              </label>
+            </div>
+          {% endif %}
+        {%- endfor -%}
+      </div>
+    </div>
+    <div class="splide__arrows{% unless swiper_on_mobile %} hidden{% endunless %}{% unless swiper_on_tablet %} md:hidden{% endunless %}{% if enable_desktop_slider %} lg:block{% else %} lg:hidden{% endif %}">
+      <button class="splide__arrow splide__arrow--prev text-[rgb(var(--colors-text))] bg-[rgba(var(--colors-text),0.3)] button-arrow lg:block absolute top-1/2 -translate-y-1/2 p-2 rounded-full z-10 w-[30px] h-[30px] after:text-[20px] rtl:rotate-180 left-0 rtl:left-auto rtl:right-0 duration-200 hover:opacity-100 disabled:cursor-not-allowed transition-all ease-in-out lg:-translate-x-full rtl:lg:translate-x-full disabled:opacity-30" aria-label="previous slide">
+        <span class="hidden">previous slide</span>
+        {% render 'icon-labels-bags', icon: 'chevron-left' %}
+      </button>
+      <button class="splide__arrow splide__arrow--next text-[rgb(var(--colors-text))] bg-[rgba(var(--colors-text),0.3)] button-arrow lg:block absolute top-1/2 -translate-y-1/2 p-2 rounded-full z-10 w-[30px] h-[30px] after:text-[20px] rtl:rotate-180 right-0 rtl:right-auto rtl:left-0 duration-200 hover:opacity-100 disabled:cursor-not-allowed transition-all ease-in-out lg:translate-x-full rtl:lg:-translate-x-full disabled:opacity-30" aria-label="next slide">
+        <span class="hidden">next slide</span>
+        {% render 'icon-labels-bags', icon: 'chevron-right' %}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,238 @@
+{%- if section.settings.cookie_enabled -%}
+  {%- style -%}
+    {% unless section.settings.text_color_cookie_light.alpha == 0.0 %}
+      .color-heading--{{ section.id }} {
+        --colors-heading: {{ section.settings.text_color_cookie_light.red }}, {{ section.settings.text_color_cookie_light.green }}, {{ section.settings.text_color_cookie_light.blue }};
+      }
+    {% endunless %}
+    .dark .color-heading--{{ section.id }} {
+      {% unless section.settings.text_color_cookie_dark.alpha == 0.0 %}
+        --colors-heading: {{ section.settings.text_color_cookie_dark.red }}, {{ section.settings.text_color_cookie_dark.green }}, {{ section.settings.text_color_cookie_dark.blue }};
+      {% else %}
+        --colors-heading: {{ settings.colors_dark_heading.red }}, {{ settings.colors_dark_heading.green }}, {{ settings.colors_dark_heading.blue }};
+      {% endunless %}
+    }
+    .button-accept {
+      {% if section.settings.accept_button_text.alpha == 0.0 %}
+        color: rgba(var(--colors-button-text-hover));
+      {% else %}
+        color: {{ section.settings.accept_button_text }};
+      {% endif %}
+      {% if section.settings.accept_button_background.alpha == 0.0 %}
+        background-color: var(--colors-button-hover);
+        border-color: var(--colors-button-hover);
+      {% else %}
+        background-color: {{ section.settings.accept_button_background }};
+        border-color: {{ section.settings.accept_button_background }};
+      {% endif %}
+    }
+    .dark .button-accept {
+      {% if section.settings.accept_button_text_dark.alpha == 0.0 %}
+        color: rgba(var(--colors-button-text-hover));
+      {% else %}
+        color: {{ section.settings.accept_button_text_dark }};
+      {% endif %}
+      {% if section.settings.accept_button_background_dark.alpha == 0.0 %}
+        background-color: var(--colors-button-hover);
+        border-color: var(--colors-button-hover);
+      {% else %}
+        background-color: {{ section.settings.accept_button_background_dark }};
+        border-color: {{ section.settings.accept_button_background_dark }};
+      {% endif %}
+    }
+    .button-decline {
+      {% if section.settings.text_color_cookie_light.alpha == 0.0 %}
+        border-color: rgba(var(--colors-text));
+        color: rgba(var(--colors-text));
+      {% else %}
+        border-color: {{ section.settings.text_color_cookie_light }};
+        color: {{ section.settings.text_color_cookie_light }};
+      {% endif %}
+      border: 1px solid;
+    }
+    .dark .button-decline {
+      {% if section.settings.text_color_cookie_dark.alpha == 0.0 %}
+        border-color: rgba(var(--colors-text));
+        color: rgba(var(--colors-text));
+      {% else %}
+        border-color: {{ section.settings.text_color_cookie_dark }};
+        color: {{ section.settings.text_color_cookie_dark }};
+      {% endif %}
+      border: 1px solid;
+    }
+    .bg-cookie-banner {
+      {% if section.settings.text_color_cookie_light.alpha == 0.0 %}
+        color: rgba(var(--colors-text));
+      {% else %}
+        color: {{ section.settings.text_color_cookie_light }};
+      {% endif %}
+      background: {{ section.settings.background_color_cookie_light }};
+    }
+    .dark .bg-cookie-banner {
+      {% if section.settings.text_color_cookie_dark.alpha == 0.0 %}
+        color: rgba(var(--colors-text));
+      {% else %}
+        color: {{ section.settings.text_color_cookie_dark }};
+      {% endif %}
+      background: {{ section.settings.background_color_cookie_dark }};
+    }
+  {%- endstyle -%}
+  <div 
+    id="cookies-banner" 
+    x-data="xCookieBanner({{ section.settings.cookie_delay }})" {% if request.design_mode %} 
+    x-show="$store.xShowCookieBanner.show" {% else %} x-show="show" {% endif %} 
+    x-cloak 
+    x-transition:enter="transition-all ease-in-out duration-500"
+    x-transition:enter-start="opacity-0 transform translate-y-full"
+    x-transition:enter-end="opacity-100 transform translate-y-0"
+    x-transition:leave="transition-all ease-in-out duration-500"
+    x-transition:leave-end="opacity-0 transform translate-y-full"
+    class="w-full fixed bottom-0 left-0 right-0 z-50 bg-cookie-banner color-heading--{{ section.id }}"
+  >
+    <div class="x-pgw page-width mx-auto flex flex-wrap lg:flex-nowrap lg:justify-between">
+      <div class="rte x-block-cookie-content py-3 w-full lg:py-4 lg:w-auto md:flex md:items-center
+        {%- if section.settings.content_alignment == '' %} md:justify-start rtl:md:justify-end text-left rtl:text-right{% endif -%}
+        {%- if section.settings.content_alignment == 'right' %} md:justify-end rtl:md:justify-start text-right rtl:text-left{% endif -%}
+        {%- if section.settings.content_alignment == 'center' %} md:justify-center text-center{% endif %}"
+      >
+        <span>{{ section.settings.cookie_notice }}</span>
+      </div>
+      <div class="flex items-center pb-3 lg:pb-0 lg:ml-7 rtl:lg:ml-0 rtl:lg:mr-7 justify-center md:justify-start gap-2 w-full md:w-auto">
+        {% if section.settings.button_decline != blank %}
+          <button class="button w-auto button-decline px-10 py-4 lg:my-4 empty:hidden whitespace-nowrap" @click="handleDecline()">
+            {{ section.settings.button_decline | escape }}
+          </button>
+        {% endif %}
+        {% if section.settings.button_accept != blank %}
+          <button class="button button-accept w-auto px-10 py-4 mr-2.5 lg:my-4 empty:hidden whitespace-nowrap" @click="handleAccept()">
+            {{ section.settings.button_accept | escape }}
+          </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+<script src="{{ 'cookie-banner.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "t:settings_schema.cookie_banner.name",
+  "class": "section-cookie-banner",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.overlay_group.cookie_banner"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:settings_schema.cookie_banner.settings.paragraph.content"
+    },
+    {
+      "type": "checkbox",
+      "id": "cookie_enabled",
+      "label": "t:settings_schema.shipping_delivery.free_shipping.enable.label",
+      "default": true
+    },
+    {
+      "type": "richtext",
+      "id": "cookie_notice",
+      "default": "<p>We use cookies and similar technologies to provide the best experience on our website.</p>",
+      "label": "t:settings_schema.cookie_banner.settings.notice.label"
+    },
+    {
+      "type": "range",
+      "id": "cookie_delay",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "s",
+      "label": "t:settings_schema.cookie_banner.settings.delay.label",
+      "default": 4
+    },
+    {
+      "type": "select",
+      "id": "content_alignment",
+      "label": "t:sections.all.content_alignment.label",
+      "options": [
+        {
+          "value": "",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ],
+      "default": ""
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.cookie_banner.settings.header_cookie_style.content"
+    },
+    {
+      "type": "text",
+      "id": "button_accept",
+      "default": "Got it!",
+      "label": "t:settings_schema.cookie_banner.settings.button_accept.label"
+    },
+    {
+      "type": "text",
+      "id": "button_decline",
+      "default": "Decline",
+      "label": "t:settings_schema.cookie_banner.settings.button_decline.label"
+    },
+    {
+      "type": "color",
+      "id": "background_color_cookie_light",
+      "default": "#000000",
+      "label": "t:sections.all.background.background_color_light"
+    },
+    {
+      "type": "color",
+      "id": "text_color_cookie_light",
+      "default": "#999999",
+      "label": "t:sections.all.text.color"
+    },
+    {
+      "type": "color",
+      "id": "accept_button_background",
+      "default": "#FB8500",
+      "label": "t:settings_schema.cookie_banner.settings.accept_button_background.label"
+    },
+    {
+      "type": "color",
+      "id": "accept_button_text",
+      "default": "#000000",
+      "label": "t:settings_schema.cookie_banner.settings.accept_button_text.label"
+    },
+    {
+      "type": "color",
+      "id": "background_color_cookie_dark",
+      "default": "#FFFFFF",
+      "label": "t:sections.all.background.background_color_dark"
+    },
+    {
+      "type": "color",
+      "id": "text_color_cookie_dark",
+      "default": "#525151",
+      "label": "t:sections.all.text.color_dark"
+    },
+    {
+      "type": "color",
+      "id": "accept_button_background_dark",
+      "default": "#FB8500",
+      "label": "t:settings_schema.cookie_banner.settings.accept_button_background_dark.label"
+    },
+    {
+      "type": "color",
+      "id": "accept_button_text_dark",
+      "default": "#000000",
+      "label": "t:settings_schema.cookie_banner.settings.accept_button_text_dark.label"
+    }
+  ]
+}
+{% endschema %}

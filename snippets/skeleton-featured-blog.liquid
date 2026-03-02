@@ -1,0 +1,61 @@
+{% liquid 
+  assign show_rounded_image = false
+  if settings.edges_type == 'rounded_corners'
+    assign show_rounded_image = true
+  endif
+  assign count_card = post_limit
+  if articles_count < post_limit
+    assign count_card = articles_count
+  endif
+  if content_alignment == 'right'
+    assign content_alignment = 'end'
+  endif
+  assign content_alignment_mobile = content_alignment
+  if columns_mobile > 1
+    assign content_alignment_mobile = 'left'
+  endif
+  
+%}
+{% style %}
+  .gap-skeleton-{{ section_id }} {
+    gap: {{ spacing_mobile }}px;
+  }
+  @media (min-width: 768px) {
+    .gap-skeleton-{{ section_id }} {
+      gap: {{ spacing }}px;
+    }
+  }
+{% endstyle %}
+<div class="w-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-{{ columns_desktop }} gap-skeleton-{{ section_id }}" >
+  {% for i in (1..count_card) %}
+    <div class="animate-Xpulse{% if swiper_on_mobile and forloop.index > 1 %} hidden{% if enable_desktop_slider and forloop.index <= columns_desktop %} lg:block{% endif %}{% endif %}{% if enable_desktop_slider and forloop.index > 3 %} md:hidden{% else %} md:block{% endif %}{% if enable_desktop_slider and forloop.index > columns_desktop %} lg:hidden{% else %} lg:block{% endif %}">
+      {%- if show_image -%}
+        <div class="bg-[#c9c9c9] relative z-20 overflow-hidden{% if show_rounded_image %} rounded-[10px]{% endif %} before:h-0 before:block z-0{% unless media_aspect_ratio == "auto" %} before:pb-[{{ media_aspect_ratio }}%]{% else %} before:pb-[100%]{% endunless %}{% if columns_mobile > 1 %} w-1/3 float-left md:w-full{% else %} w-full{% endif %}"></div>
+      {%- endif -%}
+      <div class="flex flex-col md:pt-7 md:pr-7 md:pb-7 md:pl-7 items-{{ content_alignment_mobile }} md:items-{{ content_alignment }}{% if columns_mobile > 1 and show_image %} content-article-bg-2 float-left md:w-full{% endif %}">
+        {%- if show_name -%}
+          <p class="h-4 w-1/3 bg-[#c9c9c9] mt-2.5"></p>
+        {%- endif -%}
+        <div class="h-10 w-full bg-[#c9c9c9] mt-4 {% if show_name %} mt-2.5 mb-2.5{% endif %}"></div>
+         {% if list_layout %}
+          <div class="h-6 w-full bg-[#c9c9c9] mt-3 mb-2"></div>
+        {% endif %}
+        {%- if show_author or show_date -%}
+          <div class="h-3 w-full bg-[#c9c9c9] mt-2.5 mb-2.5"></div>
+        {%- endif -%}
+        {%- if show_comment_counts and comments_enabled -%}
+          <div class="h-3 w-full bg-[#c9c9c9] mt-2.5 mb-2.5"></div>
+        {%- endif -%}
+        {%- if show_excerpt -%}
+          <div class="h-6 w-full bg-[#c9c9c9] mt-2.5 mb-2.5"></div>
+        {%- endif -%} 
+        {%- if show_tag -%}
+        <div class="h-6 w-full bg-[#c9c9c9] mt-2.5 mb-2.5"></div>
+        {%- endif -%} 
+        {%- if show_read_more -%}
+          <div class="h-6 w-1/3 bg-[#c9c9c9] mt-2.5 mb-2.5"></div>
+        {%- endif -%} 
+      </div>
+    </div>
+  {% endfor %}
+</div>

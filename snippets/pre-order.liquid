@@ -1,0 +1,34 @@
+{%- style -%}
+  {%- if show_background -%}
+    .pre-order-{{ container_id }} {
+      {% if background_color_light.alpha != 0.0 %}
+        background: {{ background_color_light }};
+        --background-color: {{ background_color_light.red }}, {{ background_color_light.green }}, {{ background_color_light.blue }};
+      {% endif %}
+    }
+    .dark .pre-order-{{ container_id }} {
+      background: {{ background_color_dark | default: 'transparent' }};
+      --background-color: {{ background_color_dark.red }}, {{ background_color_dark.green }}, {{ background_color_dark.blue }};
+    }
+  {% endif %}
+
+  .pre-order-{{ container_id }} {
+    {%- if message_color_light != 'rgba(0,0,0,0)' -%}
+      color: {{ message_color_light }};
+      --colors-heading: {{ message_color_light.red }}, {{ message_color_light.green }}, {{ message_color_light.blue }};
+    {%- endif -%}
+  }
+
+  .dark .pre-order-{{ container_id }} {
+    {%- if message_color_dark != 'rgba(0,0,0,0)' -%}
+      color: {{ message_color_dark }};
+      --colors-text: {{ message_color_dark.red }}, {{ message_color_dark.green }}, {{ message_color_dark.blue }};
+      --colors-heading: {{ message_color_dark.red }}, {{ message_color_dark.green }}, {{ message_color_dark.blue }};
+    {%- else -%}
+      color: rgba(var(--colors-text));
+      --colors-heading: {{ settings.colors_dark_heading.red }}, {{ settings.colors_dark_heading.green }}, {{ settings.colors_dark_heading.blue }};
+    {%- endif -%}
+  }
+{%- endstyle -%}
+
+<div class="pre-order-{{ container_id }} p-break-words rte{% if show_background %} pt-3 pb-3 pr-5 pl-5 lg:pl-7 lg:pr-7 mt-2.5{% else %} mt-5{% endif %}{% if box_type == 'round' or box_type == 'adapt' and settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">{{ message }}</div>

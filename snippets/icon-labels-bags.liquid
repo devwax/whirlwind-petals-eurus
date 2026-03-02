@@ -1,0 +1,14 @@
+{% liquid
+  assign list_of_new_label_bags_icons = "||flower||leaf||shopping-bag||shopping-cart||star||sun||arrow-left||arrow-right||chevron-left||chevron-right||shopping-bag-1||" 
+  assign item = '||' | append: icon | append: '||'
+
+  if settings.icon_options == "modern"
+    if list_of_new_label_bags_icons contains item
+      render 'icon-labels-bags-new', icon: icon
+    else
+      render 'icon-labels-bags-old', icon: icon
+    endif
+  else
+    render 'icon-labels-bags-old', icon: icon
+  endif
+%}

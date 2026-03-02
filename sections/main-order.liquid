@@ -1,0 +1,409 @@
+{% liquid 
+if settings.lang_direction contains request.locale.iso_code
+  assign is_rtl = true
+else
+  assign is_rtl = false
+endif
+%}
+<div class="customer order pt-[{{ section.settings.top_padding_mobile }}px] md:pt-[{{ section.settings.top_padding }}px] pb-[{{ section.settings.bottom_padding_mobile }}px] md:pb-[{{ section.settings.bottom_padding }}px]">
+  <div class="x-pgw page-width">
+    <div class="flex justify-between border-b pb-2.5 md:pb-3.5">
+      <h1 class="h2">{{ 'customer.account.title' | t }}</h1>
+      <a class="flex pl-1.5 pr-1.5 items-center justify-center underline underline-offset-2 disable-effect lg:hover:text-[rgb(var(--colors-text-link))]" href="{{ routes.account_url }}">{{ 'customer.account.return' | t }}</a>
+    </div>
+    <div class="flex flex-col md:flex-row">
+      <div class="w-full md:w-3/4 anm-fade-paragraph">
+        <div class="flex justify-between anm-fade-element" x-intersect.once="$el.classList.add('is-visible')">
+          <div>
+            <h2 class="text-large mt-12 mb-4">{{ 'customer.order.title' | t: name: order.name }}</h2>
+            {%- assign order_date = order.created_at | time_tag: format: "date_at_time" -%}
+            <p class="mb-5 md:mb-7">{{ 'customer.order.date_html' | t: date: order_date }}</p>
+            {%- if order.cancelled -%}
+              {%- assign cancelled_at = order.cancelled_at | time_tag: format: "date_at_time" -%}
+              <p class="mb-7">{{ 'customer.order.cancelled_html' | t: date: cancelled_at }}</p>
+              <p class="mb-7">{{ 'customer.order.cancelled_reason' | t: reason: order.cancel_reason_label }}</p>
+            {%- endif -%}
+          </div>
+          {% if settings.enable_reorder %}
+            <div class="flex items-center" data-label="Action">
+              {%- render 're-order', itemOrder: order -%}
+            </div>
+          {% endif %}
+        </div>
+        <table class="order-details block order-history w-full border-t md:border-none anm-fade-element" x-intersect.once="$el.classList.add('is-visible')" role="table">
+          <thead class="hidden md:block pb-4 border-b w-full text-[rgba(var(--colors-heading))]" role="rowgroup">
+            <tr class="flex justify-between w-full uppercase" role="row">
+              <th class="w-4/12{% if is_rtl %} text-right pr-3.5{% else %} text-left pl-3.5{% endif %}" id="ColumnProduct" scope="col" role="columnheader">{{ 'customer.order.product' | t }}</th>
+              <th class="w-2/12{% if is_rtl %} text-left md:pr-3.5{% else %} text-right md:pl-3.5{% endif %}" id="ColumnSku" scope="col" role="columnheader">{{ 'customer.order.sku' | t }}</th>
+              <th class="w-2/12{% if is_rtl %} text-left md:pr-3.5{% else %} text-right md:pl-3.5{% endif %}" id="ColumnPrice" scope="col" role="columnheader">{{ 'customer.order.price' | t }}</th>
+              <th class="w-2/12{% if is_rtl %} text-left md:pr-3.5{% else %} text-right md:pl-3.5{% endif %}" id="ColumnQuantity" scope="col" role="columnheader">{{ 'customer.order.quantity' | t }}</th>
+              <th class="w-2/12{% if is_rtl %} text-left pl-3.5 md:pr-3.5{% else %} text-right pr-3.5 md:pl-3.5{% endif %}" id="ColumnTotal" scope="col" role="columnheader">{{ 'customer.order.total' | t }}</th>
+            </tr>
+          </thead>
+          <tbody class="block w-full" role="rowgroup">
+            {%- for line_item in order.line_items -%}
+              <tr class="block md:flex w-full border-b mt-5 md:mt-0" role="row">
+                <td
+                  id="Row{{ line_item.key }}"
+                  class="w-full md:w-4/12 mb-3.5 md:mt-6 md:mb-4{% if is_rtl %} md:pr-3 md:ml-3 before:text-right before:pl-2.5{% else %} md:pl-3 md:mr-3 before:text-left before:pr-2.5{% endif %} flex items-center before:content-[attr(data-label)] md:before:content-none before:float-left before:w-full before:max-w-[33%]"
+                  headers="ColumnProduct"
+                  role="rowheader"
+                  scope="row"
+                  data-label="{{ 'customer.order.product' | t }}"
+                >
+                  <div>
+                    {%- if line_item.url != blank -%}
+                      <a class="disable-effect lg:hover:text-[rgb(var(--colors-text-link))]" href="{{ line_item.url }}">{{ line_item.title }}</a>
+                    {%- else -%}
+                      <p>{{ line_item.title }}</p>
+                    {%- endif -%}
+                    {%- assign property_size = line_item.properties | size -%}
+                    {%- unless line_item.selling_plan_allocation == null and property_size == 0 -%}
+                      <div class="properties mt-2.5">
+                        {%- unless line_item.product.has_only_default_variant -%}
+                          <span class="block">
+                            {{ line_item.variant.title }}
+                          </span>
+                        {%- endunless -%}
+                        {%- unless line_item.selling_plan_allocation == null -%}
+                          <span class="block">
+                            {{ line_item.selling_plan_allocation.selling_plan.name }}
+                          </span>
+                        {%- endunless -%}
+                        {%- if property_size != 0 -%}
+                          {%- for property in line_item.properties -%}
+                            {% assign property_first_char = property.first | slice: 0 %}
+                            {%- if property.last != blank and property_first_char != '_' -%}
+                              <span class="block">
+                                {{ property.first }}:&nbsp;
+                                {%- if property.last contains '/uploads/' -%}
+                                  <a href="{{ property.last }}" class="hover-text-link">{{ 'products.product.file' | t }}</a>
+                                {%- else -%}
+                                  {{ property.last }}
+                                {%- endif -%}
+                              </span>
+                            {%- endif -%}
+                          {%- endfor -%}
+                        {%- endif -%}
+                      </div>
+                    {%- endunless -%}
+                    {%- if line_item.line_level_discount_allocations != blank -%}
+                      <ul role="list" aria-label="{{ 'customer.order.discount' | t }}">
+                        {%- for discount_allocation in line_item.line_level_discount_allocations -%}
+                          <li class="flex relative mt-2">
+                            <span class="w-4 absolute top-1/2 -translate-y-1/2{% if is_rtl %} right-0{% else %} left-0{% endif %}">{% render 'icon-alls', icon: 'icon-discount' %}</span>
+                            <span class="{% if is_rtl %} pr-5{% else %} pl-5{% endif %} text-normal">{{- discount_allocation.discount_application.title }} (-{% if settings.currency_code_enable %}{{ discount_allocation.amount | money_with_currency }}{% else %}{{ discount_allocation.amount | money }}{% endif %})</span>
+                          </li>
+                        {%- endfor -%}
+                      </ul>
+                    {%- endif -%}
+                    {%- if line_item.fulfillment -%}
+                      <div class="mt-2.5 md:mt-3 flex flex-col border pt-2.5 pr-2.5 pb-2.5 pl-2.5">
+                        {%- assign created_at = line_item.fulfillment.created_at | time_tag: format: 'date' -%}
+                        <span>{{ 'customer.order.fulfilled_at_html' | t: date: created_at }}</span>
+                          {%- if line_item.fulfillment.tracking_url -%}
+                            <a class="mt-2 underline underline-offset-2 disable-effect lg:hover:text-[rgb(var(--colors-text-link))]" href="{{ line_item.fulfillment.tracking_url }}">
+                              {{ 'customer.order.track_shipment' | t }}
+                            </a>
+                          {%- endif -%}
+                          <span class="mt-2">
+                            {{ line_item.fulfillment.tracking_company }}
+                            {%- if line_item.fulfillment.tracking_number -%} #{{ line_item.fulfillment.tracking_number }} {%- endif -%}
+                          </span>
+                      </div>
+                    {%- endif -%}
+                  </div>
+                </td>
+                <td
+                  class="w-full md:w-2/12 mb-3.5 md:mt-6 md:mb-4 flex items-center justify-start md:justify-end before:content-[attr(data-label)] md:before:content-none before:float-left before:w-full before:max-w-[33%] {% if is_rtl %} before:text-right before:pl-2.5 md:text-left{% else %} before:text-left before:pr-2.5 md:text-right{% endif %}"
+                  headers="Row{{ line_item.key }} ColumnSku"
+                  role="cell"
+                  data-label="{{ 'customer.order.sku' | t }}"
+                >
+                  {{ line_item.sku }}
+                </td>
+                <td
+                  class="w-full{% if is_rtl %} md:pr-3.5 before:text-right before:pl-2.5 md:text-left{% else %} md:pl-3.5 before:text-left before:pr-2.5 md:text-right{% endif %} md:w-2/12 mb-3.5 md:mt-6 md:mb-4 flex items-center justify-start md:justify-end before:content-[attr(data-label)] md:before:content-none before:float-left before:w-full before:max-w-[33%]"
+                  headers="Row{{ line_item.key }} ColumnPrice"
+                  role="cell"
+                  data-label="{{ 'customer.order.price' | t }}"
+                >
+                  {%- if line_item.original_price != line_item.final_price or line_item.unit_price_measurement -%}
+                    <dl>
+                      {%- if line_item.original_price != line_item.final_price -%}
+                        <dd>
+                          <s>
+                            {% if settings.currency_code_enable %}
+                              {{ line_item.original_price | money_with_currency }}
+                            {% else %}
+                              {{ line_item.original_price | money }}
+                            {% endif %}
+                          </s>
+                        </dd>
+                        <dd class="mt-2">
+                          <span>
+                            {% if settings.currency_code_enable %}
+                              {{ line_item.final_price | money_with_currency }}
+                            {% else %}
+                              {{ line_item.final_price | money }}
+                            {% endif %}
+                          </span>
+                        </dd>
+                      {%- else -%}
+                        <dd>
+                          {% if settings.currency_code_enable %}
+                            {{ line_item.original_price | money_with_currency }}
+                          {% else %}
+                            {{ line_item.original_price | money }}
+                          {% endif %}
+                        </dd>
+                      {%- endif -%}
+                      {%- if line_item.unit_price_measurement -%}
+                        <dd>
+                          <span>
+                            {%- capture unit_price_separator -%}
+                              <span aria-hidden="true">/</span><span class="visually-hidden">{{ 'accessibility.unit_price_separator' | t }}&nbsp;</span>
+                            {%- endcapture -%}
+                            {%- capture unit_price_base_unit -%}
+                              {%- if line_item.unit_price_measurement.reference_value != 1 -%}
+                                {{- line_item.unit_price_measurement.reference_value -}}
+                              {%- endif -%}
+                              {{ line_item.unit_price_measurement.reference_unit }}
+                            {%- endcapture -%}
+                            <span data-unit-price>
+                              {% if settings.currency_code_enable %}
+                                {{ line_item.unit_price | money_with_currency }}
+                              {% else %}
+                                {{ line_item.unit_price | money }}
+                              {% endif %}
+                            </span>{{- unit_price_separator -}}{{- unit_price_base_unit -}}
+                          </span>
+                        </dd>
+                      {%- endif -%}
+                    </dl>
+                  {%- else -%}
+                    <span>
+                      {% if settings.currency_code_enable %}
+                        {{ line_item.final_price | money_with_currency }}
+                      {% else %}
+                        {{ line_item.final_price | money }}
+                      {% endif %}
+                    </span>
+                  {%- endif -%}
+                </td>
+                <td
+                  class="w-full{% if is_rtl %} md:pr-3.5 before:text-right before:pl-2.5 text-left{% else %} md:pl-3.5 before:text-left before:pr-2.5 text-right{% endif %} md:w-2/12 mb-3.5 md:mt-6 md:mb-4 flex items-center justify-start md:justify-end before:content-[attr(data-label)] md:before:content-none before:float-left before:w-full before:max-w-[33%]"
+                  headers="Row{{ line_item.key }} ColumnQuantity"
+                  role="cell"
+                  data-label="{{ 'customer.order.quantity' | t }}"
+                >
+                  {{ line_item.quantity }}
+                </td>
+                <td
+                  class="w-full md:w-2/12 mb-3.5 md:mt-6 md:mb-4 md:px-3.5 flex items-center justify-start md:justify-end before:content-[attr(data-label)] md:before:content-none before:float-left before:w-full before:max-w-[33%]{% if is_rtl %} before:text-right before:pl-2.5 text-left{% else %} before:text-left before:pr-2.5 text-right{% endif %}"
+                  headers="Row{{ line_item.key }} ColumnTotal"
+                  role="cell"
+                  data-label="{{ 'customer.order.total' | t }}"
+                >
+                  {%- if line_item.original_line_price != line_item.final_line_price -%}
+                    <dl>
+                      <dd>
+                        <s>
+                          {% if settings.currency_code_enable %}
+                            {{ line_item.original_line_price | money_with_currency }}
+                          {% else %}
+                            {{ line_item.original_line_price | money }}
+                          {% endif %}
+                        </s>
+                      </dd>
+                      <dd class="mt-2">
+                        <span>
+                          {% if settings.currency_code_enable %}
+                            {{ line_item.final_line_price | money_with_currency }}
+                          {% else %}
+                            {{ line_item.final_line_price | money }}
+                          {% endif %}
+                        </span>
+                      </dd>
+                    </dl>
+                  {%- else -%}
+                    <span>
+                      {% if settings.currency_code_enable %}
+                        {{ line_item.original_line_price | money_with_currency }}
+                      {% else %}
+                        {{ line_item.original_line_price | money }}
+                      {% endif %}
+                    </span>
+                  {%- endif -%}
+                </td>
+              </tr>
+            {%- endfor -%}
+          </tbody>
+          <tfoot class="block" role="rowgroup">
+            <tr class="flex justify-between mt-4" role="row">
+              <td class="{% if is_rtl %} md:pr-3.5{% else %} md:pl-3.5{% endif %}" id="RowSubtotal" role="rowheader" scope="row" colspan="4">
+                {{ 'customer.order.subtotal' | t }}
+              </td>
+              <td class="{% if is_rtl %} md:pl-3.5{% else %} md:pr-3.5{% endif %}" headers="RowSubtotal" role="cell" data-label="{{ 'customer.order.subtotal' | t }}">
+                {% if settings.currency_code_enable %}
+                  {{ order.line_items_subtotal_price | money_with_currency }}
+                {% else %}
+                  {{ order.line_items_subtotal_price | money }}
+                {% endif %}
+              </td>
+            </tr>
+            {%- if order.cart_level_discount_applications != blank -%}
+              <tr class="flex justify-between mt-3" role="row">
+                {%- for discount_application in order.cart_level_discount_applications -%}
+                  <td class="{% if is_rtl %} md:pr-3.5{% else %} md:pl-3.5{% endif %}" id="RowDiscount" role="rowheader" scope="row" colspan="4">
+                    {{ 'customer.order.discount' | t }}
+                    <span class="cart-discount">
+                      {{- discount_application.title -}}
+                    </span>
+                  </td>
+                  <td class="{% if is_rtl %} md:pl-3.5{% else %} md:pr-3.5{% endif %}" headers="RowDiscount" role="cell" data-label="{{ 'customer.order.discount' | t }}">
+                    <div>
+                      <span>
+                        {% if settings.currency_code_enable %}
+                          -{{ discount_application.total_allocated_amount | money_with_currency }}
+                        {% else %}
+                          -{{ discount_application.total_allocated_amount | money }}
+                        {% endif %}
+                      </span>
+                    </div>
+                  </td>
+                {%- endfor -%}
+              </tr>
+            {%- endif -%}
+            {%- for shipping_method in order.shipping_methods -%}
+              <tr class="flex justify-between mt-3" role="row">
+                <td class="{% if is_rtl %} md:pr-3.5{% else %} md:pl-3.5{% endif %}" id="RowShipping" role="rowheader" scope="row" colspan="4">{{ 'customer.order.shipping' | t }} ({{ shipping_method.title }})</td>
+                <td class="{% if is_rtl %} md:pl-3.5{% else %} md:pr-3.5{% endif %}" headers="RowShipping" role="cell" data-label="{{ 'customer.order.shipping' | t }} ({{ shipping_method.title }})">
+                  {% if settings.currency_code_enable %}
+                    {{ shipping_method.price | money_with_currency }}
+                  {% else %}
+                    {{ shipping_method.price | money }}
+                  {% endif %}
+                </td>
+              </tr>
+            {%- endfor -%}
+            {%- for tax_line in order.tax_lines -%}
+              <tr class="flex justify-between mt-3" role="row">
+                <td class="{% if is_rtl %} md:pr-3.5{% else %} md:pl-3.5{% endif %}" id="RowTax" role="rowheader" scope="row" colspan="4">{{ 'customer.order.tax' | t }} ({{ tax_line.title }} {{ tax_line.rate | times: 100 }}%)</td>
+                <td class="{% if is_rtl %} md:pl-3.5{% else %} md:pr-3.5{% endif %}" headers="RowTax" role="cell" data-label="{{ 'customer.order.tax' | t }} ({{ tax_line.title }} {{ tax_line.rate | times: 100 }}%)">
+                  {% if settings.currency_code_enable %}
+                    {{ tax_line.price | money_with_currency }}
+                  {% else %}
+                    {{ tax_line.price | money }}
+                  {% endif %}
+                </td>
+              </tr>
+            {%- endfor -%}
+            {%- if order.total_duties -%}
+              <tr class="flex justify-between mt-3" role="row">
+                <td class="{% if is_rtl %} md:pr-3.5{% else %} md:pl-3.5{% endif %}" id="RowDuties" role="rowheader" scope="row" colspan="4">{{ 'customer.order.total_duties' | t }}</td>
+                <td class="{% if is_rtl %} md:pl-3.5{% else %} md:pr-3.5{% endif %}" headers="RowDuties" role="cell" data-label="{{ 'customer.order.total_duties' | t }}">
+                  {% if settings.currency_code_enable %}
+                    {{ order.total_duties | money_with_currency }}
+                  {% else %}
+                    {{ order.total_duties | money }}
+                  {% endif %}
+                </td>
+              </tr>
+            {%- endif -%}
+            {%- if order.total_refunded_amount > 0 -%}
+              <tr class="flex justify-between mt-3" role="row">
+                <td class="{% if is_rtl %} md:pr-3.5{% else %} md:pl-3.5{% endif %}" id="RowRefunded" role="rowheader" scope="row" colspan="4">{{ 'customer.order.refunded' | t }}</td>
+                <td class="{% if is_rtl %} md:pl-3.5{% else %} md:pr-3.5{% endif %}" headers="RowRefunded" role="cell" data-label="{{ 'customer.order.refunded' | t }}">
+                  {% if settings.currency_code_enable %}
+                    {{ order.total_refunded_amount | money_with_currency }}
+                  {% else %}
+                    {{ order.total_refunded_amount | money }}
+                  {% endif %}
+                </td>
+              </tr>
+            {%- endif -%}
+            <tr class="flex justify-between text-large mt-3 text-[rgba(var(--colors-heading))]" role="row">
+              <td class="{% if is_rtl %} md:pr-3.5{% else %} md:pl-3.5{% endif %}" id="RowTotal" role="rowheader" scope="row" colspan="3">{{ 'customer.order.total' | t }}</td>
+              <td class="{% if is_rtl %} md:pl-3.5{% else %} md:pr-3.5{% endif %}" headers="RowTotal" role="cell" colspan="2" data-label="{{ 'customer.order.total' | t }}">{{ order.total_net_amount | money_with_currency }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="anm-fade-paragraph md:w-1/4{% if is_rtl %} md:pr-10{% else %} md:pl-10{% endif %}">
+        <div class="anm-fade-element" x-intersect.once="$el.classList.add('is-visible')">
+          <h2 class="text-large mt-16 mb-5 md:mt-12 md:mb-4">{{ 'customer.order.billing_address' | t }}</h2>
+          <div class="md:mb-4 flex">
+            <p class="text-[rgba(var(--colors-heading))]">{{ 'customer.order.payment_status' | t }}:</p>
+            <p class="block pl-1">{{ order.financial_status_label }}</p>
+          </div>
+          <div>{{ order.billing_address | format_address }}</div>
+        </div>
+        <div class="anm-fade-element" x-intersect.once="$el.classList.add('is-visible')">
+          <h2 class="text-large mt-8 md-5 md:mt-10 mb-4">{{ 'customer.order.shipping_address' | t }}</h2>
+          <div class="md:mb-4 flex">
+            <p class="text-[rgba(var(--colors-heading))]">{{ 'customer.order.fulfillment_status' | t }}:</p>
+            <p class="block pl-1">{{ order.fulfillment_status_label }}</p>
+          </div>
+          <div>{{ order.shipping_address | format_address }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{%- render 're-order-popup' -%}
+{% schema %}
+{
+  "name": "t:sections.main-order.name",
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "top_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 52
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 52
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "range",
+      "id": "top_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 52
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 52
+    }
+  ]
+}
+{% endschema %}

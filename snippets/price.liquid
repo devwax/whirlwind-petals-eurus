@@ -1,0 +1,170 @@
+{%- liquid
+  if use_variant
+    if product.selected_variant or settings.default_select_available_variant
+      assign target = product.selected_or_first_available_variant
+    else
+      assign target = product
+    endif
+  else
+    assign target = product
+  endif
+
+  assign custom_price_format = settings.custom_price_format
+  if product.metafields.custom.custom_price_format.value.format
+    assign custom_price_format = product.metafields.custom.custom_price_format.value.format
+  endif
+
+  assign compare_at_price = target.compare_at_price
+  assign price = target.price | default: 1999
+  if settings.currency_code_enable
+    assign money_price = price | money_with_currency
+  else 
+    assign money_price = price | money
+  endif 
+
+  if target == product and product.price_varies and custom_price_format == ''
+    assign money_price = 'products.product.price.from_price_html' | t: price: money_price
+  endif
+
+  assign middle_price = price
+  assign min_price = 0
+  assign max_price = 0
+  unless product.has_only_default_variant
+    assign index = product.variants.size | divided_by: 2.0 | floor 
+    assign prices_variant =  product.variants | sort: "price" | map: "price"
+    assign middle_price = prices_variant[index]
+  endunless
+  if settings.currency_code_enable
+    assign min_price = target.price_min | money_with_currency
+    assign max_price = target.price_max | money_with_currency
+    assign middle_price = middle_price | money_with_currency
+  else
+    assign min_price = target.price_min | money
+    assign max_price = target.price_max | money
+    assign middle_price = middle_price | money
+  endif
+
+  assign enable_price_range = false
+  if settings.enable_price_range and target.price_min < target.price_max and target == product
+    assign enable_price_range = true
+  endif  
+
+  if container == "main-product-price"
+    assign enable_price_range = false
+  endif
+
+  assign show_custom_price_format = false
+  if settings.applied_price_format_products != blank
+    for format_price_product in settings.applied_price_format_products
+      if target.id == format_price_product.id
+        assign show_custom_price_format = true
+      endif
+    endfor
+  endif
+  if settings.applied_price_format_collections != blank
+    for format_price_collection in settings.applied_price_format_collections
+      for format_price_product in format_price_collection.products
+        if target.id == format_price_product.id
+          assign show_custom_price_format = true
+        endif     
+      endfor
+    endfor
+  endif
+  if settings.applied_price_format_products == blank and settings.applied_price_format_collections == blank
+    assign show_custom_price_format = true
+  endif
+-%}
+<div class="{{ container }} price leading-none">
+  <div class="{% if enable_price_range %} inline-block{% endif %}">
+    <div class="target-price hidden">{{ target.price }}</div>
+    <div class="target-compare-at-price hidden">{{ target.compare_at_price }}</div>
+    {% if target == product and custom_price_format and custom_price_format != '' and show_price_range and show_custom_price_format %}
+      {% liquid
+        if custom_price_format contains 'custom.'
+          assign custom_format_keys = custom_price_format | split: '}'
+          for key in custom_format_keys
+            if key contains 'custom.'
+              assign clean_key = key
+              if key.first != '{'
+                assign key_list = key | split: '{'
+                assign clean_key = key_list.last | prepend: '{'
+              endif
+              assign key_metafield_placeholder =  clean_key | remove: ' ' | append: '}'
+              assign key_metafield = clean_key | remove: '{' | remove: '}' | remove: ' ' | split: '.'
+              if product.metafields[key_metafield.first][key_metafield.last].value != blank
+                assign custom_price_format = custom_price_format | replace: key_metafield_placeholder, product.metafields[key_metafield.first][key_metafield.last]
+              else
+                assign custom_price_format = custom_price_format | replace: key_metafield_placeholder, ''
+              endif
+            endif
+          endfor
+        endif
+
+        assign custom_price_html = custom_price_format | replace: "{price}", money_price | replace: "{max_price}", max_price | replace: "{middle_price}", middle_price | replace: "{min_price}", min_price
+      %}
+      <div class="custom-price">
+        {{ custom_price_html }}
+      </div>
+    {% else %}
+      {%- if compare_at_price > price %}
+        {%- if hide_sale_price %}
+          <p class="price {{ price_class }}">
+            <span>{{ money_price }}</span>
+          </p>
+        {%- else -%}
+          <div class="{{ price_class }}">
+            {%- unless product.price_varies == false and product.compare_at_price_varies %}
+              <small class="cap rtl:inline-block">
+                <s class="price-compare rtl:leading-tight">{% if settings.currency_code_enable %}{{ compare_at_price | money_with_currency }}{% else %}{{ compare_at_price | money }}{% endif %}</s>
+              </small>
+            {%- endunless -%}
+            <span {% unless product.price_varies == false and product.compare_at_price_varies %} class="price-sale selection:bg-text-[rgb(var(--colors-price-sale),0.2)] ml-1{% unless align_left %} rtl:mr-1 rtl:ml-0{% endunless %}"{% endunless %}>{{ money_price }}</span>
+          </div>
+        {%- endif -%}
+      {%- else -%}
+        <p class="price {{ price_class }}">
+          <span>{{ money_price }}</span>
+        </p>
+      {%- endif -%}
+      <small class="text-[70%]{% if product.selected_or_first_available_variant.unit_price_measurement == nil %} hidden{% endif %}">
+        <span class="hidden">{{ 'products.product.price.unit_price' | t }}</span>
+        <span class="up price-item price-item--last">
+          <span class="unit-price">{% if settings.currency_code_enable %}
+              {{- product.selected_or_first_available_variant.unit_price | money_with_currency -}}
+            {% else %}
+              {{- product.selected_or_first_available_variant.unit_price | money -}}
+            {% endif %}
+          </span>
+          <span aria-hidden="true">/</span>
+          <span class="hidden">&nbsp;{{ 'accessibility.unit_price_separator' | t }}&nbsp;</span>
+          <span>
+            {%- if product.selected_or_first_available_variant.unit_price_measurement.reference_value != 1 -%}
+              {{- product.selected_or_first_available_variant.unit_price_measurement.reference_value -}}
+            {%- endif -%}
+            {{ product.selected_or_first_available_variant.unit_price_measurement.reference_unit }}
+          </span>
+        </span>
+      </small>
+    {% endif %}
+  </div>
+  {% if enable_price_range and show_price_range %}
+    <button 
+      id="price-range-{{ priceID }}"
+      class="price-range flex-wrap pl-2 border-l border-solid inline-flex items-center gap-[3px] ml-1 rtl:border-r rtl:border-l-0 rtl:pl-0 rtl:pr-2 rtl:mr-1 rtl:ml-0{% if settings.price_popup != blank %} cursor-pointer{% else %} cursor-default{% endif %}"
+      {% if settings.price_popup != blank %} 
+        @click.prevent="$store.xPopupPriceDetail.show($event, '{{ product.id }}', '{{ money_price }}', '{{ max_price }}', '{{ middle_price }}', '{{ min_price }}', '{{ shop.url }}', '{{ settings.price_popup.handle }}'); $store.xModal.setActiveElement('price-range-{{ priceID }}')"
+      {% else %}
+        aria-hidden="true" 
+        tabindex="-1"
+      {% endif %}
+      style="text-align: unset;"
+    >
+      <span style="word-break: break-all;">{{ min_price }} - {{ max_price }}</span>
+      {% if settings.price_popup != blank %} 
+        <span class="w-3.5 h-3.5 min-w-[14px] pt-0.5 pb-0.5 border rounded-full flex items-center justify-center mb-0.5">
+          {% render 'icon-alls', icon: 'icon-note-dot' %}
+        </span>
+      {% endif %}
+    </button>
+  {% endif %}
+</div>

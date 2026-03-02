@@ -1,0 +1,189 @@
+{% comment %}
+    Renders an article card for a given blog with settings to either show the image or not.
+
+    Accepts:
+    - blog: {Object} Blog object
+    - article: {Object} Article object
+    - add_divider: {Boolean} The setting either add the divider blog post or not.
+    - loading: {Boolean} Image should be lazy loaded. Default: lazy (optional)
+    - columns_desktop: {Number} Number blog of columns on desktop,
+    - blog_page: {Boolean} Is it a blog page or not?
+    Usage:
+    {% render 'article-card', blog: blog, article: article %}
+{% endcomment %}
+{%- liquid
+  if columns_desktop == 1
+    assign class_column_1 = " md:pt-12 md:pl-12 md:pl-12 md:pb-12"
+  else
+    assign class_column = " md:pt-7 md:pr-7 md:pb-7 md:pl-7"
+  endif
+  assign layout_card_mobile = columns_mobile
+  if show_badge
+    assign layout_card_mobile = '1'
+  endif 
+  unless disable_divider or blog_header
+    assign class_divider = "md:border-b"
+    assign class_spacing = "md:pb-6"
+  endunless
+  assign class_title = "line-clamp-4"
+  assign class_expert = "line-clamp-4"
+  assign has_image = false
+  if show_image and article.image
+    assign has_image = true
+    assign class_title = "line-clamp-2"
+    assign class_expert = "line-clamp-2"
+  endif
+  if blog_header
+    assign class_title = "line-clamp-2"
+    assign class_expert = "line-clamp-2"
+  endif
+  if show_badge and article.image
+    assign has_image = true 
+    assign class_title = "line-clamp-3"
+  endif
+  assign image_desktop_width = settings.page_width | plus: 100 | divided_by: columns_desktop 
+  if blog_page and columns_desktop == 1
+    assign image_desktop_width = settings.page_width | plus: 100 | divided_by: 1.5
+  endif
+  assign show_corner_image = false
+  if settings.edges_type == 'rounded_corners'
+   assign show_corner_image = true
+  endif
+
+  if show_tag and article.tags.size > 0
+    assign show_tag = true
+  else
+    assign show_tag = false
+  endif
+
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+-%}
+<{% if show_in_header %}a href="{{ article.url }}"{% else %}div{% endif %} class="{% if show_show_more_mobile == true and index > 1 %}hidden {% else %}flex {% endif %}{% if show_show_more_desktop == true and index > columns_desktop %}md:hidden {% else %}md:!flex {% endif %} article--{{ section.id }}--{{ index }} article-card{{ class_slide }} md:list-layout:flex-row{% if image_desktop_top %} blog-image-desktop-top md:flex md:flex-col{% if show_in_header %} pb-5 border-b{% endif %}{% else %} blog-image-desktop-left border-b{% if index <= columns_desktop %} border-t{% endif %}{% endif %} relative group w-full{% if swiper_on_mobile %} h-auto{% else %} h-full{% endif %}{% if enable_desktop_slider %} md:h-auto{% else %} md:h-full{% endif %} article-{{ layout_card_mobile }}{% if item_secondary_background and has_image %} article-bg-{{ layout_card_mobile }}{% if show_corner_image %} rounded-[10px]{% endif %}{% elsif has_image %} {{ class_divider }}{% endif %}"
+  {% unless show_in_header or blog_page %}
+    :style="!show_more && { display: 'flex' }"
+  {% endunless %}
+>
+  {%- if show_badge -%}
+    <p class="{% if show_corner_image %}rounded {% endif %}absolute top-2 left-2 rtl:left-auto rtl:right-2 z-10 pl-2 text-xs pr-2 pt-1 pb-1 uppercase bg-[rgba(var(--background-color),1)]">{{ 'templates.search.blog' | t }}</p>
+  {% endif %}
+  {%- if has_image -%}
+    <{% if show_in_header %}div{% else %}a href="{{ article.url }}"{% endif %} class="{% if show_badge %}article-layout-1{% else %}{% if is_rtl %} article-layout-rtl-{{ layout_card_mobile }}{% else %} article-layout-{{ layout_card_mobile }}{% endif %}{% endif %} block disable-effect md:list-layout:lg:w-1/4 md:list-layout:w-2/5 md:list-layout:pr-7 rtl:md:list-layout:pr-0 rtl:md:list-layout:pl-7">
+      <div 
+        x-intersect.once.margin.-20px.0px.-20px.0px="$el.querySelector('.animate_transition_card__image')?.classList.add('active')" 
+        class="relative overflow-hidden{% if show_corner_image %} z-10 rounded-[10px]{% endif %}{% unless image_ratio == "auto" %} pb-[{{ image_ratio }}%]{% endunless %}"
+        {% if image_ratio == "auto" %} style="height:0; padding-bottom: {{ 100 | divided_by: article.image.aspect_ratio }}%;"{% endif %}
+      >
+        <div class="w-full h-full z-0 overflow-hidden absolute top-0 left-0 animate_transition_card__image animate-Xpulse skeleton-image">
+          {% # theme-check-disable ImgLazyLoading %}
+            <img
+              srcset="{{ article.image.src | image_url: width: 225 }} 225w,
+              {{ article.image.src | image_url: width: 375 }} 375w,
+              {{ article.image.src | image_url: width: 450 }} 450w,
+              {{ article.image.src | image_url: width: 750 }} 750w,
+              {{ article.image.src | image_url: width: 900 }} 900w,
+              {{ article.image.src | image_url: width: 1100 }} 1100w,
+              {{ article.image.src | image_url: width: 1500 }} 1500w,
+              {{ article.image.src | image_url: width: 1780 }} 1780w,
+              {{ article.image.src | image_url: width: 2000 }} 2000w,
+              {{ article.image.src | image_url }} {{ article.image.src.width }}w"
+              src="{{ article.image.src | image_url: width: 1780 }}"
+              alt="{{ article.image.src.alt | escape }}"
+              sizes="(min-width: {{ settings.page_width }}px) calc((100vw - {{ section.settings.spacing }}px*{{ columns_desktop | minus: 1 }}) / {{ columns_desktop }}),
+              (min-width: 768px) calc((100vw - {{ section.settings.spacing }}px*{{ columns_desktop | minus: 1 }}) / {{ columns_desktop }}),
+              calc((100vw) / {{ columns_mobile }})"
+              class="w-full h-full object-cover object-center image-hover animate_transition_image"
+              {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+              width="{{ article.image.width }}"
+              height="{{ article.image.height }}"
+              onload="this?.classList.add('active'); 
+                this.closest('.animate_transition_card__image')?.classList.remove('animate-Xpulse', 'skeleton-image');
+                setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);"
+            >
+          {% # theme-check-enable ImgLazyLoading %}
+          </div>
+      </div>
+    </{% if show_in_header %}div{% else %}a{% endif %}>
+  {%- endif -%}
+  <div class="grow content-article-{{ layout_card_mobile }} md:list-layout:lg:w-3/4 md:list-layout:w-3/5
+    {%- if has_image and blog_page %} pb-5{% endif -%}
+    {%- if blog_header or columns_mobile == '2' %} h-full{% endif -%}
+    {%- if show_corner_image %} rounded-[10px]{% endif -%}
+    {%- if article.image == blank or show_image == false %} h-full md:h-auto md:list-layout:pt-7 content-article-spacing-{{ layout_card_mobile }}{{ class_column_1 -}}
+      {%- elsif item_secondary_background %} content-article-bg-{{ layout_card_mobile }}{{ class_column -}}
+      {%- else %} md:list-layout:pt-0 {{ class_spacing -}}
+        {%- if is_rtl %} content-article-default-rtl-{{ layout_card_mobile -}}
+          {%- else %} content-article-default-{{ layout_card_mobile -}}
+        {%- endif -%}
+    {%- endif %}"
+  >        
+    <div class="flex justify-between flex-col h-full
+      {%- unless show_tag and article.tags.size > 0 %}{% if show_read_more %} gap-y-7 lg:gap-y-7{% endif %}{% endunless -%}
+      {%- if layout_card_mobile != '2' %} text-{{ content_alignment }} rtl:text-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif %}{% endif %} text-{{ content_alignment }} rtl:text-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif %}"
+    >
+      <div {% if show_badge and has_image == false %}class="mt-3"{% endif %}> 
+        {% if show_name %}
+          <p class="line-clamp-1">{{ blog.title }}</p>
+        {% endif %}
+        <p class="{% if show_in_header %}font-inherit{% else %}{% unless show_badge %}h3{% endunless %}{% endif %} sub_heading--{{ section.id }}{% if blog_header %} text-medium{% endif %} text-[rgba(var(--colors-heading))] break-words leading-tight{% if show_name %} mt-2 mb-2{% endif %} mb-2">
+          <{% if show_in_header %}span{% else %}a href="{{ article.url }}"{% endif %} class="hover-text-link{% if show_in_header %} group-hover:link-active {% endif %} duration-200 transition {{ class_title }} disable-effect">
+            {{ article.title }}
+          </{% if show_in_header %}span{% else %}a{% endif %}>
+        </p>
+        {% if list_layout %}
+          <div class="hidden md:list-layout:block">
+            <div class="line-clamp-2 mb-3">
+              {{ article.content | strip_html }}
+            </div>
+          </div>
+        {% endif %}
+        <div class="text-xs tracking-wider inline-flex items-center flex-wrap{% if layout_card_mobile != '2' %} justify-{{ content_alignment }} rtl:justify-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif %}{% endif %} md:justify-{{ content_alignment }} rtl:md:justify-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif %}">
+          {% if show_author %}
+            <span class="p-break-words mr-2 rtl:ml-2 rtl:mr-0">{{ 'sections.featured_blog.by_author' | t }} <span class="font-semibold">{{ article.author }} </span></span>
+          {% endif %}
+          {% if show_date %} 
+            <span class="p-break-words{% if show_comment_counts and article.comments_count > 0 and blog.comments_enabled? %} mr-2 rtl:mr-0 rtl:ml-2{%- endif -%}">{{ article.published_at | date: format: 'day_month_year' }}</span>
+          {% endif %}
+          {% if show_comment_counts and article.comments_count > 0 and blog.comments_enabled? %}
+            <div class="flex{% if show_author or show_date %} border-l pl-2 rtl:pl-0 rtl:pr-2 rtl:border-r rtl:border-l-0{% endif %} items-center">
+              <span class="w-4 h-4">{% render 'icon-alls', icon: 'icon-comment' %}</span>
+              <span class="text-xs pl-1 md:pr-2 rtl:pl-0 rtl:pr-1 rtl:md:pl-2">{{ article.comments_count }}</span>
+            </div>
+          {% endif %}
+        </div>
+        {% if show_excerpt and article.excerpt_or_content.size %}
+          <div>
+            <div class="{{ class_margin }} {{ class_expert }} font-normal">
+              {{ article.excerpt_or_content | replace: '<a', '<a class="effect-inline"' | strip_html }}
+            </div> 
+          </div>
+        {% endif %} 
+      </div>
+      {% if show_tag or show_read_more %}
+        <div>
+          {% if show_tag %}
+            <ul class="text-xs mt-5 md:mt-6 -ml-0.5 -mr-0.5">
+              {% for tag in article.tags %}
+                <li class="inline-block cursor-pointer bg-[rgba(var(--colors-text),0.1)] ml-0.5 mr-0.5 mb-2 {% if settings.edges_type == 'rounded_corners' %} rounded{% endif %}">
+                  <a class="inline-block pl-3 pr-3 pt-1 pb-1 disable-effect article-card:hover:text-current" href="{{ blog.url }}/tagged/{{ tag | handle }}">#{{ tag }}</a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          {% if show_read_more %}
+            <a href="{{ article.url }}" class="nav-link border-b border-[rgba(var(--colors-text))] cursor-pointer relative p-break-words pt-2 inline-block hover-text-link">
+              {% if button_read_more_label != blank %}  
+                {{ button_read_more_label }}
+              {% else %}
+                {{ 'sections.featured_blog.read_now' | t }}
+              {% endif %}
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</{% if show_in_header %}a{% else %}div{% endif %}>

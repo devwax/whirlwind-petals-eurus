@@ -1,0 +1,143 @@
+<div class="x-container-pickup-availability" x-data="{show: false}" x-show="$store.xStoreSelector?.canShowProductPage('{{ product_variant.product.id }}', [{{ product_variant.product.collections | map: 'id' | join: ', ' }}])">
+  {%- assign pick_up_availabilities = product_variant.store_availabilities | where: 'pick_up_enabled', true -%}
+  {%- if pick_up_availabilities.size > 0 -%}
+    <div 
+      x-data='{ 
+        storeAvailabilites: {
+          {%- for store in pick_up_availabilities -%}
+            {{ store.location.name | escape | json }}: {{ store.available }}{% unless forloop.last %},{% endunless %}
+          {%- endfor -%}
+        },
+        pickupLocation: [
+        {%- for store in pick_up_availabilities -%}
+          {{ store.location.name | escape | json }}{% unless forloop.last %},{% endunless %}
+        {%- endfor -%}
+        ]
+      }'
+    >
+      <!-- Availability summary -->
+      <div 
+        class="inline-flex" 
+        x-show="! $store.xStoreSelector?.enabled || ! pickupLocation.includes($store.xStoreSelector?.getStore())"
+      >
+        {%- assign closest_location = pick_up_availabilities.first -%}
+        {%- if closest_location.available -%}
+          <span class="w-6 h-6 inline-block mr-2 rtl:ml-2 rtl:mr-0">{% render 'icon-alls', icon: 'icon-tick' %}</span>
+        {%- else -%}
+          <span class="w-6 h-6 inline-block mr-2 rtl:ml-2 rtl:mr-0">{% render 'icon-alls', icon: 'icon-unavailable' %}</span>
+        {%- endif -%}
+        <div>
+          {%- if closest_location.available -%}
+            <p>
+              {{ 'products.product.pickup_availability.pick_up_available_at_html' | t: location_name: closest_location.location.name }}
+            </p>
+            <p>
+              {{ closest_location.pick_up_time }}
+            </p>
+            <button id="OpenPickUp" class="button-link effect-inline relative cursor-pointer hover:text-[rgba(var(--colors-text-link))]" @click.prevent="show = true; $store.xPopup.open = true; $store.xModal.setActiveElement('OpenPickUp')">
+              {%- if pick_up_availabilities.size == 1 -%}
+                {{ 'products.product.pickup_availability.view_store_info' | t }}
+              {%- else -%}
+                {{ 'products.product.pickup_availability.check_other_stores' | t }}
+              {%- endif -%}
+            </button>
+          {%- else -%}
+            <p>
+              {{ 'products.product.pickup_availability.pick_up_unavailable_at_html' | t: location_name: closest_location.location.name }}
+            </p>
+            {%- if pick_up_availabilities.size > 1 -%}
+              <button id="OpenPickUpOther" class="button-link effect-inline relative cursor-pointer hover:text-[rgba(var(--colors-text-link))]" @click.prevent="show = true; $store.xPopup.open = true; $store.xModal.setActiveElement('OpenPickUpOther')">
+                {{ 'products.product.pickup_availability.check_other_stores' | t }}
+              </button>
+            {%- endif -%}
+          {%- endif -%}
+        </div>
+      </div>
+
+      <div 
+        class="inline-flex" 
+        x-show="$store.xStoreSelector?.enabled && pickupLocation.includes($store.xStoreSelector?.getStore())"
+      >
+        <span x-cloak x-show="$store.xStoreSelector?.checkAvailability(storeAvailabilites)" class="w-6 h-6 inline-block mr-2 rtl:ml-2 rtl:mr-0">{% render 'icon-alls', icon: 'icon-tick' %}</span>
+        <span x-cloak x-show="! $store.xStoreSelector?.checkAvailability(storeAvailabilites)" class="w-6 h-6 inline-block mr-2 rtl:ml-2 rtl:mr-0">{% render 'icon-alls', icon: 'icon-unavailable' %}</span>
+        <div>
+          {% capture store_name %}
+            <span x-text="$store.xStoreSelector?.getStoreText()"></span>
+          {% endcapture %}
+          <p x-show="$store.xStoreSelector?.checkAvailability(storeAvailabilites)">
+            {{ 'products.product.pickup_availability.pick_up_available_at_html' | t: location_name: store_name }}
+          </p>
+          <p x-cloak x-show="! $store.xStoreSelector?.checkAvailability(storeAvailabilites)">
+            {{ 'products.product.pickup_availability.pick_up_unavailable_at_html' | t: location_name: store_name }}
+          </p>
+          {%- for store in pick_up_availabilities -%}
+            <p x-cloak x-show='$store.xStoreSelector?.checkAvailability(storeAvailabilites) && $store.xStoreSelector?.getStore() === {{ store.location.name | escape | json }}'>
+              {{ store.pick_up_time }}
+            </p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <!-- Availability modal -->
+    <template x-teleport="body">
+      <div id="PickupPopup" x-show="show" class="fixed z-[60] left-0 top-0 right-0 bottom-0 bg-[#acacac] bg-opacity-30 flex justify-end">
+        <div class="h-auto w-full md:w-96 mt-24 relative bg-[rgba(var(--background-color))]{% if settings.edges_type == "rounded_corners" %} md:m-2.5 rounded-[10px]{% else %} md:mt-0{% endif %}" x-show="show" x-cloak 
+          @click.away="show = false; $store.xPopup.open = false"
+          x-transition:enter="transition-all ease-in-out duration-500"
+          x-transition:enter-start="opacity-0 transform translate-y-1/3{% if settings.lang_direction contains request.locale.iso_code %} md:-translate-x-1/3{% else %} md:translate-x-1/3{% endif %} md:translate-y-0"
+          x-transition:enter-end="opacity-100 transform translate-y-0 md:translate-x-0 md:translate-y-0"
+          x-transition:leave="transition-all ease-in-out duration-500"
+          x-transition:leave-end="opacity-0 transform translate-y-1/3{% if settings.lang_direction contains request.locale.iso_code %} md:-translate-x-1/3{% else %} md:translate-x-1/3{% endif %} md:translate-y-0"
+          x-intersect.full="$store.xModal.focus('PickupPopup', 'ClosePickup')"
+          @keyup.escape="$store.xModal.removeFocus(); show = false; $store.xPopup.open = false"
+        >
+          <div class="ml-10 mr-10 pt-9 pb-5 border-b border-solid">
+            <button id="ClosePickup" aria-label="Close pickup" class="icon-close-container w-fit rounded-full group-close-btn absolute right-2 rtl:left-2 rtl:right-auto top-2 cursor-pointer" @click.prevent="show = false; $store.xPopup.close(); $store.xModal.removeFocus();">
+              {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+            </button>
+            <p class="leading-tight p-break-words font-medium md:text-[{{ settings.text_base_size | times: 0.00875 | times: 1.1 }}rem] text-[{{ settings.text_base_size | times: 0.00875 }}rem]">{{ product_variant.product.title | escape }}</p>
+            {%- unless product_variant.product.has_only_default_variant -%}
+              <p class="mt-4">
+                {%- for product_option in product_variant.product.options_with_values -%}
+                  {{ product_option.name | escape }}:&nbsp;
+                  {%- for value in product_option.values -%}
+                    {%- if product_option.selected_value == value -%}
+                      <span>{{ value | escape }}</span>
+                    {%- endif -%}
+                  {%- endfor -%}
+                  {%- unless forloop.last -%},&nbsp;{%- endunless forloop.last -%}
+                {%- endfor -%}
+              </p>
+            {%- endunless -%}
+            
+          </div>
+          <ul class="ml-10 pr-10 max-h-[67vh] md:max-h-[82vh] overflow-y-auto scrollbar-body" role="list">
+            {%- for availability in pick_up_availabilities -%}
+              <li class="border-b border-solid py-5">
+                <p class="mb-4 font-semibold text-[{{ settings.text_base_size | times: 0.007875 }}rem] md:text-[{{ settings.text_base_size | times: 0.00875 }}rem]">
+                  {{ availability.location.name }}
+                </p>
+                <div class="flex mb-3">
+                  {%- if availability.available -%}
+                    <span class="w-6 h-6 inline-block mr-2 rtl:ml-2 rtl:mr-0">{% render 'icon-alls', icon: 'icon-tick' %}</span> {{ 'products.product.pickup_availability.pick_up_available' | t }}, {{ availability.pick_up_time | downcase }}
+                  {%- else -%}
+                    <span class="w-6 h-6 inline-block mr-2 rtl:ml-2 rtl:mr-0">{% render 'icon-alls', icon: 'icon-unavailable' %}</span> {{ 'products.product.pickup_availability.pick_up_unavailable' | t }}
+                  {%- endif -%}
+                </div>
+                {%- assign address = availability.location.address -%}
+                <address class="not-italic">
+                  {{ address | format_address }}
+                </address>
+                {%- if address.phone.size > 0 -%}
+                  <p>
+                    {{ address.phone }}<br>
+                  </p>
+                {%- endif -%}
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      </div>
+    </template>
+  {%- endif -%}
+</div>

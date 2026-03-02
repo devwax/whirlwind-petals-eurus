@@ -1,0 +1,40 @@
+{% liquid
+  if settings.lang_direction contains request.locale.iso_code
+  assign is_rtl = true
+  else
+  assign is_rtl = false
+  endif
+%}
+{% capture icon_highlight %}
+  {% if highlight_type == "marker" %}
+    <svg class="svg-highlight svg-highlight-{{ section_id }} svg-underline absolute left-0 top-auto w-full h-[30%] -bottom-[20%]{% if is_rtl %} rotateY-180{% endif %}" xmlns="http://www.w3.org/2000/svg" width="216" height="13" viewBox="0 0 216 13" fill="none" style="fill: none;" preserveAspectRatio="none">
+      <path d="M0.406646 9.68922C49.5975 4.73865 161.298 -2.39378 214.572 8.68106" vector-effect="non-scaling-stroke" stroke="var(--color-highlight)" stroke-width="2.5px"/>
+    </svg>
+  {% elsif highlight_type == "circle" %}
+    <span class="absolute -left-2 -right-2 top-1/2{% if is_rtl %} rotateY-180{% endif %}" >
+      <svg class="svg-highlight svg-circle svg-highlight-{{ section_id }} w-full h-auto -translate-y-1/2" viewBox="0 0 187 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill="none" stroke="var(--color-highlight)" vector-effect="non-scaling-stroke" stroke-width="1px" d="M139.989 39.4C90.6978 39.0613 -6.15681 33.812 0.751102 15.524C1.11063 11.46 10.6805 2.82397 46.0835 0.791969C43.9248 0.791969 186.4 -4.28803 186.4 22.128C186.4 22.636 176.686 40.4159 81.7024 32.7959" />
+      </svg>
+    </span>
+  {% else %}
+    <svg class="svg-highlight svg-star opacity-0 svg-highlight-{{ section_id }} absolute -top-1{% if is_rtl %} -right-2{% else %} -left-2{% endif %}" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6.54054 5.87135L5.99035 4L5.35328 5.87135L3.5 6.52437L5.35328 7.19688L5.99035 9L6.63707 7.19688L8.5 6.52437L6.54054 5.87135Z" stroke="var(--color-highlight)" stroke-width="2"/>
+    </svg>
+    <svg class="svg-highlight svg-star opacity-0 animation-bling svg-highlight-{{ section_id }} absolute top-1{% if is_rtl %} -right-3{% else %} -left-3{% endif %}" width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4.10811 4.37427L3.99807 4L3.87066 4.37427L3.5 4.50487L3.87066 4.63938L3.99807 5L4.12741 4.63938L4.5 4.50487L4.10811 4.37427Z" stroke="var(--color-highlight)" stroke-width="2"/>
+    </svg>
+    <svg class="svg-highlight svg-star opacity-0 animation-bling svg-highlight-{{ section_id }} absolute bottom-0{% if is_rtl %} -left-2{% else %} -right-2{% endif %}" width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4.71622 4.74854L4.49614 4L4.24131 4.74854L3.5 5.00975L4.24131 5.27875L4.49614 6L4.75483 5.27875L5.5 5.00975L4.71622 4.74854Z" stroke="var(--color-highlight)" stroke-width="2"/>
+    </svg>
+  {% endif %}
+{% endcapture %}
+
+<span 
+  class="highlight relative inline-block" 
+  x-data="{ isIntersecting: false }" 
+  x-intersect.once="isIntersecting = true"
+  :class="isIntersecting && 'highlight-anm-start'"
+>
+  {{ menu_title }}
+  {{ icon_highlight }}
+</span>

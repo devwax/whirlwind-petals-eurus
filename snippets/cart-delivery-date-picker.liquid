@@ -1,0 +1,460 @@
+{%- liquid
+  assign market = localization.country.iso_code
+  assign delivery_date_min_global = 0
+  assign delivery_date_min_custom = 0
+  assign check_data_min_global = false
+
+  assign delivery_date_max_global = 0
+  assign delivery_date_max_custom = 0
+  assign check_data_max_global = false
+
+  for item in items
+    if item.id == settings.product_shipping_insurance.selected_or_first_available_variant.id
+      continue
+    endif
+    assign is_edt_disabled = false
+    for property in item.properties 
+      if property.first == 'Preorder' 
+        assign is_edt_disabled = true
+      endif 
+    endfor
+    if is_edt_disabled
+      continue 
+    endif
+    
+    assign requires_shipping = false
+    assign requires_shipping = item.requires_shipping
+    
+    if item.product.gift_card? != true and requires_shipping != false
+      if item.product.metafields.custom.delivery_date_min != blank or item.variant.metafields.custom.delivery_date_min != blank
+        if item.variant.metafields.custom.delivery_date_min != blank
+          assign item_delivery_date_min = item.variant.metafields.custom.delivery_date_min
+        else 
+          assign item_delivery_date_min = item.product.metafields.custom.delivery_date_min
+        endif
+        if item_delivery_date_min contains ';'
+          assign estimate_mins = item_delivery_date_min | split: ";"
+          for estimate_min in estimate_mins
+            assign code_market_min_custom = estimate_min | split: ":" | first | remove: " "
+            assign min_custom_value_market = estimate_min | split: ":" | last
+
+            if code_market_min_custom == market
+              assign delivery_date_min_custom_item = min_custom_value_market | plus: 0
+            endif 
+          endfor
+        elsif item_delivery_date_min contains ':'
+          assign code_market_min_custom = item_delivery_date_min | split: ":" | first | remove: " "
+          assign min_custom_value_market = item_delivery_date_min | split: ":" | last
+
+          if code_market_min_custom == market
+            assign delivery_date_min_custom_item = min_custom_value_market | plus: 0
+          endif 
+        else
+          assign delivery_date_min_custom_item = item_delivery_date_min | plus: 0
+        endif
+
+        if delivery_date_min_custom_item > delivery_date_min_custom 
+          assign delivery_date_min_custom = delivery_date_min_custom_item
+        endif 
+      else 
+        assign check_data_min_global = true
+      endif 
+
+      if item.product.metafields.custom.delivery_date_max != blank or item.variant.metafields.custom.delivery_date_max != blank
+        if item.variant.metafields.custom.delivery_date_max != blank
+          assign item_delivery_date_max = item.variant.metafields.custom.delivery_date_max
+        else 
+          assign item_delivery_date_max = item.product.metafields.custom.delivery_date_max
+        endif
+        if item_delivery_date_max contains ';'
+          assign estimate_maxs = item_delivery_date_max | split: ";"
+          for estimate_max in estimate_maxs
+            assign code_market_max_custom = estimate_max | split: ":" | first | remove: " "
+            assign max_custom_value_market = estimate_max | split: ":" | last
+
+            if code_market_max_custom == market
+              assign delivery_date_max_custom_item = max_custom_value_market | plus: 0
+            endif 
+          endfor
+        elsif item_delivery_date_max contains ':'
+          assign code_market_max_custom = item_delivery_date_max | split: ":" | first | remove: " "
+          assign max_custom_value_market = item_delivery_date_max | split: ":" | last
+
+          if code_market_max_custom == market
+            assign delivery_date_max_custom_item = max_custom_value_market | plus: 0
+          endif 
+        else
+          assign delivery_date_max_custom_item = item_delivery_date_max | plus: 0
+        endif
+
+        if delivery_date_max_custom_item > delivery_date_max_custom 
+          assign delivery_date_max_custom = delivery_date_max_custom_item
+        endif 
+      else 
+        assign check_data_max_global = true
+      endif 
+    endif
+  endfor
+
+  if check_data_min_global
+    if settings.estimate_delivery_min contains ';'
+      assign estimate_mins = settings.estimate_delivery_min | split: ";"
+      for estimate_min in estimate_mins
+        assign code_market_min_global = estimate_min | split: ":" | first | remove: " "
+        assign min_global_value_market = estimate_min | split: ":" | last
+
+        if code_market_min_global == market
+          assign delivery_date_min_global = min_global_value_market | plus: 0
+        endif 
+      endfor
+    else
+      if settings.estimate_delivery_min contains ':'
+        assign code_market_min_global = settings.estimate_delivery_min | split: ":" | first | remove: " "
+        assign min_global_value_market = settings.estimate_delivery_min | split: ":" | last
+
+        if code_market_min_global == market
+          assign delivery_date_min_global = min_global_value_market | plus: 0
+        endif 
+      else
+        assign delivery_date_min_global = settings.estimate_delivery_min | plus: 0
+      endif 
+    endif
+  endif 
+
+  assign delivery_date_min = delivery_date_min_global
+  if delivery_date_min_custom > delivery_date_min_global
+    assign delivery_date_min = delivery_date_min_custom
+  endif 
+
+  if check_data_max_global
+    if settings.estimate_delivery_max contains ';'
+      assign estimate_maxs = settings.estimate_delivery_max | split: ";"
+      for estimate_max in estimate_maxs
+        assign code_market_max_global = estimate_max | split: ":" | first | remove: " "
+        assign max_global_value_market = estimate_max | split: ":" | last
+
+        if code_market_max_global == market
+          assign delivery_date_max_global = max_global_value_market | plus: 0
+        endif 
+      endfor
+    else
+      if settings.estimate_delivery_max contains ':'
+        assign code_market_max_global = settings.estimate_delivery_max | split: ":" | first | remove: " "
+        assign max_global_value_market = settings.estimate_delivery_max | split: ":" | last
+
+        if code_market_max_global == market
+          assign delivery_date_max_global = max_global_value_market | plus: 0
+        endif 
+      else
+        assign delivery_date_max_global = settings.estimate_delivery_max | plus: 0
+      endif 
+    endif
+  endif 
+
+  assign delivery_date_max = delivery_date_max_global
+  if delivery_date_max_custom > delivery_date_max_global
+    assign delivery_date_max = delivery_date_max_custom
+  endif
+
+  assign delivery_available = false
+
+  assign max_slot_delivery_visibility = 0
+  assign delivery_date_values = ''
+  for item in items
+    if item.product.gift_card? != true and item.requires_shipping != false
+      assign delivery_available = true
+      if item.product.metafields.custom.slot_visibility != blank or item.variant.metafields.custom.slot_visibility != blank
+        if item.variant.metafields.custom.slot_visibility != blank
+          assign variant_mtf = item.variant.metafields.custom.slot_visibility | plus: 0
+          assign delivery_date_values = delivery_date_values | append: variant_mtf | append: ","
+        else
+          assign product_mtf = item.product.metafields.custom.slot_visibility | plus: 0
+          assign delivery_date_values = delivery_date_values | append: product_mtf | append: ","
+        endif
+      else 
+        assign settings_value = settings.slot_delivery_visibility | plus: 0
+        assign delivery_date_values = delivery_date_values | append: settings_value | append: ","
+      endif
+    endif
+  endfor
+
+  assign delivery_date_values = delivery_date_values | split: ','
+  
+  assign max_value = delivery_date_values[0] | plus: 0
+  for value in delivery_date_values
+    assign numeric_value = value | plus: 0
+    if numeric_value > max_value
+      assign max_value = value | plus: 0
+    endif
+  endfor
+  assign max_slot_delivery_visibility = max_value
+-%}
+
+{% if delivery_date_min != 0 %}
+  {% liquid 
+    assign delivery_date_max = max_slot_delivery_visibility | plus: delivery_date_min
+
+    assign current_minute = "now" | date: "%M"
+    assign current_time_of_day = "now" | date: "%H" | append: current_minute | plus: 0
+    assign cutoff_time = settings.estimate_delivery_cutoff_hour | append: settings.estimate_delivery_cutoff_minute | plus: 0
+
+    if current_time_of_day > cutoff_time
+      assign delivery_date_min = delivery_date_min | plus: 1
+      assign delivery_date_max = delivery_date_max | plus: 1
+    endif
+
+    assign now_date = "now" | date: "%w" | plus: 0
+    assign now_second = 'now' | date: "%s" | plus: 0
+    if settings.weekend_delivery_exclusions != 'none'
+      if delivery_date_min == delivery_date_max
+        assign same_min_max = true
+      endif
+      assign number_sunday_before_min = 0
+      assign delivery_date_max_before = delivery_date_max
+      for i in (1..delivery_date_max)
+        assign data_week = now_date | plus: i
+        if data_week > 6 
+          assign number_reduced = data_week | modulo: 7
+          assign data_week = number_reduced
+        endif
+        if data_week == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+          if i <= delivery_date_min 
+            assign delivery_date_min = delivery_date_min | plus: 1
+          endif
+          assign delivery_date_max = delivery_date_max | plus: 1
+        endif
+        if data_week == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+          assign delivery_date_max = delivery_date_max | plus: 1
+            if i <= delivery_date_min 
+              assign delivery_date_min = delivery_date_min | plus: 1
+            endif
+        endif 
+      endfor
+      assign delivery_date_max_after = delivery_date_max
+      if delivery_date_max_before < delivery_date_max
+        assign number_sunday_before_min = 0
+        assign delivery_date_max_before_new = delivery_date_max_before | plus: 1
+        for i in (delivery_date_max_before_new..delivery_date_max)
+          assign data_week = now_date | plus: i
+          if data_week > 6 
+            assign number_reduced = data_week | modulo: 7
+            assign data_week = number_reduced
+          endif    
+          if data_week == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+            if i <= delivery_date_min 
+              assign delivery_date_min = delivery_date_min | plus: 1
+            endif
+            assign delivery_date_max = delivery_date_max | plus: 1
+            if settings.weekend_delivery_exclusions contains 'sunday'
+              if i <= delivery_date_min 
+                assign delivery_date_min = delivery_date_min | plus: 1
+                assign number_sunday_before_min = number_sunday_before_min | plus: 1
+              endif
+            endif
+          endif
+          if data_week == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+            assign delivery_date_max = delivery_date_max | plus: 1
+            if number_sunday_before_min == 0
+              if i <= delivery_date_min 
+                assign delivery_date_min = delivery_date_min | plus: 1
+              endif
+            else
+              assign number_sunday_before_min = number_sunday_before_min | minus: 1
+            endif
+          endif 
+        endfor
+      endif
+      assign delivery_date_max_before_check = delivery_date_max
+      if delivery_date_max_after < delivery_date_max
+        for n in (1..100)
+          assign number_sunday_before_min = 0
+          assign delivery_date_max_before_new = delivery_date_max_after | plus: 1
+          assign delivery_date_max_before_check = delivery_date_max
+          for i in (delivery_date_max_before_new..delivery_date_max)
+            assign data_week = now_date | plus: i
+            if data_week > 6 
+              assign number_reduced = data_week | modulo: 7
+              assign data_week = number_reduced
+            endif    
+            if data_week == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+              if i <= delivery_date_min 
+                assign delivery_date_min = delivery_date_min | plus: 1
+              endif
+              assign delivery_date_max = delivery_date_max | plus: 1
+              if settings.weekend_delivery_exclusions contains 'sunday'
+                if i <= delivery_date_min 
+                  assign delivery_date_min = delivery_date_min | plus: 1
+                  assign number_sunday_before_min = number_sunday_before_min | plus: 1
+                endif
+              endif
+            endif
+            if data_week == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+              assign delivery_date_max = delivery_date_max | plus: 1
+              if number_sunday_before_min == 0
+                if i <= delivery_date_min 
+                  assign delivery_date_min = delivery_date_min | plus: 1
+                endif
+              else
+                assign number_sunday_before_min = number_sunday_before_min | minus: 1
+              endif
+            endif 
+          endfor
+          assign delivery_date_max_after = delivery_date_max
+          if delivery_date_max_before_check >= delivery_date_max
+            break
+          endif
+        endfor
+      endif
+      if same_min_max
+        assign delivery_date_max = delivery_date_min 
+        assign to_min_date_seconds = delivery_date_min | times: 24 | times: 60 | times: 60
+        assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60
+      else
+        assign to_min_date_seconds = delivery_date_min | times: 24 | times: 60 | times: 60
+        assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60
+        assign final_timestamp = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%u" | plus: 0
+        if final_timestamp == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+          assign delivery_date_max = delivery_date_max | plus: 1
+          assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60
+          assign final_timestamp = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%u"| plus: 0
+          if final_timestamp == 7 and settings.weekend_delivery_exclusions contains 'sunday'
+            assign delivery_date_max = delivery_date_max | plus: 1
+          endif
+          assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60
+        endif
+        if final_timestamp == 7 and settings.weekend_delivery_exclusions contains 'sunday'
+          assign delivery_date_max = delivery_date_max | plus: 1
+          assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60
+        endif
+      endif
+    endif
+    if settings.holidays_delivery_exclusions
+      assign holidays_delivery_exclusions = settings.holidays_delivery_exclusions | newline_to_br | strip_newlines | split: '<br />'
+      for holiday in holidays_delivery_exclusions
+        assign before_holidays = delivery_date_max
+        assign to_min_date_seconds = delivery_date_min | times: 24 | times: 60 | times: 60
+        assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60
+        assign min_date_time = 'now' | date: "%s" | plus: to_min_date_seconds | date: "%B %d"
+        assign max_date_time = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%B %d"
+        assign min_date_s = min_date_time | date: "%s" | plus: 0
+        assign max_date_s = max_date_time | date: "%s" | plus: 0
+        assign holiday_s = holiday | date: "%s" | plus: 0
+        assign holiday_format = holiday_s | date: "%B %d"
+        if holiday_format == min_date_time
+          assign delivery_date_min = delivery_date_min | plus: 1
+          assign delivery_date_max = delivery_date_max | plus: 1
+        elsif holiday_format == max_date_time
+          assign delivery_date_max = delivery_date_max | plus: 1
+        elsif holiday_s > min_date_s and holiday_s < max_date_s
+          assign delivery_date_max = delivery_date_max | plus: 1
+        elsif holiday_s < min_date_s and holiday_s > now_second
+          assign delivery_date_min = delivery_date_min | plus: 1
+          assign delivery_date_max = delivery_date_max | plus: 1
+        endif
+          
+        if settings.weekend_delivery_exclusions != 'none' and before_holidays < delivery_date_max
+          assign delivery_date_min_now = now_date | plus: delivery_date_min
+          assign delivery_date_max_now = now_date | plus: delivery_date_max   
+          if delivery_date_min_now > 6
+            assign delivery_date_min_now = delivery_date_min_now | modulo: 7
+          endif
+          if delivery_date_max_now > 6
+            assign delivery_date_max_now = delivery_date_max_now | modulo: 7
+          endif
+          if delivery_date_min_now == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+            assign delivery_date_min = delivery_date_min | plus: 1
+            if settings.weekend_delivery_exclusions contains 'sunday'
+              assign delivery_date_min = delivery_date_min | plus: 1
+            endif
+          endif
+          if delivery_date_min_now == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+            assign delivery_date_min = delivery_date_min | plus: 1
+          endif 
+          if delivery_date_max_now == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+            assign delivery_date_max = delivery_date_max | plus: 1
+            if settings.weekend_delivery_exclusions contains 'sunday'
+              assign delivery_date_max = delivery_date_max | plus: 1
+            endif
+          endif
+          if delivery_date_max_now == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+            assign delivery_date_max = delivery_date_max | plus: 1
+          endif
+        endif
+      endfor
+      assign to_min_date_seconds = delivery_date_min | times: 24 | times: 60 | times: 60
+      assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60 
+    endif
+    
+    assign min_date_year = 'now' | date: "%s" | plus: to_min_date_seconds | date: "%Y"
+    assign min_date_month_num = 'now' | date: "%s" | plus: to_min_date_seconds | date: "%m"
+    assign min_date_day = 'now' | date: "%s" | plus: to_min_date_seconds | date: "%d"
+    
+    assign max_date_year = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%Y"
+    assign max_date_month_num = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%m"      
+    assign max_date_day = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%d"
+        
+    assign min_date_string = min_date_year | append: '-' | append: min_date_month_num | append: '-' | append: min_date_day
+    assign max_date_string = max_date_year  | append: '-' | append: max_date_month_num | append: '-' | append: max_date_day
+  %}
+  {% if delivery_available %}
+    {% if isDatepicker %}
+      <input 
+        id="x-cart-delivery-date-field"
+        aria-label="date picker"
+        type="date"
+        x-model="cartDeliveryDateField" 
+        @change="setTimeout(()=>deliveryDateValidate(cartDeliveryDateField, $el), 1000){% unless isCartDrawer %}; saveDeliveryDateField(cartDeliveryDateField, true){% endunless %}"
+        {% if settings.delivery_date_required %}
+          :class="deliveryDateFieldError && 'border-[rgba(var(--color-error))] shadow-[0_0_0_1px_rgba(var(--color-error))]'"
+        {% endif %}
+        class="customization-picker input-date-time appearance-none cursor-pointer min-h-[45px] pl-5 pr-5 pt-3 pb-3 md:pt-3.5 md:pb-3.5 w-full border border-solid bg-transparent{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" 
+        value=""
+        {% if min_date_string %} min="{{ min_date_string }}"{% endif %}
+        {% if max_date_string and max_slot_delivery_visibility > 0 %} max="{{ max_date_string }}"{% endif %}
+      />
+      <p x-cloak x-show="deliveryDateValidationError" class="mt-2">{{ 'general.cart.delivery_date_validation_error' | t }}</p>
+    {% else %}
+      {% unless isCartDrawer %}
+        <label
+          for="x-cart-delivery-date-field"
+          {% if isMainCartItems %}
+            class="block h4 text-medium mb-2 md:mb-3{% if settings.show_cart_note %} mt-4 md:mt-5{% endif %}"
+          {% else %}
+            class="block h4 text-medium md:mb-2{% if settings.enable_estimate_shipping or settings.show_cart_note %} mt-4 md:mt-7{% endif %}"
+          {% endif %}
+        >
+          {{ 'general.delivery_date' | t }}{% if settings.delivery_date_required %}<span class="pl-1" aria-hidden="true">*</span>{% endif %}
+        </label>  
+        {% render 'cart-delivery-date-picker', items: cart.items, isDatepicker: true %}
+        {% if settings.delivery_date_required %}
+          <p x-cloak x-show="deliveryDateFieldError" class="text-[rgba(var(--color-error))] mt-2">{{ 'sections.cart.required_cart_note' | t }} {{ 'general.delivery_date' | t }}</p>
+        {% endif %}
+      {% else %}
+        <div
+          id="cart-delivery-date"
+          x-intersect="loadDeliveryFieldData({{ settings.delivery_date_required }})"
+          :class="show && 'lg:w-[calc((100%/12)*7)]'"
+        >
+          <button
+            class="flex items-center relative justify-between border-none lg:border-solid border-t w-full pt-3 pb-3 pr-5 pl-5 lg:pr-9 lg:pl-9 cursor-pointer"
+            @click.prevent="$store.xCartHelper.openField = ($store.xCartHelper.openField == 'delivery_date_field') ? false : 'delivery_date_field'; localStorage.getItem('cart_delivery_date_field') ? (document.getElementById('x-cart-delivery-date-field').value = localStorage.getItem('cart_delivery_date_field')): (document.getElementById('x-cart-delivery-date-field').value = '')"
+          >
+            <div class="summary__title text-left rtl:text-right pr-5 rtl:pr-0 rtl:pl-5">{{ 'general.delivery_date' | t }}{% if settings.delivery_date_required %}<span class="pl-1" aria-hidden="true">*</span>{% endif %}</div>
+            <div class="flex gap-1 items-center">
+              <p x-cloak x-show="!deliveryDateFieldError && cartDeliveryDateField" x-text="deliveryDateString"></p>
+              {% if settings.delivery_date_required %}
+                <p x-cloak x-show="deliveryDateFieldError" class="text-[rgba(var(--color-error))]">{{ 'sections.cart.error_cart_note' | t }} {{ 'general.delivery_date' | t }}</p>
+              {% endif %}
+              <span
+                class="w-3 h-3 block duration-500"
+                :class="$store.xCartHelper.openField == 'delivery_date_field' ? 'rotate-180 rtl:-rotate-180' : '-rotate-90 rtl:rotate-90'"
+              >
+                {% render 'icon-alls', icon: 'icon-caret' %}
+              </span>                      
+            </div>
+          </button>                   
+        </div>
+      {% endunless %}
+    {% endif %}
+  {% endif %}
+{% endif %}

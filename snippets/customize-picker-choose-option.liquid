@@ -1,0 +1,267 @@
+{% style %}
+  .variant-update-{{ block_id }} .input-radio.disabled+label {
+    pointer-events: none;
+  }
+  .variant-update-{{ block_id }} .input-radio.disabled+label .label-overlay {
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    inset: 0;
+    cursor: not-allowed;
+    pointer-events: auto;
+  }
+{% endstyle %}
+<div
+  class="variant-selects x-variants-data-js"
+  x-data='xVariantSelectCard($el,"{{ block_id }}", "{{ product.id }}", "{{ product.url }}", true, false, false, "{{ paginate.current_page }}", "", "", "{{ section.id }}")'
+  data-url="{{ product.url }}"
+  {% for option in product.options_with_values %}
+    data-option{{ forloop.index }}="{{ option.selected_value | escape }}"
+  {% endfor %}
+>
+  <div
+    id="variant-update-{{ block_id }}"
+    class="variant-update-{{ block_id }} customize-option-{{ product.id }} flex flex-col{% if show_content_center %} justify-center{% endif %} options-container"
+  >
+    <script type="application/json" data-selected-variant>{{ product.selected_or_first_available_variant | json }}</script>
+    {%- for option in product.options_with_values -%}
+      {%- assign option_index = forloop.index | minus: 1 -%}
+      {%- if settings.quick_add_picker_type == 'button' -%}
+        <fieldset
+          id="Option-{{ block_id }}-{{ forloop.index0 }}"
+          class="product-form__input pl-0 flex flex-wrap {% if show_content_center %} justify-center{% endif %} pb-5 quick-view:pb-2 eurus{% if settings.products_color_swatches_enable_on_collection_page and settings.color_option_name contains option.name and settings.swatches_type == 'color' or settings.swatches_type == 'both_text_and_color' %} gap-x-2.5{% else %} gap-x-1.5{% endif %}"
+          data-option-name="{{ option.name | handle }}"
+          data-option-index="{{ forloop.index | minus: 1 }}"
+          {% if settings.products_color_swatches_enable_on_collection_page and settings.swatches_type == 'color' or settings.swatches_type == 'both_text_and_color' and settings.color_option_name contains option.name %}
+            data-swatch="true"
+          {% endif %}
+        >
+          <legend class="p-break-words {% if show_content_center %}text-center{% else %}text-left rtl:text-right{% endif %}">{{ option.name }}{% if settings.products_color_swatches_enable_on_collection_page and settings.swatches_type == 'color' or settings.swatches_type == 'both_text_and_color' and settings.color_option_name contains option.name %}{% if checkbox %}<span> ({{ product.title | replace: '<', '&lt;' | replace: '>', '&gt;' }})</span>{% endif %}:
+            <span class="option-selected-value-customize" data-option-name="{{ option.name | handle }}"></span>
+          {% else %}
+            {% if checkbox %}<span>({{ product.title | replace: '<', '&lt;' | replace: '>', '&gt;' }})</span>{% endif %}
+          {% endif %}
+          </legend>
+          {%- liquid
+            assign color_option_values = settings.color_option_values | newline_to_br | strip_newlines | split: '<br />'
+            assign swatch_natural = false     
+            if settings.products_color_swatches_style == 'natural'
+              assign swatch_natural = true
+            endif
+            assign ratio_image = false
+          -%}
+          {%- for value in option.values -%}
+            {%- liquid
+              assign preview_image = blank
+              assign variant_value = value.variant
+              if variant_value.featured_media.preview_image
+                assign preview_image = variant_value.featured_media.preview_image
+                unless ratio_image
+                  assign ratio_image = 1 | divided_by: variant_value.featured_media.preview_image.aspect_ratio | times: 100
+                endunless
+              elsif product.featured_media
+                assign preview_image = product.featured_media
+                unless ratio_image
+                  assign ratio_image = 1 | divided_by: product.featured_media.aspect_ratio | times: 100
+                endunless
+              endif
+            -%}
+            {%- capture input_id -%}{{ block_id }}-{{ option.position }}-{{ forloop.index0 }}{%- endcapture -%}
+            
+            {%- if checkbox -%}
+              {%- capture input_name -%}
+                {{ product.id }}-{{ option.name }}-{{ option.position }}
+              {%- endcapture -%}
+            {%- else -%}
+              {%- capture input_name -%}
+                {{ option.name }}-{{ option.position }}
+              {%- endcapture -%}
+            {%- endif -%}
+          
+            {%- capture input_dataset -%}
+              data-available="{{ value.available }}"
+              data-product-url="{{ value.product_url }}"
+              data-option-value-id="{{ value.id }}"
+            {%- endcapture -%}
+            
+              {%- liquid
+                assign color_custom = blank
+                assign swatch_image = false
+                assign color_value = ''
+                for color_option_value in color_option_values reversed
+                  assign option_key = color_option_value | split: ':' | first
+                  assign option_value = color_option_value | split: ':' | last | strip
+          
+                  if option_key == value and option_value contains '.'
+                    assign color_custom = option_key
+                    assign swatch_image = true
+                    assign color_value = option_value
+                    break
+                  endif
+                  assign multi_colors = option_value | remove_first: '#' | split: '#'
+                  if option_key == value
+                    assign color_custom = option_key
+                    assign color_value = option_value
+                    break
+                  endif
+                endfor  
+              -%}
+              {% if preview_image and settings.replace_color_with_variant_images %}
+                {% if settings.color_option_name contains option.name %}
+                  {%- style %}
+                    #variant-update-{{ block_id }} .color-watches.variant-{{ option.position }}-{{ forloop.index0 }}-{{ product.id }}:before {
+                      background-image: var(--bg-image);
+                    }
+                  {%- endstyle %}
+                {% endif %}
+              {% elsif color_custom != '' %}
+                {%- style %}
+                  {% if swatch_image %}
+                    [data-swatch="{{ color_custom }}"]:before {
+                      background-image: url({{ color_value | file_img_url: "100x100" }});
+                    }
+                  {% elsif multi_colors.size == 3 %}
+                    [data-swatch="{{ color_custom }}"]:before {
+                      background: linear-gradient(45deg, {{ '#' | append: multi_colors[0] }}, {{ '#' | append: multi_colors[0] }} 33.3%, {{ '#' | append: multi_colors[1] }} 33.3%, {{ '#' | append: multi_colors[1] }} 66.6%, {{ '#' | append: multi_colors[2] }} 66.6%, {{ '#' | append: multi_colors[2] }});
+                    }
+                  {% elsif multi_colors.size == 2 %}
+                    [data-swatch="{{ color_custom }}"]:before {
+                      background: linear-gradient(45deg, {{ '#' | append: multi_colors[0] }}, {{ '#' | append: multi_colors[0] }} 50%, {{ '#' | append: multi_colors[1] }} 50%, {{ '#' | append: multi_colors[1] }});
+                    }
+                  {% else %}
+                    [data-swatch="{{ color_custom }}"]:before {
+                      background: {{ color_value }};
+                    }
+                  {% endif %}
+                {%- endstyle %}
+              {% endif %}
+              <input 
+                id="{{ input_id }}"                            
+                section-id="{{ block_id }}"
+                option-pos="{{ option.position }}"
+                forloop="{{ forloop.index0 }}"
+                type="radio"
+                name="{{ input_name | strip }}"
+                {{ input_dataset }}
+                value="{{ value | escape }}"
+                form="{{ product_form_id }}"
+                class="absolute opacity-0 h-0 w-0 input-radio{% unless value.available %} disabled{% endunless %}"                           
+                @change="setTimeout(() => { 
+                  updateProductCard('{{ product.options_with_values.size }}', '{{ value.product_url }}');
+                  {% if settings.products_color_swatches_enable_on_collection_page and settings.color_option_name contains option.name and settings.swatches_type == 'color' or settings.swatches_type == 'both_text_and_color' %}
+                    let selectedValueEl = $el.parentElement.querySelector('.option-selected-value-customize');
+                    if (selectedValueEl) selectedValueEl.textContent = '{{ value | replace: '"', '&quot;' | replace: "'", "\\&#39;" | replace: '`', '&#96;' | replace: ' ', '&nbsp;' | replace: '<', '&lt;' | replace: '>', '&gt;' }}';
+                  {% endif %}
+                  loadingEls = '{{ input_id }}';
+                }, 0)"
+                aria-label="{{ value | escape }}"
+              >
+              {%- liquid       
+                if settings.products_color_swatches_style == 'round'
+                  assign rounded = 'rounded-full before:rounded-full'
+                endif      
+              -%}
+          
+              {% if settings.products_color_swatches_enable_on_collection_page and settings.color_option_name contains option.name and settings.swatches_type == 'color' or settings.swatches_type == 'both_text_and_color' %}
+                <label 
+                  class="color-watches relative variant-{{ option.position }}-{{ forloop.index0 }}-{{ product.id }} cursor-pointer mt-2.5 inline-flex h-7 w-7 relative  {{ rounded }}" 
+                  for="{{ input_id }}" 
+                  data-swatch="{{ color_custom }}"
+                  data-optionindex="{{ option_index }}"
+                  data-optionvalue="{{ value | escape | replace: '&lt;', '\u003c' | replace: '&gt;', '\u003e' }}"
+                  data-option-value-id="{{ value.id }}"
+                  {% if preview_image == blank or settings.replace_color_with_variant_images == false and color_custom == '' %}
+                    {% liquid
+                      if value.swatch.image
+                        assign image_url = value.swatch.image | image_url: width: 50
+                        assign swatch_value = 'url(' | append: image_url | append: ')'
+                      elsif value.swatch.color
+                        assign swatch_value = 'rgb(' | append: value.swatch.color.rgb | append: ')'
+                      else
+                        assign swatch_value = value | split: ' ' | last | handle
+                      endif
+                    %}
+                    style="background: {{ swatch_value }};"
+                  {% elsif swatch_natural and ratio_image %}
+                    style="--ratio-image: {{ ratio_image }}%; --bg-image: url('{{ preview_image | image_url: width: 100, height: 100 }}')"
+                  {% else %}
+                    style="--bg-image: url('{{ preview_image | image_url: width: 100, height: 100 }}')"
+                  {% endif %}
+                  tabindex="0"
+                  aria-label="{{ value | escape }}"
+                >
+                  <div @click.prevent.stop class="label-overlay hidden"></div>
+                  <div x-cloak x-show="loadingEls === '{{ input_id }}'" class="w-full h-full flex items-center justify-center rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[rgba(var(--colors-background))]">
+                    <div class="animate-spin w-4 h-4 border-loading border-[rgba(var(--colors-text))]"></div>
+                  </div>
+                  <span class="h-full w-full color-watches-disable"></span>
+                </label>
+              {% else %}
+                <label class="relative flex items-center mt-2.5 outline-none font-medium cursor-pointer pl-5 pr-5 pt-2 pb-2 border bg-[rgba(var(--background-color),1)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" for="{{ input_id }}"
+                >
+                  <div x-cloak x-show="loadingEls === '{{ input_id }}'" class="w-4 h-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div class="animate-spin w-4 h-4 border-loading"></div>
+                  </div>
+                  <div @click.prevent.stop class="label-overlay hidden"></div>
+                  <span :class="loadingEls === '{{ input_id }}' && 'invisible'" class="p-break-words">{{ value | escape }}</span>
+                </label>
+              {% endif %}
+              <script type="application/json" data-option-value-id="{{ value.id }}" data-resource="{{ input_id }}">
+                {{ value.variant | json }}
+              </script>
+          {%- endfor -%}
+        </fieldset>
+      {%- else -%}
+        <div 
+          data-option-name="{{ option.name | handle }}"
+          data-option-index="{{ forloop.index | minus: 1 }}"
+        >
+          <label class="mt-1 mb-1 font-medium text-left rtl:text-right block" for="Option-{{ section.id }}-{{ forloop.index0 }}">
+            {{ option.name }}
+          </label>
+          <div class="select relative outline-none eurus">
+            <select
+              id="Option-{{ section.id }}-{{ forloop.index0 }}"
+              class="product-form__input w-full pt-2.5 pb-2.5 pl-5 pr-8 rtl:pr-5 rtl:pl-8 mt-2 mb-2 bg-transparent focus:border-current border appearance-none outline-none border-solid focus-visible:outline-none cursor-pointer{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+              name="{{ option.name }}-{{ product.id }}"
+              form="{{ product_form_id }}"
+              x-init="setTimeout(() => {
+                Array.from($el.options).forEach(option => { option.removeAttribute('selected') });
+                $el.options[$el.selectedIndex].setAttribute('selected', 'selected');
+                updateProductCard('{{ product.options_with_values.size }}', '{{ product.url }}');
+              }, 0)"
+              @change="setTimeout(() => {
+                Array.from($el.options).forEach(option => { option.removeAttribute('selected') });
+                $el.options[$el.selectedIndex].setAttribute('selected', 'selected');
+                updateProductCard('{{ product.options_with_values.size }}', '{{ product.url }}');
+                loadingEls = 'Option-{{ section.id }}-{{ forloop.index0 }}'
+              }, 0)"
+            > 
+              {%- liquid
+                assign enable_color_swatches = false
+                if settings.products_color_swatches_enable_on_collection_page and settings.swatches_type == 'color' and settings.color_option_name contains option.name
+                  assign enable_color_swatches = true
+                endif
+              -%}
+              {% render 'product-variant-options',
+                product: product,
+                option: option,
+                option_index: option_index,
+                product_form_id: product_form_id,
+                input_type: 'select',
+                enable_color_swatches: enable_color_swatches
+              %}
+            </select>
+            <div x-cloak x-show="loadingEls === 'Option-{{ section.id }}-{{ forloop.index0 }}'" class="w-4 h-4 absolute top-1/2 right-3 rtl:right-auto rtl:left-3 -translate-y-1/2">
+              <div class="animate-spin w-4 h-4 border-loading border-[rgba(var(--colors-text))]"></div>
+            </div>
+            <span x-cloak x-show="loadingEls !== 'Option-{{ section.id }}-{{ forloop.index0 }}'" class="absolute top-1/2 right-4 rtl:right-auto rtl:left-4 -translate-y-1/2 w-2.5 inline-block pointer-events-none">
+              {% render 'icon-alls', icon: 'icon-caret' %}
+            </span>
+          </div>
+        </div>
+      {%- endif %}
+    {%- endfor -%}
+  </div>
+</div>

@@ -1,0 +1,14 @@
+<div class="w-full {{ class }}">
+  <{% if block_link %}a href="{{ block_link }}"{% else %}div{% endif %} class="rounded-none not-icon button button-rtl button-solid flex justify-center items-center w-full py-2 px-4 pointer-events-auto empty:hidden leading-normal button cursor-pointer p-break-words{% unless block_link %} hover:cursor-not-allowed disable-btn-animation opacity-70{% endunless %}">
+    {% if quick_access_icon != 'none' %}
+      <span class="{% if settings.lang_direction contains request.locale.iso_code %} ml-2 order-2{% else %} mr-2{% endif %} icon-access inline-block">
+        {% if quick_access_custom_icon == blank %}
+          {% render 'icon-labels-bags', icon: quick_access_icon %}
+        {% else %}
+          {{ quick_access_custom_icon }}
+        {% endif %}
+      </span>
+    {% endif %}
+    <p>{{ block_title }}</p>
+  </{% if block_link %}a{% else %}div{% endif %}>
+</div>

@@ -1,0 +1,88 @@
+{%- liquid 
+  assign heading_size =  section.settings.heading_size | times: settings.heading_base_size | times: 0.000225  
+-%}
+<div class="template-404 x-pgw page-width ml-auto mr-auto text-center pt-24 pb-36 md:pt-48 md:pb-64">
+  {% if section.settings.image != blank %}
+    {% # theme-check-disable ImgLazyLoading %}
+    <img
+      class="img-not-found inline-block h-full lg:w-full object-cover mb-7 lg:mb-14 w-5/6 md:w-2/3 max-w-[578px]"
+      srcset="{{ section.settings.image | image_url: width: 450 }} 450w,
+      {{ section.settings.image | image_url: width: 750 }} 750w,
+      {{ section.settings.image | image_url: width: 900 }} 900w,
+      {{ section.settings.image | image_url: width: 1100 }} 1100w,
+      {{ section.settings.image | image_url: width: 1500 }} 1500w,
+      {{ section.settings.image | image_url }} {{ section.settings.image.width }}w"
+      src="{{ section.settings.image | image_url: width: 1500 }}"
+      alt="{{ section.settings.image.alt | escape }}"
+      {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+      sizes="(min-width: 1024px){% if section.settings.full_width %} 35vw{% else %} {{ settings.page_width | divided_by: 3 }}px{% endif %}, (min-width: 768px) 50vw, 100vw"
+      width="{{ section.settings.image.width }}"
+      height="{{ section.settings.image.height }}"
+      style="object-position: {{ section.settings.image.presentation.focal_point }}"
+    >
+    {% # theme-check-enable ImgLazyLoading %}
+  {% else %}
+    <p class="text-7xl md:text-[16rem] lg:text-[22rem] font-semibold">
+      {{ 'templates.404.subtext' | t }}
+    </p>
+  {% endif %}
+  {%- style -%}
+    .heading--{{ section.id }} { font-size: {{ heading_size | times: 0.6 }}rem; }
+    @media screen and (min-width: 1025px) {
+      .heading--{{ section.id }}{
+        font-size: {{ heading_size }}rem;
+      }  
+    }
+  {%- endstyle -%}
+  <div class="max-w-[578px] w-full mx-auto">
+    <h1 class="heading--{{ section.id }} title h2 font-semibold mb-2">
+      {% if section.settings.heading != blank %}
+        {{ section.settings.heading }}
+      {% else %}
+        {{ 'templates.404.title' | t }}
+      {% endif %}
+    </h1>
+    {% if section.settings.text != blank %}
+      <div class="rte mt-2.5">
+        {{ section.settings.text }}
+      </div>
+    {% endif %}
+    <div class="mt-3">
+      <a href="{{ routes.all_products_collection_url }}" class="relative nav-link effect-inline">
+        {{ 'general.continue_shopping' | t }}
+      </a>
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "t:sections.section-page.name",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:sections.all.image.label"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:sections.all.text.heading"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 50,
+      "max": 200,
+      "unit": "%",
+      "step": 10,
+      "default": 70,
+      "label": "t:sections.all.text.heading_size"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "t:sections.all.text.text"
+    }
+  ]
+}
+{% endschema %}

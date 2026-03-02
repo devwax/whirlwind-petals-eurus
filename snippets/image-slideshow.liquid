@@ -1,0 +1,56 @@
+{% comment %}
+    Renders image in slideshow
+    Accepts:
+    - block: {Object} Block slide show object to access settings
+    - image_mode: {String} (eg. 'desktop', 'mobile')
+    - image_url: {String} Image object for mobile image
+    - first_block: {Boolean} Whether it's the first block in the slideshow
+    Usage:
+    {% render 'image-slideshow' %}
+{% endcomment %}
+<div class="image-slideshow-{{ image_mode }}{% if image_mode == 'desktop' %} hidden md:block{% elsif image_mode == 'mobile' %} block md:hidden{% else %}{% endif %}">
+  <span class="absolute top-0 left-0 bottom-0 right-0 z-10 image-treatment-overlay opacity-{{ block.settings.overlay_opacity }}"></span>
+  <div :class="effect && 'active'" class="w-full{% unless section.settings.show_content_below_image %} absolute top-0 left-0{% endunless %} h-full md:absolute md:top-0 md:left-0 z-0 animate_transition_slide__image">
+    {%- if image_url == blank -%}
+      <div class="image-svg w-full h-full bg-[#c9c9c9] text-[#acacac]{% if block.settings.image_mobile != blank %} hidden{% endif %} md:block mx-auto">
+        {{ 'lifestyle-2' | placeholder_svg_tag: 'w-full h-full' }}
+      </div>
+    {%- else -%}
+      {% comment %}theme-check-disable ImgLazyLoading{% endcomment %}
+      <parallax-image class="h-full w-full">
+        <parallax-movement x-data="xParallax" x-intersect.once.margin.200px="load({{ settings.disable_parallax_effect }})">
+          <picture>
+            <img
+              srcset="{{ image_url | image_url: width: 750 }} 750w,
+                {{ image_url | image_url: width: 900 }} 900w,
+                {{ image_url | image_url: width: 1100 }} 1100w,
+                {{ image_url | image_url: width: 1500 }} 1500w,
+                {{ image_url | image_url: width: 1780 }} 1780w,
+                {{ image_url | image_url: width: 2000 }} 2000w,
+                {{ image_url | image_url: width: 3000 }} 3000w,
+                {{ image_url | image_url: width: 3840 }} 3840w"
+              {% unless section.settings.show_hero and is_first_block %}
+                {% if settings.enable_lazy_loading_image %}
+                  loading="lazy"
+                {% else %}
+                  loading="eager"
+                {% endif %}
+              {% else %}
+                loading="eager"
+                fetchpriority="high"
+                decoding="sync"
+              {% endunless %}
+              sizes="100vw"
+              src="{{ image_url | image_url: width: 3840 }}"
+              alt="{{ image_url.alt | escape }}"
+              class="object-cover h-full w-full image-{{ block.id }}"
+              width="{{ image_url.width }}"
+              height="{{ image_url.height }}"
+            >
+          </picture>
+        </parallax-movement>
+      </parallax-image>
+      {% comment %}theme-check-enable ImgLazyLoading{% endcomment %}
+    {%- endif %}
+  </div>
+</div>

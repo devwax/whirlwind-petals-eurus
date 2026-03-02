@@ -1,0 +1,49 @@
+{% liquid
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+
+  assign max_height_mobile = "50px"
+  assign max_height_desktop = "70px"
+  if number_of_lines_shown == "large"
+    assign max_height_mobile = "130px"
+    assign max_height_desktop = "150px"
+  elsif number_of_lines_shown == "medium"
+    assign max_height_mobile = "90px"
+    assign max_height_desktop = "100px"
+  endif
+%}
+{%- if number_of_lines_shown == 'small' or number_of_lines_shown == 'medium' or number_of_lines_shown == 'large' -%}
+  {%- style -%}
+    .line-clamp-{{ blockID }} {
+      max-height: {{ max_height_mobile }};
+    }
+    @media (min-width: 1024px) {
+      .line-clamp-{{ blockID }} {
+        max-height: {{ max_height_desktop }};
+      }
+    }
+  {%- endstyle -%}
+  <div class="truncate-container ltr" x-data="xTruncateText">
+    <div
+        class="truncate-text relative {{ class_truncate_text }} line-clamp-{{ blockID }} overflow-hidden"
+        x-intersect.once="$nextTick(() => { setTruncate($el); load($el) })"
+      >
+      <div class="text-truncate truncate-inner relative rte {% if is_rtl %} rtl{% endif %}"
+      >
+        {{ content | replace: '<iframe ', '<iframe loading="lazy" ' }}
+      </div>
+
+      <div class="{% if gradient_style == 'secondary' %}gradient-secondary {% else %}gradient {% endif %}block" :class="expanded ? 'hidden' : 'block'"></div>
+    </div>
+    <template 
+      x-if="truncatable" x-show="truncatable"
+    >
+      <button class="button-link relative effect-inline inline mt-4 mb-4" x-init="label = '{{ read_more_label }}'" x-transition @click.prevent="truncated ? open($el, '{{ see_less_label }}') : close($el, '{{ read_more_label }}', '{{ quick_view }}');" x-text="label"></button>
+    </template>
+  </div>
+{% else %}
+  <div class="rte">{{ content | replace: '<iframe ', '<iframe loading="lazy" ' }}</div>
+{% endif %}

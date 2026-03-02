@@ -1,0 +1,50 @@
+{% style %}
+  .skeleton-preload-slide--{{ section_id }} {
+    {% if swiper_on_mobile %}
+      margin-right: {{ section.settings.spacing_mobile }}px;
+    {% else %}
+      margin-right: 0px;
+    {% endif %}
+    width: calc(((100% + {{ spacing_mobile }}px) / {{ columns_mobile }}) - {{ spacing_mobile }}px);
+  }
+  @media (min-width: 768px) {
+    .skeleton-preload-slide--{{ section_id }} {
+      {% if swiper_on_mobile and section.blocks.size > 2 %}
+        margin-right: {{ section.settings.spacing_desktop }}px;
+      {% else %}
+        margin-right: 0px;
+      {% endif %}
+      width: calc(((100% + {{ spacing_desktop }}px) / 2) - {{ spacing_desktop }}px);
+    }
+  }
+  @media (min-width: 1024px) {
+    .skeleton-preload-slide--{{ section_id }} {
+      {% if enable_desktop_slider %}
+        margin-right: {{ section.settings.spacing_desktop }}px;
+        width: calc(((100% + {{ spacing_desktop }}px) / {{ columns_desktop }}) - {{ spacing_desktop }}px);
+      {% else %}
+        width: calc(100% / {{ columns_desktop }});
+        margin-right: 0px;
+      {% endif %}
+    }
+  }
+{% endstyle %}
+{%  liquid 
+  case columns_desktop
+  when 1
+    assign class_padding = 'pb-[300px]'
+  when 2
+    assign class_padding = 'pb-[350px]'
+  when 3
+    assign class_padding = 'pb-[400px]'
+  else
+    assign class_padding = 'pb-[100%]'
+  endcase
+%}
+<div class="flex lg:flex lg:gap-0 lg:w-auto spacing-desktop-{{ section_id }}-splide md:pr-0{% if enable_desktop_slider %} lg:flex-nowrap lg:justify-start{% else %} lg:flex-wrap lg:justify-center{% endif %}{% if swiper_on_mobile %} pr-10{% else %} justify-center flex-wrap{% endif %}{% if section.blocks.size > 2 and swiper_on_mobile %} md:flex-nowrap{% else %} md:flex-wrap{% endif %}">
+  {% for i in (1..blocks) %}
+    <div class="animate-Xpulse shrink-0 {{ column_layout_desktop }} {{ column_layout_mobile }} spacing--{{ section_id }} spacing-tablet-{{ section_id }} spacing-desktop-{{ section_id }} skeleton-preload-slide--{{ section_id }} md:w-1/2 spacing--{{ section_id }} min-h-[200px]" tabindex="-1">
+      <div class="bg-[#c9c9c9] relative z-20 overflow-hidden{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %} before:h-0 before:block z-0 {{ class_padding }}"></div>
+    </div>
+  {% endfor %}
+</div>

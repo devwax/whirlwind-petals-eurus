@@ -1,0 +1,215 @@
+{% comment %}
+  Renders product variant options
+
+  Accepts:
+  - product: {Object} product object.
+  - option: {Object} current product_option object.
+  - option_index: {Number} index of option.
+  - product_form_id: {String} product add to cart form id.
+  - input_type: {String} 'select' or 'radio'.
+  - enable_color_swatches: {Boolean} is color swatches enabled? - Default: false
+  - disable_option_disabled: {Boolean} is option enabled? - Default: false
+
+  Usage:
+  {% render 'product-variant-options',
+    product: product,
+    option: option,
+    input_type: 'radio'
+  %}
+{% endcomment %}
+{%- liquid
+  assign color_option_values = settings.color_option_values | newline_to_br | strip_newlines | split: '<br />'
+  assign swatch_natural = false     
+  if settings.products_color_swatches_style == 'natural'
+    assign swatch_natural = true
+  endif
+-%}
+{% unless settings.default_select_available_variant %}
+  {%- if input_type != 'radio' -%}
+    <option
+      id="{{ section.id }}-{{ option.position }}-blank"
+      class="text-left rtl:text-right rtl:pr-5 whitespace-normal cursor-pointer content-{{ section.id }} bg-[rgba(var(--background-color),1)]" 
+      {% unless product.selected_variant %}
+        selected
+      {% endunless %}
+    >
+      {{ 'products.product.choose_options' | t }}
+    </option>
+  {% endif %}
+{% endunless %}
+{%- for value in option.values -%}
+  {%- liquid
+    assign ratio_image = 0
+    assign preview_image = blank
+    assign variant_value = blank
+    assign variant_value = value.variant
+    if variant_value.featured_media.preview_image
+      assign preview_image = variant_value.featured_media.preview_image | image_url: width: 100, height: 100
+      assign ratio_image = 1 | divided_by: variant_value.featured_media.preview_image.aspect_ratio | times: 100 
+    elsif product.featured_media
+      assign preview_image = product.featured_media | image_url: width: 100, height: 100
+      assign ratio_image = 1 | divided_by: product.featured_media.aspect_ratio | times: 100 
+    endif
+  -%}
+  {%- capture input_id -%}
+    {% if is_fbt %}fbt-{% endif %}{{ section.id }}-{{ option.position }}-{{ forloop.index0 -}}
+  {%- endcapture -%}
+
+  {%- capture input_name -%}
+    {{ option.name }}-{{ option.position }}
+  {%- endcapture -%}
+
+  {%- capture input_dataset -%}
+    data-available="{{ value.available }}"
+    data-product-url="{{ value.product_url }}"
+    data-option-value-id="{{ value.id }}"
+  {%- endcapture -%}
+  {%- if input_type == 'radio' -%}
+    {%- liquid
+      assign color_custom = ''
+      assign swatch_image = false
+      assign color_value = ''
+      for color_option_value in color_option_values reversed
+        assign option_key = color_option_value | split: ':' | first
+        assign option_value = color_option_value | split: ':' | last | strip
+
+        if option_key == value and option_value contains '.'
+          assign color_custom = option_key
+          assign swatch_image = true
+          assign color_value = option_value
+          break
+        endif
+        assign multi_colors = option_value | remove_first: '#' | split: '#'
+        if option_key == value
+          assign color_custom = option_key
+          assign color_value = option_value
+          break
+        endif
+      endfor  
+    -%}
+    {% if preview_image != blank and settings.replace_color_with_variant_images %}
+      {%- style %}
+       .color-watches.variant-{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}:before {
+          background-image: url({{ preview_image }});
+        }
+      {%- endstyle %}
+    {% elsif color_custom != '' %}
+      {%- style %}
+        {% if swatch_image %}
+          [data-swatch="{{ color_custom }}"]:before {
+            background-image: url({{ color_value | file_img_url: "100x100" }});
+          }
+        {% elsif multi_colors.size == 3 %}
+          [data-swatch="{{ color_custom }}"]:before {
+            background: linear-gradient(45deg, {{ '#' | append: multi_colors[0] }}, {{ '#' | append: multi_colors[0] }} 33.3%, {{ '#' | append: multi_colors[1] }} 33.3%, {{ '#' | append: multi_colors[1] }} 66.6%, {{ '#' | append: multi_colors[2] }} 66.6%, {{ '#' | append: multi_colors[2] }});
+          }
+        {% elsif multi_colors.size == 2 %}
+          [data-swatch="{{ color_custom }}"]:before {
+            background: linear-gradient(45deg, {{ '#' | append: multi_colors[0] }}, {{ '#' | append: multi_colors[0] }} 50%, {{ '#' | append: multi_colors[1] }} 50%, {{ '#' | append: multi_colors[1] }});
+          }
+        {% else %}
+          [data-swatch="{{ color_custom }}"]:before {
+            background: {{ color_value }};
+          }
+        {% endif %}
+      {%- endstyle %}
+    {% endif %}
+    {% if disable_option_disabled == blank %}
+      <input 
+        id="{{ input_id }}"
+        type="radio"
+        name="{{ input_name }}"
+        value="{{ value | escape }}"
+        form="{{ product_form_id }}"
+        {{ input_dataset }}
+        class="absolute opacity-0 h-1 w-1 input-radio{% unless value.available %} disabled{% endunless %}"
+        aria-label="{{ value | escape }}"
+        data-value-selected="{{ value.selected }}"
+        {% if value.selected and product.selected_variant or settings.default_select_available_variant %}
+          checked
+        {% endif %}
+      >
+    {% endif %}
+    {%- liquid   
+      if settings.products_color_swatches_style == 'round'
+        assign rounded = 'rounded-full before:rounded-full'
+      elsif settings.edges_type == 'rounded_corners'
+        assign rounded = ' rounded-md before:rounded-md'
+      endif
+    -%}
+
+    {% if enable_color_swatches and settings.color_option_name contains option.name %}
+      <label 
+        id="color-swatch-{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}"
+        class="color-watches relative translate-y-0 transform-none transition {% if color_custom != '' and settings.products_color_swatches_style != 'round' %} custom-color-swatch before:border{% else %} border{% unless swatch_natural %} overflow-hidden{% endunless %}{% endif %} variant-{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}{% if disable_option_disabled == blank %} cursor-pointer mt-2.5{% endif %} block{% if swatch_natural and settings.replace_color_with_variant_images and ratio_image != 0 %} color-swatch-natural{% endif %} swatch-{{ swatch_size }} border relative {{ rounded }}" 
+        for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}" 
+        data-swatch="{{ color_custom }}"
+        {% if preview_image == blank or settings.replace_color_with_variant_images == false and color_custom == '' %}
+          {% liquid
+            if value.swatch.image
+              assign image_url = value.swatch.image | image_url: width: 50
+              assign swatch_value = 'url(' | append: image_url | append: ')'
+            elsif value.swatch.color
+              assign swatch_value = 'rgb(' | append: value.swatch.color.rgb | append: ')'
+            else
+              assign swatch_value = value | split: ' ' | last | handle
+            endif
+          %}
+          style="background: {% if color_custom == '' %}{{ swatch_value }}{% else %}none{% endif %};"
+        {% elsif swatch_natural and ratio_image %}
+          style="--ratio-image: {{ ratio_image }}%;"
+        {% endif %}
+        tabindex="0"
+        aria-label="{{ value | escape }}"
+      >
+        <span class="h-full w-full color-watches-disable"></span>
+        <div x-cloak x-show="loadingEls === '{{ input_id }}'" class="w-full h-full flex items-center justify-center rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[rgba(var(--colors-background))]">
+          <div class="animate-spin w-4 h-4 border-loading border-[rgba(var(--colors-text))]"></div>
+        </div>
+      </label>
+    {% else %}
+      {% liquid
+        assign text_option_values = settings.text_option_values | newline_to_br | strip_newlines | split: '<br />'
+        assign text_custom = blank
+        assign text_value = ''
+        for text_option_value in text_option_values
+          assign option_key = text_option_value | split: ':' | first
+          assign option_value = text_option_value | split: ':' | last
+          if option_key == value
+            assign text_custom = option_key
+            assign text_value = option_value
+            break
+          endif
+        endfor
+      %}
+      <label {% if disable_option_disabled == blank %} class="relative flex items-center outline-none cursor-pointer mt-2.5 pl-5 pr-5 pt-2 pb-2 border bg-[rgba(var(--background-color),1)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"{% endif %} for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}">
+        <span :class="loadingEls === '{{ input_id }}' && 'invisible'">{% if text_custom != blank %}{{ text_value | escape }}{% else %}{{ value | escape }}{% endif %}{% if section_compare %}{% unless forloop.last %}, {% endunless %}{% endif %}</span>
+        <div x-cloak x-show="loadingEls === '{{ input_id }}'" class="w-4 h-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div class="animate-spin w-4 h-4 border-loading"></div>
+        </div>
+      </label>
+    {% endif %}
+  {% else %}
+    <option
+      id="{% if is_fbt %}fbt-{% endif %}{{ input_id }}"
+      {{ input_dataset }}
+      value="{{ value | escape | replace: '&lt;', '\u003c' | replace: '&gt;', '\u003e' }}"
+      class="text-left rtl:text-right rtl:pr-5 whitespace-normal cursor-pointer content-{{ section.id }} bg-[rgba(var(--background-color),1)]"
+      {% if value.selected and product.selected_variant or settings.default_select_available_variant %} 
+        selected
+      {% endif %}
+    >
+      {% unless value.available -%}
+        {{- 'products.product.value_unavailable' | t: value: value -}}
+      {%- else -%}
+        {{- value | escape -}}
+      {%- endunless %}
+    </option>
+  {%- endif -%}
+  {% if disable_option_disabled == blank %}
+    <script type="application/json" data-option-value-id="{{ value.id }}" data-resource="{{ input_id }}">
+      {{ value.variant | json }}
+    </script>
+  {%- endif -%}
+{%- endfor -%}
+  

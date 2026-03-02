@@ -1,0 +1,82 @@
+{% comment %}
+    Renders an article card for a given blog with settings to either show the image or not.
+
+    Accepts:
+    - blog: {Object} Blog object
+    - article: {Object} Article object
+    - add_divider: {Boolean} The setting either add the divider blog post or not.
+    - loading: {Boolean} Image should be lazy loaded. Default: lazy (optional)
+    - columns_desktop: {Number} Number blog of columns on desktop,
+    - blog_page: {Boolean} Is it a blog page or not?
+    - collection_metafield: {String} Collection metafield for image
+    Usage:
+    {% render 'article-card', blog: blog, article: article %}
+{% endcomment %}
+{%- liquid
+  assign show_image = false
+  if link.type == 'product_link' and show_image_product
+    assign show_image = true
+  endif
+  if link.type == 'collection_link' and show_image_collection
+    assign show_image = true
+  endif 
+-%}
+{% if show_image %}
+  {%- liquid
+    assign subcollection_handle = link.object.handle
+    assign card_collection = collections[subcollection_handle]
+    assign featured_image = blank
+    if link.type == 'collection_link'
+      if collection_metafield != blank and card_collection.metafields.custom[collection_metafield] != blank
+        assign featured_image = card_collection.metafields.custom[collection_metafield].value
+      elsif card_collection.image != blank
+        assign featured_image = card_collection.image
+      elsif show_first_image_product and card_collection.featured_image
+        assign featured_image = card_collection.featured_image
+      endif
+    else
+      assign card_product = link.object
+      assign featured_image = card_product.featured_media
+    endif
+
+    if image_ratio != 'auto' and image_ratio
+     assign class_ratio = "w-full h-0 mt-1 pb-[" | append: image_ratio | append: "%]"
+    elsif image_ratio
+     assign class_ratio = "w-full h-0 mt-1"
+    endif
+  -%}
+  {% if featured_image != blank %}
+    <a
+      href="{{ link.url }}" 
+      class="inline-block relative overflow-hidden {{ class_ratio }}{% if settings.edges_type == 'rounded_corners' %}{% if image_left %} rounded{% else %} rounded-md{% endif %}{% endif %}" 
+      aria-label="image"
+      {% if image_ratio == "auto" and featured_image %}style="padding-bottom: {{ 1 | divided_by: featured_image.aspect_ratio | times: 100 }}%;"{% endif %}
+    >
+      {% # theme-check-disable ImgLazyLoading %}
+      <img
+        srcset="{{ featured_image | image_url: width: 100 }} 100w,
+        {{ featured_image | image_url: width: 225 }} 225w,
+        {{ featured_image | image_url: width: 375 }} 375w,
+        {{ featured_image | image_url: width: 450 }} 450w,
+        {{ featured_image | image_url: width: 750 }} 750w,
+        {{ featured_image | image_url: width: 900 }} 900w,
+        {{ featured_image | image_url: width: 1100 }} 1100w,
+        {{ featured_image | image_url: width: 1500 }} 1500w,
+        {{ featured_image | image_url: width: 1780 }} 1780w"
+        src="{{ featured_image | image_url: width: 3840 }}"
+        sizes="{%- unless image_left -%}
+          (min-width: 768px) calc({{ settings.page_width }}px / {{ column | plus: 1 }}),
+        {% endunless %}
+        (min-width: 768px) 100px"
+        alt="{{ featured_image.alt | escape }}"
+        height="{{ featured_image.height }}"
+        width="{{ featured_image.width }}"
+        {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+        onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+        class="w-full h-full object-cover z-10 object-center image-hover absolute top-0 right-0 animate-Xpulse skeleton-image
+          {%- if settings.edges_type == 'rounded_corners' %}{% if image_left %} rounded{% else %} rounded-[10px]{% endif %}{% endif -%}"
+      >
+      {% # theme-check-enable ImgLazyLoading %}
+    </a>
+  {% endif %}
+{% endif %}

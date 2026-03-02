@@ -1,0 +1,14 @@
+{% liquid
+  assign list_new_liststar_icons = "||quote||1_star||2_star||3_star||4_star||5_star||"
+  assign item = '||' | append: icon | append: '||'
+
+  if settings.icon_options == "modern"
+    if list_new_liststar_icons contains item
+      render 'icon-liststar-new', icon: icon
+    else
+      render 'icon-liststar-old', icon: icon
+    endif
+  else
+    render 'icon-liststar-old', icon: icon
+  endif
+%}

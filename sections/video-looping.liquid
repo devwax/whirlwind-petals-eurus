@@ -1,0 +1,2066 @@
+{% liquid
+  assign columns_desktop = 5
+  assign swiper_on_mobile = section.settings.swiper_on_mobile
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+  assign content_width_class = 'x-pgw page-width'
+  if section.settings.full_width
+    assign content_width_class = 'md:pl-5 md:pr-5 md:max-w-full'
+  endif
+  assign mobile_width_class = 'x-pgw page-width'
+  if section.settings.full_width_mobile
+    assign mobile_width_class = 'pl-0 pr-0 md:pl-5 md:pr-5'
+  endif
+%}
+{%- capture sizes_in_card -%}
+  {%- if section.settings.full_width -%}
+    (min-width: 1024px) calc((100vw - ({{ section.settings.spacing }}px * {{ columns_desktop | minus: 1 }})) / {{ columns_desktop }}),
+  {%- else -%}
+    (min-width: {{ settings.page_width }}px) calc(({{ settings.page_width }}px - ({{ section.settings.spacing }}px * {{ columns_desktop | minus: 1 }})) / {{ columns_desktop }}),
+    {% if settings.page_width > 1024 %}(min-width: 1024px) calc((100vw - ({{ section.settings.spacing }}px * {{ columns_desktop | minus: 1 }})) / {{ columns_desktop }}),{% endif %}
+  {%- endif -%}
+  (min-width: 768px) calc(100vw / 3),
+  {%- if section.settings.swiper_on_mobile %}calc(70vw + 20px){% else %}100vw{% endif %}
+{%- endcapture -%}
+{%- capture size_in_popup -%}
+  (min-width: 1024px) 25vw,
+  (min-width: 42vw),
+  (min-width: 768px) calc(100vw / 3),
+  100vw
+{%- endcapture -%}
+{%- style -%} 
+  #shopify-section-{{ section.id }}{
+    {% if section.settings.background_color_light.alpha != 0.0 %}
+      background: {{ section.settings.background_color_light }};
+      --background-color: {{ section.settings.background_color_light.red }}, {{ section.settings.background_color_light.green }}, {{ section.settings.background_color_light.blue }};
+    {% else %}
+      --background-color: {{ settings.colors_background.red }},{{ settings.colors_background.green }},{{ settings.colors_background.blue }};
+      background: {{ settings.colors_background }};
+    {% endif %}
+  }
+  .dark #shopify-section-{{ section.id }}{
+    {%- if section.settings.background_color_dark.alpha != 0.0 -%}
+      background: {{ section.settings.background_color_dark }};
+      --background-color: {{ section.settings.background_color_dark.red }}, {{ section.settings.background_color_dark.green }}, {{ section.settings.background_color_dark.blue }};
+    {%- else -%}
+      background: {{ settings.colors_dark_background }};
+      --background-color:  {{ settings.colors_dark_background.red }},{{ settings.colors_dark_background.green }},{{ settings.colors_dark_background.blue }};
+    {%- endif -%}
+  }
+  .section--{{ section.id }} {
+    {% if section.settings.heading_light.alpha != 0.0 %}
+      --colors-heading: {{ section.settings.heading_light.red }},{{ section.settings.heading_light.green }},{{ section.settings.heading_light.blue }};
+    {% endif %}
+  }
+  .dark .section--{{ section.id }} {
+    {% if section.settings.heading_dark.alpha != 0.0 %}
+      --colors-heading: {{ section.settings.heading_dark.red }},{{ section.settings.heading_dark.green }},{{ section.settings.heading_dark.blue }};
+    {% else %}        
+      --colors-heading: {{ settings.colors_dark_heading.red }}, {{ settings.colors_dark_heading.green }}, {{ settings.colors_dark_heading.blue }};
+    {% endif %}
+  }
+  {% if settings.colors_heading.alpha != 0.0 %}
+    h3.product-card-heading {
+      --colors-heading: {{ settings.colors_heading.red }},{{ settings.colors_heading.green }},{{ settings.colors_heading.blue }};
+    }
+    .dark h3.product-card-heading {
+      {% if settings.heading_dark.alpha != 0.0 %}
+        --colors-heading: {{ settings.colors_dark_heading.red }},{{ settings.colors_dark_heading.green }},{{ section.settings.colors_dark_heading.blue }};
+      {% else %}        
+        --colors-heading: var(--colors-heading-secondary);
+      {% endif %}
+    }
+  {% endif %}
+  @media (min-width: 768px) {
+    .gap--{{ section.id }} {
+      gap: {{ section.settings.spacing }}px;
+    }
+  }
+  @media (max-width: 767px) {
+    .gap-mobile--{{ section.id }} {
+      gap: {{ section.settings.spacing_mobile }}px;
+    }
+  }
+
+{%- endstyle -%}
+{% render 'section-divider' %}
+<div id="video-looping-{{ section.id }}" x-data="xVideoLooping({{ section.settings.spacing }}, {{ section.settings.auto_play }}, {{ section.settings.show_pagination }}, '{{ section.settings.product_card_position }}', '{{ section.id }}', {{ swiper_on_mobile }}, {{ section.settings.apply_black_and_white_effect }})"
+  x-intersect.margin.1200px.once="initVideoLooping()"
+  class="section--{{ section.id }} x-container-video-looping relative pt-[{{ section.settings.padding_top_mobile }}px] md:pt-[{{ section.settings.padding_top }}px] pb-[{{ section.settings.padding_bottom_mobile }}px] md:pb-[{{ section.settings.padding_bottom }}px]">
+  <div class="w-full x-pgw page-width mx-auto {{ content_width_class }} flex items-center {% if section.settings.heading_alignment == 'right' %}flex-row-reverse{% elsif section.settings.heading_alignment == 'left' %}flex-row{% else %}flex-col gap-4{% endif %} justify-between">
+    {%- if section.settings.subheading != blank or section.settings.heading != blank -%}
+      <div class="x-block-video-looping-header text-{{ section.settings.heading_alignment }} rtl:text-{% if section.settings.heading_alignment == 'center' %}center{% elsif section.settings.heading_alignment == 'left' %}right{% else %}left{% endif %}">
+        {% if section.settings.subheading != blank %}
+          <div class="mb-1.5{% unless settings.disable_heading_animation %} overflow-hidden{% endunless %}"{% unless settings.disable_heading_animation %} x-intersect.once="$el.querySelector('.anm-move-up')?.classList.add('active-anm-heading')"{% endunless %}>
+            <p class="subheading rte{% unless settings.disable_heading_animation %} anm-move-up{% endunless %}">{{ section.settings.subheading }}</p>
+          </div>
+        {% endif %}
+        {% if section.settings.heading != blank %}
+          {% liquid 
+            assign heading_size = settings.heading_base_size | times: section.settings.heading_size | times: 0.000225
+          %}
+          {% render 'heading-highlight',
+            headingId: section.id,
+            heading: section.settings.heading,
+            highlight_type: section.settings.highlight_type,
+            color_heading_highlight_dark: section.settings.color_heading_highlight_dark,
+            color_heading_highlight_light: section.settings.color_heading_highlight_light,
+            class: 'p-break-words h2 block leading-tight md:pb-0',
+            heading_tag: section.settings.heading_tag,
+            animation_heading: true
+          %}
+        {% endif %}
+      </div>
+    {% endif %}
+    {% if section.settings.show_arrow %}
+      <div class="flex gap-2.5 justify-end rtl:flex-row-reverse arrows-container{% unless swiper_on_mobile %} hidden md:flex{% endunless %}">
+        <div @click="prevSlide" class="w-11 h-11 border rounded-full pr-3 pl-3 pt-3 pb-3 cursor-pointer">
+          {% render 'icon-labels-bags', icon: 'chevron-left' %}
+        </div>
+        <div @click="nextSlide" class="w-11 h-11 border rounded-full pr-3 pl-3 pt-3 pb-3 cursor-pointer">
+          {% render 'icon-labels-bags', icon: 'chevron-right' %}
+        </div>       
+      </div> 
+    {% endif %}
+  </div>
+  {%- style -%} 
+    .heading-{{ section.id }} {
+      font-size: {{ heading_size | times: 0.6 }}rem; 
+    }
+    @media (min-width: 767px) {
+      .heading-{{ section.id }} {
+        font-size: {{ heading_size }}rem; 
+      }
+    }
+    {% if section.blocks.size > 1 %}
+      .slider-{{ section.id }}:active {
+        cursor: grabbing;
+      }
+    {% endif %}
+    .slider-{{ section.id }}, .slider-{{ section.id }} * {
+      user-select: none;
+      -webkit-user-drag: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+    .slider-item-{{ section.id }} {
+      width: calc(((100% + {{ section.settings.spacing }}px) / 5) - {{ section.settings.spacing }}px);
+      left: calc(50% - ((((100% + {{ section.settings.spacing }}px) / 5) - {{ section.settings.spacing }}px)/2));
+    }
+    {% if request.visual_preview_mode %}
+      .slider-item-preview {
+        width: calc(((100% + 28px) / 5) - 28px);
+        left: calc(50% - ((((100% + 28px) / 5) - 28px) / 2));
+      }
+    {% endif %}
+    @media (max-width: 1024px) {
+      .slider-item-{{ section.id }} {
+        width: calc(((100% + {{ section.settings.spacing }}px) / 3) - {{ section.settings.spacing }}px);
+        left: calc(50% - ((((100% + {{ section.settings.spacing }}px) / 3) - {{ section.settings.spacing }}px)/2));
+      }
+    }
+    @media (max-width: 767px) {
+      .slider-item-{{ section.id }} {
+        width: 100%;
+        left: 0;
+      }
+      {% if request.visual_preview_mode %}
+        .slider-item-preview {
+          width: 100%;
+          left: 0;
+        }
+      {% endif %}
+    }
+    .pagination{
+      height: 12px
+    }
+    .pagination-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: rgb(var(--colors-line-and-border));
+      cursor: pointer;
+      position: relative;
+      transition: background-color 0.3s ease;
+      overflow: hidden;
+    }
+    .pagination-dot.active {
+      background-color: var(--colors-button-hover)
+    }
+    .pagination-dot.active.autoplay {
+      width: 80px;
+      border-radius: 16px;
+      background-color: rgb(var(--colors-line-and-border));
+    } 
+    .pagination-dot .progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background-color: var(--colors-button-hover);
+      transition: width linear;
+    }
+    {% if section.settings.product_card_position == 'on' %}
+      .bg-card-product-videolooping-{{ section.id }} {
+        background: rgba(255, 255, 255, {{ section.settings.overlay_opacity }}%);   
+        backdrop-filter: blur(16px);    
+      }
+    {% endif %}
+    .active-slide .slide-overlay-{{ section.id }} {
+      display: none
+    }
+  {%- endstyle -%}
+  <div class="mt-6 md:mt-14">
+    <div class="mx-auto {{ content_width_class }}{% if section.settings.full_width_mobile or section.settings.full_width %} {{ mobile_width_class }}{% endif %}{% if is_rtl %} rtl{% endif %}">     
+      <div x-data="{ intersect: false }" x-intersect.once="intersect = true" class="slider-container video-looping-carousel flex flex-col w-full h-full overflow-hidden{% if request.visual_preview_mode %} hidden{% endif %}">
+        <div 
+          {% if section.blocks.size > 1 %}
+            @mousedown="onMouseDown($event)" 
+            @mousemove="onMouseMove($event)"
+            @mouseup="onMouseUp($event)"
+            @mouseleave="onMouseLeave($event)"
+            {% if swiper_on_mobile %}
+              @touchstart="onTouchStart($event)"
+              @touchmove="onTouchMove($event)"
+              @touchcancel="onTouchCancel($event)"
+              @touchend="onTouchEnd($event)"
+            {% endif %}
+          {% endif %}
+          class="slider-{{ section.id }} relative w-full h-fit {% unless swiper_on_mobile %}flex flex-col gap-4 md:block{% endunless %} {% if section.blocks.size > 1 %}cursor-grab{% endif %}">
+          <div id="preload-slide-{{ section.id }}" tabindex="-1" class="{% unless swiper_on_mobile %}hidden{% else %}flex{% endunless %} md:flex flex-col gap-1 invisible preload-slide-{{ section.id }} slider-item-{{ section.id }} aspect-[9/16] {% if settings.edges_type == 'rounded_corners' %}rounded-2xl{% endif %} {% if request.visual_preview_mode %} slider-item-preview{% endif %}">
+            <div class="w-full h-full flex justify-center items-center {% if settings.edges_type == 'rounded_corners' %}rounded-[10px]{% endif %} bg-[#c9c9c9]">
+              <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+                {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+              </span>
+            </div>
+            {% for block in section.blocks %}
+              {% if forloop.first %}
+                {% unless section.settings.auto_play == false and section.settings.product_card_position == 'on' %}
+                  {% render 'card-product-video-shopping',
+                    card_product: block.settings.product_1,
+                    type: "card",
+                    index: 1,
+                    block: block,
+                    next_action_show_product: true,
+                    section: section,
+                    layout_card: 'row',
+                    video_looping: true
+                  %}
+                {% endunless %}
+              {% endif %}
+            {% endfor %}
+          </div>
+          {% for block in section.blocks %}
+            {% liquid
+              assign video_alt = block.settings.video_alt_text
+              assign check_video = false
+              assign video_type = blank
+              assign video_id = blank
+              if block.settings.video_url.type == 'youtube'
+                assign video_type = 'youtube'
+                assign check_video = true
+                assign video_id = block.settings.video_url.id
+              endif
+              if block.settings.video_url.type == 'vimeo'
+                assign video_type = 'vimeo'
+                assign check_video = true
+                assign video_id = block.settings.video_url.id
+              endif
+            
+              if block.settings.video != null 
+                assign video_type = 'video_select'
+                assign check_video = true
+              endif 
+              assign image_cover = blank
+              if video_type == 'video_select'
+                assign image_cover = block.settings.video.preview_image
+              endif
+
+              if settings.edges_type == 'rounded_corners'
+                if section.settings.full_width_mobile
+                  if swiper_on_mobile
+                    assign video_layout = section.settings.video_layout | append: ' rounded-[10px]'
+                  else
+                    assign video_layout = section.settings.video_layout | append: ' md:rounded-[10px]'
+                  endif
+                else
+                  assign video_layout = section.settings.video_layout | append: ' rounded-[10px]'
+                endif
+              else
+                assign video_layout = section.settings.video_layout
+              endif
+
+              assign card_product = blank
+              assign count_product = 0
+              assign index = 0
+              if block.settings.product_1 != blank
+                assign card_product = block.settings.product_1
+                assign index = 1
+                assign count_product = count_product | plus: 1
+              endif
+              if block.settings.product_2 != blank
+                if card_product == blank
+                  assign card_product = block.settings.product_2
+                  assign index = 2
+                endif
+                assign count_product = count_product | plus: 1
+              endif
+              if block.settings.product_3 != blank
+                if card_product == blank
+                  assign card_product = block.settings.product_3
+                  assign index = 3
+                endif
+                assign count_product = count_product | plus: 1
+              endif
+              if block.settings.product_4 != blank
+                if card_product == blank
+                  assign card_product = block.settings.product_4
+                  assign index = 4
+                endif
+                assign count_product = count_product | plus: 1
+              endif
+              if block.settings.product_5 != blank
+                if card_product == blank
+                  assign card_product = block.settings.product_5
+                  assign index = 5
+                endif
+                assign count_product = count_product | plus: 1
+              endif
+              if count_product == 1
+                assign next_action_show_product = true
+              else 
+                assign next_action_show_product = false
+              endif
+            %}           
+            <div tabindex="-1" x-data="xVideoShopping" class="card-video-shopping-{{ block.id }} h-full {% unless swiper_on_mobile %}opacity-100{% else %}opacity-0{% endunless %} {% if forloop.first %}md:opacity-100{% else %}md:opacity-0{% endif %} item slider-item-{{ section.id }} {% if swiper_on_mobile %}absolute{% else %}relative{% endif %} md:absolute aspect-[9/16] {% if settings.edges_type == 'rounded_corners' %}rounded-2xl{% endif %} top-0 overflow-hidden{% if request.visual_preview_mode %} slider-item-preview{% endif %}" {{ block.shopify_attributes }}>
+              {% if section.blocks.size > 1 %}<div class="{% unless swiper_on_mobile %}hidden{% endunless %} md:block absolute top-0 left-0 bottom-0 right-0 slide-overlay-{{ section.id }} z-50" @click="goToSlide($el)"></div>{% endif %}
+              <div class="h-full relative group flex flex-col gap-1" :class="showSlideListItemInVideoCard ? 'opacity-0 transition-opacity duration-500 ease-in-out' : 'opacity-100 transition-opacity duration-500 ease-in-out'" x-transition.duration.500ms>
+                {% if count_product == 0 %}
+                  <div class="absolute x-block-social-post-media-icon z-20 lg:max-w-[48px] lg:w-1/5 top-3 right-3 translate-x-0 lg:translate-x-full lg:right-0 group-hover:lg:right-3 group-hover:lg:translate-x-0 transition-all duration-500 flex flex-col gap-2">
+                    {% if block.settings.integrated_social_media != "none" %}
+                      <div 
+                        {% if block.settings.social_account_url != blank %} @click="window.open('{{ block.settings.social_account_url }}')"{% endif %} 
+                        class="{% if block.settings.social_account_url != blank %}cursor-pointer{% endif %} relative max-w-[48px] max-h-[48px] w-[48px] h-[48px] p-5 lg:p-0 lg:w-full lg:h-auto lg:aspect-square rounded-full bg-white disabled:cursor-not-allowed"
+                      >
+                        <span class="pointer-events-none duration-200 bg-button-play absolute w-4 h-5 lg:w-1/3 lg:h-1/3 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[#282928]">
+                          {% render 'icon-media', icon: block.settings.integrated_social_media %}
+                        </span>
+                      </div>
+                    {% endif %}
+                  </div>    
+                {% endif %}           
+                <div class="h-full desktop-video-container group hidden md:block" >
+                  {% unless check_video %}
+                    <div class="w-full h-full flex justify-center items-center {% if settings.edges_type == 'rounded_corners' %}rounded-[10px]{% endif %} bg-[#c9c9c9]">
+                      <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+                        {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+                      </span>
+                    </div>
+                  {% else %}
+                    {% if section.settings.auto_play %}
+                      {% if video_type == 'video_select' %}
+                        <div class="w-full h-full relative cursor-default overflow-hidden external-video {{ video_layout }} video-hero" 
+                          @click.stop="$store.xVideo.togglePlay($el)"
+                        >
+                          {% if image_cover != blank %}
+                            <img
+                              srcset="{{ image_cover | image_url: width: 375 }} 375w,
+                              {{ image_cover | image_url: width: 450 }} 450w,
+                              {{ image_cover | image_url: width: 750 }} 750w,
+                              {{ image_cover | image_url: width: 900 }} 900w,
+                              {{ image_cover | image_url: width: 1100 }} 1100w,
+                              {{ image_cover | image_url: width: 1500 }} 1500w,
+                              {{ image_cover | image_url: width: 1780 }} 1780w"
+                              sizes="{{ sizes_in_card }}"
+                              src="{{ image_cover | image_url: width: 1780 }}"
+                              alt="{{ image_cover.alt | escape }}"
+                              class="object-cover z-10 absolute top-0 left-0 h-full w-full img-thumbnail {{ video_layout }} animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                              loading="lazy"
+                              onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                              width="{{ image_cover.width }}"
+                              height="{{ image_cover.height }}"
+                              style="object-position:{{ image_cover.presentation.focal_point }};"
+                            >
+                          {% endif %}
+                          {%- render 'media-video',
+                            collage: true,
+                            enable_video_autoplay: true,
+                            loop: true,
+                            video_type: video_type,
+                            show_sound_icon_small: true,
+                            video_id: video_id,
+                            video_alt: video_alt,
+                            video: block.settings.video,
+                            cover_image: image_cover,
+                            show_sound_control: block.settings.show_sound_control,
+                            video_looping: true
+                          -%}
+                        </div>
+                      {% else %}
+                        <div
+                          class="w-full h-full relative overflow-hidden video-hero cursor-default external-video yt-vimec-video {{ video_layout }}"
+                          x-data="{ isHovered: false }"
+                          video-type='{{ video_type }}'
+                          video-id='{{ video_id }}'
+                          video-alt='{{ video_alt }}'
+                          video-loaded='false'
+                          >
+                          {% if image_cover != blank %}
+                            <img
+                              srcset="{{ image_cover | image_url: width: 375 }} 375w,
+                              {{ image_cover | image_url: width: 450 }} 450w,
+                              {{ image_cover | image_url: width: 750 }} 750w,
+                              {{ image_cover | image_url: width: 900 }} 900w,
+                              {{ image_cover | image_url: width: 1100 }} 1100w,
+                              {{ image_cover | image_url: width: 1500 }} 1500w,
+                              {{ image_cover | image_url: width: 1780 }} 1780w"
+                              sizes="{{ sizes_in_card }}"
+                              src="{{ image_cover | image_url: width: 1780 }}"
+                              alt="{{ image_cover.alt | escape }}"
+                              class="object-cover z-10 absolute top-0 left-0 h-full w-full img-thumbnail {{ video_layout }} animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                              loading="lazy"
+                              onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                              width="{{ image_cover.width }}"
+                              height="{{ image_cover.height }}"
+                              style="object-position:{{ image_cover.presentation.focal_point }};"
+                            >
+                          {% else %}
+                            {% unless check_video %}
+                              <div class="w-full h-full flex justify-center items-center absolute bg-[#c9c9c9]">
+                                <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+                                  {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+                                </span>
+                              </div>
+                            {% endunless %}
+                            {% if video_type == 'youtube' %}
+                              <div class="absolute h-full w-full video">
+                                {% # theme-check-disable RemoteAsset %}
+                                <picture>
+                                  <source type="image/webp" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                  <source type="image/jpeg" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi/' | append: '/maxresdefault.jpg' }}">
+                                  <img 
+                                    src="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}" 
+                                    class="w-full h-full object-cover animate-Xpulse skeleton-image" alt="{{ video_alt }}" width="1280" height="890"
+                                    loading="lazy"
+                                    alt=""
+                                    onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                                  />
+                                </picture>
+                                {% # theme-check-enable RemoteAsset %}
+                              </div>
+                            {% elsif video_type == 'vimeo' %}
+                              {%- capture options -%}
+                                {
+                                  'alt': '{{ video_alt }}',
+                                  'width': 1280
+                                }
+                              {%- endcapture -%}
+                              <div class="external-video w-full h-full">
+                                <div class="h-full w-full" x-init="$store.xVideo.renderVimeoFacade($el, '{{ video_id }}', {{ options }})"></div>
+                              </div>
+                            {% endif %}
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                    {% else %}
+                      {% capture button_play %}
+                        {% if check_video %}
+                          <div class="button-play absolute top-1/2 left-1/2">
+                            <div class="cursor-pointer absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] md:w-[60px] md:h-[60px] rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 disabled:cursor-not-allowed">
+                              <span class="pointer-events-none duration-200 bg-button-play absolute w-4 h-5 md:w-4 md:h-5 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+                              </span>
+                            </div>
+                          </div>
+                        {% endif %}
+                      {% endcapture %}
+                      <div
+                        class="w-full {% if video_type == 'youtube' or video_type == 'vimeo' %}yt-vimec-video{% endif %} h-full relative overflow-hidden cursor-default external-video {{ video_layout }}"
+                        x-data="{ isHovered: false }"
+                        {% if video_type == 'video_select' %}@click.prevent="$store.xVideo.mp4Thumbnail($el)"{% endif %}
+                        {% if video_type == 'youtube' or video_type == 'vimeo' %}@click.prevent="$store.xVideo.externalLoad($el, '{{ video_type }}', '{{ video_id }}', false, '{{ video_alt }}')"{% endif %}
+                        >
+                        {% if image_cover != blank %}
+                          <img
+                            srcset="{{ image_cover | image_url: width: 375 }} 375w,
+                            {{ image_cover | image_url: width: 450 }} 450w,
+                            {{ image_cover | image_url: width: 750 }} 750w,
+                            {{ image_cover | image_url: width: 900 }} 900w,
+                            {{ image_cover | image_url: width: 1100 }} 1100w,
+                            {{ image_cover | image_url: width: 1500 }} 1500w,
+                            {{ image_cover | image_url: width: 1780 }} 1780w"
+                            sizes="{{ sizes_in_card }}"
+                            src="{{ image_cover | image_url: width: 1780 }}"
+                            alt="{{ image_cover.alt | escape }}"
+                            class="object-cover z-10 absolute top-0 left-0 h-full w-full img-thumbnail {{ video_layout }} animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                            loading="lazy"
+                            onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                            width="{{ image_cover.width }}"
+                            height="{{ image_cover.height }}"
+                            style="object-position:{{ image_cover.presentation.focal_point }};"
+                          >
+                          {% if video_type == 'video_select' %}
+                            {{ block.settings.video
+                              | video_tag:
+                                image_size: "1100x",
+                                loop: true,
+                                muted: false,
+                                poster: '',
+                                class: "w-full h-full absolute top-0 left-0 video object-cover",
+                                preload: "none",
+                                alt: block.settings.video.alt
+                                | replace: '<video ', '<video x-on:mouseover="isHovered = true" x-on:mouseleave="isHovered = false" :controls="isHovered" '
+                                | replace: '<img ', '<img loading="lazy" alt="" '
+                            }}
+                            {{ button_play }}
+                          {% endif %}
+                        {% else %}
+                          {% unless check_video %}
+                            <div class="w-full h-full flex justify-center items-center absolute bg-[#c9c9c9]">
+                              <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+                                {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+                              </span>
+                            </div>
+                          {% endunless %}
+                          {% if video_type == 'youtube' %}
+                            <div class="absolute h-full w-full video">
+                              {% # theme-check-disable RemoteAsset %}
+                              <picture>
+                                <source type="image/webp" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                <source type="image/jpeg" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi/' | append: '/maxresdefault.jpg' }}">
+                                <img 
+                                  src="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}" 
+                                  class="w-full h-full object-cover animate-Xpulse skeleton-image" alt="{{ video_alt }}" width="1280" height="890"
+                                  loading="lazy"
+                                  alt=""
+                                  onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                                />
+                              </picture>
+                              {% # theme-check-enable RemoteAsset %}
+                            </div>
+                            {{ button_play }}
+                          {% elsif video_type == 'vimeo' %}
+                            {%- capture options -%}
+                              {
+                                'alt': '{{ video_alt }}',
+                                'width': 1280
+                              }
+                            {%- endcapture -%}
+                            <div class="external-video w-full h-full">
+                              <div class="h-full w-full" x-init="$store.xVideo.renderVimeoFacade($el, '{{ video_id }}', {{ options }})"></div>
+                              {{ button_play }}
+                            </div>
+                          {% elsif video_type == 'video_select' %}
+                            {{ block.settings.video
+                              | video_tag:
+                                image_size: "1100x",
+                                loop: false,
+                                controls: true,
+                                muted: false,
+                                class: "w-full h-full absolute video",
+                                alt: block.settings.video.alt
+                                | replace: '<video ', '<video x-on:pause="paused = true" x-on:play="paused = false" x-on:mouseover="isHovered = true" x-on:mouseleave="isHovered = false" :controls="isHovered" '
+                                | replace: '<img ', '<img loading="lazy" alt="" '
+                            }}
+                            {{ button_play }}
+                          {% endif %}
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  {% endunless %}
+                </div>
+                {% comment %} mobile {% endcomment %}
+                <div class="h-full mobile-video-container block md:hidden" >
+                  {% unless check_video %}
+                    <div class="w-full h-full flex justify-center items-center rounded-[10px] bg-[#c9c9c9]">
+                      <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+                        {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+                      </span>
+                    </div>
+                  {% else %}
+                    {% if section.settings.auto_play and swiper_on_mobile %}
+                      {% if video_type == 'video_select' %}
+                        <div class="w-full h-full relative cursor-default overflow-hidden external-video {{ video_layout }} video-hero" 
+                          @click.stop="$store.xVideo.togglePlay($el)"
+                        >
+                          {% if image_cover != blank %}
+                            <img
+                              srcset="{{ image_cover | image_url: width: 375 }} 375w,
+                              {{ image_cover | image_url: width: 450 }} 450w,
+                              {{ image_cover | image_url: width: 750 }} 750w,
+                              {{ image_cover | image_url: width: 900 }} 900w,
+                              {{ image_cover | image_url: width: 1100 }} 1100w,
+                              {{ image_cover | image_url: width: 1500 }} 1500w,
+                              {{ image_cover | image_url: width: 1780 }} 1780w"
+                              sizes="{{ sizes_in_card }}"
+                              src="{{ image_cover | image_url: width: 1780 }}"
+                              alt="{{ image_cover.alt | escape }}"
+                              class="object-cover z-10 absolute top-0 left-0 h-full w-full img-thumbnail {{ video_layout }} animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                              loading="lazy"
+                              onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                              width="{{ image_cover.width }}"
+                              height="{{ image_cover.height }}"
+                              style="object-position:{{ image_cover.presentation.focal_point }};"
+                            >
+                          {% endif %}
+                          {%- render 'media-video',
+                            collage: true,
+                            enable_video_autoplay: true,
+                            loop: true,
+                            video_type: video_type,
+                            show_sound_icon_small: true,
+                            video_id: video_id,
+                            video_alt: video_alt,
+                            video: block.settings.video,
+                            cover_image: image_cover,
+                            show_sound_control: block.settings.show_sound_control,
+                            video_looping: true
+                          -%}
+                        </div>
+                      {% else %}
+                        <div
+                          class="w-full h-full relative overflow-hidden cursor-default external-video yt-vimec-video {{ video_layout }}"
+                          x-data="{ isHovered: false }"
+                          video-loaded='false'
+                          video-type='{{ video_type }}'
+                          video-id='{{ video_id }}'
+                          video-alt='{{ video_alt }}'
+                          >
+                          {% if image_cover != blank %}
+                            <img
+                              srcset="{{ image_cover | image_url: width: 375 }} 375w,
+                              {{ image_cover | image_url: width: 450 }} 450w,
+                              {{ image_cover | image_url: width: 750 }} 750w,
+                              {{ image_cover | image_url: width: 900 }} 900w,
+                              {{ image_cover | image_url: width: 1100 }} 1100w,
+                              {{ image_cover | image_url: width: 1500 }} 1500w,
+                              {{ image_cover | image_url: width: 1780 }} 1780w"
+                              sizes="{{ sizes_in_card }}"
+                              src="{{ image_cover | image_url: width: 1780 }}"
+                              alt="{{ image_cover.alt | escape }}"
+                              class="object-cover z-10 absolute top-0 left-0 h-full w-full img-thumbnail {{ video_layout }} animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                              loading="lazy"
+                              onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                              width="{{ image_cover.width }}"
+                              height="{{ image_cover.height }}"
+                              style="object-position:{{ image_cover.presentation.focal_point }};"
+                            >
+                          {% else %}
+                            {% unless check_video %}
+                              <div class="w-full h-full flex justify-center items-center absolute bg-[#c9c9c9]">
+                                <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+                                  {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+                                </span>
+                              </div>
+                            {% endunless %}
+                            {% if video_type == 'youtube' %}
+                              <div class="absolute h-full w-full video">
+                                {% # theme-check-disable RemoteAsset %}
+                                <picture>
+                                  <source type="image/webp" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                  <source type="image/jpeg" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi/' | append: '/maxresdefault.jpg' }}">
+                                  <img 
+                                    src="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}" 
+                                    class="w-full h-full object-cover animate-Xpulse skeleton-image" alt="{{ video_alt }}" width="1280" height="890"
+                                    loading="lazy"
+                                    alt=""
+                                    onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                                  />
+                                </picture>
+                                {% # theme-check-enable RemoteAsset %}
+                              </div>
+                            {% elsif video_type == 'vimeo' %}
+                              {%- capture options -%}
+                                {
+                                  'alt': '{{ video_alt }}',
+                                  'width': 1280
+                                }
+                              {%- endcapture -%}
+                              <div class="external-video w-full h-full">
+                                <div class="h-full w-full" x-init="$store.xVideo.renderVimeoFacade($el, '{{ video_id }}', {{ options }})"></div>
+                              </div>
+                            {% endif %}
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                    {% else %}
+                      {% capture button_play %}
+                        {% if check_video %}
+                          <div class="button-play absolute top-1/2 left-1/2">
+                            <div class="cursor-pointer absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] md:w-[60px] md:h-[60px] rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 disabled:cursor-not-allowed">
+                              <span class="pointer-events-none duration-200 bg-button-play absolute w-4 h-5 md:w-4 md:h-5 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                                {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+                              </span>
+                            </div>
+                          </div>
+                        {% endif %}
+                      {% endcapture %}
+                      <div
+                        class="w-full h-full {% if video_type == 'youtube' or video_type == 'vimeo' %}yt-vimec-video{% endif %} relative overflow-hidden cursor-default external-video {{ video_layout }}"
+                        x-data="{ isHovered: false }"
+                        {% if video_type == 'video_select' %}@click.prevent="$store.xVideo.mp4Thumbnail($el)"{% endif %}
+                        {% if video_type == 'youtube' or video_type == 'vimeo' %}@click.prevent="$store.xVideo.externalLoad($el, '{{ video_type }}', '{{ video_id }}', false, '{{ video_alt }}')"{% endif %}
+                        >
+                        {% if image_cover != blank %}
+                          <img
+                            srcset="{{ image_cover | image_url: width: 375 }} 375w,
+                            {{ image_cover | image_url: width: 450 }} 450w,
+                            {{ image_cover | image_url: width: 750 }} 750w,
+                            {{ image_cover | image_url: width: 900 }} 900w,
+                            {{ image_cover | image_url: width: 1100 }} 1100w,
+                            {{ image_cover | image_url: width: 1500 }} 1500w,
+                            {{ image_cover | image_url: width: 1780 }} 1780w"
+                            sizes="{{ sizes_in_card }}"
+                            src="{{ image_cover | image_url: width: 1780 }}"
+                            alt="{{ image_cover.alt | escape }}"
+                            class="object-cover z-10 absolute top-0 left-0 h-full w-full img-thumbnail {{ video_layout }} animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                            loading="lazy"
+                            onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                            width="{{ image_cover.width }}"
+                            height="{{ image_cover.height }}"
+                            style="object-position:{{ image_cover.presentation.focal_point }};"
+                          >
+                          {% if video_type == 'video_select' %}
+                            {{ block.settings.video
+                              | video_tag:
+                                image_size: "1100x",
+                                loop: false,
+                                muted: false,
+                                preload: "none",
+                                class: "w-full h-full absolute top-0 left-0 video object-cover",
+                                alt: block.settings.video.alt
+                                | replace: '<video ', '<video x-on:mouseover="isHovered = true" x-on:mouseleave="isHovered = false" :controls="isHovered" '
+                                | replace: '<img ', '<img loading="lazy" alt="" '
+                            }}
+                            {{ button_play }}
+                          {% endif %}
+                        {% else %}
+                          {% unless check_video %}
+                            <div class="w-full h-full flex justify-center items-center absolute bg-[#c9c9c9]">
+                              <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+                                {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+                              </span>
+                            </div>
+                          {% endunless %}
+                          {% if video_type == 'youtube' %}
+                            <div class="absolute h-full w-full video">
+                              {% # theme-check-disable RemoteAsset %}
+                              <picture>
+                                <source type="image/webp" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                                <source type="image/jpeg" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi/' | append: '/maxresdefault.jpg' }}">
+                                <img 
+                                  src="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}" 
+                                  class="w-full h-full object-cover animate-Xpulse skeleton-image" alt="{{ video_alt }}" width="1280" height="890"
+                                  loading="lazy"
+                                  alt=""
+                                  onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                                />
+                              </picture>
+                              {% # theme-check-enable RemoteAsset %}
+                            </div>
+                            {{ button_play }}
+                          {% elsif video_type == 'vimeo' %}
+                            {%- capture options -%}
+                              {
+                                'alt': '{{ video_alt }}',
+                                'width': 1280
+                              }
+                            {%- endcapture -%}
+                            <div class="external-video w-full h-full">
+                              <div class="h-full w-full" x-init="$store.xVideo.renderVimeoFacade($el, '{{ video_id }}', {{ options }})"></div>
+                              {{ button_play }}
+                            </div>
+                          {% elsif video_type == 'video_select' %}
+                            {{ block.settings.video
+                              | video_tag:
+                                image_size: "1100x",
+                                loop: false,
+                                controls: true,
+                                muted: false,
+                                preload: "none",
+                                class: "w-full h-full absolute video",
+                                alt: block.settings.video.alt
+                                | replace: '<video ', '<video x-on:pause="paused = true" x-on:play="paused = false" x-on:mouseover="isHovered = true" x-on:mouseleave="isHovered = false" :controls="isHovered" '
+                                | replace: '<img ', '<img loading="lazy" alt="" '
+                            }}
+                            {{ button_play }}
+                          {% endif %}
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  {% endunless %}
+                </div>
+                {% if section.settings.auto_play == false and section.settings.product_card_position == 'on' %}
+                  {% style %}
+                    @supports (-webkit-touch-callout: none) {
+                      /* CSS specific to iOS devices */ 
+                      .mobile-device-class {
+                        top: 1rem
+                      }
+                    }
+                    @supports not (-webkit-touch-callout: none) {
+                      /* CSS for other than iOS devices */ 
+                      .mobile-device-class {
+                        top: 0.5rem
+                      }
+                    }
+                    @supports (-webkit-hyphens: none) {
+                      /* Safari only */
+                      body .mobile-device-class {
+                        top: 1rem
+                      }
+                    }                
+                  {% endstyle %}
+                  {% if count_product != 0 %}
+                    <div
+                      {% if block.settings.image == blank or next_action_show_product %}
+                        @click="showSlideListItemInVideoCard = true"
+                      {% else %}
+                        @click="openPopup()"
+                      {% endif %}
+                      class="absolute mobile-device-class z-20 hover:cursor-pointer left-2 rtl:left-0 rtl:right-2 pl-2.5 pr-2.5 pt-2.5 pb-2.5 w-[34px] h-[34px] text-[rgb(var(--colors-button-text))] bg-[rgba(var(--colors-button))]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                    >
+                      {% render 'icon-alls', icon: 'icon-search-quickview' %}
+                    </div>
+                  {% endif %}
+                {% else %}
+                  {% render 'card-product-video-shopping',
+                    card_product: card_product,
+                    type: "card",
+                    index: index,
+                    block: block,
+                    next_action_show_product: next_action_show_product,
+                    section: section,
+                    layout_card: 'row',
+                    video_looping: true
+                  %}
+                {% endif %}
+              </div>
+              {% style %}
+                .card-product-video-looping {
+                  {% if settings.card_product_background_color_light.alpha != 0 %}
+                    background-color: rgb({{ settings.card_product_background_color_light.red }}, {{ settings.card_product_background_color_light.green }}, {{ settings.card_product_background_color_light.blue }});
+                  {% else %}
+                    background-color: rgba(var(--background-color));
+                  {% endif %}
+                }
+                .dark .card-product-video-looping {
+                  {% if settings.card_product_background_color_dark.alpha != 0 %}
+                    background-color: rgb({{ settings.card_product_background_color_dark.red }}, {{ settings.card_product_background_color_dark.green }}, {{ settings.card_product_background_color_dark.blue }});
+                  {% else %}
+                    background-color: rgba(var(--background-color));
+                  {% endif %}
+                }
+              {% endstyle %}
+              {% if next_action_show_product or block.settings.image == blank %}
+                <template x-if="intersect" >
+                  <div  
+                    tabindex="-1"
+                    x-init="sanitizeClonedItem($el.closest('.slider-item-{{ section.id }}'), $el.closest('.slider-item-{{ section.id }}').getAttribute('slide-index'))"                                 
+                    x-cloak 
+                    :class="{
+                      'transform translate-y-0 card-product-video-looping' : showSlideListItemInVideoCard,
+                      'transform translate-y-full bg-[rgba(var(--background-color))]': !showSlideListItemInVideoCard,
+                      'opacity-0' : showSlideProductInVideoCard,
+                      'opacity-100': !showSlideProductInVideoCard
+                    }" 
+                    class="pt-4 pb-4 js-product-container {% if settings.edges_type == 'rounded_corners' %}rounded-2xl{% endif %} slide-animation duration-500 ease-in-out overflow-hidden flex flex-col hover:cursor-default absolute top-0 bottom-0 left-0 right-0 border z-20 h-full"
+                  >
+                    <div class="flex justify-end pb-2.5 pl-5 pr-5">
+                      <div
+                        @click="showSlideListItemInVideoCard = false; continueVideo()"
+                        class="js-close-button hover:cursor-pointer rotate-90 pl-2.5 pr-2.5 pt-2.5 pb-2.5 w-[34px] h-[34px] border{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                          {% render 'icon-labels-bags', icon: 'chevron-right' %}
+                      </div>
+                    </div>
+                    <div tabindex="-1" class="overflow-y-auto scrollbar-body pl-5 pr-5">
+                      {% assign index_paginate = section.index | append: forloop.index %}
+                      {% if next_action_show_product %}
+                        {% assign index_product = index_paginate | append: index %}
+                        {% render 'card-product-video-shopping',
+                          card_product: card_product,
+                          block: block,
+                          index: index_product,
+                          type: 'product',
+                          section: section,
+                          layout_card: 'row',
+                          video_looping: true
+                        %}
+                      {% else %}
+                        {% if block.settings.product_1 != blank %}
+                          {% assign index_product = index_paginate | append: 1 %}
+                          {% render 'card-product-video-shopping',
+                            card_product: block.settings.product_1,
+                            block: block,
+                            index: index_product,
+                            type: 'item_in_slide',
+                            next_action_show_product: true,
+                            section: section,
+                            layout_card: 'row',
+                            video_looping: true
+                          %}
+                        {% endif %}
+                        {% if block.settings.product_2 != blank %}
+                          {% assign index_product = index_paginate | append: 2 %}
+                          {% render 'card-product-video-shopping',
+                            card_product: block.settings.product_2,
+                            block: block,
+                            index: index_product,
+                            type: 'item_in_slide',
+                            next_action_show_product: true,
+                            section: section,
+                            layout_card: 'row',
+                            video_looping: true
+                          %}
+                        {% endif %}
+                        {% if block.settings.product_3 != blank %}
+                          {% assign index_product = index_paginate | append: 3 %}
+                          {% render 'card-product-video-shopping',
+                            card_product: block.settings.product_3,
+                            block: block,
+                            index: index_product,
+                            type: 'item_in_slide',
+                            next_action_show_product: true,
+                            section: section,
+                            layout_card: 'row',
+                            video_looping: true
+                          %}
+                        {% endif %}
+                        {% if block.settings.product_4 != blank %}
+                          {% assign index_product = index_paginate | append: 4 %}
+                          {% render 'card-product-video-shopping',
+                            card_product: block.settings.product_4,
+                            block: block,
+                            index: index_product,
+                            type: 'item_in_slide',
+                            next_action_show_product: true,
+                            layout_card: 'row',
+                            section: section,
+                            video_looping: true
+                          %}
+                        {% endif %}
+                        {% if block.settings.product_5 != blank %}
+                          {% assign index_product = index_paginate | append: 5 %}
+                          {% render 'card-product-video-shopping',
+                            card_product: block.settings.product_5,
+                            block: block,
+                            index: index_product,
+                            type: 'item_in_slide',
+                            next_action_show_product: true,
+                            section: section,
+                            layout_card: 'row',
+                            video_looping: true
+                          %}
+                        {% endif %}
+                        <div>
+                          {% if block.settings.account_username != blank or block.settings.integrated_social_media != 'none' %}
+                            <div class="flex flex-row justify-between items-center pt-7">
+                              <p>{{ block.settings.account_username }}</p>
+                              {% if block.settings.integrated_social_media != 'none' %}
+                                <span class='hover-text-link w-[30px] h-[30px]{% if block.settings.social_account_url %} hover:cursor-pointer{% endif %}'
+                                  {% if block.settings.social_account_url != blank %}
+                                    @click="window.open('{{ block.settings.social_account_url }}')"
+                                  {% endif %}
+                                >
+                                  {% render 'icon-media', icon: block.settings.integrated_social_media %}                                
+                                </span>
+                              {% endif %}
+                            </div>
+                          {% endif %}
+                          {% if block.settings.social_post != blank %}
+                            <div class="pt-6">
+                              {{ block.settings.social_post }}
+                            </div>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </template>
+              {% endif %}
+              {% if card_product != blank and block.settings.image != blank %}
+                <template x-if="intersect">
+                  <template x-teleport="#video-looping-popup-{{ section.id }}">
+                    <div
+                      x-init="document.addEventListener('eurus:video-popup:close-popup', () => {!$store.xMiniCart?.open && closePopup()})"
+                      x-show="showPopup"
+                      x-cloak 
+                      class="flex items-end md:items-center fixed top-0 left-0 right-0 overflow-hidden bottom-0 z-[60] bg-[#acacac] bg-opacity-30"
+                    >
+                      <div 
+                        role="dialog"
+                        aria-label="Video looping popup"
+                        aria-modal="true"
+                        x-show="showPopup"
+                        class="w-full md:h-auto md:mt-auto relative{% if block.settings.image != blank %} md:max-w-[80%] lg:max-w-[44%] lg:min-w-[768px]{% else %} md:max-w-[53%] lg:max-w-[30%] lg:min-w-[450px]{% endif %} md:h-fit pt-14 pb-5 md:pt-10 md:pb-10 md:mx-auto md:my-auto bg-[rgba(var(--background-color))]{% if settings.edges_type == 'rounded_corners' %} rounded-t-[10px] md:rounded-[10px]{% endif %}"
+                        x-transition:enter="transition-all ease-in-out duration-500"
+                        x-transition:enter-start="opacity-0 transform translate-y-1/3"
+                        x-transition:enter-end="opacity-100 transform translate-y-0"
+                        x-transition:leave="transition-all ease-in-out duration-500"
+                        x-transition:leave-end="opacity-0 transform translate-y-1/3"
+                      >
+                        <div id="video-shopping-popup-{{ block.id }}" @click.away="!$store.xMiniCart?.open && closePopup(); !$store.xMiniCart?.open && continueVideo()" class="h-full">
+                          <button
+                            class="absolute group-close-btn cursor-pointer right-2 top-2 md:right-2 rtl:right-auto rtl:left-2 md:rtl:left-2 z-30 md:opacity-100{% if settings.edges_type == 'rounded_corners' %} rounded-[10px] md:rounded-none{% endif %}" 
+                            :class="showSlideProductInPopup ? 'opacity-0 transition-opacity duration-500 ease-in-out md:opacity-100' : 'opacity-100 transition-opacity duration-500 ease-in-out'"
+                            @click.prevent="!$store.xMiniCart?.open && closePopup(); !$store.xMiniCart?.open && continueVideo()"
+                          >
+                            <span class="block icon-close-container w-fit rounded-full">
+                              {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+                            </span>
+                          </button>
+                          <div id="video-shopping-popup-content-{{ block.id }}" class="relative flex flex-col md:flex-row h-full max-h-[calc(88vh-96px)] md:max-h-fit overflow-y-auto" 
+                            {% comment %} :style="{
+                              height: positionBottomGroupAnnouncementAndHeader === 0 ? showSlideProductInPopup ? '100%' : 'auto' : `calc(90vh - 50px - ${positionBottomGroupAnnouncementAndHeader}px)`,
+                              minHeight: positionBottomGroupAnnouncementAndHeader === 0 ? '400px' : 'unset'
+                            }" {% endcomment %}
+                          >
+                            {% if block.settings.image != blank %}
+                              <div
+                                :class="showSlideProductInPopup ? 'opacity-0 h-full transition-opacity duration-500 ease-in-out md:opacity-100' : 'h-fit opacity-100 transition-opacity duration-500 ease-in-out'"
+                                class="relative md:ml-10 rtl:md:ml-0 rtl:md:mr-10 pl-4 pr-4 md:pl-0 md:pr-0 w-full md:w-1/2" 
+                              >
+                                <div class="w-full h-fit relative flex md:block justify-center">
+                                  <img
+                                    srcset="{{ block.settings.image | image_url: width: 375 }} 375w,
+                                    {{ block.settings.image | image_url: width: 450 }} 450w,
+                                    {{ block.settings.image | image_url: width: 750 }} 750w,
+                                    {{ block.settings.image | image_url: width: 900 }} 900w,
+                                    {{ block.settings.image | image_url: width: 1100 }} 1100w,
+                                    {{ block.settings.image | image_url: width: 1500 }} 1500w,
+                                    {{ block.settings.image | image_url: width: 1780 }} 1780w"
+                                    sizes="{{ size_in_popup }}"
+                                    src="{{ block.settings.image | image_url: width: 1780 }}"
+                                    alt="{{ block.settings.image.alt | escape }}"
+                                    :class="window.innerHeight < 700 ? 'max-h-56' : 'max-h-72'"
+                                    class="md:object-contain md:max-h-[calc(70vh-5rem)] lg:max-h-[calc(70vh-5rem)] relative z-30 w-auto md:w-full img-thumbnail animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                                    loading="lazy"
+                                    onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                                    width="{{ block.settings.image.width }}"
+                                    height="{{ block.settings.image.height }}"
+                                    style="object-position:{{ block.settings.image.presentation.focal_point }}; aspect-ratio: {{ block.settings.image.aspect_ratio }}"
+                                  >
+                                  {% if section.settings.enable_hotspots %}
+                                    {% style %}
+                                      {% unless section.settings.hotspot_color_light.alpha == 0.0 %}
+                                        .hotspot-{{ block.id }} {
+                                          --colors-text: {{ section.settings.hotspot_color_light.red }}, {{ section.settings.hotspot_color_light.green }}, {{ section.settings.hotspot_color_light.blue }};
+                                        }
+                                      {% endunless %}
+                                      {% unless section.settings.hotspot_color_dark.alpha == 0.0 %}
+                                        .dark .hotspot-{{ block.id }} {
+                                          --colors-text: {{ section.settings.hotspot_color_dark.red }}, {{ section.settings.hotspot_color_dark.green }}, {{ section.settings.hotspot_color_dark.blue }};
+                                        }
+                                      {% endunless %}
+                                      .hotspot-{{ block.id }}-1 {
+                                        left:{{ block.settings.hotspot_mobile_horizontal_1 }}%;
+                                        top:{{ block.settings.hotspot_mobile_vertical_1 }}%;
+                                        transform: translate(-{{ block.settings.hotspot_mobile_horizontal_1 }}%,-{{ block.settings.hotspot_mobile_vertical_1 }}%);
+                                      }
+                                      .hotspot-{{ block.id }}-2 {
+                                        left:{{ block.settings.hotspot_mobile_horizontal_2 }}%;
+                                        top:{{ block.settings.hotspot_mobile_vertical_2 }}%;
+                                        transform: translate(-{{ block.settings.hotspot_mobile_horizontal_2 }}%,-{{ block.settings.hotspot_mobile_vertical_2 }}%);
+                                      }
+                                      .hotspot-{{ block.id }}-3 {
+                                        left:{{ block.settings.hotspot_mobile_horizontal_3 }}%;
+                                        top:{{ block.settings.hotspot_mobile_vertical_3 }}%;
+                                        transform: translate(-{{ block.settings.hotspot_mobile_horizontal_3 }}%,-{{ block.settings.hotspot_mobile_vertical_3 }}%);
+                                      }
+                                      .hotspot-{{ block.id }}-4 {
+                                        left:{{ block.settings.hotspot_mobile_horizontal_4 }}%;
+                                        top:{{ block.settings.hotspot_mobile_vertical_4 }}%;
+                                        transform: translate(-{{ block.settings.hotspot_mobile_horizontal_4 }}%,-{{ block.settings.hotspot_mobile_vertical_4 }}%);
+                                      }
+                                      .hotspot-{{ block.id }}-5 {
+                                        left:{{ block.settings.hotspot_mobile_horizontal_5 }}%;
+                                        top:{{ block.settings.hotspot_mobile_vertical_5 }}%;
+                                        transform: translate(-{{ block.settings.hotspot_mobile_horizontal_5 }}%,-{{ block.settings.hotspot_mobile_vertical_5 }}%);
+                                      }
+                                      @media (min-width: 767px) {
+                                        .hotspot-{{ block.id }}-1 {
+                                          left:{{ block.settings.hotspot_desktop_horizontal_1 }}%;
+                                          top:{{ block.settings.hotspot_desktop_vertical_1 }}%;
+                                          transform: translate(-{{ block.settings.hotspot_desktop_horizontal_1 }}%,-{{ block.settings.hotspot_desktop_vertical_1 }}%);
+                                        }
+                                        .hotspot-{{ block.id }}-2 {
+                                          left:{{ block.settings.hotspot_desktop_horizontal_2 }}%;
+                                          top:{{ block.settings.hotspot_desktop_vertical_2 }}%;
+                                          transform: translate(-{{ block.settings.hotspot_desktop_horizontal_2 }}%,-{{ block.settings.hotspot_desktop_vertical_2 }}%);
+                                        }
+                                        .hotspot-{{ block.id }}-3 {
+                                          left:{{ block.settings.hotspot_desktop_horizontal_3 }}%;
+                                          top:{{ block.settings.hotspot_desktop_vertical_3 }}%;
+                                          transform: translate(-{{ block.settings.hotspot_desktop_horizontal_3 }}%,-{{ block.settings.hotspot_desktop_vertical_3 }}%);
+                                        }
+                                        .hotspot-{{ block.id }}-4 {
+                                          left:{{ block.settings.hotspot_desktop_horizontal_4 }}%;
+                                          top:{{ block.settings.hotspot_desktop_vertical_4 }}%;
+                                          transform: translate(-{{ block.settings.hotspot_desktop_horizontal_4 }}%,-{{ block.settings.hotspot_desktop_vertical_4 }}%);
+                                        }
+                                        .hotspot-{{ block.id }}-5 {
+                                          left:{{ block.settings.hotspot_desktop_horizontal_5 }}%;
+                                          top:{{ block.settings.hotspot_desktop_vertical_5 }}%;
+                                          transform: translate(-{{ block.settings.hotspot_desktop_horizontal_5 }}%,-{{ block.settings.hotspot_desktop_vertical_5 }}%);
+                                        }
+                                      }
+                                    {% endstyle %}
+                                    {% assign index_paginate = section.index | append: forloop.index %}
+                                    {% if block.settings.product_1 != blank %}
+                                      <button
+                                        class="opacity-0 z-40 absolute pl-5 pr-5 pt-5 pb-5 md:pl-6 md:pr-6 md:pt-6 md:pb-6 hotspot-{{ block.id }} x-hotspot hotspot-{{ block.id }}-1 group"
+                                        aria-label="hotspot" 
+                                        x-intersect.once="$el.classList.add('opacity-100')"
+                                      >
+                                        <p class="hidden" id="current-variant-{{ section.id }}-{{ block.settings.product_1.id }}-{{ block.id }}">{{ block.settings.product_1.selected_or_first_available_variant.id }}</p>
+                                        <span class="flex w-3 h-3 md:h-4 md:w-4 relative duration-300 active-hotspot:scale-[1.8] group-hover:scale-[1.8]">
+                                          <span class="animate-[pingHotspot_2s_ease-in-out_infinite] absolute inline-flex h-full w-full rounded-full bg-[rgba(var(--colors-text),0.2)]"></span>
+                                          <span class="relative inline-flex rounded-full h-3 w-3 md:h-4 md:w-4 duration-300 bg-[rgba(var(--colors-text))]"
+                                            @click.prevent="openProductInPopup('{{ block.settings.product_1.id | append: '_' | append: index_paginate | append: '1' }}')"
+                                          ></span>
+                                        </span>
+                                      </button>
+                                    {% endif %}
+                                    {% if block.settings.product_2 != blank %}
+                                      <button
+                                        class="opacity-0 z-40 absolute pl-5 pr-5 pt-5 pb-5 md:pl-6 md:pr-6 md:pt-6 md:pb-6 hotspot-{{ block.id }} x-hotspot hotspot-{{ block.id }}-2 group"
+                                        aria-label="hotspot" 
+                                        x-intersect.once="$el.classList.add('opacity-100')"
+                                      >
+                                        <p class="hidden" id="current-variant-{{ section.id }}-{{ block.settings.product_2.id }}-{{ block.id }}">{{ block.settings.product_2.selected_or_first_available_variant.id }}</p>
+                                        <span class="flex w-3 h-3 md:h-4 md:w-4 relative duration-300 active-hotspot:scale-[1.8] group-hover:scale-[1.8]">
+                                          <span class="animate-[pingHotspot_2s_ease-in-out_infinite] absolute inline-flex h-full w-full rounded-full bg-[rgba(var(--colors-text),0.2)]"></span>
+                                          <span class="relative inline-flex rounded-full h-3 w-3 md:h-4 md:w-4 duration-300 bg-[rgba(var(--colors-text))]"
+                                            @click.prevent="openProductInPopup('{{ block.settings.product_2.id | append: '_' | append: index_paginate | append: '2' }}')"
+                                          ></span>
+                                        </span>
+                                      </button>
+                                    {% endif %}
+                                    {% if block.settings.product_3 != blank %}
+                                      <button
+                                        class="opacity-0 z-40 absolute pl-5 pr-5 pt-5 pb-5 md:pl-6 md:pr-6 md:pt-6 md:pb-6 hotspot-{{ block.id }} x-hotspot hotspot-{{ block.id }}-3 group"
+                                        aria-label="hotspot" 
+                                        x-intersect.once="$el.classList.add('opacity-100')"
+                                      >
+                                        <p class="hidden" id="current-variant-{{ section.id }}-{{ block.settings.product_3.id }}-{{ block.id }}">{{ block.settings.product_3.selected_or_first_available_variant.id }}</p>
+                                        <span class="flex w-3 h-3 md:h-4 md:w-4 relative duration-300 active-hotspot:scale-[1.8] group-hover:scale-[1.8]">
+                                          <span class="animate-[pingHotspot_2s_ease-in-out_infinite] absolute inline-flex h-full w-full rounded-full bg-[rgba(var(--colors-text),0.2)]"></span>
+                                          <span class="relative inline-flex rounded-full h-3 w-3 md:h-4 md:w-4 duration-300 bg-[rgba(var(--colors-text))]"
+                                            @click.prevent="openProductInPopup('{{ block.settings.product_3.id | append: '_' | append: index_paginate | append: '3' }}')"
+                                          ></span>
+                                        </span>
+                                      </button>
+                                    {% endif %}
+                                    {% if block.settings.product_4 != blank %}
+                                      <button
+                                        class="opacity-0 z-40 absolute pl-5 pr-5 pt-5 pb-5 md:pl-6 md:pr-6 md:pt-6 md:pb-6 hotspot-{{ block.id }} x-hotspot hotspot-{{ block.id }}-4 group"
+                                        aria-label="hotspot" 
+                                        x-intersect.once="$el.classList.add('opacity-100')"
+                                      >
+                                        <p class="hidden" id="current-variant-{{ section.id }}-{{ block.settings.product_4.id }}-{{ block.id }}">{{ block.settings.product_4.selected_or_first_available_variant.id }}</p>
+                                        <span class="flex w-3 h-3 md:h-4 md:w-4 relative duration-300 active-hotspot:scale-[1.8] group-hover:scale-[1.8]">
+                                          <span class="animate-[pingHotspot_2s_ease-in-out_infinite] absolute inline-flex h-full w-full rounded-full bg-[rgba(var(--colors-text),0.2)]"></span>
+                                          <span class="relative inline-flex rounded-full h-3 w-3 md:h-4 md:w-4 duration-300 bg-[rgba(var(--colors-text))]"
+                                            @click.prevent="openProductInPopup('{{ block.settings.product_4.id | append: '_' | append: index_paginate | append: '4' }}')"
+                                          ></span>
+                                        </span>
+                                      </button>
+                                    {% endif %}
+                                    {% if block.settings.product_5 != blank %}
+                                      <button
+                                        class="opacity-0 z-40 absolute pl-5 pr-5 pt-5 pb-5 md:pl-6 md:pr-6 md:pt-6 md:pb-6 hotspot-{{ block.id }} x-hotspot hotspot-{{ block.id }}-5 group"
+                                        aria-label="hotspot" 
+                                        x-intersect.once="$el.classList.add('opacity-100')"
+                                      >
+                                        <p class="hidden" id="current-variant-{{ section.id }}-{{ block.settings.product_5.id }}-{{ block.id }}">{{ block.settings.product_5.selected_or_first_available_variant.id }}</p>
+                                        <span class="flex w-3 h-3 md:h-4 md:w-4 relative duration-300 active-hotspot:scale-[1.8] group-hover:scale-[1.8]">
+                                          <span class="animate-[pingHotspot_2s_ease-in-out_infinite] absolute inline-flex h-full w-full rounded-full bg-[rgba(var(--colors-text),0.2)]"></span>
+                                          <span 
+                                            class="relative inline-flex rounded-full h-3 w-3 md:h-4 md:w-4 duration-300 bg-[rgba(var(--colors-text))]"
+                                            @click.prevent="openProductInPopup('{{ block.settings.product_5.id | append: '_' | append: index_paginate | append: '5' }}')"
+                                          ></span>
+                                        </span>
+                                      </button>
+                                    {% endif %}
+                                  {% endif %}
+                                </div>
+                              </div>
+                            {% endif %}
+                            <div id="popup-content-{{ block.id }}" class="w-full md:relative flex flex-col{% if block.settings.image == blank %} md:w-full{% else %} md:w-1/2{% endif %} md:min-h-[400px] md:max-h-[calc(70vh-5rem)] lg:max-h-[calc(70vh-5rem)] pb-0.5 overflow-y-auto md:overflow-hidden scrollbar-body" >
+                              <div
+                                :class="showSlideProductInPopup ? 'opacity-0 transition-opacity duration-500 ease-in-out' : 'opacity-100 transition-opacity duration-500 ease-in-out'"
+                                x-transition.duration.500ms
+                                class="flex flex-1 md:relative md:overflow-y-auto scrollbar-body flex-col pl-4 pr-4 pt-4 pb-1 md:pt-0 md:pr-10{% if block.settings.image != blank %} md:pl-6 rtl:md:pr-6 rtl:md:pl-10{% else %} md:pl-10{% endif %}"
+                              >
+                                {% assign index_paginate = section.index | append: forloop.index %}
+                                {% if block.settings.product_1 != blank %}
+                                  <div>
+                                    {% assign index_product = index_paginate | append: 1 %}
+                                    {% render 'card-product-video-shopping',
+                                      card_product: block.settings.product_1,
+                                      block: block,
+                                      index: index_product,
+                                      type: 'item',
+                                      next_action_show_product: true,
+                                      section: section,
+                                      layout_card: 'row',
+                                      video_looping: true
+                                    %}
+                                  </div>
+                                {% endif %}
+                                {% if block.settings.product_2 != blank %}
+                                  <div class="{% if index < 2 %}pt-4{% endif %}">
+                                    {% assign index_product = index_paginate | append: 2 %}
+                                    {% render 'card-product-video-shopping',
+                                      card_product: block.settings.product_2,
+                                      block: block,
+                                      index: index_product,
+                                      type: 'item',
+                                      next_action_show_product: true,
+                                      section: section,
+                                      layout_card: 'row',
+                                      video_looping: true
+                                    %}
+                                  </div>
+                                {% endif %}
+                                {% if block.settings.product_3 != blank %}
+                                  <div class="{% if index < 3 %}pt-4{% endif %}">
+                                    {% assign index_product = index_paginate | append: 3 %}
+                                    {% render 'card-product-video-shopping',
+                                      card_product: block.settings.product_3,
+                                      block: block,
+                                      index: index_product,
+                                      type: 'item',
+                                      next_action_show_product: true,
+                                      section: section,
+                                      layout_card: 'row',
+                                      video_looping: true
+                                    %}
+                                  </div>
+                                {% endif %}
+                                {% if block.settings.product_4 != blank %}
+                                  <div class="{% if index < 4 %}pt-4{% endif %}">
+                                    {% assign index_product = index_paginate | append: 4 %}
+                                    {% render 'card-product-video-shopping',
+                                      card_product: block.settings.product_4,
+                                      block: block,
+                                      index: index_product,
+                                      type: 'item',
+                                      next_action_show_product: true,
+                                      section: section,
+                                      layout_card: 'row',
+                                      video_looping: true
+                                    %}
+                                  </div>
+                                {% endif %}
+                                {% if block.settings.product_5 != blank %}
+                                  <div class="{% if index < 5 %}pt-4{% endif %}">
+                                    {% assign index_product = index_paginate | append: 5 %}
+                                    {% render 'card-product-video-shopping',
+                                      card_product: block.settings.product_5,
+                                      block: block,
+                                      index: index_product,
+                                      type: 'item',
+                                      next_action_show_product: true,
+                                      section: section,
+                                      layout_card: 'row',
+                                      video_looping: true
+                                    %}
+                                  </div>
+                                {% endif %}
+                                <div >
+                                  {% if block.settings.account_username != blank or block.settings.integrated_social_media != 'none' %}
+                                    <div class="flex flex-row justify-between items-center pt-7">
+                                      <p>{{ block.settings.account_username }}</p>
+                                      {% if block.settings.integrated_social_media != 'none' %}
+                                        <span class='hover-text-link w-[30px] h-[30px]{% if block.settings.social_account_url %} hover:cursor-pointer{% endif %}'
+                                          {% if block.settings.social_account_url != blank %}
+                                            @click="window.open('{{ block.settings.social_account_url }}')"
+                                          {% endif %}
+                                        >
+                                          {% render 'icon-media', icon: block.settings.integrated_social_media %}                                
+                                        </span>
+                                      {% endif %}
+                                    </div>
+                                  {% endif %}
+                                  {% if block.settings.social_post != blank %}
+                                    <div class="pt-6">
+                                      {{ block.settings.social_post }}
+                                    </div>
+                                  {% endif %}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </template>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        {% if section.settings.show_pagination %}
+          <div id="pagination-{{ section.id }}" class="pagination {% if swiper_on_mobile %}flex{% else %}hidden{% endif %} md:flex justify-center mt-6 md:mt-14 gap-2"></div>
+        {% endif %}
+      </div>
+      {% if request.visual_preview_mode %}
+        <div class="flex gap-7">
+          {% style %}
+            .item-1, .item-5 {
+              padding-top: 70px;
+              padding-bottom: 70px;
+            }
+            .item-2, .item-4 {
+              padding-top: 35px;
+              padding-bottom: 35px;
+            }
+            .item {
+              aspect-ratio: 8 / 16;
+            }
+            @media (max-width: 767px) {
+              .item-1, .item-2, .item-4, .item-5 {
+                display: none;
+              }
+              .item {
+              aspect-ratio: 8 / 16;
+            }
+            }
+            @media (max-width: 1140px) {
+              .item {
+                aspect-ratio: 6 / 16;
+              }
+            }
+          {% endstyle %}
+          {% for block in section.blocks %}
+            <div class="item h-full item-{{ forloop.index }} md:w-1/5 {% if settings.edges_type == 'rounded_corners' %}rounded-2xl{% endif %} overflow-hidden{% if request.visual_preview_mode %} slider-item-preview{% endif %}">
+              <div class="h-full relative flex flex-col gap-1">
+                <div class="h-full" >
+                  <div class="w-full h-full flex justify-center items-center rounded-[10px] bg-[#c9c9c9]">
+                    <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+                      {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+                    </span>
+                  </div>
+                </div>
+                {% render 'card-product-video-shopping',
+                  card_product: card_product,
+                  type: "card",
+                  index: index,
+                  block: block,
+                  next_action_show_product: next_action_show_product,
+                  section: section,
+                  layout_card: 'row',
+                  video_looping: true
+                %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %} 
+    </div>
+  </div>
+</div>
+<div id="video-looping-popup-{{ section.id }}"></div>
+<script src="{{ 'video-looping.js' | asset_url }}" defer></script> 
+<script src="{{ 'video-shopping.js' | asset_url }}" defer></script>
+<script src="{{ 'product-cart.js' | asset_url }}" defer></script>
+{% schema %}
+{
+  "name": "t:sections.video-looping.name",
+  "tag": "section",
+  "class": "section section-video-looping x-section",
+  "disabled_on": {
+    "groups": [
+			"header",
+			"footer",
+			"aside"
+		]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.section_and_blocks.video_looping"
+    },
+    {
+			"type": "text",
+			"id": "heading",
+			"label": "t:sections.all.text.heading",
+			"info": "t:settings_schema.typography.settings.heading_highlight_type.info",
+      "default": "Video looping"
+		},
+		{
+      "type": "select",
+      "id": "highlight_type",
+      "default": "underline",
+      "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+      "options": [
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        },
+        {
+          "value": "font_highlight",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+        }
+      ]
+    },
+		{
+      "type": "range",
+      "id": "heading_size",
+      "min": 50,
+      "max": 200,
+      "unit": "%",
+      "step": 10,
+      "default": 100,
+      "label": "t:sections.all.text.heading_size"
+    },
+		{
+      "type": "select",
+      "id": "heading_tag",
+      "default": "h2",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "p",
+          "label": "p"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "default": "center",
+      "label": "t:sections.all.text.heading_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "t:sections.all.text.subheading"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 10,
+      "unit": "%",
+      "label": "t:sections.all.overlay_opacity.label",
+      "default": 70
+    },
+    {
+			"type": "header",
+			"content": "t:sections.video_shopping.settings.shoppable_video.content"
+		},
+    {
+      "type": "checkbox",
+      "id": "apply_black_and_white_effect",
+      "label": "t:sections.video_shopping.settings.shoppable_video.apply_black_and_white_effect",
+      "default": true
+    },
+    {
+			"type": "select",
+			"id": "product_card_position",
+			"label": "t:sections.video_shopping.settings.product_card_position.label",
+			"options": [
+				{
+          "value": "bottom",
+          "label": "t:sections.video_shopping.settings.product_card_position.options__1"
+        },
+        {
+          "value": "on",
+          "label": "t:sections.video_shopping.settings.product_card_position.options__2"
+        }
+			]
+		},
+		{
+      "type": "checkbox",
+      "id": "enable_hotspots",
+      "label": "t:sections.video_shopping.settings.enable_hotspots_in_the_look.label",
+      "default": false
+		},
+    {
+      "type": "header",
+      "content": "t:sections.announcement-bar.settings.carousel.name"
+		},
+    {
+      "type": "checkbox",
+      "id": "swiper_on_mobile",
+      "default": true,
+      "label": "t:sections.collection-list.settings.swipe_on_mobile.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "auto_play",
+      "label": "t:sections.slideshow.settings.auto_play.label",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_arrow",
+      "label": "t:sections.slideshow.settings.show_arrow.label",
+      "default": false,
+      "info": "t:sections.slideshow.settings.show_arrow.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_pagination",
+      "label": "t:sections.testimonials.show_paginate.label",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.colors.name"
+    },
+    {
+      "type": "color",
+      "id": "background_color_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_light"
+    },
+    {
+      "type": "color",
+      "id": "heading_light",
+      "label": "t:sections.all.text.color_heading_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_heading_highlight_light",
+      "label": "t:sections.all.text.color_heading_highlight_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "hotspot_color_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.video_shopping.settings.hotspot_color_light.label"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_dark"
+    },
+    {
+      "type": "color",
+      "id": "heading_dark",
+      "label": "t:sections.all.text.color_heading_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_heading_highlight_dark",
+      "label": "t:sections.all.text.color_heading_highlight_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "hotspot_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.video_shopping.settings.hotspot_color_dark.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "spacing",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 1,
+      "default": 28,
+      "label": "t:sections.all.spacing.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "default": false,
+      "label": "t:sections.all.full_width.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_bottom"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width_mobile",
+      "default": false,
+      "label": "t:sections.all.full_width.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider_mobile",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_bottom"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "shoppable_video",
+      "name": "t:sections.video_shopping.settings.shoppable_video.content",
+      "settings": [
+        {
+          "type": "video",
+          "id": "video",
+          "label": "t:sections.video.name"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_sound_control",
+          "label": "t:sections.video.settings.show_sound_control.label",
+          "info": "t:sections.video.settings.show_sound_control.info",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "t:sections.video.settings.header_video_url.content"
+        },
+        {
+          "type": "paragraph",
+          "content": "t:sections.video.settings.header_video_url.label"
+        },
+        {
+          "type": "video_url",
+          "id": "video_url",
+          "accept": [
+            "youtube",
+            "vimeo"
+          ],
+          "label": "t:sections.video.settings.video_url.label",
+          "info": "t:sections.video.settings.video_url.info"
+        },
+        {
+          "type": "text",
+          "id": "video_alt_text",
+          "label": "t:sections.video.settings.video_alt_text.label"
+        },
+        {
+          "type": "header",
+          "content": "t:settings_schema.social-media.settings.header.content"
+        },
+        {
+          "type": "select",
+          "id": "integrated_social_media",
+          "label": "t:sections.video_shopping.blocks.shoppable_video.settings.integrated_social_media.label",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "icon-facebook",
+              "label": "Facebook"
+            },
+            {
+              "value": "icon-instagram",
+              "label": "Instagram"
+            },
+            {
+              "value": "icon-pinterest",
+              "label": "Pinterest"
+            },
+            {
+              "value": "icon-twitter",
+              "label": "X"
+            },
+            {
+              "value": "icon-tiktok",
+              "label": "Tiktok"
+            },
+            {
+              "value": "icon-line",
+              "label": "LINE"
+            }
+          ],
+          "default": "icon-instagram"
+        },
+        {
+          "type": "text",
+          "id": "account_username",
+          "label": "t:sections.video_shopping.blocks.shoppable_video.settings.account_username.label"
+        },
+        {
+          "type": "url",
+          "id": "social_account_url",
+          "label": "t:sections.video_shopping.blocks.shoppable_video.settings.social_account_url.label"
+        },
+        {
+          "type": "textarea",
+          "id": "social_post",
+          "label": "t:sections.video_shopping.blocks.shoppable_video.settings.social_post.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.video_shopping.blocks.shoppable_video.settings.shop_the_look_in_video.content"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.all.image.label",
+          "info": "t:sections.all.image.note_image_size_video_shopping"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.video_shopping.blocks.shoppable_video.settings.first_product.content"
+        },
+        {
+          "type": "product",
+          "id": "product_1",
+          "label": "t:settings_schema.cart.product"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_desktop_horizontal_1",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 30,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_desktop_horizontal.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_desktop_vertical_1",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 50,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_desktop_vertical.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_mobile_horizontal_1",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 27,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_mobile_horizontal.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_mobile_vertical_1",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 47,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_mobile_vertical.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.video_shopping.blocks.shoppable_video.settings.second_product.content"
+        },
+        {
+          "type": "product",
+          "id": "product_2",
+          "label": "t:settings_schema.cart.product"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_desktop_horizontal_2",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 53,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_desktop_horizontal.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_desktop_vertical_2",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 27,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_desktop_vertical.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_mobile_horizontal_2",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 54,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_mobile_horizontal.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_mobile_vertical_2",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 25,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_mobile_vertical.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.video_shopping.blocks.shoppable_video.settings.third_product.content"
+        },
+        {
+          "type": "product",
+          "id": "product_3",
+          "label": "t:settings_schema.cart.product"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_desktop_horizontal_3",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 64,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_desktop_horizontal.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_desktop_vertical_3",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 50,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_desktop_vertical.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_mobile_horizontal_3",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 65,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_mobile_horizontal.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_mobile_vertical_3",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 50,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_mobile_vertical.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.video_shopping.blocks.shoppable_video.settings.fourth_product.content"
+        },
+        {
+          "type": "product",
+          "id": "product_4",
+          "label": "t:settings_schema.cart.product"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_desktop_horizontal_4",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 20,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_desktop_horizontal.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_desktop_vertical_4",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 20,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_desktop_vertical.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_mobile_horizontal_4",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 20,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_mobile_horizontal.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_mobile_vertical_4",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 20,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_mobile_vertical.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.video_shopping.blocks.shoppable_video.settings.fifth_product.content"
+        },
+        {
+          "type": "product",
+          "id": "product_5",
+          "label": "t:settings_schema.cart.product"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_desktop_horizontal_5",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 20,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_desktop_horizontal.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_desktop_vertical_5",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 20,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_desktop_vertical.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_mobile_horizontal_5",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 20,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_mobile_horizontal.label"
+        },
+        {
+          "type": "range",
+          "id": "hotspot_mobile_vertical_5",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "step": 1,
+          "default": 20,
+          "label": "t:sections.shop_the_look.blocks.product.settings.hotspot_mobile_vertical.label"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.video-looping.name",
+      "category": "t:categories.products",
+      "blocks": [
+        {
+          "type": "shoppable_video"
+        },
+        {
+          "type": "shoppable_video"
+        },
+        {
+          "type": "shoppable_video"
+        },
+        {
+          "type": "shoppable_video"
+        },
+        {
+          "type": "shoppable_video"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

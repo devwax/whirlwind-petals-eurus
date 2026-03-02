@@ -1,0 +1,551 @@
+{% comment %}
+  Renders a product card video shopping
+
+  Accepts:
+  - card_product: {Object} Product Liquid object (optional).
+  - next_action_show_product: {Boolean} Show product after click card
+  - index: {Number} index of product
+  - block: {Object} block to wich this snippet belongs.
+  - section: {Object} section to which this snippet belongs.
+  - type: {String} type of snippet (card/product/product_in_popup/item/item_in_slide).
+  Usage:
+  {% render 'card-product-video-shopping' %}
+{% endcomment %}
+{%- liquid
+  assign choose_option_id = card_product.id | append: index
+  assign section_id = 'choose-option' | append: choose_option_id
+  
+  if type == 'card'
+    if section.settings.product_card_position == 'on' and section.settings.video_layout == 'aspect-[9/16]'
+      assign is_bottom = false
+    else 
+      assign is_bottom = true
+    endif
+
+    if video_looping 
+      if section.settings.product_card_position == 'on'
+        assign is_bottom = false
+      else
+        assign is_bottom = true
+      endif
+    endif
+  endif
+
+  if shoppable_video
+    assign is_bottom = false
+  endif
+  assign is_autoplay = false
+  if shoppable_video_autoplay or block.settings.enable_video_autoplay
+    assign is_autoplay = true
+  endif
+-%}
+{% if video_looping %}
+  {% if is_bottom == false and section.settings.auto_play == false %}
+    <template x-teleport="#video--{{ block.id }}">
+      {% if type != 'product' and type != 'product_in_popup' %}
+        <div
+          {{ block.shopify_attributes }}
+          {% if type == 'card' %}
+            {% if block.settings.image == blank or next_action_show_product %}
+              @click="showSlideListItemInVideoCard = true"
+            {% else %}
+              @click="openPopup()"
+            {% endif %}
+          {% elsif type == 'item' %}
+            @click="openProductInPopup('{{ card_product.id | append: '_' | append: index }}')"
+          {% elsif type == 'item_in_slide' %}
+            @click="openProductInSlide('{{ card_product.id | append: '_' | append: index }}')"
+          {% else %}
+            @click="openPopup()"
+          {% endif %}
+          class="absolute top-2 z-20 hover:cursor-pointer left-2 rtl:left-0 rtl:right-2 pl-2.5 pr-2.5 pt-2.5 pb-2.5 w-[36px] h-[36px] text-[rgb(var(--colors-button-text))] bg-[rgba(var(--colors-button))]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+        >
+          {% if type == 'card' %}
+            {% render 'icon-alls', icon: 'icon-search-quickview' %}
+          {% else %}
+            {% render 'icon-alls', icon: 'icon-plus' %}
+          {% endif %}
+        </div>
+      {% endif %}
+    </template>
+  {% else %}
+    <div
+      class="{% if type == 'product_in_popup' %} pl-2 pr-2{% endif %}{% if is_bottom %} h-fit card-product-videolooping {% elsif is_bottom == false %} pr-2 pl-2 pt-2 pb-2{% if section.settings.video_items_view == "focus" %} mb-2 mr-2 ml-2 {% endif %} absolute bottom-0 left-0 right-0 z-10{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-2xl{% endif %} card-bg-{{ section.id }}" {{ block.shopify_attributes }}
+      id="x-product-template-{{ product.id }}-{{ section_id }}"
+      x-data='xVariantSelectCard($el,"{{ section.id }}", "{{ card_product.id }}", "{{ card_product.url }}", false, false, true, "{{ paginate.current_page }}", "", "", "{{ section.id }}")'
+      data-url="{{ product.url }}"
+      {% for option in card_product.options_with_values %}
+        data-option{{ forloop.index }}="{{ option.selected_value | escape }}"
+      {% endfor %}
+    >
+      {% if card_product != blank %}
+        {% if type == 'item_in_slide' %}
+          <div x-init="$el.closest('.card-video-shopping-{{ block.id }}{% if shoppable_video %}-{{ index }}{% endif %}').appendChild($el)">
+            <div
+              x-cloak
+              x-show="showSlideProductInVideoCard && productSelectedId === '{{ card_product.id | append: '_' | append: index }}'"
+              x-transition:enter="transition-all ease-in-out duration-300"
+              x-transition:enter-start=" transform translate-y-full"
+              x-transition:enter-end="transform translate-y-0"
+              x-transition:leave="transition-all ease-in-out duration-300"
+              x-transition:leave-end="transform translate-y-full"
+              
+              class="recommendations js-product-container product-slide card-product pt-4 pb-4 overflow-hidden bg-[rgba(var(--background-color))] flex flex-col hover:cursor-default absolute top-0 bottom-0 left-0 right-0 border z-20 h-full{% if settings.edges_type == 'rounded_corners' %} rounded-2xl{% endif %}"
+            >
+              <div class="flex justify-end pb-2.5 pl-4 pr-4">
+                <div
+                  @click="showSlideProductInVideoCard = false"
+                  class="js-close-button hover:cursor-pointer rotate-90 pl-2.5 pr-2.5 pt-2.5 pb-2.5 w-[34px] h-[34px] border{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                    {% render 'icon-labels-bags', icon: 'chevron-right' %}
+                </div>
+              </div>
+              <div tabindex="-1" class="overflow-y-auto scrollbar-body pl-4 pr-4">
+                {% render 'card-product-video-shopping',
+                  card_product: card_product,
+                  block: block,
+                  index: index,
+                  type: 'product',
+                  section: section,
+                  video_looping: true
+                %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        <div class="flex flex-col hover:cursor-default card-product card-product-videolooping recommendations {% if type == 'card' %}bg-card-product-videolooping-{{ section.id }}{% endif %}
+          {%- if settings.edges_type == 'rounded_corners' %} rounded-2xl{% endif -%}
+          {%- if is_bottom %}  h-full border border-solid pt-4 pb-4 pl-4 pr-4
+            {%- elsif is_bottom == false %} pt-4 pb-4 pl-4 pr-4
+            {%- elsif type == 'item' %} border border-solid pl-4 pr-4 pt-4 pb-4
+            {%- else %} pt-4 pb-0
+          {%- endif -%}"
+        >
+          <div class="card-product-info-container {%- if is_bottom or type == 'item_in_slide' or type == 'product' %} is-bottom{% endif %} flex{% if type != 'product_in_popup' %} flex-row gap-y-2 gap-x-3{% else %} flex-col{% endif %}">
+            <div class="product-image{% if type == 'product' %} w-20 min-w-[80px]{% elsif type == 'product_in_popup' %} w-full{% else %} w-16 min-w-[64px] lg:w-8 lg:min-w-[32px] xl:w-16 xl:min-w-[64px]{% endif %}">
+              {%- if card_product.featured_media -%}
+                {%- capture sizes -%}
+                  (min-width: 1024px) calc(44vw + 30px),
+                  (min-width: 768px) calc(80vw + 30px),
+                  100vw
+                {%- endcapture -%}
+                <span
+                  class="relative{% if type != "product" and type != "product_in_popup" %} cursor-pointer{% endif %}"
+                  {% if type == 'card' %}
+                    {% if block.settings.image == blank or next_action_show_product %}
+                      @click="showSlideListItemInVideoCard = true"
+                    {% else %}
+                      @click="openPopup()"
+                    {% endif %}
+                  {% elsif type == 'item' %}
+                    @click="openProductInPopup('{{ card_product.id | append: '_' | append: index }}')"
+                  {% elsif type == 'item_in_slide' %}
+                    @click="openProductInSlide('{{ card_product.id | append: '_' | append: index }}')"
+                  {% elsif type != "product" and type != "product_in_popup" %}
+                    @click="openPopup()"
+                  {% endif %}
+                >
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <img
+                    srcset="{{ card_product.featured_media | image_url: width: 250 }} 250w,
+                    {{ card_product.featured_media | image_url: width: 300 }} 300w,
+                    {{ card_product.featured_media | image_url: width: 375 }} 375w,
+                    {{ card_product.featured_media | image_url: width: 450 }} 450w,
+                    {{ card_product.featured_media | image_url: width: 750 }} 750w,
+                    {{ card_product.featured_media | image_url: width: 900 }} 900w,
+                    {{ card_product.featured_media | image_url: width: 1100 }} 1100w,
+                    {{ card_product.featured_media | image_url: width: 1500 }} 1500w,
+                    {{ card_product.featured_media | image_url: width: 1780 }} 1780w"
+                    class="preview-img object-cover w-full aspect-square animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[6px]{% endif %}"
+                    src="{{ card_product.featured_media | image_url: width: 1780 }}"
+                    width="{{ card_product.featured_media.width }}"
+                    size="{{ sizes }}"
+                    height="{{ card_product.featured_media.height }}"
+                    alt="{{ card_product.featured_media.alt | escape }}"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                  />
+                  {% # theme-check-enable ImgLazyLoading %}
+                </span>
+              {%- else -%} 
+                <div class='bg-[#c9c9c9] flex justify-center w-full items-center aspect-square{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}'>
+                  {%- render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}
+                </div>
+              {%- endif -%}
+            </div>
+            <div class="product-info-container flex flex-row gap-x-3 gap-y-2 flex-1" {{ block.shopify_attributes }}>
+              <div class="flex-1{% if type == 'product_in_popup' %} pt-3{% endif %}" {{ block.shopify_attributes }}>
+                <div class="mb-2 leading-tight">
+                  <h3 class="{% if layout_card == 'row' %}text-[100%] {% else %}x-card-title{% endif %} card__heading product-card-heading p-break-words line-clamp-2">
+                    <span
+                      class="full-unstyled-link product-name text-[rgba(var(--colors-heading))]{% if type != "product" and type != "product_in_popup" %} hover:text-[rgba(var(--colors-text-link))] cursor-pointer{% endif %} duration-200 p-break-words"
+                      {% if type == 'card' %}
+                        {% if block.settings.image == blank or next_action_show_product %}
+                          @click="showSlideListItemInVideoCard = true"
+                        {% else %}
+                          @click="openPopup()"
+                        {% endif %}
+                      {% elsif type == 'item' %}
+                        @click="openProductInPopup('{{ card_product.id | append: '_' | append: index }}')"
+                      {% elsif type == 'item_in_slide' %}
+                        @click="openProductInSlide('{{ card_product.id | append: '_' | append: index }}')"
+                      {% elsif type != "product" and type != "product_in_popup" %}
+                        @click="openPopup()"
+                      {% endif %}
+                    >
+                      {{ card_product.title | escape }}
+                    </span>
+                  </h3>
+                </div>
+                {%- liquid 
+                  assign use_variant = false
+                  if type == 'product' or type == 'product_in_popup'
+                    assign use_variant = true
+                  endif
+                -%}
+                <div class="x-card-price mt-3 text-left rtl:text-right"
+                  {%- if type == 'product' %} id="price-{{ section_id }}" role="status"{% endif -%}
+                  {%- if type == 'product_in_popup' %} id="price-{{ section_id }}" role="status"{% endif -%}
+                >
+                  {% render 'price', product: card_product, use_variant: use_variant %}
+                </div>
+              </div>
+              {% if type != 'product' and type != 'product_in_popup' %}
+                <div
+                  {{ block.shopify_attributes }}
+                  {% if type == 'card' %}
+                    {% if block.settings.image == blank or next_action_show_product %}
+                      @click="showSlideListItemInVideoCard = true; pauseVideo()"
+                    {% else %}
+                      @click="openPopup(); pauseVideo()"
+                    {% endif %}
+                  {% elsif type == 'item' %}
+                    @click="openProductInPopup('{{ card_product.id | append: '_' | append: index }}')"
+                  {% elsif type == 'item_in_slide' %}
+                    @click="openProductInSlide('{{ card_product.id | append: '_' | append: index }}')"
+                  {% else %}
+                    @click="openPopup()"
+                  {% endif %}
+                  tabindex="-1"
+                  class="hover:cursor-pointer pl-2.5 pr-2.5 pt-2.5 pb-2.5 w-[36px] h-[36px] text-[rgb(var(--colors-button-text))] bg-[rgba(var(--colors-button))]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                >
+                  {% if type == 'card' %}
+                    {% render 'icon-alls', icon: 'icon-search-quickview' %}
+                  {% else %}
+                    {% render 'icon-alls', icon: 'icon-plus' %}
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          {% if type == 'product' %}
+            {% render 'choose-option', section: section, product: card_product, index: index, block: block, is_product_in_slide: true, video_looping: true %}
+          {%  elsif type == 'product_in_popup'  %}
+            {% render 'choose-option', section: section , product: card_product, index: index, block: block, is_product_in_popup: true %}
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+    {% if card_product != blank and type == "item" %}
+      {% comment %} Slide product in popup tablet/laptop/desktop {% endcomment %}
+      <div x-init="$el.closest('#popup-content-{{ block.id }}').appendChild($el)">
+        <div
+          x-cloak
+          :class="{
+            'transform -translate-y-0 transition-transform duration-500 ease-in-out': showSlideProductInPopup && productSelectedId === '{{ card_product.id | append: '_' | append: index }}',
+            'transform translate-y-full transition-transform duration-500 ease-in-out': !(showSlideProductInPopup && productSelectedId === '{{ card_product.id | append: '_' | append: index }}'),
+            'h-full': productSelectedId === '{{ card_product.id | append: '_' | append: index }}',
+            'h-0': productSelectedId !== '{{ card_product.id | append: '_' | append: index }}'
+          }"
+          x-transition.duration.500ms
+          class="bg-[rgba(var(--background-color))] flex flex-col hover:cursor-default absolute top-0 bottom-0 left-0 right-0 z-[60]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+        >
+          <template x-if="productSelectedId == '{{ card_product.id | append: '_' | append: index }}'">
+            <div class="flex flex-col h-full js-product-container">
+              <div class="flex pb-2.5 pl-4 pr-4 md:pl-10 md:pr-10 justify-end">
+                <div
+                  @click="closeProductInPopup()"
+                  class="js-close-button hover:cursor-pointer rotate-90 pl-2.5 pr-2.5 pt-2.5 pb-2.5 w-[34px] h-[34px] border{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                    {% render 'icon-labels-bags', icon: 'chevron-right' %}
+                </div>
+              </div>
+              <div class="overflow-y-auto scrollbar-body pl-4 pr-4 md:pl-10 md:pr-10">
+                {% render 'card-product-video-shopping',
+                  card_product: card_product,
+                  block: block,
+                  index: index,
+                  type: 'product_in_popup',
+                  section: section,
+                  video_looping: true
+                %}
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    {% endif %}
+  {% endif %}
+{% else %}
+  {% if is_bottom == false and is_autoplay == false %}
+    {% style %}
+      @supports (-webkit-touch-callout: none) {
+        /* CSS specific to iOS devices */ 
+        .mobile-device-class {
+          top: 1rem
+        }
+      }
+      @supports not (-webkit-touch-callout: none) {
+        /* CSS for other than iOS devices */ 
+        .mobile-device-class {
+          top: 0.5rem
+        }
+      }
+      @supports (-webkit-hyphens: none) {
+        /* Safari only */
+        body .mobile-device-class {
+          top: 1rem
+        }
+      }         
+    {% endstyle %}
+    {% if count_product != 0  %}
+      <template x-teleport="#video--{{ block.id }}{% if shoppable_video %}-{{ index }}{% endif %}">
+        {% if type != 'product' and type != 'product_in_popup' %}
+          <div
+            {{ block.shopify_attributes }}
+            {% if type == 'card' %}
+              {% if block.settings.image == blank or next_action_show_product %}
+                @click="showSlideListItemInVideoCard = true; {% if shoppable_video %}disableSplide(){% endif %}"
+              {% else %}
+                @click="openPopup()"
+              {% endif %}
+            {% elsif type == 'item' %}
+              @click="openProductInPopup('{{ card_product.id | append: '_' | append: index }}')"
+            {% elsif type == 'item_in_slide' %}
+              @click="openProductInSlide('{{ card_product.id | append: '_' | append: index }}');"
+            {% else %}
+              @click="openPopup()"
+            {% endif %}
+            class="absolute mobile-device-class z-10 hover:cursor-pointer left-2 rtl:left-0 rtl:right-2 pl-2.5 pr-2.5 pt-2.5 pb-2.5 w-[36px] h-[36px] text-[rgb(var(--colors-button-text))] bg-[rgba(var(--colors-button))]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+          >
+            {% if type == 'card' %}
+              {% render 'icon-alls', icon: 'icon-search-quickview' %}
+            {% else %}
+              {% render 'icon-alls', icon: 'icon-plus' %}
+            {% endif %}
+          </div>
+        {% endif %}
+      </template>
+    {% endif %}
+  {% else %}
+    <div
+      class="card-product{% if type == 'product_in_popup' %} pl-2 pr-2{% endif %}{% if is_bottom %} h-full{% elsif is_bottom == false %} m-2{% if section.settings.video_items_view == "focus" %} mb-2 mr-2 ml-2 {% endif %} absolute bottom-0 left-0 right-0 z-10{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %} card-bg-{{ section.id }}" {{ block.shopify_attributes }}
+      id="x-product-template-{{ product.id }}-{{ section_id }}"
+      x-data='xVariantSelectCard($el,"{{ section.id }}", "{{ card_product.id }}", "{{ card_product.url }}", false, false, true, "{{ paginate.current_page }}", "", "", "{{ section.id }}")'
+      data-url="{{ product.url }}"
+      {% for option in card_product.options_with_values %}
+        data-option{{ forloop.index }}="{{ option.selected_value | escape }}"
+      {% endfor %}
+    >
+      {% if card_product != blank %}
+        {% if type == 'item_in_slide' %}
+          <div x-init="$el.closest('.card-video-shopping-{{ block.id }}{% if shoppable_video %}-{{ index }}{% endif %}').appendChild($el)">
+            <div
+              x-cloak 
+              x-show="showSlideProductInVideoCard && productSelectedId === '{{ card_product.id | append: '_' | append: index }}'"
+              x-transition:enter="transition-all ease-in-out duration-300"
+              x-transition:enter-start=" transform translate-y-full"
+              x-transition:enter-end="transform translate-y-0"
+              x-transition:leave="transition-all ease-in-out duration-300"
+              x-transition:leave-end="transform translate-y-full"
+              class="js-product-container product-slide pt-4 pb-4 overflow-hidden bg-[rgba(var(--background-color))] flex flex-col hover:cursor-default absolute top-0 bottom-0 left-0 right-0 border z-20 h-full{% if settings.edges_type == 'rounded_corners' %}{% if section.settings.full_width_mobile %}{% if swiper_on_mobile %} rounded-[10px]{% else %} md:rounded-[10px]{% endif %}{% else %} rounded-[10px]{% endif %}{% endif %}"
+            >
+              <div class="flex justify-end pb-2.5 pl-5 pr-5">
+                <div
+                  @click="showSlideProductInVideoCard = false; {% if shoppable_video %}enableSplide(){% endif %}"
+                  class="js-close-button hover:cursor-pointer rotate-90 pl-2.5 pr-2.5 pt-2.5 pb-2.5 w-[34px] h-[34px] border{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                    {% render 'icon-labels-bags', icon: 'chevron-right' %}
+                </div>
+              </div>
+              <div class="overflow-y-auto scrollbar-body pl-5 pr-5 mt-auto mb-auto">
+                {% render 'card-product-video-shopping',
+                  card_product: card_product,
+                  block: block,
+                  index: index,
+                  type: 'product',
+                  layout_card: 'row',
+                  section: section
+                %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        <div class="flex flex-col card-product hover:cursor-default
+          {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+          {%- if is_bottom %} h-full border border-solid pt-4 pb-4 pl-4 pr-4
+            {%- elsif is_bottom == false %} pt-4 pb-4 pl-4 pr-4
+            {%- elsif type == 'item' %} border border-solid pl-4 pr-4 pt-4 pb-4
+            {%- else %} pt-4 pb-0
+          {%- endif -%}"
+        >
+          <div class="card-product-info-container {%- if is_bottom %} is-bottom{% endif %} flex{% if type != 'product_in_popup' %} flex-row gap-y-2 gap-x-3{% else %} flex-col{% endif %}">
+            <div class="product-image{% if type == 'product' %} w-20 min-w-[80px]{% elsif type == 'product_in_popup' %} w-full{% else %} w-16 min-w-[64px] lg:w-8 lg:min-w-[32px] xl:w-16 xl:min-w-[64px]{% endif %}">
+              {%- if card_product.featured_media -%}
+                {%- capture sizes -%}
+                  (min-width: 1024px) calc(44vw + 30px),
+                  (min-width: 768px) calc(80vw + 30px),
+                  100vw
+                {%- endcapture -%}
+                <span
+                  class="relative{% if type != "product" and type != "product_in_popup" %} cursor-pointer{% endif %}"
+                  {% if type == 'card' %}
+                    {% if block.settings.image == blank or next_action_show_product %}
+                      @click="showSlideListItemInVideoCard = true"
+                    {% else %}
+                      @click="openPopup()"
+                    {% endif %}
+                  {% elsif type == 'item' %}
+                    @click="openProductInPopup('{{ card_product.id | append: '_' | append: index }}')"
+                  {% elsif type == 'item_in_slide' %}
+                    @click="openProductInSlide('{{ card_product.id | append: '_' | append: index }}')"
+                  {% elsif type != "product" and type != "product_in_popup" %}
+                    @click="openPopup()"
+                  {% endif %}
+                >
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <img
+                    srcset="{{ card_product.featured_media | image_url: width: 250 }} 250w,
+                    {{ card_product.featured_media | image_url: width: 300 }} 300w,
+                    {{ card_product.featured_media | image_url: width: 375 }} 375w,
+                    {{ card_product.featured_media | image_url: width: 450 }} 450w,
+                    {{ card_product.featured_media | image_url: width: 750 }} 750w,
+                    {{ card_product.featured_media | image_url: width: 900 }} 900w,
+                    {{ card_product.featured_media | image_url: width: 1100 }} 1100w,
+                    {{ card_product.featured_media | image_url: width: 1500 }} 1500w,
+                    {{ card_product.featured_media | image_url: width: 1780 }} 1780w"
+                    class="preview-img object-cover w-full aspect-square animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[6px]{% endif %}"
+                    src="{{ card_product.featured_media | image_url: width: 1780 }}"
+                    width="{{ card_product.featured_media.width }}"
+                    size="{{ sizes }}"
+                    height="{{ card_product.featured_media.height }}"
+                    alt="{{ card_product.featured_media.alt | escape }}"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                  />
+                  {% # theme-check-enable ImgLazyLoading %}
+                </span>
+              {%- else -%} 
+                <div class='bg-[#c9c9c9] flex justify-center w-full items-center aspect-square{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}'>
+                  {%- render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}
+                </div>
+              {%- endif -%}
+            </div>
+            <div class="product-info-container flex flex-row gap-x-3 gap-y-2 flex-1" {{ block.shopify_attributes }}>
+              <div class="flex-1{% if type == 'product_in_popup' %} pt-3{% endif %}" {{ block.shopify_attributes }}>
+                <div class="mb-2 leading-tight">
+                  <h3 class="{% if layout_card == 'row' %}text-[100%] {% else %}x-card-title {% endif %}card__heading product-card-heading p-break-words line-clamp-2">
+                    <span
+                      class="full-unstyled-link product-name text-[rgba(var(--colors-heading))]{% if type != "product" and type != "product_in_popup" %} hover:text-[rgba(var(--colors-text-link))] cursor-pointer{% endif %} duration-200 p-break-words"
+                      {% if type == 'card' %}
+                        {% if block.settings.image == blank or next_action_show_product %}
+                          @click="showSlideListItemInVideoCard = true"
+                        {% else %}
+                          @click="openPopup()"
+                        {% endif %}
+                      {% elsif type == 'item' %}
+                        @click="openProductInPopup('{{ card_product.id | append: '_' | append: index }}')"
+                      {% elsif type == 'item_in_slide' %}
+                        @click="openProductInSlide('{{ card_product.id | append: '_' | append: index }}')"
+                      {% elsif type != "product" and type != "product_in_popup" %}
+                        @click="openPopup()"
+                      {% endif %}
+                    >
+                      {{ card_product.title | escape }}
+                    </span>
+                  </h3>
+                </div>
+                {%- liquid 
+                  assign use_variant = false
+                  if type == 'product' or type == 'product_in_popup'
+                    assign use_variant = true
+                  endif
+                -%}
+                <div class="x-card-price mt-2 text-left rtl:text-right"
+                  {%- if type == 'product' %} id="price-{{ section_id }}" role="status"{% endif -%}
+                  {%- if type == 'product_in_popup' %} id="price-{{ section_id }}" role="status"{% endif -%}
+                >
+                  {% render 'price', product: card_product, use_variant: use_variant %}
+                </div>
+              </div>
+              {% if type != 'product' and type != 'product_in_popup' %}
+                <div
+                  {{ block.shopify_attributes }}
+                  {% if type == 'card' %}
+                    {% if block.settings.image == blank or next_action_show_product %}
+                      @click="showSlideListItemInVideoCard = true"
+                    {% else %}
+                      @click="openPopup()"
+                    {% endif %}
+                  {% elsif type == 'item' %}
+                    @click="openProductInPopup('{{ card_product.id | append: '_' | append: index }}')"
+                  {% elsif type == 'item_in_slide' %}
+                    @click="openProductInSlide('{{ card_product.id | append: '_' | append: index }}'); {% if shoppable_video %}disableSplide(){% endif %}"
+                  {% else %}
+                    @click="openPopup()"
+                  {% endif %}
+                  class="hover:cursor-pointer pl-2.5 pr-2.5 pt-2.5 pb-2.5 w-[36px] h-[36px] text-[rgb(var(--colors-button-text))] bg-[rgba(var(--colors-button))]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                >
+                  {% if type == 'card' %}
+                    {% render 'icon-alls', icon: 'icon-search-quickview' %}
+                  {% else %}
+                    {% render 'icon-alls', icon: 'icon-plus' %}
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          {% if type == 'product' %}
+            {% render 'choose-option', section: section, product: card_product, index: index, block: block, shoppable_video: true %}
+          {%  elsif type == 'product_in_popup'  %}
+            {% render 'choose-option', section: section , product: card_product, index: index, block: block, is_product_in_popup: true, shoppable_video: true %}
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+    {% if card_product != blank and type == "item" %}
+      {% comment %} Slide product in popup tablet/laptop/desktop {% endcomment %}
+      <template x-teleport="#popup-content-{{ block.id }}">
+        <div
+          x-cloak
+          :class="{
+            'transform -translate-y-0 transition-transform duration-500 ease-in-out': showSlideProductInPopup && productSelectedId === '{{ card_product.id | append: '_' | append: index }}',
+            'transform translate-y-full transition-transform duration-500 ease-in-out': !(showSlideProductInPopup && productSelectedId === '{{ card_product.id | append: '_' | append: index }}'),
+            'h-full': productSelectedId === '{{ card_product.id | append: '_' | append: index }}',
+            'h-0': productSelectedId !== '{{ card_product.id | append: '_' | append: index }}'
+          }"
+          x-transition.duration.500ms
+          class="bg-[rgba(var(--background-color))] flex flex-col hover:cursor-default absolute top-0 bottom-0 left-0 right-0 z-[60]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+        >
+          <template x-if="productSelectedId == '{{ card_product.id | append: '_' | append: index }}'">
+            <div class="flex flex-col h-full js-product-container">
+              <div class="flex pb-2.5 pl-4 pr-4 md:pl-10 md:pr-10 justify-end">
+                <div
+                  @click="closeProductInPopup()"
+                  class="js-close-button hover:cursor-pointer rotate-90 pl-2.5 pr-2.5 pt-2.5 pb-2.5 w-[34px] h-[34px] border{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                    {% render 'icon-labels-bags', icon: 'chevron-right' %}
+                </div>
+              </div>
+              <div class="overflow-y-auto scrollbar-body pl-4 pr-4 md:pl-10 md:pr-10">
+                {% render 'card-product-video-shopping',
+                  card_product: card_product,
+                  block: block,
+                  index: index,
+                  type: 'product_in_popup',
+                  section: section
+                %}
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+    {% endif %}
+  {% endif %}
+{% endif %}

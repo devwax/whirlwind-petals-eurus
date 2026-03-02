@@ -1,0 +1,104 @@
+{% style %}
+  .button--{{ block.id }}.button-solid,
+  .button--{{ block.id }}.button-solid:before { 
+    {%- unless block.settings.color_button.alpha == 0.0 -%}
+      --colors-line-and-border: {{ block.settings.color_button.red }}, {{ block.settings.color_button.green }}, {{ block.settings.color_button.blue }};
+      --colors-button: {{ block.settings.color_button.red }}, {{ block.settings.color_button.green }}, {{ block.settings.color_button.blue }};
+    {%- else -%}
+      --colors-line-and-border: var(--colors-button);
+    {%- endunless -%}
+    {%- unless block.settings.color_button_hover.alpha == 0.0 -%}
+      --colors-button-hover: rgb({{ block.settings.color_button_hover.red }}, {{ block.settings.color_button_hover.green }}, {{ block.settings.color_button_hover.blue }});
+    {%- endunless -%}
+    {%- unless block.settings.color_text_button.alpha == 0.0 -%}
+      --colors-button-text: {{ block.settings.color_text_button.red }}, {{ block.settings.color_text_button.green }}, {{ block.settings.color_text_button.blue }};
+    {%- endunless -%}
+    {%- unless block.settings.color_text_button_hover.alpha == 0.0 -%}
+      --colors-button-text-hover: {{ block.settings.color_text_button_hover.red }}, {{ block.settings.color_text_button_hover.green }}, {{ block.settings.color_text_button_hover.blue }};
+    {%- endunless -%}
+  }
+  .button--{{ block.id }}.button-outline {
+    {%- if block.settings.secondary_button_text.alpha != 0.0 -%} 
+      --colors-secondary-button: {{ block.settings.secondary_button_text.red }}, {{ block.settings.secondary_button_text.green }}, {{ block.settings.secondary_button_text.blue }}; 
+      --colors-line-secondary-button: {{ block.settings.secondary_button_text.red }}, {{ block.settings.secondary_button_text.green }}, {{ block.settings.secondary_button_text.blue }}; 
+      --background-secondary-button: transparent;
+    {% endif %}
+    {%- if block.settings.color_button_secondary.alpha != 0.0 -%} 
+      --background-secondary-button: {{ block.settings.color_button_secondary.red }}, {{ block.settings.color_button_secondary.green }}, {{ block.settings.color_button_secondary.blue }}; 
+      --colors-line-secondary-button: {{ block.settings.color_button_secondary.red }}, {{ block.settings.color_button_secondary.green }}, {{ block.settings.color_button_secondary.blue }}; 
+    {% endif %}
+  }
+  {% if block.settings.colors_text_link.alpha != 0.0 %}
+    .button--{{ block.id }}.button-text-link, .button--{{ block.id }}.button-text-link::after, .button--{{ block.id }}.button-text-link::before {
+      --colors-text-link: {{ block.settings.colors_text_link.red }}, {{ block.settings.colors_text_link.green }}, {{ block.settings.colors_text_link.blue }};
+    }
+  {% endif %}
+{% endstyle %}
+{% if block.settings.button_label != blank or block.settings.button_label_2 != blank %}
+  <div 
+    class="w-full{% if block.settings.button_label != blank or block.settings.button_label_2 != blank %} inline-flex {% if show_content_center %} justify-center{% endif %} flex-wrap gap-2{% endif %} p-break-words" 
+  >
+    {% if block.settings.button_label != blank %}
+      {% liquid 
+        assign button_link_1 = block.settings.button_link
+        if block.settings.mtf_button_link_1 != blank
+          assign mtf_key = block.settings.mtf_button_link_1 | strip | remove: " " | split: "."
+          assign mtf_value = blank
+          if product.selected_variant or settings.default_select_available_variant
+            assign mtf_value = product.selected_or_first_available_variant.metafields[mtf_key.first][mtf_key.last].value
+            assign mtf_type = product.selected_or_first_available_variant.metafields[mtf_key.first][mtf_key.last].type
+          else
+            assign mtf_value = product.metafields[mtf_key.first][mtf_key.last].value
+            assign mtf_type = product.metafields[mtf_key.first][mtf_key.last].type
+          endif
+
+          if mtf_value == blank
+            assign mtf_value = product.metafields[mtf_key.first][mtf_key.last].value
+            assign mtf_type = product.metafields[mtf_key.first][mtf_key.last].type
+          endif
+
+          if mtf_value != blank and mtf_type == 'url'
+            assign button_link_1 = mtf_value
+          endif
+        endif
+      %}
+      <a
+        {% if button_link_1 %} href="{{ button_link_1 }}"{% if block.settings.open_new_window_button %} target="_blank"{% endif %}{% else %} role="link" aria-disabled="true"{% endif %}
+        class="button button--{{ block.id }} pt-2.5 pb-2.5 pl-7 pr-7 md:pl-9 md:pr-9 md:pt-3 md:pb-3{% if block.settings.show_button_style_1 == 'secondary' %} button-outline{% elsif block.settings.show_button_style_1 == 'text-link' %} button-text-link {% else %} button-solid{% endif %} text-center inline-block border empty:hidden leading-normal{% unless button_link_1 %} hover:cursor-not-allowed disable-btn-animation opacity-70{% endunless %}"
+      >
+        {% render 'button-label', button_label: block.settings.button_label, show_button_style: block.settings.show_button_style_1 %}
+      </a>
+    {% endif %}
+    {% if block.settings.button_label_2 != blank %}
+      {% liquid 
+        assign button_link_2 = block.settings.button_link_2
+        if block.settings.mtf_button_link_2 != blank
+          assign mtf_key_2 = block.settings.mtf_button_link_2 | strip | remove: " " | split: "."
+          assign mtf_value_2 = blank
+          if product.selected_variant or settings.default_select_available_variant
+            assign mtf_value_2 = product.selected_or_first_available_variant.metafields[mtf_key_2.first][mtf_key_2.last].value
+            assign mtf_type_2 = product.selected_or_first_available_variant.metafields[mtf_key_2.first][mtf_key_2.last].type
+          else
+            assign mtf_value_2 = product.metafields[mtf_key_2.first][mtf_key_2.last].value
+            assign mtf_type_2 = product.metafields[mtf_key_2.first][mtf_key_2.last].type
+          endif
+
+          if mtf_value_2 == blank
+            assign mtf_value_2 = product.metafields[mtf_key_2.first][mtf_key_2.last].value
+            assign mtf_type_2 = product.metafields[mtf_key_2.first][mtf_key_2.last].type
+          endif
+
+          if mtf_value_2 != blank and mtf_type_2 == 'url'
+            assign button_link_2 = mtf_value_2
+          endif
+        endif
+      %}
+      <a
+        {% if button_link_2 %} href="{{ button_link_2 }}"{% if block.settings.open_new_window_button_2 %} target="_blank"{% endif %}{% else %} role="link" aria-disabled="true"{% endif %}
+        class="button button--{{ block.id }} pt-2.5 pb-2.5 pl-7 pr-7 md:pl-9 md:pr-9 md:pt-3 md:pb-3{% if block.settings.show_button_style_2 == 'secondary' %} button-outline{% elsif block.settings.show_button_style_2 == 'text-link' %} button-text-link {% else %} button-solid{% endif %} text-center inline-block border empty:hidden leading-normal{% unless button_link_2 %} hover:cursor-not-allowed disable-btn-animation opacity-70{% endunless %}"
+      >
+        {% render 'button-label', button_label: block.settings.button_label_2, show_button_style: block.settings.show_button_style_2 %}
+      </a>
+    {% endif %}
+  </div>
+{% endif %}

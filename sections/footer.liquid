@@ -1,0 +1,2213 @@
+{% liquid 
+  if settings.lang_direction contains request.locale.iso_code
+    assign class_rtl = 'rtl'
+    assign is_rtl = true
+  else
+    assign class_rtl = 'ltr'
+    assign is_rtl = false
+  endif
+%}
+<div id="section-footer" class="section-footer relative background-footer sticky-footer selection:bg-[rgba(var(--colors-text-footer),0.2)] pt-[{{ section.settings.top_padding_mobile }}px] md:pt-[{{ section.settings.top_padding }}px] pb-[{{ section.settings.bottom_padding_mobile }}px] md:pb-[{{ section.settings.bottom_padding }}px]">
+  {%- if section.settings.show_social_icons -%}
+    <div class="flex items-center">
+      {% render 'toolbar', show_social_icons: section.settings.show_social_icons %}
+    </div>
+  {%- endif -%}
+  {%- if section.blocks.size > 0 or section.settings.newsletter_enable or section.settings.show_social or section.settings.enable_follow_on_shop -%}
+    <div class="flex-wrap md:mb-5 md:border-b md:border-b-solid md:pt-12 md:pb-7">
+      {%- if section.blocks.size > 0 -%}
+        {% liquid
+          assign number_col_footer = section.settings.columns_desktop
+        %}
+        <div class="pt-6 md:pt-0 md:flex justify-center md:m-auto md:pr-0 rtl:md:pr-5 rtl:md:pl-0 x-pgw page-width flex-wrap">
+          {%- for block in section.blocks -%}
+            {% liquid
+              assign number = forloop.index | modulo: number_col_footer
+            %}
+          <div class="footer-col--{{ forloop.index }} md:pr-5 rtl:md:pr-0 md:first:pl-0 rtl:md:pl-5 rtl:md:first:pr-0 md:mb-7{% if number == 1 %}{% if is_rtl %} md:pr-0{% else %} md:pl-0{% endif %}{% else %} md:pl-10 rtl:md:pl-0 rtl:md:pr-10{% endif %} w-full md:w-1/{{ section.settings.columns_desktop }} {{ class_rtl }}" {{ block.shopify_attributes }}>
+              {%- case block.type -%}
+                {%- when 'text' -%}
+                  <div x-data="{ open: {{ block.settings.open_by_default }} }" class="py-4 border-b border-b-solid md:border-none">
+                    {%- if block.settings.heading_text != blank -%}
+                      <div @click="open = ! open" class="relative pr-5 rtl:pr-0 rtl:pl-5 cursor-pointer md:cursor-default duration-200 transition">
+                        <p class="h6 text-[115%]">{{ block.settings.heading_text | escape }}</p>
+                        <span class="md:hidden absolute w-2.5	h-2.5 top-1/2 -translate-y-1/2 duration-500 flex right-3.5 rtl:right-auto rtl:left-3.5" :class="open ? 'rotate-180' : ''">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+                      </div>
+                    {%- endif -%}
+                    <div class="hidden md:block">
+                      {%- if block.settings.image != blank -%}
+                        {% liquid
+                          if settings.enable_lazy_loading_image
+                            assign loading = 'lazy'
+                          else
+                            assign loading = 'eager'
+                          endif
+                        %}
+                        {%- capture sizes -%}
+                          {{ block.settings.image_width | times: 1.1 | ceil }}px
+                        {%- endcapture -%}
+                        {% style %}
+                          .image-{{ block.id }} {
+                            width: {{ block.settings.image_width }}px;
+                          }
+                        {% endstyle %}
+                        {% assign image_tags = block.settings.image_width | times: 1.1 | ceil | append: '' %}
+                        {%- if block.settings.link_image_footer != blank -%}
+                          <a href="{{ block.settings.link_image_footer }}"{% if block.settings.open_new_window %} target="_blank"{% endif %} class="image-{{ block.id }} h-full inline-block overflow-hidden{% if block.settings.heading_text != blank %} mt-6{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                            {{ block.settings.image | image_url: width: block.settings.image.width | image_tag: widths: image_tags,
+                              height: block.settings.image.height,
+                              class: "image-hover",
+                              width: block.settings.image.width,
+                              sizes: sizes,
+                              loading: loading,
+                              alt: block.settings.image.alt | escape
+                            }}
+                          </a>
+                        {%- else -%}
+                          <div class="image-{{ block.id }} h-full inline-block overflow-hidden{% if block.settings.heading_text != blank %} mt-6{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                            {{ block.settings.image | image_url: width: block.settings.image.width | image_tag: widths: image_tags,
+                              height: block.settings.image.height,
+                              class: "image-hover",
+                              width: block.settings.image.width,
+                              sizes: sizes,
+                              loading: loading,
+                              alt: block.settings.image.alt | escape
+                            }}
+                          </div>
+                        {%- endif -%}
+                      {%- endif -%}
+                      <div class="rte{% if block.settings.image != blank %} mt-2{% else %} mt-6{% endif %}">{{ block.settings.subtext }}</div>
+                      {%- if block.settings.show_social_icons -%}
+                        <div class="mt-2">
+                          {% render 'toolbar', enable_footer: true, show_social_icons: block.settings.show_social_icons, social_icons_layout: block.settings.icon_layout %}
+                        </div>
+                      {%- endif -%}
+                    </div>
+                    <div class="md:hidden"{% if block.settings.heading_text != blank %} x-show="open" x-collapse x-cloak {%- endif %}>
+                      {%- if block.settings.image != blank -%}
+                        {% liquid
+                          if settings.enable_lazy_loading_image
+                            assign loading = 'lazy'
+                          else
+                            assign loading = 'eager'
+                          endif
+                        %}
+                        {%- capture sizes -%}
+                          {{ block.settings.image_width | times: 1.1 | ceil }}px
+                        {%- endcapture -%}
+                        {% style %}
+                          .image-{{ block.id }} {
+                            width: {{ block.settings.image_width }}px;
+                          }
+                        {% endstyle %}
+                        {% assign image_tags = block.settings.image_width | times: 1.1 | ceil | append: '' %}
+                        {%- if block.settings.link_image_footer != blank -%}
+                          <a href="{{ block.settings.link_image_footer }}"{% if block.settings.open_new_window %} target="_blank"{% endif %} class="image-{{ block.id }} h-full inline-block overflow-hidden{% if block.settings.heading_text != blank %} mt-6{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                            {{ block.settings.image | image_url: width: block.settings.image.width | image_tag: widths: image_tags,
+                              height: block.settings.image.height,
+                              class: "image-hover",
+                              width: block.settings.image.width,
+                              sizes: sizes,
+                              loading: loading,
+                              alt: block.settings.image.alt | escape
+                            }}
+                          </a>
+                        {%- else -%}
+                          <div class="image-{{ block.id }} h-full inline-block overflow-hidden{% if block.settings.heading_text != blank %} mt-6{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                            {{ block.settings.image | image_url: width: block.settings.image.width | image_tag: widths: image_tags,
+                              height: block.settings.image.height,
+                              class: "image-hover",
+                              width: block.settings.image.width,
+                              sizes: sizes,
+                              loading: loading,
+                              alt: block.settings.image.alt | escape
+                            }}
+                          </div>
+                        {%- endif -%}
+                      {%- endif -%}
+                      <div class="rte{% if block.settings.image != blank %} mt-2{% else %} mt-6{% endif %}">{{ block.settings.subtext }}</div>
+                      {%- if block.settings.show_social_icons -%}
+                        <div class="mt-2">
+                          {% render 'toolbar', enable_footer: true, show_social_icons: block.settings.show_social_icons, social_icons_layout: block.settings.icon_layout %}
+                        </div>
+                      {%- endif -%}
+                    </div>
+                  </div>
+                {%- when 'link_list' -%}
+                  <div x-data="{ open: {{ block.settings.open_by_default }} }" class="py-4 border-b md:border-none">
+                    {%- if block.settings.heading_menu != blank -%}
+                      <div @click="open = ! open" class="relative pr-5 rtl:pr-0 rtl:pl-5 cursor-pointer md:cursor-default duration-200 transition">
+                        <p class="h6 text-[115%]">{{- block.settings.heading_menu | escape -}}</p>
+                        <span class="md:hidden absolute w-2.5	h-2.5 top-1/2 -translate-y-1/2 duration-500 flex right-3.5 rtl:right-auto rtl:left-3.5" :class="open ? 'rotate-180' : ''">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+                      </div>
+                    {%- endif -%}
+                    {%- if block.settings.menu != blank -%}
+                      <ul class="mt-6 hidden md:block">
+                        {%- for link in block.settings.menu.links -%}
+                          <li class="mb-1 first:pt-0 pt-2">
+                            <a href="{{ link.url }}" class="hover-text-link nav-link relative block lg:inline-block">
+                              {{ link.title }}
+                            </a>
+                          </li>
+                        {%- endfor -%}
+                        {%- if block.settings.show_social_icons -%}
+                          <div class="mt-2">
+                            {% render 'toolbar', enable_footer: true, show_social_icons: block.settings.show_social_icons %}
+                          </div>
+                        {%- endif -%}
+                      </ul>
+                    {%- endif -%}
+                    {%- if block.settings.menu != blank -%}
+                      <ul class="md:hidden"{% if block.settings.heading_menu != blank %} x-show="open" x-collapse x-cloak{% endif %}>
+                        {%- for link in block.settings.menu.links -%}
+                          <li class="mb-1 {% if forloop.index == 1 %}mt-6{% endif %} first:pt-0 pt-2">
+                            <a href="{{ link.url }}" class="hover-text-link nav-link relative block lg:inline-block">
+                              {{ link.title }}
+                            </a>
+                          </li>
+                        {%- endfor -%}
+                        {%- if block.settings.show_social_icons -%}
+                          <div class="mt-2">
+                            {% render 'toolbar', enable_footer: true, show_social_icons: block.settings.show_social_icons %}
+                          </div>
+                        {%- endif -%}
+                      </ul>
+                    {%- endif -%}
+                  </div>
+                {%- when 'image' -%}
+                  <div class="py-4 flex flex-col justify-start text-{{ block.settings.alignment }} text-{{ block.settings.alignment }} rtl:text-{% if block.settings.alignment == 'center' %}center{% elsif block.settings.alignment == 'left' %}right{% else %}left{% endif -%}
+                    {%- if number == 1 %} md:pr-0{% endif -%}
+                    {%- if block.settings.alignment == 'center' %} items-center{% elsif block.settings.alignment == 'right' %} items-end{% endif %}"
+                  >
+                    {%- if block.settings.image != blank -%}
+                      {% liquid
+                        if settings.enable_lazy_loading_image
+                          assign loading = 'lazy'
+                        else
+                          assign loading = 'eager'
+                        endif
+                      %}
+                      {%- capture sizes -%}
+                        {{ block.settings.image_width | times: 1.1 | ceil }}px
+                      {%- endcapture -%}
+                      {% style %}
+                        .image-{{ block.id }} {
+                          width: {{ block.settings.image_width }}px;
+                        }
+                      {% endstyle %}
+                      {% assign image_tags = block.settings.image_width | times: 1.1 | ceil | append: '' %}
+                      {%- if block.settings.link_image_footer != blank -%}
+                        <a href="{{ block.settings.link_image_footer }}"{% if block.settings.open_new_window %} target="_blank"{% endif %} class="image-{{ block.id }} h-full inline-block overflow-hidden{% if block.settings.rounded_corner_image %} rounded-[10px]{% endif %}">
+                          {{ block.settings.image | image_url: width: block.settings.image.width | image_tag: widths: image_tags,
+                            height: 'auto',
+                            class: "image-hover",
+                            width: block.settings.image_width,
+                            sizes: sizes,
+                            loading: loading,
+                            alt: block.settings.image.alt | escape
+                          }}
+                        </a>
+                      {%- else -%}
+                        <div class="image-{{ block.id }} h-full inline-block overflow-hidden{% if block.settings.rounded_corner_image %} rounded-[10px]{% endif %}">
+                          {{ block.settings.image | image_url: width: block.settings.image.width | image_tag: widths: image_tags,
+                            height: 'auto',
+                            class: "image-hover",
+                            width: block.settings.image_width,
+                            sizes: sizes,
+                            loading: loading,
+                            alt: block.settings.image.alt | escape
+                          }}
+                        </div>
+                      {%- endif -%}
+                    {%- else -%}
+                      {% liquid
+                        assign class_img = 'max-w-[13rem] bg-neutral-200'
+                        if block.settings.rounded_corner_image 
+                          assign class_img = class_img | append: ' rounded-[10px]'
+                        endif
+                      %}
+                      {{ 'image' | placeholder_svg_tag: class_img }}  
+                    {%- endif -%}
+                    {% if block.settings.text != blank %}
+                      {% style %}
+                        .text-{{ block.id }} {
+                          margin-top: {{ block.settings.spacing }}px;
+                        }
+                        .text-{{ block.id }}.rte p:first-child {
+                          margin-top: 0px;
+                        }
+                      {% endstyle %}
+                      <div class="text-{{ block.id }} rte">{{ block.settings.text }}</div>
+                    {% endif %}
+                  </div>
+                {%- when 'email_footer' -%}
+                  <div x-data="{ open: {{ block.settings.open_by_default }} }" class="pt-4 md:pb-5">
+                    <div @click="open = ! open" class="relative pr-5 rtl:pr-0 rtl:pl-5 cursor-pointer md:cursor-default duration-200 transition">
+                      <p class="h6 text-[115%]">{{ block.settings.heading_email | escape }}</p>
+                      <span class="md:hidden absolute w-2.5	h-2.5 top-1/2 -translate-y-1/2 duration-500 flex right-3.5 rtl:right-auto rtl:left-3.5" :class="open ? 'rotate-180' : ''">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+                    </div>
+                    <div class="hidden md:block">
+                      {%- form 'customer', id: 'ContactFooter', class: 'footer__newsletter newsletter-form mb-5' -%}
+                        <input type="hidden" aria-hidden="true" name="contact[tags]" value="newsletter">
+                        <div class="mt-4 flex">
+                          <div class="relative w-full">
+                            <input
+                              id="NewsletterFormDesktop--{{ section.id }}"
+                              type="email"
+                              name="contact[email]"
+                              aria-label="Email"
+                              class="w-full h-full pl-2.5 pr-4 pt-5 input border-b-2 border-current rounded-none border-b-solid focus:outline-none focus:border-current bg-transparent placeholder:opacity-0"
+                              aria-required="true"
+                              autocorrect="off"
+                              autocapitalize="off"
+                              autocomplete="email"
+                              {% if form.errors %}
+                                autofocus
+                                aria-invalid="true"
+                                aria-describedby="ContactFooter-error"
+                              {% elsif form.posted_successfully? %}
+                                aria-describedby="ContactFooter-success"
+                              {% endif %}
+                                placeholder="{{ 'newsletter.label' | t }}"
+                                required>
+                            <label class="absolute top-1/2 left-2.5 rtl:left-auto rtl:right-2.5 -translate-y-1/2 input_focus:text-xs input_focus:top-2.5 input_not_empty:top-2.5 input_not_empty:text-xs" for="NewsletterFormDesktop--{{ section.id }}">
+                              {{ 'newsletter.label' | t }}
+                            </label>
+                          </div>
+                          <div>
+                            <button type="submit" class="rounded-none border-solid border-current ml-1 w-12 h-full flex justify-center items-center bg-transparent border-b-2 border-b-solid border-x-0 border-t-0" name="commit" aria-label="{{ 'newsletter.button_label' | t }}">
+                              <span class="rtl:rotate-180">{% render 'icon-alls', icon: 'icon-arrow', enable_email_footer: true %}</span>
+                            </button>
+                          </div>
+                          {%- if form.errors -%}
+                            <div class="flex items-center text-left px-4 py-3 mt-4 bg-[rgba(var(--color-error),0.1)] selection:bg-[rgba(var(--color-error),0.2)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" id="Newsletter-error--{{ section.id }}">
+                              <span class="inline-block w-6 mr-2 text-[rgba(var(--color-error))]">{% render 'icon-alls', icon: 'icon-error' %} </span>
+                              <p class="flex-1">{{ form.errors.translated_fields['email'] | capitalize }} {{ form.errors.messages['email'] }}</p>
+                            </div>
+                          {%- endif -%}
+                        </div>
+                        {%- if form.posted_successfully? -%}
+                          <div class="flex items-center text-left px-3 py-3 mt-4 bg-[rgba(var(--color-success),0.1)] selection:bg-[rgba(var(--color-success),0.2)] focus:shadown-none focus-visible:outline-none focus:outline-none focus-visible:shadow-none" id="Newsletter-success--{{ section.id }}" tabindex="-1" autofocus>
+                            <span class="inline-block w-6 mr-2 text-[rgba(var(--color-success))]">{% render 'icon-alls', icon: 'icon-success' %}</span>
+                            <p class="flex-1">{{ 'newsletter.success' | t }}</p>
+                          </div>
+                        {%- endif -%}
+                      {%- endform -%}
+                      {% if block.settings.subtext_email != blank %}
+                        <div class="rte">{{ block.settings.subtext_email }}</div>
+                      {% endif %}
+                      {%- if block.settings.show_social_icons -%}
+                        <div class="mt-4">{% render 'toolbar', enable_footer: true, show_social_icons: block.settings.show_social_icons %}</div>
+                      {%- endif -%}  
+                    </div>
+                    <div class="md:hidden" x-show="open" x-collapse x-cloak>
+                      {%- form 'customer', id: 'ContactFooter', class: 'footer__newsletter newsletter-form mb-5' -%}
+                        <input type="hidden" aria-hidden="true" name="contact[tags]" value="newsletter">
+                        <div class="mt-4 flex">
+                          <div class="relative w-full">
+                            <input
+                              id="NewsletterForm--{{ section.id }}"
+                              type="email"
+                              name="contact[email]"
+                              class="w-full h-full pl-2.5 pr-4 pt-5 input border-b-2 border-current rounded-none border-b-solid focus:outline-none focus:border-current bg-transparent placeholder:opacity-0"
+                              aria-required="true"
+                              autocorrect="off"
+                              autocapitalize="off"
+                              autocomplete="email"
+                              {% if form.errors %}
+                                autofocus
+                                aria-invalid="true"
+                                aria-describedby="ContactFooter-error"
+                              {% elsif form.posted_successfully? %}
+                                aria-describedby="ContactFooter-success"
+                              {% endif %}
+                                placeholder="{{ 'newsletter.label' | t }}"
+                                required>
+                            <label class="absolute top-1/2 left-2.5 rtl:left-auto rtl:right-2.5 -translate-y-1/2 input_focus:text-xs input_focus:top-2.5 input_not_empty:top-2.5 input_not_empty:text-xs" for="NewsletterForm--{{ section.id }}">
+                              {{ 'newsletter.label' | t }}
+                            </label>
+                          </div>
+                          <div>
+                            <button type="submit" class="rounded-none border-solid border-current ml-1 w-12 h-full flex justify-center items-center bg-transparent border-b-2 border-b-solid border-x-0 border-t-0" name="commit" aria-label="{{ 'newsletter.button_label' | t }}">
+                              <span class="rtl:rotate-180">{% render 'icon-alls', icon: 'icon-arrow', enable_email_footer: true %}</span>
+                            </button>
+                          </div>
+                          {%- if form.errors -%}
+                            <div class="flex items-center text-left px-4 py-3 mt-4 bg-[rgba(var(--color-error),0.1)] selection:bg-[rgba(var(--color-error),0.2)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" id="Newsletter-error--{{ section.id }}">
+                              <span class="inline-block w-6 mr-2 text-[rgba(var(--color-error))]">{% render 'icon-alls', icon: 'icon-error' %} </span>
+                              <p class="flex-1">{{ form.errors.translated_fields['email'] | capitalize }} {{ form.errors.messages['email'] }}</p>
+                            </div>
+                          {%- endif -%}
+                        </div>
+                        {%- if form.posted_successfully? -%}
+                          <div class="flex items-center text-left px-3 py-3 mt-4 bg-[rgba(var(--color-success),0.1)] selection:bg-[rgba(var(--color-success),0.2)] focus:shadown-none focus-visible:outline-none focus:outline-none focus-visible:shadow-none" id="Newsletter-success--{{ section.id }}" tabindex="-1" autofocus>
+                            <span class="inline-block w-6 mr-2 text-[rgba(var(--color-success))]">{% render 'icon-alls', icon: 'icon-success' %}</span>
+                            <p class="flex-1">{{ 'newsletter.success' | t }}</p>
+                          </div>
+                        {%- endif -%}
+                      {%- endform -%}
+                      {% if block.settings.subtext_email != blank %}
+                        <div class="rte">{{ block.settings.subtext_email }}</div>
+                      {% endif %}
+                      {%- if block.settings.show_social_icons -%}
+                        <div class="mt-4">{% render 'toolbar', enable_footer: true, show_social_icons: block.settings.show_social_icons %}</div>
+                      {%- endif -%}  
+                    </div>
+                  </div>
+                {% when 'contact' %}
+                  <div x-data="{ open: {{ block.settings.open_by_default }} }" class="py-4 border-b md:border-none">
+                    {%- if block.settings.heading_menu != blank -%}
+                      <div @click="open = ! open" class="relative pr-5 rtl:pr-0 rtl:pl-5 cursor-pointer md:cursor-default duration-200 transition">
+                        <p class="h6 text-[115%]">{{- block.settings.heading_menu | escape -}}</p>
+                        <span class="md:hidden absolute w-2.5	h-2.5 top-1/2 -translate-y-1/2 duration-500 flex right-3.5 rtl:right-auto rtl:left-3.5" :class="open ? 'rotate-180' : ''">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+                      </div>
+                    {%- endif -%}
+                    <div class="mt-6 hidden md:block">
+                      {% if block.settings.icon_1 != 'none' or block.settings.title_1 or block.settings.text_1 %}
+                        <div class="mb-4 flex items-center gap-x-4">
+                          {% if block.settings.icon_1 != 'none' %}
+                            {% unless block.settings.custom_icon == blank and block.settings.another_icon_1 == blank and block.settings.icon_1 == 'another_icon' %}
+                              <span class="inline-block h-6 w-6 lg:h-9 lg:w-9 min-w-[24px] lg:min-w-[36px]">
+                                {% if block.settings.custom_icon == blank %}
+                                  {% if block.settings.another_icon_1 != blank and block.settings.icon_1 == 'another_icon' %}
+                                    {% render 'icon-new-alls', icon: block.settings.another_icon_1 %}
+                                  {% else %}
+                                    {% render 'icon-labels-bags', icon: block.settings.icon_1 %}
+                                  {% endif %}
+                                {% else %}
+                                  {{ block.settings.custom_icon }}
+                                {% endif %}
+                              </span>
+                            {% endunless %}
+                          {% endif %}
+                          {% if block.settings.title_1 or block.settings.text_1 %}
+                            <div>
+                              <p class="empty:hidden p-break-words">{{ block.settings.title_1 | escape }}</p>
+                              {% if block.settings.text_link_1 != blank %}
+                                <a href="{{ block.settings.text_link_1 }}"{% if block.settings.open_new_window_1 %} target="_blank"{% endif %}
+                                  class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_1 %} text-[rgb(var(--colors-text-link))]{% endif %} hover-text-link nav-link relative"
+                                >
+                                  {{ block.settings.text_1 | escape }}
+                                </a>
+                              {% else %}
+                                <p class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_1 %} text-[rgb(var(--colors-text-link))]{% endif %}">
+                                  {{ block.settings.text_1 | escape }}
+                                </p>
+                              {% endif %} 
+                            </div>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                      {% if block.settings.icon_2 != 'none' or block.settings.title_2 or block.settings.text_2 %}
+                        <div class="mb-4 flex items-center gap-x-4">
+                          {% if block.settings.icon_2 != 'none' %}
+                            {% unless block.settings.custom_icon_2 == blank and block.settings.another_icon_2 == blank and block.settings.icon_2 == 'another_icon' %}
+                              <span class="inline-block min-w-[24px] lg:min-w-[36px] h-6 w-6 lg:h-9 lg:w-9">
+                                {% if block.settings.custom_icon_2 == blank %}
+                                  {% if block.settings.another_icon_2 != blank and block.settings.icon_2 == 'another_icon' %}
+                                    {% render 'icon-new-alls', icon: block.settings.another_icon_2 %}
+                                  {% else %}
+                                    {% render 'icon-labels-bags', icon: block.settings.icon_2 %}
+                                  {% endif %}
+                                {% else %}
+                                  {{ block.settings.custom_icon_2 }}
+                                {% endif %}
+                              </span>
+                            {% endunless %}
+                          {% endif %}
+                          {% if block.settings.title_2 or block.settings.text_2 %}
+                            <div>
+                              <p class="empty:hidden">{{ block.settings.title_2 | escape }}</p>
+                              {% if block.settings.text_link_2 != blank %}
+                                <a href="{{ block.settings.text_link_2 }}"{% if block.settings.open_new_window_2 %} target="_blank"{% endif %}
+                                  class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_2 %} text-[rgb(var(--colors-text-link))]{% endif %} hover-text-link nav-link relative"
+                                >
+                                  {{ block.settings.text_2 | escape }}
+                                </a>
+                              {% else %}
+                                <p class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_2 %} text-[rgb(var(--colors-text-link))]{% endif %}">
+                                  {{ block.settings.text_2 | escape }}
+                                </p>
+                              {% endif %} 
+                            </div>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                      {% if block.settings.icon_3 != 'none' or block.settings.title_3 or block.settings.text_3 %}
+                        <div class="mb-4 flex items-center gap-x-4">
+                          {% if block.settings.icon_3 != 'none' %}
+                            {% unless block.settings.custom_icon_3 == blank and block.settings.another_icon_3 == blank and block.settings.icon_3 == 'another_icon' %}
+                              <span class="inline-block h-6 w-6 lg:h-9 lg:w-9 min-w-[24px] lg:min-w-[36px]">
+                                {% if block.settings.custom_icon_3 == blank %}
+                                  {% if block.settings.another_icon_3 != blank and block.settings.icon_3 == 'another_icon' %}
+                                    {% render 'icon-new-alls', icon: block.settings.another_icon_3 %}
+                                  {% else %}
+                                    {% render 'icon-labels-bags', icon: block.settings.icon_3 %}
+                                  {% endif %}
+                                {% else %}
+                                  {{ block.settings.custom_icon_3 }}
+                                {% endif %}
+                              </span>
+                            {% endunless %}
+                          {% endif %}
+                          {% if block.settings.title_3 or block.settings.text_3 %}
+                            <div>
+                              <p class="empty:hidden">{{ block.settings.title_3 | escape }}</p>
+                              {% if block.settings.text_link_3 != blank %}
+                                <a href="{{ block.settings.text_link_3 }}"{% if block.settings.open_new_window_3 %} target="_blank"{% endif %}
+                                  class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_3 %} text-[rgb(var(--colors-text-link))]{% endif %} hover-text-link nav-link relative"
+                                >
+                                  {{ block.settings.text_3 | escape }}
+                                </a>
+                              {% else %}
+                                <p class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_3 %} text-[rgb(var(--colors-text-link))]{% endif %}">
+                                  {{ block.settings.text_3 | escape }}
+                                </p>
+                              {% endif %}
+                            </div>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                    </div>
+                    <div class="mt-6 md:hidden" x-show="open" x-collapse x-cloak>
+                      {% if block.settings.icon_1 != 'none' or block.settings.title_1 or block.settings.text_1 %}
+                        <div class="mb-4 flex items-center gap-x-4">
+                          {% if block.settings.icon_1 != 'none' %}
+                            {% unless block.settings.custom_icon == blank and block.settings.another_icon_1 == blank and block.settings.icon_1 == 'another_icon' %}
+                              <span class="inline-block h-6 w-6 lg:h-9 lg:w-9 min-w-[24px] lg:min-w-[36px]">
+                                {% if block.settings.custom_icon == blank %}
+                                  {% if block.settings.another_icon_1 != blank and block.settings.icon_1 == 'another_icon' %}
+                                    {% render 'icon-new-alls', icon: block.settings.another_icon_1 %}
+                                  {% else %}
+                                    {% render 'icon-labels-bags', icon: block.settings.icon_1 %}
+                                  {% endif %}
+                                {% else %}
+                                  {{ block.settings.custom_icon }}
+                                {% endif %}
+                              </span>
+                            {% endunless %}
+                          {% endif %}
+                          {% if block.settings.title_1 or block.settings.text_1 %}
+                            <div>
+                              <p class="empty:hidden p-break-words">{{ block.settings.title_1 | escape }}</p>
+                              {% if block.settings.text_link_1 != blank %}
+                                <a href="{{ block.settings.text_link_1 }}"{% if block.settings.open_new_window_1 %} target="_blank"{% endif %}
+                                  class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_1 %} text-[rgb(var(--colors-text-link))]{% endif %} hover-text-link nav-link relative"
+                                >
+                                  {{ block.settings.text_1 | escape }}
+                                </a>
+                              {% else %}
+                                <p class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_1 %} text-[rgb(var(--colors-text-link))]{% endif %}">
+                                  {{ block.settings.text_1 | escape }}
+                                </p>
+                              {% endif %} 
+                            </div>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                      {% if block.settings.icon_2 != 'none' or block.settings.title_2 or block.settings.text_2 %}
+                        <div class="mb-4 flex items-center gap-x-4">
+                          {% if block.settings.icon_2 != 'none' %}
+                            {% unless block.settings.custom_icon_2 == blank and block.settings.another_icon_2 == blank and block.settings.icon_2 == 'another_icon' %}
+                              <span class="inline-block min-w-[24px] lg:min-w-[36px] h-6 w-6 lg:h-9 lg:w-9">
+                                {% if block.settings.custom_icon_2 == blank %}
+                                  {% if block.settings.another_icon_2 != blank and block.settings.icon_2 == 'another_icon' %}
+                                    {% render 'icon-new-alls', icon: block.settings.another_icon_2 %}
+                                  {% else %}
+                                    {% render 'icon-labels-bags', icon: block.settings.icon_2 %}
+                                  {% endif %}
+                                {% else %}
+                                  {{ block.settings.custom_icon_2 }}
+                                {% endif %}
+                              </span>
+                            {% endunless %}
+                          {% endif %}
+                          {% if block.settings.title_2 or block.settings.text_2 %}
+                            <div>
+                              <p class="empty:hidden">{{ block.settings.title_2 | escape }}</p>
+                              {% if block.settings.text_link_2 != blank %}
+                                <a href="{{ block.settings.text_link_2 }}"{% if block.settings.open_new_window_2 %} target="_blank"{% endif %}
+                                  class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_2 %} text-[rgb(var(--colors-text-link))]{% endif %} hover-text-link nav-link relative"
+                                >
+                                  {{ block.settings.text_2 | escape }}
+                                </a>
+                              {% else %}
+                                <p class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_2 %} text-[rgb(var(--colors-text-link))]{% endif %}">
+                                  {{ block.settings.text_2 | escape }}
+                                </p>
+                              {% endif %} 
+                            </div>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                      {% if block.settings.icon_3 != 'none' or block.settings.title_3 or block.settings.text_3 %}
+                        <div class="mb-4 flex items-center gap-x-4">
+                          {% if block.settings.icon_3 != 'none' %}
+                            {% unless block.settings.custom_icon_3 == blank and block.settings.another_icon_3 == blank and block.settings.icon_3 == 'another_icon' %}
+                              <span class="inline-block h-6 w-6 lg:h-9 lg:w-9 min-w-[24px] lg:min-w-[36px]">
+                                {% if block.settings.custom_icon_3 == blank %}
+                                  {% if block.settings.another_icon_3 != blank and block.settings.icon_3 == 'another_icon' %}
+                                    {% render 'icon-new-alls', icon: block.settings.another_icon_3 %}
+                                  {% else %}
+                                    {% render 'icon-labels-bags', icon: block.settings.icon_3 %}
+                                  {% endif %}
+                                {% else %}
+                                  {{ block.settings.custom_icon_3 }}
+                                {% endif %}
+                              </span>
+                            {% endunless %}
+                          {% endif %}
+                          {% if block.settings.title_3 or block.settings.text_3 %}
+                            <div>
+                              <p class="empty:hidden">{{ block.settings.title_3 | escape }}</p>
+                              {% if block.settings.text_link_3 != blank %}
+                                <a href="{{ block.settings.text_link_3 }}"{% if block.settings.open_new_window_3 %} target="_blank"{% endif %}
+                                  class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_3 %} text-[rgb(var(--colors-text-link))]{% endif %} hover-text-link nav-link relative"
+                                >
+                                  {{ block.settings.text_3 | escape }}
+                                </a>
+                              {% else %}
+                                <p class="font-semibold p-break-words empty:hidden{% if block.settings.enable_text_link_3 %} text-[rgb(var(--colors-text-link))]{% endif %}">
+                                  {{ block.settings.text_3 | escape }}
+                                </p>
+                              {% endif %}
+                            </div>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                    </div>
+                    {%- if block.settings.show_social_icons -%}
+                      <div class="mt-4 md:mt-6 pb-1">
+                        {% render 'toolbar', enable_footer: true, show_social_icons: block.settings.show_social_icons %}
+                      </div>
+                    {%- endif -%}
+                  </div>
+              {%- endcase -%}
+            </div>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+  {%- if shop.features.follow_on_shop? and section.settings.enable_follow_on_shop -%}
+    <div class="x-pgw page-width pt-5 md:pt-3.5 md:pb-3 pb-2 change-position-popup text-center ltr
+      {%- if section.settings.additional_layout == 'horizontal' %} lg:text-{{ section.settings.horizontal_position }} rtl:lg:text-{% if section.settings.horizontal_position == 'center' %}center{% elsif section.settings.horizontal_position == 'left' %}right{% else %}left{% endif -%}
+      {%- else %} lg:text-center{% endif %}"
+    >
+      {% comment %} TODO: enable theme-check once `login_button` is accepted as valid filter {% endcomment %}
+      {% # theme-check-disable %}
+      {{ shop | login_button: action: 'follow' }}
+      {% # theme-check-enable %}
+    </div>  
+  {%- endif -%}
+  <div class="additional-footer {{ class_rtl }}{% if section.settings.additional_layout == 'horizontal' %} x-pgw page-width mx-auto lg:flex lg:flex-row lg:justify-between items-center{% else %} mx-5{% endif -%}"
+  >
+    <div class="{% if section.settings.additional_layout == 'horizontal' %}flex flex-col lg:flex lg:flex-row gap-x-7 items-center w-full justify-between{% else %}flex flex-col{% endif %}">
+      {%- if section.settings.show_language_selector or section.settings.show_currency_selector -%}
+        <div class="mb-3 md:mb-2{% if section.settings.additional_layout == 'vertical' %} lg:mb-2{% else %} lg:mb-0{% endif %}">
+        {% render 'toolbar', enable_footer: true, show_currency_selector: section.settings.show_currency_selector, show_language_selector: section.settings.show_language_selector %}
+        </div>
+      {%- endif -%}
+      <div class="flex flex-col items-center{% if section.settings.additional_layout == 'vertical' %} lg:mt-2 order-last{% else %} lg:mb-0 order-last md:order-none{% endif %}{% if section.settings.additional_layout == 'horizontal' %} lg:pl-14 lg:max-w-3xl{% endif %}">
+        <div class="{% if section.settings.show_copyright %}mt-4 md:mt-4 base-link text-center lg:mt-0{% unless section.settings.additional_layout == 'vertical' %} lg:text-right{% endunless %}{% endif %} p-break-words">
+          {%- if section.settings.show_copyright -%}
+          <p class="inline-block">&copy; {{ 'now' | date: "%Y" }}{% unless is_rtl %}, {% endunless %}</p>
+            {{ shop.name | link_to: routes.root_url }}.
+            {%- if section.settings.add_copyright_text != blank -%}
+              <div class="ml-1 inline-block">
+                {{ section.settings.add_copyright_text | replace: '<a href="https://omnithemes.com', '<a rel="nofollow" href="https://omnithemes.com' }}
+              </div>
+            {%- endif -%}
+          {%- endif -%}
+          {% if section.settings.show_powered %}
+            <p class="mt-3{% if section.settings.show_copyright %} md:mt-0{% else %} md:mt-4{% endif %} md:ml-1 block md:inline-block">{{ powered_by_link }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {%- if section.settings.payment_enable -%}
+        {% if section.settings.custom_payment != blank %}
+          {% assign enabled_payment_types = section.settings.custom_payment | remove: ' ' | split: ',' %}
+          <ul class="icon-payment flex justify-center gap-y-2 flex-wrap{% unless section.settings.show_language_selector or section.settings.show_currency_selector %} mt-5 md:mt-0{% endunless %}" role="list">
+          {%- for type in enabled_payment_types -%}
+            <li class="pl-1 pr-1">
+              {{ type | payment_type_svg_tag }}
+            </li>
+          {%- endfor -%}
+          </ul>
+        {% else %}
+          <ul class="icon-payment flex justify-center gap-y-2 flex-wrap{% unless section.settings.show_language_selector or section.settings.show_currency_selector %} mt-5 md:mt-0{% endunless %}" role="list">
+            {%- for type in shop.enabled_payment_types -%}
+              <li class="pl-1 pr-1">
+                {{ type | payment_type_svg_tag }}
+              </li>
+            {%- endfor -%}
+          </ul>
+        {% endif %}       
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "t:sections.footer.name",
+  "class": "section-footer",
+  "blocks": [
+    {
+      "type": "link_list",
+      "name": "t:sections.mobile-navigation.settings.menu.label",
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "open_by_default",
+          "default": false,
+          "label": "t:sections.footer.blocks.open_by_default"
+        },
+        {
+          "type": "text",
+          "id": "heading_menu",
+          "default": "Quick links",
+          "label": "t:sections.all.text.heading"
+        },
+        {
+          "type": "link_list",
+          "id": "menu",
+          "default": "footer",
+          "label": "t:sections.mobile-navigation.settings.menu.label",
+          "info": "t:sections.footer.blocks.link_list.settings.menu.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_social_icons",
+          "default": false,
+          "label": "t:sections.footer.settings.show_social_icons.label",
+          "info": "t:sections.footer.settings.show_social_icons.info"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "t:sections.footer.blocks.text.name",
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "open_by_default",
+          "default": false,
+          "label": "t:sections.footer.blocks.open_by_default"
+        },
+        {
+          "type": "text",
+          "id": "heading_text",
+          "default": "Custom text",
+          "label": "t:sections.all.text.heading"
+        },
+        {
+          "type": "richtext",
+          "id": "subtext",
+          "default": "<p>Share contact information, store details, and brand content with your customers.</p>",
+          "label": "t:sections.footer.blocks.text.settings.subtext.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_social_icons",
+          "default": false,
+          "label": "t:sections.footer.settings.show_social_icons.label",
+          "info": "t:sections.footer.settings.show_social_icons.info"
+        },
+        {
+          "type": "select",
+          "id": "icon_layout",
+          "label": "Icon layout",
+          "options": [
+            {
+              "label": "t:sections.featured-collection.settings.slider_style.options__1",
+              "value": "horizontal"
+            },
+            {
+              "label": "t:sections.featured-collection.settings.slider_style.options__2",
+              "value": "vertical"
+            }
+          ],
+          "default": "horizontal",
+          "visible_if": "{{ block.settings.show_social_icons }}"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.all.image.label"
+        },
+        {
+          "type": "range",
+          "id": "image_width",
+          "min": 50,
+          "max": 200,
+          "step": 5,
+          "unit": "px",
+          "label": "t:sections.all.image.image_width",
+          "default": 100
+        },
+        {
+          "type": "url",
+          "id": "link_image_footer",
+          "label": "t:sections.announcement-bar.blocks.announcement.link.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_new_window",
+          "default": false,
+          "label": "t:sections.all.open_new_window.label"
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "name": "t:sections.all.image.label",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.all.image.label"
+        },
+        {
+          "type": "range",
+          "id": "image_width",
+          "min": 50,
+          "max": 200,
+          "step": 5,
+          "label": "t:sections.all.image.image_width",
+          "default": 100
+        },
+        {
+          "type": "url",
+          "id": "link_image_footer",
+          "label": "t:sections.announcement-bar.blocks.announcement.link.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_new_window",
+          "default": false,
+          "label": "t:sections.all.open_new_window.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "rounded_corner_image",
+          "default": false,
+          "label": "t:sections.promotion-grid.blocks.promotion.settings.rounded_corner_image.label"
+        },
+        {
+          "type": "select",
+          "id": "alignment",
+          "label": "t:sections.footer.settings.alignment.label",
+          "options": [
+            {
+              "value": "left",
+              "label": "t:sections.all.content_alignment.options__1.label"
+            },
+            {
+              "value": "center",
+              "label": "t:sections.all.content_alignment.options__2.label"
+            },
+            {
+              "value": "right",
+              "label": "t:sections.all.content_alignment.options__3.label"
+            }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "t:sections.footer.settings.header_add_info.content"
+        },
+        {
+          "type": "range",
+          "id": "spacing",
+          "min": 4,
+          "max": 100,
+          "step": 4,
+          "unit": "px",
+          "label": "t:sections.all.spacing.label",
+          "default": 28
+        }
+      ]
+    },
+    {
+      "type": "email_footer",
+      "limit": 1,
+      "name": "t:sections.footer.blocks.email_footer.name",
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "open_by_default",
+          "default": true,
+          "label": "t:sections.footer.blocks.open_by_default"
+        },
+        {
+          "type": "text",
+          "id": "heading_email",
+          "default": "Subscribe to our emails",
+          "label": "t:sections.all.text.heading"
+        },
+        {
+          "type": "richtext",
+          "id": "subtext_email",
+          "label": "t:sections.all.text.text"
+        },
+        {
+          "type": "paragraph",
+          "content": "t:sections.footer.settings.paragraph.content"
+        },
+        {
+          "type": "paragraph",
+          "content": "t:sections.newsletter.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_social_icons",
+          "default": true,
+          "label": "t:sections.footer.settings.show_social_icons.label",
+          "info": "t:sections.footer.settings.show_social_icons.info"
+        }
+      ]
+    },
+    {
+      "type": "contact",
+      "name": "t:sections.footer.blocks.contact.name",
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "open_by_default",
+          "default": false,
+          "label": "t:sections.footer.blocks.open_by_default"
+        },
+        {
+          "type": "text",
+          "id": "heading_menu",
+          "default": "Need help",
+          "label": "t:sections.all.text.heading"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.promotion-grid.blocks.promotion.settings.line_1.label"
+        },
+        {
+          "type": "select",
+          "id": "icon_1",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.all.icon.options.none"
+            },
+            {
+              "value": "another_icon",
+              "label": "t:sections.all.icon.another_icon_label"
+            },
+            {
+              "value": "activity",
+              "label": "t:sections.all.icon.options.activity"
+            },
+            {
+              "value": "archive",
+              "label": "t:sections.all.icon.options.archive"
+            },
+            {
+              "value": "arrow-down-cricle",
+              "label": "t:sections.all.icon.options.arrow-down-cricle"
+            },
+            {
+              "value": "arrow-left",
+              "label": "t:sections.all.icon.options.arrow-left"
+            },
+            {
+              "value": "arrow-left-circle",
+              "label": "t:sections.all.icon.options.arrow-left-circle"
+            },
+            {
+              "value": "arrow-right",
+              "label": "t:sections.all.icon.options.arrow-right"
+            },
+            {
+              "value": "arrow-right-circle",
+              "label": "t:sections.all.icon.options.arrow-right-circle"
+            },
+            {
+              "value": "arrow-up-circle",
+              "label": "t:sections.all.icon.options.arrow-up-circle"
+            },
+            {
+              "value": "chevron-left",
+              "label": "t:sections.all.icon.options.chevron-left"
+            },
+            {
+              "value": "trending-down",
+              "label": "t:sections.all.icon.options.trending-down"
+            },
+            {
+              "value": "tv",
+              "label": "t:sections.all.icon.options.tv"
+            },
+            {
+              "value": "trending-up",
+              "label": "t:sections.all.icon.options.trending-up"
+            },
+            {
+              "value": "zap",
+              "label": "t:sections.all.icon.options.zap"
+            },
+            {
+              "value": "1st-medal",
+              "label": "t:sections.all.icon.options.1st-medal"
+            },
+            {
+              "value": "award",
+              "label": "t:sections.all.icon.options.award"
+            },
+            {
+              "value": "bicycle",
+              "label": "t:sections.all.icon.options.bicycle"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.all.icon.options.box"
+            },
+            {
+              "value": "briefcase",
+              "label": "t:sections.all.icon.options.briefcase"
+            },
+            {
+              "value": "blink",
+              "label": "t:sections.all.icon.options.blink"
+            },
+            {
+              "value": "calendar",
+              "label": "t:sections.all.icon.options.calendar"
+            },
+            {
+              "value": "camera",
+              "label": "t:sections.all.icon.options.camera"
+            },
+            {
+              "value": "chat-bubble",
+              "label": "t:sections.all.icon.options.chat-bubble"
+            },
+            {
+              "value": "check-mark",
+              "label": "t:sections.all.icon.options.check-mark"
+            },
+            {
+              "value": "clock",
+              "label": "t:sections.all.icon.options.clock"
+            },
+            {
+              "value": "cloud-rain",
+              "label": "t:sections.all.icon.options.cloud-rain"
+            },
+            {
+              "value": "coffee",
+              "label": "t:sections.all.icon.options.coffee"
+            },
+            {
+              "value": "coin",
+              "label": "t:sections.all.icon.options.coin"
+            },
+            {
+              "value": "credit-card",
+              "label": "t:sections.all.icon.options.credit-card"
+            },
+            {
+              "value": "delivery-truck",
+              "label": "t:sections.all.icon.options.delivery-truck"
+            },
+            {
+              "value": "dollar-sign",
+              "label": "t:sections.all.icon.options.dollar-sign"
+            },
+            {
+              "value": "dna",
+              "label": "t:sections.all.icon.options.dna"
+            },
+            {
+              "value": "dark-mode",
+              "label": "t:sections.all.icon.options.dark-mode"
+            },
+            {
+              "value": "earth",
+              "label": "t:sections.all.icon.options.earth"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.all.icon.options.eye"
+            },
+            {
+              "value": "feather",
+              "label": "t:sections.all.icon.options.feather"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.all.icon.options.fire"
+            },
+            {
+              "value": "flower",
+              "label": "t:sections.all.icon.options.flower"
+            },
+            {
+              "value": "free-delivery",
+              "label": "t:sections.all.icon.options.free-delivery"
+            },
+            {
+              "value": "gift",
+              "label": "t:sections.all.icon.options.gift"
+            },
+            {
+              "value": "globe",
+              "label": "t:sections.all.icon.options.globe"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.all.icon.options.heart"
+            },
+            {
+              "value": "help",
+              "label": "t:sections.all.icon.options.help"
+            },
+            {
+              "value": "hot-sale",
+              "label": "t:sections.all.icon.options.hot-sale"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.all.icon.options.iron"
+            },
+            {
+              "value": "information",
+              "label": "t:sections.contact-form.settings.infomation.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.all.icon.options.leaf"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.all.icon.options.lock"
+            },
+            {
+              "value": "light-mode",
+              "label": "t:sections.all.icon.options.light-mode"
+            },
+            {
+              "value": "map-pin",
+              "label": "t:sections.all.icon.options.map-pin"
+            },
+            {
+              "value": "megaphone",
+              "label": "t:sections.all.icon.options.megaphone"
+            },
+            {
+              "value": "message-text",
+              "label": "t:sections.all.icon.options.message-text"
+            },
+            {
+              "value": "music",
+              "label": "t:sections.all.icon.options.music"
+            },
+            {
+              "value": "moon",
+              "label": "t:sections.all.icon.options.moon"
+            },
+            {
+              "value": "packages",
+              "label": "t:sections.all.icon.options.packages"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.all.icon.options.pants"
+            },
+            {
+              "value": "percent",
+              "label": "t:sections.all.icon.options.percent"
+            },
+            {
+              "value": "piggy-bank",
+              "label": "t:sections.all.icon.options.piggy-bank"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.all.icon.options.plane"
+            },
+            {
+              "value": "planet",
+              "label": "t:sections.all.icon.options.planet"
+            },
+            {
+              "value": "question-mark",
+              "label": "t:sections.all.icon.options.question-mark"
+            },
+            {
+              "value": "rocket",
+              "label": "t:sections.all.icon.options.rocket"
+            },
+            {
+              "value": "rulers",
+              "label": "t:sections.all.icon.options.rulers"
+            },
+            {
+              "value": "scissors",
+              "label": "t:sections.all.icon.options.scissors"
+            },
+            {
+              "value": "settings",
+              "label": "t:sections.all.icon.options.settings"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.all.icon.options.shirt"
+            },
+            {
+              "value": "shop-alt",
+              "label": "t:sections.all.icon.options.shop-alt"
+            },
+            {
+              "value": "shopping-bag",
+              "label": "t:sections.all.icon.options.shopping-bag"
+            },
+            {
+              "value": "shopping-cart",
+              "label": "t:sections.all.icon.options.shopping-cart"
+            },
+            {
+              "value": "smile",
+              "label": "t:sections.all.icon.options.smile"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.all.icon.options.star"
+            },
+            {
+              "value": "sun",
+              "label": "t:sections.all.icon.options.sun"
+            },
+            {
+              "value": "support",
+              "label": "t:sections.all.icon.options.support"
+            },
+            {
+              "value": "tag",
+              "label": "t:sections.all.icon.options.tag"
+            },
+            {
+              "value": "telephone",
+              "label": "t:sections.all.icon.options.telephone"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.all.icon.options.truck"
+            },
+            {
+              "value": "wallet",
+              "label": "t:sections.all.icon.options.wallet"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.all.icon.options.washing"
+            },
+            {
+              "value": "water",
+              "label": "t:sections.all.icon.options.water"
+            },
+            {
+              "value": "yoga",
+              "label": "t:sections.all.icon.options.yoga"
+            }
+          ],
+          "default": "question-mark",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "text",
+          "id": "another_icon_1",
+          "label": "t:sections.all.icon.another_icon_label",
+          "info": "t:sections.all.icon.another_icon_info",
+          "visible_if": "{{ block.settings.icon_1 == 'another_icon' }}"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info",
+          "visible_if": "{{ block.settings.icon_1 != 'none' }}"
+        },
+        {
+          "type": "text",
+          "id": "title_1",
+          "default": "Got questions? Call us 24/7",
+          "label": "t:sections.all.text.heading"
+        },
+        {
+          "type": "text",
+          "id": "text_1",
+          "default": "1908474783",
+          "label": "t:sections.all.text.text"
+        },
+        {
+          "type": "url",
+          "id": "text_link_1",
+          "label": "t:settings_schema.colors.colors_text_link"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_new_window_1",
+          "default": false,
+          "label": "t:sections.all.open_new_window.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_text_link_1",
+          "default": true,
+          "label": "t:sections.footer.blocks.contact.settings.color_text_link.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.promotion-grid.blocks.promotion.settings.line_2.label"
+        },
+        {
+          "type": "select",
+          "id": "icon_2",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.all.icon.options.none"
+            },
+            {
+              "value": "another_icon",
+              "label": "t:sections.all.icon.another_icon_label"
+            },
+            {
+              "value": "activity",
+              "label": "t:sections.all.icon.options.activity"
+            },
+            {
+              "value": "archive",
+              "label": "t:sections.all.icon.options.archive"
+            },
+            {
+              "value": "arrow-down-cricle",
+              "label": "t:sections.all.icon.options.arrow-down-cricle"
+            },
+            {
+              "value": "arrow-left",
+              "label": "t:sections.all.icon.options.arrow-left"
+            },
+            {
+              "value": "arrow-left-circle",
+              "label": "t:sections.all.icon.options.arrow-left-circle"
+            },
+            {
+              "value": "arrow-right",
+              "label": "t:sections.all.icon.options.arrow-right"
+            },
+            {
+              "value": "arrow-right-circle",
+              "label": "t:sections.all.icon.options.arrow-right-circle"
+            },
+            {
+              "value": "arrow-up-circle",
+              "label": "t:sections.all.icon.options.arrow-up-circle"
+            },
+            {
+              "value": "chevron-left",
+              "label": "t:sections.all.icon.options.chevron-left"
+            },
+            {
+              "value": "trending-down",
+              "label": "t:sections.all.icon.options.trending-down"
+            },
+            {
+              "value": "tv",
+              "label": "t:sections.all.icon.options.tv"
+            },
+            {
+              "value": "trending-up",
+              "label": "t:sections.all.icon.options.trending-up"
+            },
+            {
+              "value": "zap",
+              "label": "t:sections.all.icon.options.zap"
+            },
+            {
+              "value": "1st-medal",
+              "label": "t:sections.all.icon.options.1st-medal"
+            },
+            {
+              "value": "award",
+              "label": "t:sections.all.icon.options.award"
+            },
+            {
+              "value": "bicycle",
+              "label": "t:sections.all.icon.options.bicycle"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.all.icon.options.box"
+            },
+            {
+              "value": "briefcase",
+              "label": "t:sections.all.icon.options.briefcase"
+            },
+            {
+              "value": "blink",
+              "label": "t:sections.all.icon.options.blink"
+            },
+            {
+              "value": "calendar",
+              "label": "t:sections.all.icon.options.calendar"
+            },
+            {
+              "value": "camera",
+              "label": "t:sections.all.icon.options.camera"
+            },
+            {
+              "value": "chat-bubble",
+              "label": "t:sections.all.icon.options.chat-bubble"
+            },
+            {
+              "value": "check-mark",
+              "label": "t:sections.all.icon.options.check-mark"
+            },
+            {
+              "value": "clock",
+              "label": "t:sections.all.icon.options.clock"
+            },
+            {
+              "value": "cloud-rain",
+              "label": "t:sections.all.icon.options.cloud-rain"
+            },
+            {
+              "value": "coffee",
+              "label": "t:sections.all.icon.options.coffee"
+            },
+            {
+              "value": "coin",
+              "label": "t:sections.all.icon.options.coin"
+            },
+            {
+              "value": "credit-card",
+              "label": "t:sections.all.icon.options.credit-card"
+            },
+            {
+              "value": "delivery-truck",
+              "label": "t:sections.all.icon.options.delivery-truck"
+            },
+            {
+              "value": "dollar-sign",
+              "label": "t:sections.all.icon.options.dollar-sign"
+            },
+            {
+              "value": "dna",
+              "label": "t:sections.all.icon.options.dna"
+            },
+            {
+              "value": "dark-mode",
+              "label": "t:sections.all.icon.options.dark-mode"
+            },
+            {
+              "value": "earth",
+              "label": "t:sections.all.icon.options.earth"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.all.icon.options.eye"
+            },
+            {
+              "value": "feather",
+              "label": "t:sections.all.icon.options.feather"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.all.icon.options.fire"
+            },
+            {
+              "value": "flower",
+              "label": "t:sections.all.icon.options.flower"
+            },
+            {
+              "value": "free-delivery",
+              "label": "t:sections.all.icon.options.free-delivery"
+            },
+            {
+              "value": "gift",
+              "label": "t:sections.all.icon.options.gift"
+            },
+            {
+              "value": "globe",
+              "label": "t:sections.all.icon.options.globe"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.all.icon.options.heart"
+            },
+            {
+              "value": "help",
+              "label": "t:sections.all.icon.options.help"
+            },
+            {
+              "value": "hot-sale",
+              "label": "t:sections.all.icon.options.hot-sale"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.all.icon.options.iron"
+            },
+            {
+              "value": "information",
+              "label": "t:sections.contact-form.settings.infomation.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.all.icon.options.leaf"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.all.icon.options.lock"
+            },
+            {
+              "value": "light-mode",
+              "label": "t:sections.all.icon.options.light-mode"
+            },
+            {
+              "value": "map-pin",
+              "label": "t:sections.all.icon.options.map-pin"
+            },
+            {
+              "value": "megaphone",
+              "label": "t:sections.all.icon.options.megaphone"
+            },
+            {
+              "value": "message-text",
+              "label": "t:sections.all.icon.options.message-text"
+            },
+            {
+              "value": "music",
+              "label": "t:sections.all.icon.options.music"
+            },
+            {
+              "value": "moon",
+              "label": "t:sections.all.icon.options.moon"
+            },
+            {
+              "value": "packages",
+              "label": "t:sections.all.icon.options.packages"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.all.icon.options.pants"
+            },
+            {
+              "value": "percent",
+              "label": "t:sections.all.icon.options.percent"
+            },
+            {
+              "value": "piggy-bank",
+              "label": "t:sections.all.icon.options.piggy-bank"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.all.icon.options.plane"
+            },
+            {
+              "value": "planet",
+              "label": "t:sections.all.icon.options.planet"
+            },
+            {
+              "value": "question-mark",
+              "label": "t:sections.all.icon.options.question-mark"
+            },
+            {
+              "value": "rocket",
+              "label": "t:sections.all.icon.options.rocket"
+            },
+            {
+              "value": "rulers",
+              "label": "t:sections.all.icon.options.rulers"
+            },
+            {
+              "value": "scissors",
+              "label": "t:sections.all.icon.options.scissors"
+            },
+            {
+              "value": "settings",
+              "label": "t:sections.all.icon.options.settings"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.all.icon.options.shirt"
+            },
+            {
+              "value": "shop-alt",
+              "label": "t:sections.all.icon.options.shop-alt"
+            },
+            {
+              "value": "shopping-bag",
+              "label": "t:sections.all.icon.options.shopping-bag"
+            },
+            {
+              "value": "shopping-cart",
+              "label": "t:sections.all.icon.options.shopping-cart"
+            },
+            {
+              "value": "smile",
+              "label": "t:sections.all.icon.options.smile"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.all.icon.options.star"
+            },
+            {
+              "value": "sun",
+              "label": "t:sections.all.icon.options.sun"
+            },
+            {
+              "value": "support",
+              "label": "t:sections.all.icon.options.support"
+            },
+            {
+              "value": "tag",
+              "label": "t:sections.all.icon.options.tag"
+            },
+            {
+              "value": "telephone",
+              "label": "t:sections.all.icon.options.telephone"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.all.icon.options.truck"
+            },
+            {
+              "value": "wallet",
+              "label": "t:sections.all.icon.options.wallet"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.all.icon.options.washing"
+            },
+            {
+              "value": "water",
+              "label": "t:sections.all.icon.options.water"
+            },
+            {
+              "value": "yoga",
+              "label": "t:sections.all.icon.options.yoga"
+            }
+          ],
+          "default": "message-text",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "text",
+          "id": "another_icon_2",
+          "label": "t:sections.all.icon.another_icon_label",
+          "info": "t:sections.all.icon.another_icon_info",
+          "visible_if": "{{ block.settings.icon_2 == 'another_icon' }}"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon_2",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info",
+          "visible_if": "{{ block.settings.icon_2 != 'none' }}"
+        },
+        {
+          "type": "text",
+          "id": "title_2",
+          "default": "Need help with your order?",
+          "label": "t:sections.all.text.heading"
+        },
+        {
+          "type": "text",
+          "id": "text_2",
+          "default": "Contact",
+          "label": "t:sections.all.text.text"
+        },
+        {
+          "type": "url",
+          "id": "text_link_2",
+          "label": "t:settings_schema.colors.colors_text_link"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_new_window_2",
+          "default": false,
+          "label": "t:sections.all.open_new_window.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_text_link_2",
+          "default": true,
+          "label": "t:sections.footer.blocks.contact.settings.color_text_link.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.promotion-grid.blocks.promotion.settings.line_3.label"
+        },
+        {
+          "type": "select",
+          "id": "icon_3",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.all.icon.options.none"
+            },
+            {
+              "value": "another_icon",
+              "label": "t:sections.all.icon.another_icon_label"
+            },
+            {
+              "value": "activity",
+              "label": "t:sections.all.icon.options.activity"
+            },
+            {
+              "value": "archive",
+              "label": "t:sections.all.icon.options.archive"
+            },
+            {
+              "value": "arrow-down-cricle",
+              "label": "t:sections.all.icon.options.arrow-down-cricle"
+            },
+            {
+              "value": "arrow-left",
+              "label": "t:sections.all.icon.options.arrow-left"
+            },
+            {
+              "value": "arrow-left-circle",
+              "label": "t:sections.all.icon.options.arrow-left-circle"
+            },
+            {
+              "value": "arrow-right",
+              "label": "t:sections.all.icon.options.arrow-right"
+            },
+            {
+              "value": "arrow-right-circle",
+              "label": "t:sections.all.icon.options.arrow-right-circle"
+            },
+            {
+              "value": "arrow-up-circle",
+              "label": "t:sections.all.icon.options.arrow-up-circle"
+            },
+            {
+              "value": "chevron-left",
+              "label": "t:sections.all.icon.options.chevron-left"
+            },
+            {
+              "value": "trending-down",
+              "label": "t:sections.all.icon.options.trending-down"
+            },
+            {
+              "value": "tv",
+              "label": "t:sections.all.icon.options.tv"
+            },
+            {
+              "value": "trending-up",
+              "label": "t:sections.all.icon.options.trending-up"
+            },
+            {
+              "value": "zap",
+              "label": "t:sections.all.icon.options.zap"
+            },
+            {
+              "value": "1st-medal",
+              "label": "t:sections.all.icon.options.1st-medal"
+            },
+            {
+              "value": "award",
+              "label": "t:sections.all.icon.options.award"
+            },
+            {
+              "value": "bicycle",
+              "label": "t:sections.all.icon.options.bicycle"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.all.icon.options.box"
+            },
+            {
+              "value": "briefcase",
+              "label": "t:sections.all.icon.options.briefcase"
+            },
+            {
+              "value": "blink",
+              "label": "t:sections.all.icon.options.blink"
+            },
+            {
+              "value": "calendar",
+              "label": "t:sections.all.icon.options.calendar"
+            },
+            {
+              "value": "camera",
+              "label": "t:sections.all.icon.options.camera"
+            },
+            {
+              "value": "chat-bubble",
+              "label": "t:sections.all.icon.options.chat-bubble"
+            },
+            {
+              "value": "check-mark",
+              "label": "t:sections.all.icon.options.check-mark"
+            },
+            {
+              "value": "clock",
+              "label": "t:sections.all.icon.options.clock"
+            },
+            {
+              "value": "cloud-rain",
+              "label": "t:sections.all.icon.options.cloud-rain"
+            },
+            {
+              "value": "coffee",
+              "label": "t:sections.all.icon.options.coffee"
+            },
+            {
+              "value": "coin",
+              "label": "t:sections.all.icon.options.coin"
+            },
+            {
+              "value": "credit-card",
+              "label": "t:sections.all.icon.options.credit-card"
+            },
+            {
+              "value": "delivery-truck",
+              "label": "t:sections.all.icon.options.delivery-truck"
+            },
+            {
+              "value": "dollar-sign",
+              "label": "t:sections.all.icon.options.dollar-sign"
+            },
+            {
+              "value": "dna",
+              "label": "t:sections.all.icon.options.dna"
+            },
+            {
+              "value": "dark-mode",
+              "label": "t:sections.all.icon.options.dark-mode"
+            },
+            {
+              "value": "earth",
+              "label": "t:sections.all.icon.options.earth"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.all.icon.options.eye"
+            },
+            {
+              "value": "feather",
+              "label": "t:sections.all.icon.options.feather"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.all.icon.options.fire"
+            },
+            {
+              "value": "flower",
+              "label": "t:sections.all.icon.options.flower"
+            },
+            {
+              "value": "free-delivery",
+              "label": "t:sections.all.icon.options.free-delivery"
+            },
+            {
+              "value": "gift",
+              "label": "t:sections.all.icon.options.gift"
+            },
+            {
+              "value": "globe",
+              "label": "t:sections.all.icon.options.globe"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.all.icon.options.heart"
+            },
+            {
+              "value": "help",
+              "label": "t:sections.all.icon.options.help"
+            },
+            {
+              "value": "hot-sale",
+              "label": "t:sections.all.icon.options.hot-sale"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.all.icon.options.iron"
+            },
+            {
+              "value": "information",
+              "label": "t:sections.contact-form.settings.infomation.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.all.icon.options.leaf"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.all.icon.options.lock"
+            },
+            {
+              "value": "light-mode",
+              "label": "t:sections.all.icon.options.light-mode"
+            },
+            {
+              "value": "map-pin",
+              "label": "t:sections.all.icon.options.map-pin"
+            },
+            {
+              "value": "megaphone",
+              "label": "t:sections.all.icon.options.megaphone"
+            },
+            {
+              "value": "message-text",
+              "label": "t:sections.all.icon.options.message-text"
+            },
+            {
+              "value": "music",
+              "label": "t:sections.all.icon.options.music"
+            },
+            {
+              "value": "moon",
+              "label": "t:sections.all.icon.options.moon"
+            },
+            {
+              "value": "packages",
+              "label": "t:sections.all.icon.options.packages"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.all.icon.options.pants"
+            },
+            {
+              "value": "percent",
+              "label": "t:sections.all.icon.options.percent"
+            },
+            {
+              "value": "piggy-bank",
+              "label": "t:sections.all.icon.options.piggy-bank"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.all.icon.options.plane"
+            },
+            {
+              "value": "planet",
+              "label": "t:sections.all.icon.options.planet"
+            },
+            {
+              "value": "question-mark",
+              "label": "t:sections.all.icon.options.question-mark"
+            },
+            {
+              "value": "rocket",
+              "label": "t:sections.all.icon.options.rocket"
+            },
+            {
+              "value": "rulers",
+              "label": "t:sections.all.icon.options.rulers"
+            },
+            {
+              "value": "scissors",
+              "label": "t:sections.all.icon.options.scissors"
+            },
+            {
+              "value": "settings",
+              "label": "t:sections.all.icon.options.settings"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.all.icon.options.shirt"
+            },
+            {
+              "value": "shop-alt",
+              "label": "t:sections.all.icon.options.shop-alt"
+            },
+            {
+              "value": "shopping-bag",
+              "label": "t:sections.all.icon.options.shopping-bag"
+            },
+            {
+              "value": "shopping-cart",
+              "label": "t:sections.all.icon.options.shopping-cart"
+            },
+            {
+              "value": "smile",
+              "label": "t:sections.all.icon.options.smile"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.all.icon.options.star"
+            },
+            {
+              "value": "sun",
+              "label": "t:sections.all.icon.options.sun"
+            },
+            {
+              "value": "support",
+              "label": "t:sections.all.icon.options.support"
+            },
+            {
+              "value": "tag",
+              "label": "t:sections.all.icon.options.tag"
+            },
+            {
+              "value": "telephone",
+              "label": "t:sections.all.icon.options.telephone"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.all.icon.options.truck"
+            },
+            {
+              "value": "wallet",
+              "label": "t:sections.all.icon.options.wallet"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.all.icon.options.washing"
+            },
+            {
+              "value": "water",
+              "label": "t:sections.all.icon.options.water"
+            },
+            {
+              "value": "yoga",
+              "label": "t:sections.all.icon.options.yoga"
+            }
+          ],
+          "default": "chat-bubble",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "text",
+          "id": "another_icon_3",
+          "label": "t:sections.all.icon.another_icon_label",
+          "info": "t:sections.all.icon.another_icon_info",
+          "visible_if": "{{ block.settings.icon_3 == 'another_icon' }}"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon_3",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info",
+          "visible_if": "{{ block.settings.icon_3 != 'none' }}"
+        },
+        {
+          "type": "text",
+          "id": "title_3",
+          "default": "Available 24/7 via chat",
+          "label": "t:sections.all.text.heading"
+        },
+        {
+          "type": "text",
+          "id": "text_3",
+          "default": "Chat With US",
+          "label": "t:sections.all.text.text"
+        },
+        {
+          "type": "url",
+          "id": "text_link_3",
+          "label": "t:settings_schema.colors.colors_text_link"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_new_window_3",
+          "default": false,
+          "label": "t:sections.all.open_new_window.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_text_link_3",
+          "default": true,
+          "label": "t:sections.footer.blocks.contact.settings.color_text_link.label"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.footer.footer"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "min": 2,
+      "max": 5,
+      "step": 1,
+      "default": 4,
+      "label": "t:sections.collection-list.settings.columns_desktop.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.header.settings.language_currency"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_language_selector",
+      "default": true,
+      "label": "t:sections.header.settings.show_language_selector.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_currency_selector",
+      "default": true,
+      "label": "t:sections.header.settings.show_currency_selector.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.footer.settings.header_add_info.content"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_social_icons",
+      "default": true,
+      "label": "t:sections.footer.settings.show_social_icons.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "payment_enable",
+      "default": true,
+      "label": "t:sections.footer.settings.payment_enable.label"
+    },
+    {
+      "type": "text",
+      "id": "custom_payment",
+      "info": "t:sections.footer.settings.custom_payment.info",
+      "label": "t:sections.footer.settings.custom_payment.label",
+      "visible_if": "{{ section.settings.payment_enable }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_copyright",
+      "default": false,
+      "label": "t:sections.footer.settings.show_copyright.label"
+    },
+    {
+      "type": "richtext",
+      "id": "add_copyright_text",
+      "label": "t:sections.footer.settings.add_copyright_text.label",
+      "visible_if": "{{ section.settings.show_copyright }}"
+    },
+    {
+      "type": "select",
+      "id": "additional_layout",
+      "label": "t:sections.footer.settings.additional_info_desktop_layout.label",
+      "default": "vertical",
+      "options": [
+        {
+          "value": "vertical",
+          "label": "t:sections.featured-collection.settings.slider_style.options__2"
+        },
+        {
+          "value": "horizontal",
+          "label": "t:sections.featured-collection.settings.slider_style.options__1"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "show_powered",
+      "default": true,
+      "label": "t:sections.footer.settings.show_powered.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.footer.settings.header_follow_on_shop.content",
+      "info": "t:sections.footer.settings.header_follow_on_shop.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_follow_on_shop",
+      "default": false,
+      "label": "t:sections.footer.settings.enable_follow_on_shop.label"
+    },
+    {
+      "type": "select",
+      "id": "horizontal_position",
+      "label": "t:sections.product-labels-and-badges.blocks.horizontal_position.label",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ],
+      "default": "right",
+      "visible_if": "{{ section.settings.enable_follow_on_shop and section.settings.additional_layout == 'horizontal' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "top_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 40
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "range",
+      "id": "top_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 28
+    }
+  ],
+  "default": {
+    "blocks": [
+      {
+        "type": "link_list"
+      },
+      {
+        "type": "link_list"
+      },
+      {
+        "type": "link_list"
+      },
+      {
+        "type": "email_footer"
+      }
+    ]
+  }
+}
+{% endschema %}

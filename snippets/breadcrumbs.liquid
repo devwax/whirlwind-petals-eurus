@@ -1,0 +1,192 @@
+{% style %}
+  .bg-breadcrumb--{{ section.id }} {
+    {% unless background_color_light.alpha == 0.0 %}
+      background: {{ background_color_light }};
+    {% else %}
+      background: rgba(var(--colors-background-secondary));
+    {% endunless %}
+  }
+  .breadcrumb__divider,
+  .bg-breadcrumb--{{ section.id }}, .bg-breadcrumb--{{ section.id }} .before-link::before, .bg-breadcrumb--{{ section.id }} .nav-link:before {
+    {% unless text_color_light.alpha == 0.0 %}
+      --colors-text: {{ text_color_light.red }},{{ text_color_light.green }},{{ text_color_light.blue }};
+    {% else %}
+      --colors-text: {{ settings.secondary_text.red }}, {{ settings.secondary_text.green }}, {{ settings.secondary_text.blue }};
+    {% endunless %}
+    {% unless textlink_color_light.alpha == 0.0 %}
+      --colors-text-link: {{ textlink_color_light.red }},{{ textlink_color_light.green }},{{ textlink_color_light.blue }};
+    {% endunless %}
+  }
+  .dark .bg-breadcrumb--{{ section.id }} {
+    {% unless background_color_dark.alpha == 0.0 %}
+      background: {{ background_color_dark }};
+    {% else %}
+      background: rgba(var(--colors-background-secondary));
+    {% endunless %}
+  }
+  .dark .breadcrumb__divider,
+  .dark .bg-breadcrumb--{{ section.id }}, .dark .bg-breadcrumb--{{ section.id }} .before-link::before, .dark .bg-breadcrumb--{{ section.id }} .nav-link::before {
+    {%- unless text_color_dark.alpha == 0.0 -%}
+      --colors-text: {{ text_color_dark.red }},{{ text_color_dark.green }},{{ text_color_dark.blue }};
+    {% else %}  
+      --colors-text: {{ settings.secondary_text_dark.red }}, {{ settings.secondary_text_dark.green }}, {{ settings.secondary_text_dark.blue }};
+    {% endunless %}
+    {%- unless textlink_color_dark.alpha == 0.0 -%}
+      --colors-text-link: {{ textlink_color_dark.red }},{{ textlink_color_dark.green }},{{ textlink_color_dark.blue }};
+    {% else %}  
+      --colors-text-link: {{ settings.colors_dark_text_link.red }}, {{ settings.colors_dark_text_link.green }}, {{ settings.colors_dark_text_link.blue }};
+    {% endunless %}
+  }
+{% endstyle %}
+
+{% liquid
+  if show_breadcrumbs_border
+    if show_image_banner
+      assign class_border_desktop = " md:border-b"
+      assign class_border_mobile = " border-b"
+    else 
+      assign class_border_desktop = " md:border-b md:border-t"
+      assign class_border_mobile = " border-b border-t"
+    endif
+  endif
+  assign icon_breadcrumbs = settings.breadcrumbs_separator
+%}
+<div class="bg-breadcrumb--{{ section.id }} {{ class_border_desktop }} {{ class_border_mobile }} ltr">
+  <div class="w-full pt-3.5 pb-3.5 text-[rgb(var(--colors-text))]{% if full_width_breadcrumb %} md:pl-5 md:pr-5 {% else %} x-pgw page-width{% endif %} pl-5 pr-5">
+    <div class="md:pl-0 md:pr-0
+      {%- if mobile_content_alignment == 'text-center' %} text-center rtl:text-center{% elsif mobile_content_alignment == 'text-left' %} text-left rtl:text-right{% else %} text-right rtl:text-left{% endif -%}
+      {%- if desktop_content_alignment == 'text-center' %} md:text-center rtl:md:text-center{% elsif desktop_content_alignment == 'text-left' %} md:text-left rtl:md:text-right{% else %} md:text-right rtl:md:text-left{% endif %}"
+    >
+      {% unless template.name == 'index' or template.name == 'cart' %}
+        <div class="block" role="navigation" aria-label="breadcrumbs">
+          <a 
+            class="nav-link text-[rgba(var(--colors-text-link))] relative h-fit before-link" 
+            href="{{ routes.root_url }}" 
+            title="Home"
+          >{{ 'general.breadcrumbs.home' | t }}</a>
+          <span class="breadcrumb__divider border-[rgba(var(--colors-text))]{% if icon_breadcrumbs == "—" %} w-2.5 border-b{% endif %} inline-block bottom-1 ml-1 mr-1" aria-hidden="true">{% if icon_breadcrumbs != "—" %}{{ icon_breadcrumbs }}{% endif %}</span>
+          {% if template.name == 'page' %}
+            {% capture schema_seo %}
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "{{ page.title | escape }}",
+                "item": "{{ shop.url }}{{ request.path }}"
+              }
+            {% endcapture %}
+            <span>{{ page.title | escape }}</span>
+          {% elsif template.name == 'product' %}
+            {% capture schema_seo %}
+              {% if collection %}
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "{{ collection.title | escape }}",
+                  "item": "{{ shop.url }}{{ collection.url }}"
+                },
+              {% endif %}
+              {
+                "@type": "ListItem",
+                "position": {% if collection %}3{% else %}2{% endif %},
+                "name": "{{ product.title | escape }}",
+                "item": "{{ shop.url }}{% if collection %}{{ collection.url }}{% endif %}{{ product.url }}"
+              }
+            {% endcapture %}
+            {% if collection %}
+              <a
+                class="nav-link text-[rgba(var(--colors-text-link))] relative h-fit before-link"
+                href="{{ collection.url }}"
+                title="{{ collection.title }}"
+              >{{ collection.title | escape }}</a>
+              <span class="breadcrumb__divider border-[rgba(var(--colors-text))]{% if icon_breadcrumbs == "—" %} w-2.5 border-b{% endif %} inline-block bottom-1 ml-1 mr-1" aria-hidden="true">{% if icon_breadcrumbs != "—" %}{{ icon_breadcrumbs }}{% endif %}</span>
+            {% endif %}
+            <span>{{ product.title | escape }}</span>
+          {% elsif template.name == 'collection' and collection.handle %}
+            {% capture schema_seo %}
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "{{ collection.title | escape }}",
+                "item": "{{ shop.url }}{{ collection.url }}"
+              }
+            {% endcapture %}
+            {% if current_tags %}
+              <a 
+                class="nav-link text-[rgba(var(--colors-text-link))] relative h-fit before-link" 
+                href="{{ collection.url }}" 
+                title="{{ collection.title }}"
+              >{{ collection.title | escape }}</a>
+              <span class="breadcrumb__divider border-[rgba(var(--colors-text))]{% if icon_breadcrumbs == "—" %} w-2.5 border-b{% endif %} inline-block bottom-1 ml-1 mr-1" aria-hidden="true">{% if icon_breadcrumbs != "—" %}{{ icon_breadcrumbs }}{% endif %}</span>
+              <span>{{ current_tags | join: " + " }}</span>
+            {% else %}
+              <span>{{ collection.title | escape }}</span>
+            {% endif %}
+          {% elsif template.name == 'blog' %}
+            {% capture schema_seo %}
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "{{ blog.title | escape }}",
+                "item": "{{ shop.url }}{{ blog.url }}"
+              }
+            {% endcapture %}
+            {% if current_tags %}
+              <a 
+                class="nav-link text-[rgba(var(--colors-text-link))] relative h-fit before-link" 
+                href="{{ blog.url }}" 
+                title="{{ blog.title }}"
+              >{{ blog.title | escape }}</a>
+              <span class="breadcrumb__divider border-[rgba(var(--colors-text))]{% if icon_breadcrumbs == "—" %} w-2.5 border-b{% endif %} inline-block bottom-1 ml-1 mr-1" aria-hidden="true">{% if icon_breadcrumbs != "—" %}{{ icon_breadcrumbs }}{% endif %}</span>
+              <span>{{ current_tags | join: " + " }}</span>
+            {% else %}
+            <span>{{ blog.title | escape }}</span>
+            {% endif %}
+          {% elsif template.name == 'article' %}
+            {% capture schema_seo %}
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "{{ blog.title | escape }}",
+                "item": "{{ shop.url }}{{ blog.url }}"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "{{ article.title | escape }}",
+                "item": "{{ shop.url }}{{ blog.url }}{{ article.url }}"
+              }
+            {% endcapture %}
+            <a 
+              class="nav-link text-[rgba(var(--colors-text-link))] relative h-fit" 
+              href="{{ blog.url }}" 
+              title="{{ blog.title }}"
+            >{{ blog.title | escape }}</a>
+            <span class="breadcrumb__divider border-[rgba(var(--colors-text))]{% if icon_breadcrumbs == "—" %} w-2.5 border-b{% endif %} inline-block bottom-1 ml-1 mr-1" aria-hidden="true">{% if icon_breadcrumbs != "—" %}{{ icon_breadcrumbs }}{% endif %}</span>
+            <span>{{ article.title | escape }}</span>
+          {% else %}
+          <span>{{ page_title | escape }}</span>
+          {% endif %}
+        </div>
+      {% endunless %}
+    </div>
+  </div>
+</div>
+{% unless template.name == 'index' or template.name == 'cart' %}
+  {% if settings.schema_breadcrumbs %}
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "{{ 'general.breadcrumbs.home' | t }}",
+            "item": "{{ shop.url }}"
+          },
+          {{ schema_seo }}
+        ]
+      }
+    </script>
+  {% endif %}
+{% endunless %}

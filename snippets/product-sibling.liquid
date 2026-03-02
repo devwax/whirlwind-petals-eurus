@@ -1,0 +1,179 @@
+
+{% liquid
+  assign link_option = block.settings.link_option
+  assign variant_type = block.settings.variant_type
+  if featured_product
+    assign link_option = 'redirect'
+    assign variant_type = 'button'
+  endif
+  assign collection_key = block.settings.collection_handle_metafield | split: "."
+  if product.metafields[collection_key.first][collection_key.last] != blank
+    assign collection_handle = product.metafields[collection_key.first][collection_key.last].value
+  endif
+  assign collection = collections[collection_handle]
+  assign coll = product.collections | where: "id", collection.id 
+  if coll == blank
+    assign collection = blank
+  endif
+  if collection != blank
+    assign option_value_metafield = block.settings.option_value_metafield | split: "."
+    for prod in collection.products
+      if prod.metafields[option_value_metafield.first][option_value_metafield.last] != blank
+        assign list_value = true
+        if product.id == prod.id
+          assign value_selected = prod.metafields[option_value_metafield.first][option_value_metafield.last].value
+        endif
+      endif 
+    endfor
+  endif
+  assign option_name = 'products.product.option_name' | t 
+  if block.settings.option_name != blank
+    assign option_name = block.settings.option_name | escape
+  endif
+%}
+{% if list_value %}
+  <div class="x-block-product-sibling mb-4 md:mb-6 w-full{% if show_content_center %} text-center{% endif %}" {{ block.shopify_attributes }}>
+    {% if option_name != blank %}
+      <p class="mb-2">{{ option_name }}: {{ value_selected }}</p>
+      <input class="hidden" aria-hidden="true" form="{{ product_form_id }}" name="properties[{{ option_name }}]" value="{{ value_selected }}" checked/>
+    {% endif %}
+    {% if collection != blank %}
+      <div class="flex gap-2 mt-2 relative flex-wrap{% if show_content_center %} justify-center items-center text-center {% endif %}" x-data="xProductSibling('{{ section.id }}', {{ is_product_page | default: false }}, {% if link_option == 'redirect' %}true{% else %}false{% endif %})">
+        {% if variant_type == 'dropdown' %}
+          <span class="absolute top-1/2 right-4 rtl:right-auto rtl:left-4 -translate-y-1/2 w-2.5 inline-block pointer-events-none">
+            {% render 'icon-alls', icon: 'icon-caret' %}
+          </span>
+          <select
+            id="Option-{{ block.id }}"
+            class="empty:hidden w-full pt-2.5 pb-2.5 pl-5 pr-8 rtl:pr-5 rtl:pl-8 mt-2 mb-2 bg-transparent focus:border-current border appearance-none outline-none border-solid focus-visible:outline-none cursor-pointer{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+            name="{{ block.id }}-{{ option_name }}"
+            @change="changeSelectOption($event)"
+          >
+        {% endif %}
+          {% assign option_value_metafield = block.settings.option_value_metafield | split: "." %}
+          {% for prod in collection.products %}
+            {% liquid
+              assign value = blank
+              if prod.metafields[option_value_metafield.first][option_value_metafield.last] != blank
+                assign value = prod.metafields[option_value_metafield.first][option_value_metafield.last].value
+              endif 
+            %}
+            {% if value != blank %}
+              {%- if variant_type == 'button' -%}
+                {%- liquid
+                  assign preview_image = blank
+                  if prod.featured_media
+                    assign preview_image = prod.featured_media | image_url: width: 100, height: 100
+                    assign ratio_image = 1 | divided_by: prod.featured_media.aspect_ratio | times: 100 
+                  endif
+                  assign color_option_values = settings.color_option_values | newline_to_br | strip_newlines | split: '<br />'
+                  assign swatch_natural = false     
+                  if settings.products_color_swatches_style == 'natural'
+                    assign swatch_natural = true
+                  endif
+                  assign color_custom = ''
+                  assign swatch_image = false
+                  assign color_value = ''
+                  for color_option_value in color_option_values reversed
+                    assign option_key = color_option_value | split: ':' | first
+                    assign option_value = color_option_value | split: ':' | last | strip
+            
+                    if option_key == value and option_value contains '.'
+                      assign color_custom = option_key
+                      assign swatch_image = true
+                      assign color_value = option_value
+                      break
+                    endif
+                    assign multi_colors = option_value | remove_first: '#' | split: '#'
+                    if option_key == value
+                      assign color_custom = option_key
+                      assign color_value = option_value
+                      break
+                    endif
+                  endfor  
+                -%}
+                {% if preview_image != blank and settings.replace_color_with_variant_images %}
+                  {%- style %}
+                  .color-watches.variant-{{ block.id }}-{{ forloop.index0 }}:before {
+                      background-image: url({{ preview_image }});
+                    }
+                  {%- endstyle %}
+                {% elsif color_custom != '' %}
+                  {%- style %}
+                    {% if swatch_image %}
+                      [data-swatch="{{ color_custom }}"]:before {
+                        background-image: url({{ color_value | file_img_url: "100x100" }});
+                      }
+                    {% elsif multi_colors.size == 3 %}
+                      [data-swatch="{{ color_custom }}"]:before {
+                        background: linear-gradient(45deg, {{ '#' | append: multi_colors[0] }}, {{ '#' | append: multi_colors[0] }} 33.3%, {{ '#' | append: multi_colors[1] }} 33.3%, {{ '#' | append: multi_colors[1] }} 66.6%, {{ '#' | append: multi_colors[2] }} 66.6%, {{ '#' | append: multi_colors[2] }});
+                      }
+                    {% elsif multi_colors.size == 2 %}
+                      [data-swatch="{{ color_custom }}"]:before {
+                        background: linear-gradient(45deg, {{ '#' | append: multi_colors[0] }}, {{ '#' | append: multi_colors[0] }} 50%, {{ '#' | append: multi_colors[1] }} 50%, {{ '#' | append: multi_colors[1] }});
+                      }
+                    {% else %}
+                      [data-swatch="{{ color_custom }}"]:before {
+                        background: {{ color_value }};
+                      }
+                    {% endif %}
+                  {%- endstyle %}
+                {% endif %}
+                  <input 
+                    data-product-url="{{ prod.url }}"
+                    id="{{ block.id }}-{{ forloop.index0 }}"
+                    type="radio"
+                    name="{{ block.id }}-{{ option_name }}"
+                    value="{{ value | escape | replace: '&lt;', '\u003c' | replace: '&gt;', '\u003e' }}"
+                    class="absolute opacity-0 h-1 w-1 input-radio"
+                    {% if product.id == prod.id %}checked{% endif %}
+                    @change="updateProductInfo('{{ prod.url }}')"
+                  >
+                {%- liquid       
+                  if settings.products_color_swatches_style == 'round'
+                    assign rounded = 'rounded-full before:rounded-full'
+                  elsif settings.edges_type == 'rounded_corners'
+                    assign rounded = ' rounded-md before:rounded-md'
+                  endif      
+                -%}
+                {% if block.settings.enable_color_swatch and settings.color_option_name contains block.settings.option_name %}
+                  <label 
+                    id="color-swatch-{{ block.id }}-{{ forloop.index0 }}"
+                    class="color-watches translate-y-0 transform-none transition {% if color_custom != '' and settings.products_color_swatches_style != 'round' %} custom-color-swatch before:border{% unless swatch_natural %} overflow-hidden{% endunless %}{% endif %} variant-{{ block.id }}-{{ forloop.index0 }} rtl:ml-2.5 rtl:mr-0{% if disable_option_disabled == blank %} cursor-pointer ml-[2px] rtl:mr-0.5 rtl:ml-0{% endif %} block{% if swatch_natural and preview_image != blank and settings.replace_color_with_variant_images %} color-swatch-natural{% endif %} swatch-{{ swatch_size }} relative {{ rounded }}" 
+                    for="{{ block.id }}-{{ forloop.index0 }}"
+                    data-swatch="{{ color_custom }}"
+                    {% if preview_image == blank or settings.replace_color_with_variant_images == false and color_custom == '' %}
+                      style="background: {{ value | split: ' ' | last | handle }};"
+                    {% elsif swatch_natural and ratio_image %}
+                      style="--ratio-image: {{ ratio_image }}%;"
+                    {% endif %}
+                    tabindex="0"
+                    aria-label="{{ value | escape }}"
+                    title="{{ value | escape }}"
+                    @keyup.enter="updateProductInfo('{{ prod.url }}')"
+                  >
+                  </label>
+                {% else %}
+                  <label tabindex="0" {% if disable_option_disabled == blank %} class="flex items-center cursor-pointer pl-5 pr-5 pt-2 pb-2 border bg-[rgba(var(--background-color),1)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"{% endif %} for="{{ block.id }}-{{ forloop.index0 }}">
+                    <span>{{ value | escape }}</span>
+                  </label>
+                {% endif %}
+              {% else %}
+                <option
+                  value="{{ value | escape | replace: '&lt;', '\u003c' | replace: '&gt;', '\u003e' }}"
+                  class="text-left rtl:text-right rtl:pr-5 whitespace-normal cursor-pointer content-{{ section.id }} bg-[rgba(var(--background-color),1)]"{% if product.id == prod.id %} selected="selected"{% endif %}
+                  data-product-url="{{ prod.url }}"
+                >
+                  {{- value | escape -}}
+                </option>
+              {%- endif -%}
+            {% endif %}
+          {% endfor %}
+        {% if variant_type == 'dropdown' %}
+          </select>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+{% endif %}
+<script src="{{ 'product-sibling.js' | asset_url }}" defer></script>

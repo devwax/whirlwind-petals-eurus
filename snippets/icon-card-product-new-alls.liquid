@@ -1,0 +1,76 @@
+{% liquid 
+    assign list_icon_1_1 = "||B-alcohol free||B-artificial||B-alcohol||B-boiled||B-complementary flavors||B-food pairings||B-gluten||B-locally sourced||B-no alcohol||B-organic||B-sustainable||B-celery||B-clean water||B-cow milk||B-fat||B-for sensitive skin||B-gmo||B-health||B-heartbeat||B-meat||B-milk||B-no animal testing||B-no paraben free||B-no for sensitive skin||B-no artificial||B-no celery||B-no cow milk||"
+    assign list_icon_1_2 = "||B-no fat||B-no gluten||B-no gmo||B-no meat||B-no milk||B-no peanuts||B-no shellfish||B-no soy||B-no whole grain||B-paraben free||B-peanut||B-plant based||B-protein 1||B-protein||B-shellfish||B-soy||B-sulfate free||B-sunlight||B-sweet||B-vegetarian||B-water||B-whole grain||"
+    assign list_icon_2 = "||alcohol free||alcohol||artificial||boiled||celery||clean water||complementary flavors||fat||food pairings||for sensitive skin||gluten||gmo||health||heartbeat||locally sourced||milk||no alcohol||no animal testing||no paraben free||no protein||no artificial||no celery||no fat||no for sensitive skin||no gluten||no gmo||no milk||no peanuts||no shellfish||no soy||no whole grain||organic||paraben free||peanut||plant based||protein||shellfish||soy||sulfate free||sunlight||sustainable||sweet||vegetarian||water||whole grain||"
+    assign list_icon_3 = "||B-beauty cream||B-beauty lotion||B-beauty massage organic||B-blood bank||B-blood drop donation||B-blood drops positive||B-cannabis beauty product||B-cannabis research||B-comb||B-dental xray||B-ear hearing||B-flower||B-glue||B-herbal compress||B-insurance hand||B-lipstick||B-lipstick||B-mirror||B-serum||B-soap||B-spray||B-support 2||B-transfusion||"
+    assign list_icon_4 = "||beauty cream||beauty lotion||beauty massage organic||blood bank||blood drop donation||blood drops positive||cannabis beauty product||cannabis research||comb||dental xray||ear hearing||flower||glue||herbal compress||insurance hand||lipstick||lipstick||mirror||serum||soap||spray||support 2||transfusion||"
+    assign list_icon_5 = "||B-activity||B-check mark||B-coin||B-credit card||B-delivery truck||B-earth||B-ecofriendly||B-fire||B-gift||B-globe||B-heart||B-map pin||B-percent||B-piggy bank||B-plant||B-rocket||B-rulers||B-settings||B-shipping||B-shop||B-shopping bag||B-shopping cart||B-star||B-support||B-tag||B-telephone||B-trending up 1||B-trending up||B-wallet||"
+    assign list_icon_6 = "||activity||chat bubble||check mark||coin||credit card||delivery truck||earth||ecofriendly||fire||gift||globe||heart||map pin||percent||piggy bank||plant||rocket||rulers||settings||shipping||shop||shopping bag||shopping cart||star||support||tag||telephone||trending up||wallet||"
+    assign list_icon_7 = "||B-baby 12||B-baby 2||B-baby 3||B-baby 36||B-baby 4||B-baby 6||B-baby 0||B-baby apron||B-baby bottle||B-baby care body||B-baby heart||B-bpa free||B-cereal bowl||B-chinese kid boy||B-easter egg decoration||B-family mother||B-food grade||B-hold baby||B-kids full body||B-kids head||B-no toxic chemicals||B-pediatrician||B-photo retouch||B-phthalates||B-pvc||B-star medal||B-teething friendly||B-toy horse line||B-toys duck||B-toys rocking horse||B-toys teddy bear||"
+    assign list_icon_8 = "||baby 0||baby 12||baby 2||baby 3||baby 36||baby 4||baby 6||baby apron||baby bottle||baby care body||baby heart||baby lucide||bpa free||cereal bowl||chinese kid boy||easter egg decoration||family mother||food grade||hold baby||kids full body||kids head||no toxic chemicals||pediatrician||photo retouch||phthalates||pvc||star medal||teething friendly||toy horse line||toys duck||toys rocking horse||toys teddy bear||"
+    assign list_icon_9 = "||B-avoid chemicals||B-avoid collisions||B-avoid direct sunlight||B-avoid heat||B-avoid moisture||B-avoid perfume||B-avoid when sleeping||B-bracelet 1||B-bracelet pearls||B-certificates of authenticity||B-couple ring||B-diamond||B-durability||B-earrings hoops||B-earrings oriental||B-engagement ring||B-gemstone grading reports||B-karat of gold||B-lgbt engagement ring||B-necklace 1||B-necklace 2||B-necklace 3||B-necklace heart pendant||B-no avoid chemicals||B-no avoid direct sunlight||B-no avoid perfume||B-quality||B-ring 1||B-ring 2||"
+    assign list_icon_10 = "||avoid collisions||avoid chemicals||avoid direct sunlight||avoid heat||avoid moisture||avoid perfume||avoid when sleeping||bracelet 1||bracelet pearls||certificates of authenticity||couple ring||diamond||durability||earrings hoops||earrings oriental||engagement ring||gemstone grading reports||karat of gold||lgbt engagement ring||necklace 1||necklace 2||necklace 3||necklace heart pendant||no avoid chemicals||no avoid direct sunlight||no avoid perfume||quality||ring 1||ring 2||"
+    assign item = '||' | append: icon | append: '||'
+%}     
+
+{% if list_icon_1_1 contains item %}
+    <span class="inline-block relative w-[30px] h-[30px] empty:hidden">{% render 'icon-new-alls-1-1', icon: icon %}</span>
+    {% if label != blank %}
+        <div x-intersect.once="setPosition($el)" class="absolute p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label }}</div>
+    {% endif %}
+{% elsif list_icon_1_2 contains item %}
+    <span class="inline-block relative w-[30px] h-[30px] empty:hidden">{% render 'icon-new-alls-1-2', icon: icon %}</span>
+    {% if label != blank %}
+        <div x-intersect.once="setPosition($el)" class="absolute p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label }}</div>
+    {% endif %}
+{% elsif list_icon_2 contains item %}
+    <span class="inline-block relative w-[30px] h-[30px] empty:hidden">{% render 'icon-new-alls-2', icon: icon %}</span>
+    {% if label != blank %}
+        <div x-intersect.once="setPosition($el)" class="absolute p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label }}</div>
+    {% endif %}
+{% elsif list_icon_3 contains item %}
+    <span class="inline-block relative w-[30px] h-[30px] empty:hidden">{% render 'icon-new-alls-3', icon: icon %}</span>
+    {% if label != blank %}
+        <div x-intersect.once="setPosition($el)" class="absolute p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label }}</div>
+    {% endif %}
+{% elsif list_icon_4 contains item %}
+    <span class="inline-block relative w-[30px] h-[30px] empty:hidden">{% render 'icon-new-alls-4', icon: icon %}</span>
+    {% if label != blank %}
+        <div x-intersect.once="setPosition($el)" class="absolute p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label }}</div>
+    {% endif %}
+{% elsif list_icon_5 contains item %}
+    <span class="inline-block relative w-[30px] h-[30px] empty:hidden">{% render 'icon-new-alls-5', icon: icon %}</span>
+    {% if label != blank %}
+        <div x-intersect.once="setPosition($el)" class="absolute p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label }}</div>
+    {% endif %}
+{% elsif list_icon_6 contains item %}
+    <span class="inline-block relative w-[30px] h-[30px] empty:hidden">{% render 'icon-new-alls-6', icon: icon %}</span>
+    {% if label != blank %}
+        <div x-intersect.once="setPosition($el)" class="absolute p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label }}</div>
+    {% endif %}
+{% elsif list_icon_7 contains item %}
+    <span class="inline-block relative w-[30px] h-[30px] empty:hidden">{% render 'icon-new-alls-7', icon: icon %}</span>
+    {% if label != blank %}
+        <div x-intersect.once="setPosition($el)" class="absolute p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label }}</div>
+    {% endif %}
+{% elsif list_icon_8 contains item %}
+    <span class="inline-block relative w-[30px] h-[30px] empty:hidden">{% render 'icon-new-alls-8', icon: icon %}</span>
+    {% if label != blank %}
+        <div x-intersect.once="setPosition($el)" class="absolute p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label }}</div>
+    {% endif %}
+{% elsif list_icon_9 contains item %}
+    <span class="inline-block relative w-[30px] h-[30px] empty:hidden">{% render 'icon-new-alls-9', icon: icon %}</span>
+    {% if label != blank %}
+        <div x-intersect.once="setPosition($el)" class="absolute p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label }}</div>
+    {% endif %}
+{% elsif list_icon_10 contains item %}
+    <span class="inline-block relative w-[30px] h-[30px] empty:hidden">{% render 'icon-new-alls-10', icon: icon %}</span>
+    {% if label != blank %}
+        <div x-intersect.once="setPosition($el)" class="absolute p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label }}</div>
+    {% endif %}
+{% else %}
+    {% if label != blank %}
+      <div class="text-center pt-0.5 pb-0.5 pl-2.5 pr-2.5 bg-[rgba(var(--colors-text),0.2)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">{{ label }}</div>
+    {% endif %}
+{% endif %}
+  

@@ -1,0 +1,2822 @@
+{% if section.blocks != blank %}
+  {% style %}
+    .mobile-dock-background, .mobile-dock-background .background-header {
+      {% if section.settings.background_color_light.alpha != 0.0 -%}
+        background-color: rgb({{ section.settings.background_color_light.red }}, {{ section.settings.background_color_light.green }}, {{ section.settings.background_color_light.blue }});
+      {%- else -%}
+        background-color: rgb(var(--background-color-header));
+      {%- endif %}
+      {% if section.settings.text_color_light.alpha != 0.0 -%}
+        --colors-heading: {{ section.settings.text_color_light.red }}, {{ section.settings.text_color_light.green }}, {{ section.settings.text_color_light.blue }};
+        color: rgb({{ section.settings.text_color_light.red }}, {{ section.settings.text_color_light.green }}, {{ section.settings.text_color_light.blue }});
+      {%- else -%}
+        --colors-heading: var(--colors-text-header);
+        color: rgb(var(--colors-text-header));
+      {%- endif %}
+      {% if section.settings.divider_color_light.alpha != 0.0 -%}
+        border-color: rgb({{ section.settings.divider_color_light.red }}, {{ section.settings.divider_color_light.green }}, {{ section.settings.divider_color_light.blue }});
+      {%- else -%}
+        border-color: rgb(var(--colors-line-header));
+      {%- endif %}
+      {% if section.settings.divider_color_light.alpha != 0.0 -%}
+        --colors-line-and-border: {{ section.settings.divider_color_light.red }}, {{ section.settings.divider_color_light.green }}, {{ section.settings.divider_color_light.blue }};
+      {%- else -%}
+        --colors-line-and-border: var(--colors-line-header);
+      {%- endif %}
+    }
+    .dark .mobile-dock-background, .dark .mobile-dock-background .background-header {
+      {% if section.settings.background_color_dark.alpha != 0.0 -%}
+        background-color: rgb({{ section.settings.background_color_dark.red }}, {{ section.settings.background_color_dark.green }}, {{ section.settings.background_color_dark.blue }});
+      {%- else -%}
+        background-color: rgb(var(--background-color-header));
+      {%- endif %}
+      {% if section.settings.text_color_dark.alpha != 0.0 -%}
+        --colors-heading: {{ section.settings.text_color_dark.red }}, {{ section.settings.text_color_dark.green }}, {{ section.settings.text_color_dark.blue }};
+        color: rgb({{ section.settings.text_color_dark.red }}, {{ section.settings.text_color_dark.green }}, {{ section.settings.text_color_dark.blue }});
+      {%- else -%}
+        --colors-heading: var(--colors-text-header);
+        color: rgb(var(--colors-text-header));
+      {%- endif %}
+      {% if section.settings.divider_color_dark.alpha != 0.0 -%}
+        border-color: rgb({{ section.settings.divider_color_dark.red }}, {{ section.settings.divider_color_dark.green }}, {{ section.settings.divider_color_dark.blue }});
+      {%- else -%}
+        border-color: rgb(var(--colors-line-header));
+      {%- endif %}
+      {% if section.settings.divider_color_dark.alpha != 0.0 -%}
+        --colors-line-and-border: {{ section.settings.divider_color_dark.red }}, {{ section.settings.divider_color_dark.green }}, {{ section.settings.divider_color_dark.blue }};
+      {%- else -%}
+        --colors-line-and-border: var(--colors-line-header);
+      {%- endif %}
+    }
+    .mobile-dock-icon {
+      width: {{ section.settings.icon_size }}px;
+      height: {{ section.settings.icon_size }}px;
+    }
+    .mobile-dock-text {
+      font-size: {{ settings.text_base_size | times: 0.01 | times: 10 | divided_by: 16 }}rem;
+    }
+  {% endstyle %}
+  <template x-teleport="body">
+    <div id="eurus-mobile-dock" class="x-mobile-dock mobile-dock fixed bottom-0 left-0 right-0 z-30 md:hidden" x-cloak>
+      <div x-data="xMobileDock()"
+        :class="showDock ? 'opacity-100 bottom-0' : 'opacity-0 -bottom-full'"
+        id="mobile-dock-container"
+        class="fixed left-0 right-0 transition-all duration-300 ease-out mobile-dock-background{% if section.settings.show_section_divider %} border-t{% endif %} pt-[{{ section.settings.padding_top }}px] pb-[{{ section.settings.padding_bottom }}px]"
+      >
+        <div class="flex{% if section.settings.icon_position == "spread_evenly" %} justify-evenly{% else %} justify-center{% endif %} items-center">
+          {% for block in section.blocks %}
+            {% case block.type %}
+              {% when 'home' %}
+                <a href="{{ routes.root_url }}" class="flex flex-col{% if section.settings.icon_position == "spread_evenly" %} flex-1{% endif %} gap-1 items-center{% if section.settings.icon_position == "spread_evenly" %} pl-1 pr-1{% else %} pl-2 pr-2{% endif %} pt-3 pb-3" {% if block.settings.title == blank %}aria-label="home"{% endif %}>
+                  {% unless block.settings.custom_image == blank and block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+                    <div class="mobile-dock-icon relative">
+                      {% if block.settings.custom_image != blank %}
+                        {% # theme-check-disable ImgLazyLoading %}
+                        <img 
+                          src="{{ block.settings.custom_image | image_url: width: section.settings.icon_size }}"
+                          alt="{{ block.settings.custom_image.alt | escape }}"
+                          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                          onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                          width="{{ block.settings.custom_image.width }}"
+                          height="{{ block.settings.custom_image.height }}"
+                          style="object-position: {{ block.settings.custom_image.presentation.focal_point }}"
+                          class="object-cover absolute top-0 left-0 w-full h-full"
+                        >
+                        {% # theme-check-enable ImgLazyLoading %}
+                      {% else %}
+                        {% if block.settings.custom_icon == blank %}
+                          {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                            {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                          {% elsif block.settings.icon == 'default_icon' %}
+                            {% render 'icon-alls', icon: 'icon-home-mobile-dock', animation_class: 'icon-animation' %}
+                          {% else %}
+                            {% render 'icon-labels-bags', icon: block.settings.icon %}
+                          {% endif %}
+                        {% else %}
+                          {{ block.settings.custom_icon }}
+                        {% endif %}
+                      {% endif %}
+                    </div>
+                    <div class="mobile-dock-text text-center">
+                      <span>{{ block.settings.title }}</span>
+                    </div>
+                  {% endunless %}
+                </a>
+              {% when 'menu' %}
+                <div @click="setTimeout(() => { $store.xMobileNav.open() }, 0)" class="flex flex-col{% if section.settings.icon_position == "spread_evenly" %} flex-1{% endif %} gap-1 items-center{% if section.settings.icon_position == "spread_evenly" %} pl-1 pr-1{% else %} pl-2 pr-2{% endif %} pt-3 pb-3 cursor-pointer" {% if block.settings.title == blank %}aria-label="menu"{% endif %}>
+                  {% unless block.settings.custom_image == blank and block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+                    <div class="mobile-dock-icon relative">
+                      {% if block.settings.custom_image != blank %}
+                        {% # theme-check-disable ImgLazyLoading %}
+                        <img 
+                          src="{{ block.settings.custom_image | image_url: width: section.settings.icon_size }}"
+                          alt="{{ block.settings.custom_image.alt | escape }}"
+                          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                          onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                          width="{{ block.settings.custom_image.width }}"
+                          height="{{ block.settings.custom_image.height }}"
+                          style="object-position: {{ block.settings.custom_image.presentation.focal_point }}"
+                          class="object-cover absolute top-0 left-0 w-full h-full"
+                        >
+                        {% # theme-check-enable ImgLazyLoading %}
+                      {% else %}
+                        {% if block.settings.custom_icon == blank %}
+                          {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                            {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                          {% elsif block.settings.icon == 'default_icon' %}
+                            {% render 'icon-alls', icon: 'icon-hamburger', animation_class: 'icon-animation' %}
+                          {% else %}
+                            {% render 'icon-labels-bags', icon: block.settings.icon %}
+                          {% endif %}
+                        {% else %}
+                          {{ block.settings.custom_icon }}
+                        {% endif %}
+                      {% endif %}
+                    </div>
+                    <div class="mobile-dock-text text-center">
+                      <span>{{ block.settings.title }}</span>
+                    </div>
+                  {% endunless %}
+                </div>
+              {% when 'search' %}
+                {% liquid
+                  assign search_type =  'query,' | append: settings.search_type
+                  if settings.lang_direction contains request.locale.iso_code
+                    assign is_rtl = true
+                  else
+                    assign is_rtl = false
+                  endif
+                %}
+                <div x-data="xModalSearch('{{ search_type }}','{{ settings.search_desktop_maximun_results }}',{{ settings.search_mobile_maximun_results }}, '{{ 'templates.search.product_type_default' | t }}')"
+                  class="mobile-dock-search flex flex-col{% if section.settings.icon_position == "spread_evenly" %} flex-1{% endif %} gap-1 items-center{% if section.settings.icon_position == "spread_evenly" %} pl-1 pr-1{% else %} pl-2 pr-2{% endif %} pt-3 pb-3"
+                  x-init="if ($store.xModal.activeElement == 'SearchOpenMobileDock') { open('open_search_mobile_dock'); $store.xHeaderMenu.hideMenu($el); }"
+                  x-on:click.away="close('open_search_mobile_dock');"
+                  @keyup.escape="close('open_search_mobile_dock'); $store.xModal.removeFocus();"
+                >
+                  <a
+                    id="SearchOpenMobileDock"
+                    href="{{ routes.search_url }}"
+                    aria-label="search"
+                    class="flex items-center cursor-pointer justify-center link focus-inset bg-none"
+                    @click.prevent="setTimeout(() => { $store.xModal.setActiveElement('SearchOpenMobileDock'); open('open_search_mobile_dock'); $store.xHeaderMenu.hideMenu($el); }, 0)"
+                  >
+                    <span class="mobile-dock-icon relative">
+                      {% if block.settings.custom_image != blank %}
+                        {% # theme-check-disable ImgLazyLoading %}
+                        <img 
+                          src="{{ block.settings.custom_image | image_url: width: section.settings.icon_size }}"
+                          alt="{{ block.settings.custom_image.alt | escape }}"
+                          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                          onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                          width="{{ block.settings.custom_image.width }}"
+                          height="{{ block.settings.custom_image.height }}"
+                          style="object-position: {{ block.settings.custom_image.presentation.focal_point }}"
+                          class="object-cover absolute top-0 left-0 w-full h-full"
+                        >
+                        {% # theme-check-enable ImgLazyLoading %}
+                      {% else %}
+                        {% if block.settings.custom_icon == blank %}
+                          {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                            {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                          {% elsif block.settings.icon == 'default_icon' %}
+                            {% render 'icon-alls', icon: 'icon-search', animation_class: 'icon-animation' %}
+                          {% else %}
+                            {% render 'icon-labels-bags', icon: block.settings.icon %}
+                          {% endif %}
+                        {% else %}
+                          {{ block.settings.custom_icon }}
+                        {% endif %}
+                      {% endif %}
+                    </span>
+                  </a>
+                  <div class="mobile-dock-text text-center cursor-pointer" 
+                    @click.prevent="setTimeout(() => { $store.xModal.setActiveElement('SearchOpenMobileDock'); open('open_search_mobile_dock'); $store.xHeaderMenu.hideMenu($el); }, 0)"
+                  >
+                    <span>{{ block.settings.title }}</span>
+                  </div>
+                  <div
+                    id="FormSearchMobileDock"
+                    x-ref="open_search_mobile_dock"
+                    class="x-search-popup popup-hidden mobile-dock-background shadow-sm lg:shadow-none fixed left-0 right-0 gradient transition-all duration-300 ease-in-out"
+                  >
+                    <div class="pb-8 pl-5 pr-5 pt-14 flex items-center justify-center w-full h-full relative lg:shadow-sm" tabindex="-1">
+                      {%- if settings.predictive_search_enabled -%}
+                        <div class="relative max-w-6xl w-full" data-loading-text="{{ 'accessibility.loading' | t }}">
+                      {%- endif -%}
+                      <div class="max-w-[62rem] mx-auto w-full{% if settings.search_refined %} border-b border-[rgb(var(--colors-line-and-border))]{% endif %}">
+                        <div class="relative field rtl:flex-row-reverse rtl:md:flex-row pr-5 lg:pr-0 flex{% unless settings.search_refined %} pl-5 lg:pl-0{% endunless %}">
+                          {% if settings.search_refined %}
+                            <div class="md:relative search-categories flex items-center flex-shrink-0">
+                              <div 
+                                class="inline-flex lg:inline-block border-[rgb(var(--colors-line-and-border))]{% if is_rtl %} border-l ml-2 pl-3.5{% else %} border-r mr-2 pr-3.5{% endif %}"
+                                x-data="{ open: false }" 
+                                @keyup.escape="open = false">
+                                <button
+                                  @click.prevent="open = ! open;"
+                                  class="relative py-1 w-28 md:w-44{% if is_rtl %} text-right pl-5{% else %} text-left pr-5{% endif %} cursor-pointer hover-text-link duration-200 transition"
+                                  aria-expanded="false"
+                                  aria-controls="CategoriesList"
+                                >
+                                  <span class="line-clamp-1 p-break-words" x-text="productTypeSelected"></span>
+                                  <span class="opacity-60 absolute w-2.5 h-2.5 top-1/2 -translate-y-1/2 flex{% if is_rtl %} left-0{% else %} right-0{% endif %}" :class="open && ' -rotate-180'">
+                                    {% render 'icon-alls', icon: 'icon-caret' %}
+                                  </span>
+                                </button>
+                                <div
+                                  x-show="open"
+                                  @click.away="open = false"
+                                  x-cloak
+                                >
+                                  <div
+                                    x-show="open"
+                                    x-transition:enter="transition-all ease-in-out duration-500"
+                                    x-transition:enter-start="opacity-0 transform -translate-y-4"
+                                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                                    x-transition:leave="transition-all ease-in-out duration-500"
+                                    x-transition:leave-end="opacity-0 transform -translate-y-4"
+                                    class="absolute pt-6 pb-7 z-50{% if is_rtl %} right-0{% else %} left-0{% endif %} top-[calc(100%+12px)] lg:bottom-auto background-header shadow-[0_0_6px_-4px_rgba(var(--colors-text))]">
+                                    <ul
+                                      role="list"
+                                      id="CategoriesList"
+                                      class="w-full md:w-auto md:min-w-[15rem] pl-7 pr-7{% if is_rtl %} right-0{% else %} left-0{% endif %} max-h-[15rem] overflow-y-auto scrollbar-body scrollbar-visible">
+                                      <li
+                                        tabindex="0"
+                                        class="cursor-pointer py-1 duration-200 transition text-[rgb(var(--colors-text-header))]" 
+                                        @click="setProductType('{{ 'templates.search.product_type_default' | t }}', 'product_type'); open = false">
+                                        <p
+                                          class="nav-link inline-block hover-text-link relative p-break-words"
+                                          :class="productTypeSelected == '{{ 'templates.search.product_type_default' | t }}' && 'border-b link-active'"
+                                          href="#"
+                                          data-no-instant>
+                                          {{ 'templates.search.product_type_default' | t }}
+                                        </p>
+                                      </li>
+                                      {% for product_type in shop.types %}
+                                        {% if product_type != blank %}
+                                          <li 
+                                            tabindex="0"
+                                            class="product-type-item cursor-pointer py-1 duration-200 transition text-[rgb(var(--colors-text-header))]" 
+                                            @keyup.enter="setProductType(`{{ product_type }}`, 'product_type');"
+                                            @click="setProductType(`{{ product_type }}`, 'product_type'); open = false">
+                                            <p
+                                              class="nav-link inline-block hover-text-link relative p-break-words"
+                                              :class="productTypeSelected == `{{ product_type }}` && 'border-b effect-inline'"
+                                              href="#"
+                                              data-no-instant>
+                                              {{ product_type }}
+                                            </p>
+                                          </li>
+                                        {% endif %}
+                                      {%- endfor -%}
+                                    </ul>
+                                  </div>
+                                </div>
+                                <input type="hidden" aria-hidden="true" name="product_type" id="product_type" value="product_type:" data-disclosure-input tabindex="-1"/>
+                              </div>
+                            </div>
+                          {% endif %}
+                          <form id="form-search-{{ section.id }}" class="grow" action="{{ routes.search_url }}" method="get" role="search">
+                            {% style %}
+                              .input-search::placeholder {
+                                {% if settings.search_prompts_font == "search_prompts_font_text" %}
+                                  font-family: var(--font-body-family);
+                                {% else %}
+                                  font-family: var(--font-heading-family);
+                                {% endif %}
+                              }
+                            {% endstyle %}
+                            <input 
+                              x-data="xSearchPrompts($el, ['{{ settings.search_prompts_1 }}', '{{ settings.search_prompts_2 }}', '{{ settings.search_prompts_3 }}'], {% if settings.search_prompts_mobile %}true{% else %}false{% endif %})"
+                              id="search-in-modal-mobile-dock"
+                              aria-label="Search"
+                              class="peer input-search focus-visible:outline-none{% if settings.search_refined %} py-3{% else %} py-4 border-b border-[rgb(var(--colors-line-and-border))]{% endif %}{% if is_rtl %} pl-[4.5rem] pr-4 lg:pr-2 lg:pl-20 text-right{% else %} pr-[4.5rem] pl-4 lg:pl-2 lg:pr-20 text-left{% endif %} w-full appearance-none relative outline-none bg-transparent placeholder:text-current placeholder:opacity-60"
+                              type="search"
+                              name="q"
+                              value=""
+                              x-on:keyup="keyUp()"
+                              @focus="focusForm()"
+                              autofocus
+                              placeholder="{{ 'general.search.search' | t }}"
+                            >
+                            <input type="hidden" aria-hidden="true" name="options[prefix]" value="last">
+                            <button 
+                              class="btn-search absolute none_border w-7 h-7 p-1 top-1/2 -translate-y-1/2 opacity-60 bg-none text-current{% if is_rtl %} lg:left-2{% if settings.search_refined %} left-2{% else %} left-7{% endif %}{% else %} lg:right-2{% if settings.search_refined %} right-2{% else %} right-7{% endif %}{% endif %}"
+                              aria-label="{{ 'general.search.search' | t }}">
+                              {%- render 'icon-alls', icon: 'icon-search', animation_class: 'icon-animation' -%}
+                            </button>
+                            {% if settings.show_speech_search %}
+                              <button aria-label="Search speech" class="search__speech absolute cursor-pointer w-7 h-7 p-1{% if is_rtl %}{% if settings.search_refined %} left-10{% else %} left-16{% endif %} lg:left-12{% else %}{% if settings.search_refined %} right-10{% else %} right-16{% endif %} lg:right-12{% endif %} top-1/2 -translate-y-1/2 opacity-60 bg-none text-current" x-data="xSpeechSearch($el)" x-init="initSpeechSearch()" x-show="show">
+                                {% render 'icon-alls', icon: 'icon-voice' %}
+                              </button>
+                              <script src="{{ 'speech-search.js' | asset_url }}" defer></script>
+                            {% endif %}
+                            {%- if settings.predictive_search_enabled -%}
+                              <div id="search-result-mobile-dock" class="md:max-h-96 absolute top-[calc(100%+12px)] w-full left-0{% if is_rtl %} rtl{% endif %}" tabindex="-1" data-predictive-search x-html="result" x-show="loading == false">
+                                <div class="predictive-search__loading-state">
+                                  <svg aria-hidden="true" focusable="false" role="presentation" class="spinner" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle class="path" fill="none" stroke-width="6" cx="33" cy="33" r="30"></circle>
+                                  </svg>
+                                </div>
+                              </div>
+                              {% if settings.search_recomendation != blank or settings.popular_product_search != blank %}
+                                <div 
+                                  id="suggest-search-mobile-dock" class="absolute top-[calc(100%+12px)] w-full left-0{% if is_rtl %} rtl{% endif %}" 
+                                  tabindex="-1" 
+                                  data-predictive-search 
+                                  x-cloak 
+                                  :class="showSuggest ? 'block' : 'hidden'">
+                                  {% render 'suggest-search', 
+                                    search_recomendation: settings.search_recomendation, 
+                                    popular_product_search: settings.popular_product_search,
+                                    is_mobile_dock: true
+                                  %}
+                                </div>
+                              {% endif %}
+                            {%- endif -%}
+                          </form>
+                        </div>
+                      </div>
+                      {%- if settings.predictive_search_enabled -%}
+                        </div>
+                      {%- endif -%}
+                      <button
+                        id="SearchCloseMobileDock"
+                        aria-label="Search close"
+                        class="link link--text focus-inset group-close-btn rounded-full cursor-pointer w-fit icon-close-container absolute top-2 opacity-60 right-2 rtl:right-auto rtl:left-2"
+                        x-on:click="close('open_search_mobile_dock'); $store.xModal.removeFocus();"
+                      >
+                        {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              {% when 'account' %}
+                <a href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}"
+                  class="flex flex-col{% if section.settings.icon_position == "spread_evenly" %} flex-1{% endif %} gap-1 items-center{% if section.settings.icon_position == "spread_evenly" %} pl-1 pr-1{% else %} pl-2 pr-2{% endif %} pt-3 pb-3" {% if block.settings.title == blank %}aria-label="account"{% endif %}
+                >
+                  {% unless block.settings.custom_image == blank and block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+                    <div class="mobile-dock-icon relative">
+                      {% if block.settings.custom_image != blank %}
+                        {% # theme-check-disable ImgLazyLoading %}
+                        <img 
+                          src="{{ block.settings.custom_image | image_url: width: section.settings.icon_size }}"
+                          alt="{{ block.settings.custom_image.alt | escape }}"
+                          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                          onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                          width="{{ block.settings.custom_image.width }}"
+                          height="{{ block.settings.custom_image.height }}"
+                          style="object-position: {{ block.settings.custom_image.presentation.focal_point }}"
+                          class="object-cover absolute top-0 left-0 w-full h-full"
+                        >
+                        {% # theme-check-enable ImgLazyLoading %}
+                      {% else %}
+                        {% if block.settings.custom_icon == blank %}
+                          {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                            {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                          {% elsif block.settings.icon == 'default_icon' %}
+                            {% render 'icon-alls', icon: 'icon-account', animation_class: 'icon-animation' %}
+                          {% else %}
+                            {% render 'icon-labels-bags', icon: block.settings.icon %}
+                          {% endif %}
+                        {% else %}
+                          {{ block.settings.custom_icon }}
+                        {% endif %}
+                      {% endif %}
+                    </div>
+                    <div class="mobile-dock-text text-center">
+                      <span>{{ block.settings.title }}</span>
+                    </div>
+                  {% endunless %}
+                </a>
+              {% when 'cart' %}
+                <a href="{{ routes.cart_url }}"
+                  class="flex flex-col{% if section.settings.icon_position == "spread_evenly" %} flex-1{% endif %} gap-1 items-center{% if section.settings.icon_position == "spread_evenly" %} pl-1 pr-1{% else %} pl-2 pr-2{% endif %} pt-3 pb-3"
+                  {% if block.settings.title == blank %}aria-label="cart"{% endif %}
+                  {% if settings.cart_type != 'page' %}           
+                    @click.prevent="setTimeout(() => { $store.xModal.setActiveElement('cart-icon'); $store.xMiniCart.openCart(); }, 0)"
+                    :class="$store.xMiniCart.open && 'pointer-events-none'"
+                  {% endif %}
+                >
+                  {% unless block.settings.custom_image == blank and block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+                    <div class="mobile-dock-icon relative">
+                      {% if block.settings.custom_image != blank %}
+                        {% # theme-check-disable ImgLazyLoading %}
+                        <img 
+                          src="{{ block.settings.custom_image | image_url: width: section.settings.icon_size }}"
+                          alt="{{ block.settings.custom_image.alt | escape }}"
+                          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                          onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                          width="{{ block.settings.custom_image.width }}"
+                          height="{{ block.settings.custom_image.height }}"
+                          style="object-position: {{ block.settings.custom_image.presentation.focal_point }}"
+                          class="object-cover absolute top-0 left-0 w-full h-full"
+                        >
+                        {% # theme-check-enable ImgLazyLoading %}
+                      {% else %}
+                        {% if block.settings.custom_icon == blank %}
+                          {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                            {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                          {% elsif block.settings.icon == 'use_theme_settings' %}
+                            {% render 'icon-cart-all', icon: settings.cart_icon, animation_class: 'icon-animation' %}
+                          {% else %}
+                            {% render 'icon-labels-bags', icon: block.settings.icon %}
+                          {% endif %}
+                        {% else %}
+                          {{ block.settings.custom_icon }}
+                        {% endif %}
+                      {% endif %}
+                      <div id="cart-icon-bubble-mobile-dock" class="count_item absolute -top-[20%] left-[60%]" data-value="{{ cart.item_count }}">
+                        <div class="bg-[rgba(var(--colors-cart))] text-[rgba(var(--colors-cart-text))] font-medium h-4 w-4 rounded-full text-[10px]{% if cart == empty %} hidden{% endif %}">
+                          {% if cart.item_count < 100 %}
+                            <span class="h-full flex items-center justify-center mt-[1px]" aria-hidden="true">{{ cart.item_count }}</span>
+                          {% else %}
+                            <span class="h-full flex items-center justify-center mt-[1px]">99+</span> 
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mobile-dock-text text-center">
+                      <span>{{ block.settings.title }}</span>
+                    </div>
+                  {% endunless %}
+                </a>
+              {% when 'link' %}
+                <a {% if block.settings.url != blank %}href="{{ block.settings.url }}"{% if block.settings.open_new_window %} target="_blank"{% endif %}{% endif %} class="flex flex-col{% if section.settings.icon_position == "spread_evenly" %} flex-1{% endif %} gap-1 items-center{% if section.settings.icon_position == "spread_evenly" %} pl-1 pr-1{% else %} pl-2 pr-2{% endif %} pt-3 pb-3 cursor-pointer" {% if block.settings.title == blank %}aria-label="{{ block.settings.link_title }}"{% endif %}>
+                  {% unless block.settings.custom_image == blank and block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+                    <div class="mobile-dock-icon relative">
+                      {% if block.settings.custom_image != blank %}
+                        {% # theme-check-disable ImgLazyLoading %}
+                        <img 
+                          src="{{ block.settings.custom_image | image_url: width: section.settings.icon_size }}"
+                          alt="{{ block.settings.custom_image.alt | escape }}"
+                          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                          onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                          width="{{ block.settings.custom_image.width }}"
+                          height="{{ block.settings.custom_image.height }}"
+                          style="object-position: {{ block.settings.custom_image.presentation.focal_point }}"
+                          class="object-cover absolute top-0 left-0 w-full h-full"
+                        >
+                        {% # theme-check-enable ImgLazyLoading %}
+                      {% else %}
+                        {% if block.settings.custom_icon == blank %}
+                          {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                            {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                          {% elsif block.settings.icon == 'default_icon' %}
+                            {% render 'icon-alls', icon: 'icon-grid', animation_class: 'icon-animation' %}
+                          {% else %}
+                            {% render 'icon-labels-bags', icon: block.settings.icon %}
+                          {% endif %}
+                        {% else %}
+                          {{ block.settings.custom_icon }}
+                        {% endif %}
+                      {% endif %}
+                    </div>
+                    <div class="mobile-dock-text text-center">
+                      <span>{{ block.settings.link_title }}</span>
+                    </div>
+                  {% endunless %}
+                </a>
+            {% endcase %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </template>
+{% endif %}
+<script src="{{ 'mobile-dock.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "t:sections.mobile-dock.name",
+  "class": "section-mobile-dock",
+  "limit": 1,
+  "max_blocks": 6,
+  "enabled_on": {
+    "groups": [
+      "aside"
+    ]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.overlay_group.mobile_dock"
+    },
+    {
+      "type": "select",
+      "id": "icon_position",
+      "options": [
+        {
+          "value": "spread_evenly",
+          "label": "t:sections.multicolumn.settings.icon_position.options__3.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.multicolumn.settings.icon_position.options__4.label"
+        }
+      ],
+      "default": "spread_evenly",
+      "label": "t:sections.multicolumn.settings.icon_position.label"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "min": 20,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "label": "t:sections.multicolumn.settings.icon_size.label",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.colors.name"
+    },
+    {
+      "type": "color",
+      "id": "background_color_light",
+      "label": "t:sections.all.background.background_color_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "text_color_light",
+      "label": "t:sections.all.text.color",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "divider_color_light",
+      "label": "t:sections.mobile-navigation.settings.divider_color.label",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "label": "t:sections.all.background.background_color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "text_color_dark",
+      "label": "t:sections.all.text.color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "divider_color_dark",
+      "label": "t:sections.mobile-navigation.settings.divider_color_dark.label",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.promotion-grid.blocks.promotion.settings.header.content"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider",
+      "default": true,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 8
+    }
+  ],
+  "blocks": [
+    {
+      "type": "home",
+      "name": "t:sections.mobile-dock.blocks.home.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            {
+              "value": "default_icon",
+              "label": "t:sections.all.size.options__4.label"
+            },
+            {
+              "value": "another_icon",
+              "label": "t:sections.all.icon.another_icon_label"
+            },
+            {
+              "value": "activity",
+              "label": "t:sections.all.icon.options.activity"
+            },
+            {
+              "value": "archive",
+              "label": "t:sections.all.icon.options.archive"
+            },
+            {
+              "value": "arrow-down-cricle",
+              "label": "t:sections.all.icon.options.arrow-down-cricle"
+            },
+            {
+              "value": "arrow-left",
+              "label": "t:sections.all.icon.options.arrow-left"
+            },
+            {
+              "value": "arrow-left-circle",
+              "label": "t:sections.all.icon.options.arrow-left-circle"
+            },
+            {
+              "value": "arrow-right",
+              "label": "t:sections.all.icon.options.arrow-right"
+            },
+            {
+              "value": "arrow-right-circle",
+              "label": "t:sections.all.icon.options.arrow-right-circle"
+            },
+            {
+              "value": "arrow-up-circle",
+              "label": "t:sections.all.icon.options.arrow-up-circle"
+            },
+            {
+              "value": "chevron-left",
+              "label": "t:sections.all.icon.options.chevron-left"
+            },
+            {
+              "value": "trending-down",
+              "label": "t:sections.all.icon.options.trending-down"
+            },
+            {
+              "value": "tv",
+              "label": "t:sections.all.icon.options.tv"
+            },
+            {
+              "value": "trending-up",
+              "label": "t:sections.all.icon.options.trending-up"
+            },
+            {
+              "value": "zap",
+              "label": "t:sections.all.icon.options.zap"
+            },
+            {
+              "value": "1st-medal",
+              "label": "t:sections.all.icon.options.1st-medal"
+            },
+            {
+              "value": "award",
+              "label": "t:sections.all.icon.options.award"
+            },
+            {
+              "value": "bicycle",
+              "label": "t:sections.all.icon.options.bicycle"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.all.icon.options.box"
+            },
+            {
+              "value": "briefcase",
+              "label": "t:sections.all.icon.options.briefcase"
+            },
+            {
+              "value": "blink",
+              "label": "t:sections.all.icon.options.blink"
+            },
+            {
+              "value": "calendar",
+              "label": "t:sections.all.icon.options.calendar"
+            },
+            {
+              "value": "camera",
+              "label": "t:sections.all.icon.options.camera"
+            },
+            {
+              "value": "chat-bubble",
+              "label": "t:sections.all.icon.options.chat-bubble"
+            },
+            {
+              "value": "check-mark",
+              "label": "t:sections.all.icon.options.check-mark"
+            },
+            {
+              "value": "clock",
+              "label": "t:sections.all.icon.options.clock"
+            },
+            {
+              "value": "cloud-rain",
+              "label": "t:sections.all.icon.options.cloud-rain"
+            },
+            {
+              "value": "coffee",
+              "label": "t:sections.all.icon.options.coffee"
+            },
+            {
+              "value": "coin",
+              "label": "t:sections.all.icon.options.coin"
+            },
+            {
+              "value": "credit-card",
+              "label": "t:sections.all.icon.options.credit-card"
+            },
+            {
+              "value": "delivery-truck",
+              "label": "t:sections.all.icon.options.delivery-truck"
+            },
+            {
+              "value": "dollar-sign",
+              "label": "t:sections.all.icon.options.dollar-sign"
+            },
+            {
+              "value": "dna",
+              "label": "t:sections.all.icon.options.dna"
+            },
+            {
+              "value": "dark-mode",
+              "label": "t:sections.all.icon.options.dark-mode"
+            },
+            {
+              "value": "earth",
+              "label": "t:sections.all.icon.options.earth"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.all.icon.options.eye"
+            },
+            {
+              "value": "feather",
+              "label": "t:sections.all.icon.options.feather"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.all.icon.options.fire"
+            },
+            {
+              "value": "flower",
+              "label": "t:sections.all.icon.options.flower"
+            },
+            {
+              "value": "free-delivery",
+              "label": "t:sections.all.icon.options.free-delivery"
+            },
+            {
+              "value": "gift",
+              "label": "t:sections.all.icon.options.gift"
+            },
+            {
+              "value": "globe",
+              "label": "t:sections.all.icon.options.globe"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.all.icon.options.heart"
+            },
+            {
+              "value": "help",
+              "label": "t:sections.all.icon.options.help"
+            },
+            {
+              "value": "hot-sale",
+              "label": "t:sections.all.icon.options.hot-sale"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.all.icon.options.iron"
+            },
+            {
+              "value": "information",
+              "label": "t:sections.contact-form.settings.infomation.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.all.icon.options.leaf"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.all.icon.options.lock"
+            },
+            {
+              "value": "light-mode",
+              "label": "t:sections.all.icon.options.light-mode"
+            },
+            {
+              "value": "map-pin",
+              "label": "t:sections.all.icon.options.map-pin"
+            },
+            {
+              "value": "megaphone",
+              "label": "t:sections.all.icon.options.megaphone"
+            },
+            {
+              "value": "message-text",
+              "label": "t:sections.all.icon.options.message-text"
+            },
+            {
+              "value": "music",
+              "label": "t:sections.all.icon.options.music"
+            },
+            {
+              "value": "moon",
+              "label": "t:sections.all.icon.options.moon"
+            },
+            {
+              "value": "packages",
+              "label": "t:sections.all.icon.options.packages"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.all.icon.options.pants"
+            },
+            {
+              "value": "percent",
+              "label": "t:sections.all.icon.options.percent"
+            },
+            {
+              "value": "piggy-bank",
+              "label": "t:sections.all.icon.options.piggy-bank"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.all.icon.options.plane"
+            },
+            {
+              "value": "planet",
+              "label": "t:sections.all.icon.options.planet"
+            },
+            {
+              "value": "question-mark",
+              "label": "t:sections.all.icon.options.question-mark"
+            },
+            {
+              "value": "rocket",
+              "label": "t:sections.all.icon.options.rocket"
+            },
+            {
+              "value": "rulers",
+              "label": "t:sections.all.icon.options.rulers"
+            },
+            {
+              "value": "scissors",
+              "label": "t:sections.all.icon.options.scissors"
+            },
+            {
+              "value": "settings",
+              "label": "t:sections.all.icon.options.settings"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.all.icon.options.shirt"
+            },
+            {
+              "value": "shop-alt",
+              "label": "t:sections.all.icon.options.shop-alt"
+            },
+            {
+              "value": "shopping-bag",
+              "label": "t:sections.all.icon.options.shopping-bag"
+            },
+            {
+              "value": "shopping-cart",
+              "label": "t:sections.all.icon.options.shopping-cart"
+            },
+            {
+              "value": "smile",
+              "label": "t:sections.all.icon.options.smile"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.all.icon.options.star"
+            },
+            {
+              "value": "sun",
+              "label": "t:sections.all.icon.options.sun"
+            },
+            {
+              "value": "support",
+              "label": "t:sections.all.icon.options.support"
+            },
+            {
+              "value": "tag",
+              "label": "t:sections.all.icon.options.tag"
+            },
+            {
+              "value": "telephone",
+              "label": "t:sections.all.icon.options.telephone"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.all.icon.options.truck"
+            },
+            {
+              "value": "wallet",
+              "label": "t:sections.all.icon.options.wallet"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.all.icon.options.washing"
+            },
+            {
+              "value": "water",
+              "label": "t:sections.all.icon.options.water"
+            },
+            {
+              "value": "yoga",
+              "label": "t:sections.all.icon.options.yoga"
+            }
+          ],
+          "default": "default_icon",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "text",
+          "id": "another_icon",
+          "label": "t:sections.all.icon.another_icon_label",
+          "info": "t:sections.all.icon.another_icon_info",
+          "visible_if": "{{ block.settings.icon == 'another_icon' }}"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image",
+          "label": "t:sections.multicolumn.blocks.column.settings.custom_image"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Home",
+          "label": "t:sections.all.text.title"
+        }
+      ]
+    },
+    {
+      "type": "menu",
+      "name": "t:sections.mobile-navigation.settings.menu.label",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.mobile-dock.blocks.menu.info"
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            {
+              "value": "default_icon",
+              "label": "t:sections.all.size.options__4.label"
+            },
+            {
+              "value": "another_icon",
+              "label": "t:sections.all.icon.another_icon_label"
+            },
+            {
+              "value": "activity",
+              "label": "t:sections.all.icon.options.activity"
+            },
+            {
+              "value": "archive",
+              "label": "t:sections.all.icon.options.archive"
+            },
+            {
+              "value": "arrow-down-cricle",
+              "label": "t:sections.all.icon.options.arrow-down-cricle"
+            },
+            {
+              "value": "arrow-left",
+              "label": "t:sections.all.icon.options.arrow-left"
+            },
+            {
+              "value": "arrow-left-circle",
+              "label": "t:sections.all.icon.options.arrow-left-circle"
+            },
+            {
+              "value": "arrow-right",
+              "label": "t:sections.all.icon.options.arrow-right"
+            },
+            {
+              "value": "arrow-right-circle",
+              "label": "t:sections.all.icon.options.arrow-right-circle"
+            },
+            {
+              "value": "arrow-up-circle",
+              "label": "t:sections.all.icon.options.arrow-up-circle"
+            },
+            {
+              "value": "chevron-left",
+              "label": "t:sections.all.icon.options.chevron-left"
+            },
+            {
+              "value": "trending-down",
+              "label": "t:sections.all.icon.options.trending-down"
+            },
+            {
+              "value": "tv",
+              "label": "t:sections.all.icon.options.tv"
+            },
+            {
+              "value": "trending-up",
+              "label": "t:sections.all.icon.options.trending-up"
+            },
+            {
+              "value": "zap",
+              "label": "t:sections.all.icon.options.zap"
+            },
+            {
+              "value": "1st-medal",
+              "label": "t:sections.all.icon.options.1st-medal"
+            },
+            {
+              "value": "award",
+              "label": "t:sections.all.icon.options.award"
+            },
+            {
+              "value": "bicycle",
+              "label": "t:sections.all.icon.options.bicycle"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.all.icon.options.box"
+            },
+            {
+              "value": "briefcase",
+              "label": "t:sections.all.icon.options.briefcase"
+            },
+            {
+              "value": "blink",
+              "label": "t:sections.all.icon.options.blink"
+            },
+            {
+              "value": "calendar",
+              "label": "t:sections.all.icon.options.calendar"
+            },
+            {
+              "value": "camera",
+              "label": "t:sections.all.icon.options.camera"
+            },
+            {
+              "value": "chat-bubble",
+              "label": "t:sections.all.icon.options.chat-bubble"
+            },
+            {
+              "value": "check-mark",
+              "label": "t:sections.all.icon.options.check-mark"
+            },
+            {
+              "value": "clock",
+              "label": "t:sections.all.icon.options.clock"
+            },
+            {
+              "value": "cloud-rain",
+              "label": "t:sections.all.icon.options.cloud-rain"
+            },
+            {
+              "value": "coffee",
+              "label": "t:sections.all.icon.options.coffee"
+            },
+            {
+              "value": "coin",
+              "label": "t:sections.all.icon.options.coin"
+            },
+            {
+              "value": "credit-card",
+              "label": "t:sections.all.icon.options.credit-card"
+            },
+            {
+              "value": "delivery-truck",
+              "label": "t:sections.all.icon.options.delivery-truck"
+            },
+            {
+              "value": "dollar-sign",
+              "label": "t:sections.all.icon.options.dollar-sign"
+            },
+            {
+              "value": "dna",
+              "label": "t:sections.all.icon.options.dna"
+            },
+            {
+              "value": "dark-mode",
+              "label": "t:sections.all.icon.options.dark-mode"
+            },
+            {
+              "value": "earth",
+              "label": "t:sections.all.icon.options.earth"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.all.icon.options.eye"
+            },
+            {
+              "value": "feather",
+              "label": "t:sections.all.icon.options.feather"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.all.icon.options.fire"
+            },
+            {
+              "value": "flower",
+              "label": "t:sections.all.icon.options.flower"
+            },
+            {
+              "value": "free-delivery",
+              "label": "t:sections.all.icon.options.free-delivery"
+            },
+            {
+              "value": "gift",
+              "label": "t:sections.all.icon.options.gift"
+            },
+            {
+              "value": "globe",
+              "label": "t:sections.all.icon.options.globe"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.all.icon.options.heart"
+            },
+            {
+              "value": "help",
+              "label": "t:sections.all.icon.options.help"
+            },
+            {
+              "value": "hot-sale",
+              "label": "t:sections.all.icon.options.hot-sale"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.all.icon.options.iron"
+            },
+            {
+              "value": "information",
+              "label": "t:sections.contact-form.settings.infomation.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.all.icon.options.leaf"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.all.icon.options.lock"
+            },
+            {
+              "value": "light-mode",
+              "label": "t:sections.all.icon.options.light-mode"
+            },
+            {
+              "value": "map-pin",
+              "label": "t:sections.all.icon.options.map-pin"
+            },
+            {
+              "value": "megaphone",
+              "label": "t:sections.all.icon.options.megaphone"
+            },
+            {
+              "value": "message-text",
+              "label": "t:sections.all.icon.options.message-text"
+            },
+            {
+              "value": "music",
+              "label": "t:sections.all.icon.options.music"
+            },
+            {
+              "value": "moon",
+              "label": "t:sections.all.icon.options.moon"
+            },
+            {
+              "value": "packages",
+              "label": "t:sections.all.icon.options.packages"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.all.icon.options.pants"
+            },
+            {
+              "value": "percent",
+              "label": "t:sections.all.icon.options.percent"
+            },
+            {
+              "value": "piggy-bank",
+              "label": "t:sections.all.icon.options.piggy-bank"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.all.icon.options.plane"
+            },
+            {
+              "value": "planet",
+              "label": "t:sections.all.icon.options.planet"
+            },
+            {
+              "value": "question-mark",
+              "label": "t:sections.all.icon.options.question-mark"
+            },
+            {
+              "value": "rocket",
+              "label": "t:sections.all.icon.options.rocket"
+            },
+            {
+              "value": "rulers",
+              "label": "t:sections.all.icon.options.rulers"
+            },
+            {
+              "value": "scissors",
+              "label": "t:sections.all.icon.options.scissors"
+            },
+            {
+              "value": "settings",
+              "label": "t:sections.all.icon.options.settings"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.all.icon.options.shirt"
+            },
+            {
+              "value": "shop-alt",
+              "label": "t:sections.all.icon.options.shop-alt"
+            },
+            {
+              "value": "shopping-bag",
+              "label": "t:sections.all.icon.options.shopping-bag"
+            },
+            {
+              "value": "shopping-cart",
+              "label": "t:sections.all.icon.options.shopping-cart"
+            },
+            {
+              "value": "smile",
+              "label": "t:sections.all.icon.options.smile"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.all.icon.options.star"
+            },
+            {
+              "value": "sun",
+              "label": "t:sections.all.icon.options.sun"
+            },
+            {
+              "value": "support",
+              "label": "t:sections.all.icon.options.support"
+            },
+            {
+              "value": "tag",
+              "label": "t:sections.all.icon.options.tag"
+            },
+            {
+              "value": "telephone",
+              "label": "t:sections.all.icon.options.telephone"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.all.icon.options.truck"
+            },
+            {
+              "value": "wallet",
+              "label": "t:sections.all.icon.options.wallet"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.all.icon.options.washing"
+            },
+            {
+              "value": "water",
+              "label": "t:sections.all.icon.options.water"
+            },
+            {
+              "value": "yoga",
+              "label": "t:sections.all.icon.options.yoga"
+            }
+          ],
+          "default": "default_icon",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "text",
+          "id": "another_icon",
+          "label": "t:sections.all.icon.another_icon_label",
+          "info": "t:sections.all.icon.another_icon_info",
+          "visible_if": "{{ block.settings.icon == 'another_icon' }}"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image",
+          "label": "t:sections.multicolumn.blocks.column.settings.custom_image"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Menu",
+          "label": "t:sections.all.text.title"
+        }
+      ]
+    },
+    {
+      "type": "search",
+      "name": "t:settings_schema.search_navigation.search_header",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            {
+              "value": "default_icon",
+              "label": "t:sections.all.size.options__4.label"
+            },
+            {
+              "value": "another_icon",
+              "label": "t:sections.all.icon.another_icon_label"
+            },
+            {
+              "value": "activity",
+              "label": "t:sections.all.icon.options.activity"
+            },
+            {
+              "value": "archive",
+              "label": "t:sections.all.icon.options.archive"
+            },
+            {
+              "value": "arrow-down-cricle",
+              "label": "t:sections.all.icon.options.arrow-down-cricle"
+            },
+            {
+              "value": "arrow-left",
+              "label": "t:sections.all.icon.options.arrow-left"
+            },
+            {
+              "value": "arrow-left-circle",
+              "label": "t:sections.all.icon.options.arrow-left-circle"
+            },
+            {
+              "value": "arrow-right",
+              "label": "t:sections.all.icon.options.arrow-right"
+            },
+            {
+              "value": "arrow-right-circle",
+              "label": "t:sections.all.icon.options.arrow-right-circle"
+            },
+            {
+              "value": "arrow-up-circle",
+              "label": "t:sections.all.icon.options.arrow-up-circle"
+            },
+            {
+              "value": "chevron-left",
+              "label": "t:sections.all.icon.options.chevron-left"
+            },
+            {
+              "value": "trending-down",
+              "label": "t:sections.all.icon.options.trending-down"
+            },
+            {
+              "value": "tv",
+              "label": "t:sections.all.icon.options.tv"
+            },
+            {
+              "value": "trending-up",
+              "label": "t:sections.all.icon.options.trending-up"
+            },
+            {
+              "value": "zap",
+              "label": "t:sections.all.icon.options.zap"
+            },
+            {
+              "value": "1st-medal",
+              "label": "t:sections.all.icon.options.1st-medal"
+            },
+            {
+              "value": "award",
+              "label": "t:sections.all.icon.options.award"
+            },
+            {
+              "value": "bicycle",
+              "label": "t:sections.all.icon.options.bicycle"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.all.icon.options.box"
+            },
+            {
+              "value": "briefcase",
+              "label": "t:sections.all.icon.options.briefcase"
+            },
+            {
+              "value": "blink",
+              "label": "t:sections.all.icon.options.blink"
+            },
+            {
+              "value": "calendar",
+              "label": "t:sections.all.icon.options.calendar"
+            },
+            {
+              "value": "camera",
+              "label": "t:sections.all.icon.options.camera"
+            },
+            {
+              "value": "chat-bubble",
+              "label": "t:sections.all.icon.options.chat-bubble"
+            },
+            {
+              "value": "check-mark",
+              "label": "t:sections.all.icon.options.check-mark"
+            },
+            {
+              "value": "clock",
+              "label": "t:sections.all.icon.options.clock"
+            },
+            {
+              "value": "cloud-rain",
+              "label": "t:sections.all.icon.options.cloud-rain"
+            },
+            {
+              "value": "coffee",
+              "label": "t:sections.all.icon.options.coffee"
+            },
+            {
+              "value": "coin",
+              "label": "t:sections.all.icon.options.coin"
+            },
+            {
+              "value": "credit-card",
+              "label": "t:sections.all.icon.options.credit-card"
+            },
+            {
+              "value": "delivery-truck",
+              "label": "t:sections.all.icon.options.delivery-truck"
+            },
+            {
+              "value": "dollar-sign",
+              "label": "t:sections.all.icon.options.dollar-sign"
+            },
+            {
+              "value": "dna",
+              "label": "t:sections.all.icon.options.dna"
+            },
+            {
+              "value": "dark-mode",
+              "label": "t:sections.all.icon.options.dark-mode"
+            },
+            {
+              "value": "earth",
+              "label": "t:sections.all.icon.options.earth"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.all.icon.options.eye"
+            },
+            {
+              "value": "feather",
+              "label": "t:sections.all.icon.options.feather"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.all.icon.options.fire"
+            },
+            {
+              "value": "flower",
+              "label": "t:sections.all.icon.options.flower"
+            },
+            {
+              "value": "free-delivery",
+              "label": "t:sections.all.icon.options.free-delivery"
+            },
+            {
+              "value": "gift",
+              "label": "t:sections.all.icon.options.gift"
+            },
+            {
+              "value": "globe",
+              "label": "t:sections.all.icon.options.globe"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.all.icon.options.heart"
+            },
+            {
+              "value": "help",
+              "label": "t:sections.all.icon.options.help"
+            },
+            {
+              "value": "hot-sale",
+              "label": "t:sections.all.icon.options.hot-sale"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.all.icon.options.iron"
+            },
+            {
+              "value": "information",
+              "label": "t:sections.contact-form.settings.infomation.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.all.icon.options.leaf"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.all.icon.options.lock"
+            },
+            {
+              "value": "light-mode",
+              "label": "t:sections.all.icon.options.light-mode"
+            },
+            {
+              "value": "map-pin",
+              "label": "t:sections.all.icon.options.map-pin"
+            },
+            {
+              "value": "megaphone",
+              "label": "t:sections.all.icon.options.megaphone"
+            },
+            {
+              "value": "message-text",
+              "label": "t:sections.all.icon.options.message-text"
+            },
+            {
+              "value": "music",
+              "label": "t:sections.all.icon.options.music"
+            },
+            {
+              "value": "moon",
+              "label": "t:sections.all.icon.options.moon"
+            },
+            {
+              "value": "packages",
+              "label": "t:sections.all.icon.options.packages"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.all.icon.options.pants"
+            },
+            {
+              "value": "percent",
+              "label": "t:sections.all.icon.options.percent"
+            },
+            {
+              "value": "piggy-bank",
+              "label": "t:sections.all.icon.options.piggy-bank"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.all.icon.options.plane"
+            },
+            {
+              "value": "planet",
+              "label": "t:sections.all.icon.options.planet"
+            },
+            {
+              "value": "question-mark",
+              "label": "t:sections.all.icon.options.question-mark"
+            },
+            {
+              "value": "rocket",
+              "label": "t:sections.all.icon.options.rocket"
+            },
+            {
+              "value": "rulers",
+              "label": "t:sections.all.icon.options.rulers"
+            },
+            {
+              "value": "scissors",
+              "label": "t:sections.all.icon.options.scissors"
+            },
+            {
+              "value": "settings",
+              "label": "t:sections.all.icon.options.settings"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.all.icon.options.shirt"
+            },
+            {
+              "value": "shop-alt",
+              "label": "t:sections.all.icon.options.shop-alt"
+            },
+            {
+              "value": "shopping-bag",
+              "label": "t:sections.all.icon.options.shopping-bag"
+            },
+            {
+              "value": "shopping-cart",
+              "label": "t:sections.all.icon.options.shopping-cart"
+            },
+            {
+              "value": "smile",
+              "label": "t:sections.all.icon.options.smile"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.all.icon.options.star"
+            },
+            {
+              "value": "sun",
+              "label": "t:sections.all.icon.options.sun"
+            },
+            {
+              "value": "support",
+              "label": "t:sections.all.icon.options.support"
+            },
+            {
+              "value": "tag",
+              "label": "t:sections.all.icon.options.tag"
+            },
+            {
+              "value": "telephone",
+              "label": "t:sections.all.icon.options.telephone"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.all.icon.options.truck"
+            },
+            {
+              "value": "wallet",
+              "label": "t:sections.all.icon.options.wallet"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.all.icon.options.washing"
+            },
+            {
+              "value": "water",
+              "label": "t:sections.all.icon.options.water"
+            },
+            {
+              "value": "yoga",
+              "label": "t:sections.all.icon.options.yoga"
+            }
+          ],
+          "default": "default_icon",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "text",
+          "id": "another_icon",
+          "label": "t:sections.all.icon.another_icon_label",
+          "info": "t:sections.all.icon.another_icon_info",
+          "visible_if": "{{ block.settings.icon == 'another_icon' }}"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image",
+          "label": "t:sections.multicolumn.blocks.column.settings.custom_image"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Search",
+          "label": "t:sections.all.text.title"
+        }
+      ]
+    },
+    {
+      "type": "account",
+      "name": "t:sections.main-account.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            {
+              "value": "default_icon",
+              "label": "t:sections.all.size.options__4.label"
+            },
+            {
+              "value": "another_icon",
+              "label": "t:sections.all.icon.another_icon_label"
+            },
+            {
+              "value": "activity",
+              "label": "t:sections.all.icon.options.activity"
+            },
+            {
+              "value": "archive",
+              "label": "t:sections.all.icon.options.archive"
+            },
+            {
+              "value": "arrow-down-cricle",
+              "label": "t:sections.all.icon.options.arrow-down-cricle"
+            },
+            {
+              "value": "arrow-left",
+              "label": "t:sections.all.icon.options.arrow-left"
+            },
+            {
+              "value": "arrow-left-circle",
+              "label": "t:sections.all.icon.options.arrow-left-circle"
+            },
+            {
+              "value": "arrow-right",
+              "label": "t:sections.all.icon.options.arrow-right"
+            },
+            {
+              "value": "arrow-right-circle",
+              "label": "t:sections.all.icon.options.arrow-right-circle"
+            },
+            {
+              "value": "arrow-up-circle",
+              "label": "t:sections.all.icon.options.arrow-up-circle"
+            },
+            {
+              "value": "chevron-left",
+              "label": "t:sections.all.icon.options.chevron-left"
+            },
+            {
+              "value": "trending-down",
+              "label": "t:sections.all.icon.options.trending-down"
+            },
+            {
+              "value": "tv",
+              "label": "t:sections.all.icon.options.tv"
+            },
+            {
+              "value": "trending-up",
+              "label": "t:sections.all.icon.options.trending-up"
+            },
+            {
+              "value": "zap",
+              "label": "t:sections.all.icon.options.zap"
+            },
+            {
+              "value": "1st-medal",
+              "label": "t:sections.all.icon.options.1st-medal"
+            },
+            {
+              "value": "award",
+              "label": "t:sections.all.icon.options.award"
+            },
+            {
+              "value": "bicycle",
+              "label": "t:sections.all.icon.options.bicycle"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.all.icon.options.box"
+            },
+            {
+              "value": "briefcase",
+              "label": "t:sections.all.icon.options.briefcase"
+            },
+            {
+              "value": "blink",
+              "label": "t:sections.all.icon.options.blink"
+            },
+            {
+              "value": "calendar",
+              "label": "t:sections.all.icon.options.calendar"
+            },
+            {
+              "value": "camera",
+              "label": "t:sections.all.icon.options.camera"
+            },
+            {
+              "value": "chat-bubble",
+              "label": "t:sections.all.icon.options.chat-bubble"
+            },
+            {
+              "value": "check-mark",
+              "label": "t:sections.all.icon.options.check-mark"
+            },
+            {
+              "value": "clock",
+              "label": "t:sections.all.icon.options.clock"
+            },
+            {
+              "value": "cloud-rain",
+              "label": "t:sections.all.icon.options.cloud-rain"
+            },
+            {
+              "value": "coffee",
+              "label": "t:sections.all.icon.options.coffee"
+            },
+            {
+              "value": "coin",
+              "label": "t:sections.all.icon.options.coin"
+            },
+            {
+              "value": "credit-card",
+              "label": "t:sections.all.icon.options.credit-card"
+            },
+            {
+              "value": "delivery-truck",
+              "label": "t:sections.all.icon.options.delivery-truck"
+            },
+            {
+              "value": "dollar-sign",
+              "label": "t:sections.all.icon.options.dollar-sign"
+            },
+            {
+              "value": "dna",
+              "label": "t:sections.all.icon.options.dna"
+            },
+            {
+              "value": "dark-mode",
+              "label": "t:sections.all.icon.options.dark-mode"
+            },
+            {
+              "value": "earth",
+              "label": "t:sections.all.icon.options.earth"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.all.icon.options.eye"
+            },
+            {
+              "value": "feather",
+              "label": "t:sections.all.icon.options.feather"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.all.icon.options.fire"
+            },
+            {
+              "value": "flower",
+              "label": "t:sections.all.icon.options.flower"
+            },
+            {
+              "value": "free-delivery",
+              "label": "t:sections.all.icon.options.free-delivery"
+            },
+            {
+              "value": "gift",
+              "label": "t:sections.all.icon.options.gift"
+            },
+            {
+              "value": "globe",
+              "label": "t:sections.all.icon.options.globe"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.all.icon.options.heart"
+            },
+            {
+              "value": "help",
+              "label": "t:sections.all.icon.options.help"
+            },
+            {
+              "value": "hot-sale",
+              "label": "t:sections.all.icon.options.hot-sale"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.all.icon.options.iron"
+            },
+            {
+              "value": "information",
+              "label": "t:sections.contact-form.settings.infomation.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.all.icon.options.leaf"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.all.icon.options.lock"
+            },
+            {
+              "value": "light-mode",
+              "label": "t:sections.all.icon.options.light-mode"
+            },
+            {
+              "value": "map-pin",
+              "label": "t:sections.all.icon.options.map-pin"
+            },
+            {
+              "value": "megaphone",
+              "label": "t:sections.all.icon.options.megaphone"
+            },
+            {
+              "value": "message-text",
+              "label": "t:sections.all.icon.options.message-text"
+            },
+            {
+              "value": "music",
+              "label": "t:sections.all.icon.options.music"
+            },
+            {
+              "value": "moon",
+              "label": "t:sections.all.icon.options.moon"
+            },
+            {
+              "value": "packages",
+              "label": "t:sections.all.icon.options.packages"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.all.icon.options.pants"
+            },
+            {
+              "value": "percent",
+              "label": "t:sections.all.icon.options.percent"
+            },
+            {
+              "value": "piggy-bank",
+              "label": "t:sections.all.icon.options.piggy-bank"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.all.icon.options.plane"
+            },
+            {
+              "value": "planet",
+              "label": "t:sections.all.icon.options.planet"
+            },
+            {
+              "value": "question-mark",
+              "label": "t:sections.all.icon.options.question-mark"
+            },
+            {
+              "value": "rocket",
+              "label": "t:sections.all.icon.options.rocket"
+            },
+            {
+              "value": "rulers",
+              "label": "t:sections.all.icon.options.rulers"
+            },
+            {
+              "value": "scissors",
+              "label": "t:sections.all.icon.options.scissors"
+            },
+            {
+              "value": "settings",
+              "label": "t:sections.all.icon.options.settings"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.all.icon.options.shirt"
+            },
+            {
+              "value": "shop-alt",
+              "label": "t:sections.all.icon.options.shop-alt"
+            },
+            {
+              "value": "shopping-bag",
+              "label": "t:sections.all.icon.options.shopping-bag"
+            },
+            {
+              "value": "shopping-cart",
+              "label": "t:sections.all.icon.options.shopping-cart"
+            },
+            {
+              "value": "smile",
+              "label": "t:sections.all.icon.options.smile"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.all.icon.options.star"
+            },
+            {
+              "value": "sun",
+              "label": "t:sections.all.icon.options.sun"
+            },
+            {
+              "value": "support",
+              "label": "t:sections.all.icon.options.support"
+            },
+            {
+              "value": "tag",
+              "label": "t:sections.all.icon.options.tag"
+            },
+            {
+              "value": "telephone",
+              "label": "t:sections.all.icon.options.telephone"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.all.icon.options.truck"
+            },
+            {
+              "value": "wallet",
+              "label": "t:sections.all.icon.options.wallet"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.all.icon.options.washing"
+            },
+            {
+              "value": "water",
+              "label": "t:sections.all.icon.options.water"
+            },
+            {
+              "value": "yoga",
+              "label": "t:sections.all.icon.options.yoga"
+            }
+          ],
+          "default": "default_icon",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "text",
+          "id": "another_icon",
+          "label": "t:sections.all.icon.another_icon_label",
+          "info": "t:sections.all.icon.another_icon_info",
+          "visible_if": "{{ block.settings.icon == 'another_icon' }}"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image",
+          "label": "t:sections.multicolumn.blocks.column.settings.custom_image"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Account",
+          "label": "t:sections.all.text.title"
+        }
+      ]
+    },
+    {
+      "type": "cart",
+      "name": "t:settings_schema.cart.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            {
+              "value": "use_theme_settings",
+              "label": "t:sections.mobile-dock.blocks.cart.icon_cart_theme_settings"
+            },
+            {
+              "value": "another_icon",
+              "label": "t:sections.all.icon.another_icon_label"
+            },
+            {
+              "value": "activity",
+              "label": "t:sections.all.icon.options.activity"
+            },
+            {
+              "value": "archive",
+              "label": "t:sections.all.icon.options.archive"
+            },
+            {
+              "value": "arrow-down-cricle",
+              "label": "t:sections.all.icon.options.arrow-down-cricle"
+            },
+            {
+              "value": "arrow-left",
+              "label": "t:sections.all.icon.options.arrow-left"
+            },
+            {
+              "value": "arrow-left-circle",
+              "label": "t:sections.all.icon.options.arrow-left-circle"
+            },
+            {
+              "value": "arrow-right",
+              "label": "t:sections.all.icon.options.arrow-right"
+            },
+            {
+              "value": "arrow-right-circle",
+              "label": "t:sections.all.icon.options.arrow-right-circle"
+            },
+            {
+              "value": "arrow-up-circle",
+              "label": "t:sections.all.icon.options.arrow-up-circle"
+            },
+            {
+              "value": "chevron-left",
+              "label": "t:sections.all.icon.options.chevron-left"
+            },
+            {
+              "value": "trending-down",
+              "label": "t:sections.all.icon.options.trending-down"
+            },
+            {
+              "value": "tv",
+              "label": "t:sections.all.icon.options.tv"
+            },
+            {
+              "value": "trending-up",
+              "label": "t:sections.all.icon.options.trending-up"
+            },
+            {
+              "value": "zap",
+              "label": "t:sections.all.icon.options.zap"
+            },
+            {
+              "value": "1st-medal",
+              "label": "t:sections.all.icon.options.1st-medal"
+            },
+            {
+              "value": "award",
+              "label": "t:sections.all.icon.options.award"
+            },
+            {
+              "value": "bicycle",
+              "label": "t:sections.all.icon.options.bicycle"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.all.icon.options.box"
+            },
+            {
+              "value": "briefcase",
+              "label": "t:sections.all.icon.options.briefcase"
+            },
+            {
+              "value": "blink",
+              "label": "t:sections.all.icon.options.blink"
+            },
+            {
+              "value": "calendar",
+              "label": "t:sections.all.icon.options.calendar"
+            },
+            {
+              "value": "camera",
+              "label": "t:sections.all.icon.options.camera"
+            },
+            {
+              "value": "chat-bubble",
+              "label": "t:sections.all.icon.options.chat-bubble"
+            },
+            {
+              "value": "check-mark",
+              "label": "t:sections.all.icon.options.check-mark"
+            },
+            {
+              "value": "clock",
+              "label": "t:sections.all.icon.options.clock"
+            },
+            {
+              "value": "cloud-rain",
+              "label": "t:sections.all.icon.options.cloud-rain"
+            },
+            {
+              "value": "coffee",
+              "label": "t:sections.all.icon.options.coffee"
+            },
+            {
+              "value": "coin",
+              "label": "t:sections.all.icon.options.coin"
+            },
+            {
+              "value": "credit-card",
+              "label": "t:sections.all.icon.options.credit-card"
+            },
+            {
+              "value": "delivery-truck",
+              "label": "t:sections.all.icon.options.delivery-truck"
+            },
+            {
+              "value": "dollar-sign",
+              "label": "t:sections.all.icon.options.dollar-sign"
+            },
+            {
+              "value": "dna",
+              "label": "t:sections.all.icon.options.dna"
+            },
+            {
+              "value": "dark-mode",
+              "label": "t:sections.all.icon.options.dark-mode"
+            },
+            {
+              "value": "earth",
+              "label": "t:sections.all.icon.options.earth"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.all.icon.options.eye"
+            },
+            {
+              "value": "feather",
+              "label": "t:sections.all.icon.options.feather"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.all.icon.options.fire"
+            },
+            {
+              "value": "flower",
+              "label": "t:sections.all.icon.options.flower"
+            },
+            {
+              "value": "free-delivery",
+              "label": "t:sections.all.icon.options.free-delivery"
+            },
+            {
+              "value": "gift",
+              "label": "t:sections.all.icon.options.gift"
+            },
+            {
+              "value": "globe",
+              "label": "t:sections.all.icon.options.globe"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.all.icon.options.heart"
+            },
+            {
+              "value": "help",
+              "label": "t:sections.all.icon.options.help"
+            },
+            {
+              "value": "hot-sale",
+              "label": "t:sections.all.icon.options.hot-sale"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.all.icon.options.iron"
+            },
+            {
+              "value": "information",
+              "label": "t:sections.contact-form.settings.infomation.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.all.icon.options.leaf"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.all.icon.options.lock"
+            },
+            {
+              "value": "light-mode",
+              "label": "t:sections.all.icon.options.light-mode"
+            },
+            {
+              "value": "map-pin",
+              "label": "t:sections.all.icon.options.map-pin"
+            },
+            {
+              "value": "megaphone",
+              "label": "t:sections.all.icon.options.megaphone"
+            },
+            {
+              "value": "message-text",
+              "label": "t:sections.all.icon.options.message-text"
+            },
+            {
+              "value": "music",
+              "label": "t:sections.all.icon.options.music"
+            },
+            {
+              "value": "moon",
+              "label": "t:sections.all.icon.options.moon"
+            },
+            {
+              "value": "packages",
+              "label": "t:sections.all.icon.options.packages"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.all.icon.options.pants"
+            },
+            {
+              "value": "percent",
+              "label": "t:sections.all.icon.options.percent"
+            },
+            {
+              "value": "piggy-bank",
+              "label": "t:sections.all.icon.options.piggy-bank"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.all.icon.options.plane"
+            },
+            {
+              "value": "planet",
+              "label": "t:sections.all.icon.options.planet"
+            },
+            {
+              "value": "question-mark",
+              "label": "t:sections.all.icon.options.question-mark"
+            },
+            {
+              "value": "rocket",
+              "label": "t:sections.all.icon.options.rocket"
+            },
+            {
+              "value": "rulers",
+              "label": "t:sections.all.icon.options.rulers"
+            },
+            {
+              "value": "scissors",
+              "label": "t:sections.all.icon.options.scissors"
+            },
+            {
+              "value": "settings",
+              "label": "t:sections.all.icon.options.settings"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.all.icon.options.shirt"
+            },
+            {
+              "value": "shop-alt",
+              "label": "t:sections.all.icon.options.shop-alt"
+            },
+            {
+              "value": "shopping-bag",
+              "label": "t:sections.all.icon.options.shopping-bag"
+            },
+            {
+              "value": "shopping-cart",
+              "label": "t:sections.all.icon.options.shopping-cart"
+            },
+            {
+              "value": "smile",
+              "label": "t:sections.all.icon.options.smile"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.all.icon.options.star"
+            },
+            {
+              "value": "sun",
+              "label": "t:sections.all.icon.options.sun"
+            },
+            {
+              "value": "support",
+              "label": "t:sections.all.icon.options.support"
+            },
+            {
+              "value": "tag",
+              "label": "t:sections.all.icon.options.tag"
+            },
+            {
+              "value": "telephone",
+              "label": "t:sections.all.icon.options.telephone"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.all.icon.options.truck"
+            },
+            {
+              "value": "wallet",
+              "label": "t:sections.all.icon.options.wallet"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.all.icon.options.washing"
+            },
+            {
+              "value": "water",
+              "label": "t:sections.all.icon.options.water"
+            },
+            {
+              "value": "yoga",
+              "label": "t:sections.all.icon.options.yoga"
+            }
+          ],
+          "default": "use_theme_settings",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "text",
+          "id": "another_icon",
+          "label": "t:sections.all.icon.another_icon_label",
+          "info": "t:sections.all.icon.another_icon_info",
+          "visible_if": "{{ block.settings.icon == 'another_icon' }}"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image",
+          "label": "t:sections.multicolumn.blocks.column.settings.custom_image"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Cart",
+          "label": "t:sections.all.text.title"
+        }
+      ]
+    },
+    {
+      "type": "link",
+      "name": "t:sections.announcement-bar.blocks.announcement.link.label",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            {
+              "value": "default_icon",
+              "label": "t:sections.all.size.options__4.label"
+            },
+            {
+              "value": "another_icon",
+              "label": "t:sections.all.icon.another_icon_label"
+            },
+            {
+              "value": "activity",
+              "label": "t:sections.all.icon.options.activity"
+            },
+            {
+              "value": "archive",
+              "label": "t:sections.all.icon.options.archive"
+            },
+            {
+              "value": "arrow-down-cricle",
+              "label": "t:sections.all.icon.options.arrow-down-cricle"
+            },
+            {
+              "value": "arrow-left",
+              "label": "t:sections.all.icon.options.arrow-left"
+            },
+            {
+              "value": "arrow-left-circle",
+              "label": "t:sections.all.icon.options.arrow-left-circle"
+            },
+            {
+              "value": "arrow-right",
+              "label": "t:sections.all.icon.options.arrow-right"
+            },
+            {
+              "value": "arrow-right-circle",
+              "label": "t:sections.all.icon.options.arrow-right-circle"
+            },
+            {
+              "value": "arrow-up-circle",
+              "label": "t:sections.all.icon.options.arrow-up-circle"
+            },
+            {
+              "value": "chevron-left",
+              "label": "t:sections.all.icon.options.chevron-left"
+            },
+            {
+              "value": "trending-down",
+              "label": "t:sections.all.icon.options.trending-down"
+            },
+            {
+              "value": "tv",
+              "label": "t:sections.all.icon.options.tv"
+            },
+            {
+              "value": "trending-up",
+              "label": "t:sections.all.icon.options.trending-up"
+            },
+            {
+              "value": "zap",
+              "label": "t:sections.all.icon.options.zap"
+            },
+            {
+              "value": "1st-medal",
+              "label": "t:sections.all.icon.options.1st-medal"
+            },
+            {
+              "value": "award",
+              "label": "t:sections.all.icon.options.award"
+            },
+            {
+              "value": "bicycle",
+              "label": "t:sections.all.icon.options.bicycle"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.all.icon.options.box"
+            },
+            {
+              "value": "briefcase",
+              "label": "t:sections.all.icon.options.briefcase"
+            },
+            {
+              "value": "blink",
+              "label": "t:sections.all.icon.options.blink"
+            },
+            {
+              "value": "calendar",
+              "label": "t:sections.all.icon.options.calendar"
+            },
+            {
+              "value": "camera",
+              "label": "t:sections.all.icon.options.camera"
+            },
+            {
+              "value": "chat-bubble",
+              "label": "t:sections.all.icon.options.chat-bubble"
+            },
+            {
+              "value": "check-mark",
+              "label": "t:sections.all.icon.options.check-mark"
+            },
+            {
+              "value": "clock",
+              "label": "t:sections.all.icon.options.clock"
+            },
+            {
+              "value": "cloud-rain",
+              "label": "t:sections.all.icon.options.cloud-rain"
+            },
+            {
+              "value": "coffee",
+              "label": "t:sections.all.icon.options.coffee"
+            },
+            {
+              "value": "coin",
+              "label": "t:sections.all.icon.options.coin"
+            },
+            {
+              "value": "credit-card",
+              "label": "t:sections.all.icon.options.credit-card"
+            },
+            {
+              "value": "delivery-truck",
+              "label": "t:sections.all.icon.options.delivery-truck"
+            },
+            {
+              "value": "dollar-sign",
+              "label": "t:sections.all.icon.options.dollar-sign"
+            },
+            {
+              "value": "dna",
+              "label": "t:sections.all.icon.options.dna"
+            },
+            {
+              "value": "dark-mode",
+              "label": "t:sections.all.icon.options.dark-mode"
+            },
+            {
+              "value": "earth",
+              "label": "t:sections.all.icon.options.earth"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.all.icon.options.eye"
+            },
+            {
+              "value": "feather",
+              "label": "t:sections.all.icon.options.feather"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.all.icon.options.fire"
+            },
+            {
+              "value": "flower",
+              "label": "t:sections.all.icon.options.flower"
+            },
+            {
+              "value": "free-delivery",
+              "label": "t:sections.all.icon.options.free-delivery"
+            },
+            {
+              "value": "gift",
+              "label": "t:sections.all.icon.options.gift"
+            },
+            {
+              "value": "globe",
+              "label": "t:sections.all.icon.options.globe"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.all.icon.options.heart"
+            },
+            {
+              "value": "help",
+              "label": "t:sections.all.icon.options.help"
+            },
+            {
+              "value": "hot-sale",
+              "label": "t:sections.all.icon.options.hot-sale"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.all.icon.options.iron"
+            },
+            {
+              "value": "information",
+              "label": "t:sections.contact-form.settings.infomation.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.all.icon.options.leaf"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.all.icon.options.lock"
+            },
+            {
+              "value": "light-mode",
+              "label": "t:sections.all.icon.options.light-mode"
+            },
+            {
+              "value": "map-pin",
+              "label": "t:sections.all.icon.options.map-pin"
+            },
+            {
+              "value": "megaphone",
+              "label": "t:sections.all.icon.options.megaphone"
+            },
+            {
+              "value": "message-text",
+              "label": "t:sections.all.icon.options.message-text"
+            },
+            {
+              "value": "music",
+              "label": "t:sections.all.icon.options.music"
+            },
+            {
+              "value": "moon",
+              "label": "t:sections.all.icon.options.moon"
+            },
+            {
+              "value": "packages",
+              "label": "t:sections.all.icon.options.packages"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.all.icon.options.pants"
+            },
+            {
+              "value": "percent",
+              "label": "t:sections.all.icon.options.percent"
+            },
+            {
+              "value": "piggy-bank",
+              "label": "t:sections.all.icon.options.piggy-bank"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.all.icon.options.plane"
+            },
+            {
+              "value": "planet",
+              "label": "t:sections.all.icon.options.planet"
+            },
+            {
+              "value": "question-mark",
+              "label": "t:sections.all.icon.options.question-mark"
+            },
+            {
+              "value": "rocket",
+              "label": "t:sections.all.icon.options.rocket"
+            },
+            {
+              "value": "rulers",
+              "label": "t:sections.all.icon.options.rulers"
+            },
+            {
+              "value": "scissors",
+              "label": "t:sections.all.icon.options.scissors"
+            },
+            {
+              "value": "settings",
+              "label": "t:sections.all.icon.options.settings"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.all.icon.options.shirt"
+            },
+            {
+              "value": "shop-alt",
+              "label": "t:sections.all.icon.options.shop-alt"
+            },
+            {
+              "value": "shopping-bag",
+              "label": "t:sections.all.icon.options.shopping-bag"
+            },
+            {
+              "value": "shopping-cart",
+              "label": "t:sections.all.icon.options.shopping-cart"
+            },
+            {
+              "value": "smile",
+              "label": "t:sections.all.icon.options.smile"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.all.icon.options.star"
+            },
+            {
+              "value": "sun",
+              "label": "t:sections.all.icon.options.sun"
+            },
+            {
+              "value": "support",
+              "label": "t:sections.all.icon.options.support"
+            },
+            {
+              "value": "tag",
+              "label": "t:sections.all.icon.options.tag"
+            },
+            {
+              "value": "telephone",
+              "label": "t:sections.all.icon.options.telephone"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.all.icon.options.truck"
+            },
+            {
+              "value": "wallet",
+              "label": "t:sections.all.icon.options.wallet"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.all.icon.options.washing"
+            },
+            {
+              "value": "water",
+              "label": "t:sections.all.icon.options.water"
+            },
+            {
+              "value": "yoga",
+              "label": "t:sections.all.icon.options.yoga"
+            }
+          ],
+          "default": "default_icon",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "text",
+          "id": "another_icon",
+          "label": "t:sections.all.icon.another_icon_label",
+          "info": "t:sections.all.icon.another_icon_info",
+          "visible_if": "{{ block.settings.icon == 'another_icon' }}"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image",
+          "label": "t:sections.multicolumn.blocks.column.settings.custom_image"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info"
+        },
+        {
+          "type": "text",
+          "id": "link_title",
+          "default": "Link",
+          "label": "t:sections.quick-links.blocks.link_list.settings.link_title.label"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "t:sections.video.settings.video_url.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_new_window",
+          "default": false,
+          "label": "t:sections.all.open_new_window.label"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.mobile-dock.name",
+      "blocks": [
+        {
+          "type": "home"
+        },
+        {
+          "type": "menu"
+        },
+        {
+          "type": "search"
+        },
+        {
+          "type": "account"
+        },
+        {
+          "type": "cart"
+        },
+        {
+          "type": "link"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

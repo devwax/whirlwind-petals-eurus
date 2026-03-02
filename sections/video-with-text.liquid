@@ -1,0 +1,1523 @@
+{% liquid
+  assign base_size_heading = settings.heading_base_size | times: 0.0225
+  assign font_size_heading = section.settings.heading_size_video | times: 0.01 | times: base_size_heading
+  assign size_text = section.settings.text_size | times: settings.text_base_size | times: 0.0000875
+  assign video_alt = section.settings.video_alt_text
+
+  assign check_video_desktop = false
+  if section.settings.video_url.type == 'youtube'
+    assign desktop_video_type = 'youtube'
+    assign check_video_desktop = true
+    assign desktop_video_id = section.settings.video_url.id
+  endif
+  if section.settings.video_url.type == 'vimeo'
+    assign desktop_video_type = 'vimeo'
+    assign check_video_desktop = true
+    assign desktop_video_id = section.settings.video_url.id
+  endif
+  if section.settings.video != null 
+    assign desktop_video_type = 'video_select'
+    assign check_video_desktop = true
+  endif
+  assign check_video_mobile = false
+  if section.settings.mobile_video_url.type == 'youtube'
+    assign mobile_video_type = 'youtube'
+    assign check_video_mobile = true
+    assign mobile_video_id = section.settings.mobile_video_url.id
+  endif
+  if section.settings.mobile_video_url.type == 'vimeo'
+    assign mobile_video_type = 'vimeo'
+    assign check_video_mobile = true
+    assign mobile_video_id = section.settings.mobile_video_url.id
+  endif
+  if section.settings.mobile_video != null 
+    assign mobile_video_type = 'video_select'
+    assign check_video_mobile = true
+  endif 
+
+  assign rounded_desktop = section.settings.rounded_corners
+  assign rounded_mobile = section.settings.rounded_corners_mobile
+  if section.settings.adapt_corners_desktop 
+    if settings.edges_type == 'rounded_corners'
+      assign rounded_desktop = true
+    else
+      assign rounded_desktop = false
+    endif 
+  endif
+  if section.settings.adapt_corners_mobile
+    if settings.edges_type == 'rounded_corners'
+      assign rounded_mobile = true
+    else
+      assign rounded_mobile = false
+    endif 
+  endif
+%}
+{% style %}
+  .button--{{ section.id }}.button-solid,
+  .button--{{ section.id }}.button-solid:before { 
+    {% unless section.settings.color_button.alpha == 0.0 -%}
+      --colors-line-and-border: {{ section.settings.color_button.red }}, {{ section.settings.color_button.green }}, {{ section.settings.color_button.blue }};
+      --colors-button: {{ section.settings.color_button.red }}, {{ section.settings.color_button.green }}, {{ section.settings.color_button.blue }};
+    {%- else -%}
+      --colors-line-and-border: var(--colors-button);
+    {%- endunless %}
+    {% unless section.settings.color_button_hover.alpha == 0.0 -%}
+      --colors-button-hover: rgb({{ section.settings.color_button_hover.red }}, {{ section.settings.color_button_hover.green }}, {{ section.settings.color_button_hover.blue }});
+    {%- endunless %}
+    {% unless section.settings.color_text_button.alpha == 0.0 -%}
+      --colors-button-text: {{ section.settings.color_text_button.red }}, {{ section.settings.color_text_button.green }}, {{ section.settings.color_text_button.blue }};
+    {%- endunless %}
+    {% unless section.settings.color_text_button_hover.alpha == 0.0 -%}
+      --colors-button-text-hover: {{ section.settings.color_text_button_hover.red }}, {{ section.settings.color_text_button_hover.green }}, {{ section.settings.color_text_button_hover.blue }};
+    {%- endunless %}
+  }
+  .button--{{ section.id }}.button-solid .icon-separator-{{ section.id }} {
+    border-color: rgba(var(--colors-button-text));
+  }
+  .button--{{ section.id }}.button-solid:hover .icon-separator-{{ section.id }} {
+    border-color: rgba(var(--colors-button-text-hover));
+  }
+  .button--{{ section.id }}.button-outline {
+    {% if section.settings.secondary_button_text.alpha != 0.0 -%} 
+      --colors-secondary-button: {{ section.settings.secondary_button_text.red }}, {{ section.settings.secondary_button_text.green }}, {{ section.settings.secondary_button_text.blue }}; 
+      --colors-line-secondary-button: {{ section.settings.secondary_button_text.red }}, {{ section.settings.secondary_button_text.green }}, {{ section.settings.secondary_button_text.blue }}; 
+      --background-secondary-button: transparent;
+    {%- endif %}
+    {% if section.settings.color_button_secondary.alpha != 0.0 -%} 
+      --background-secondary-button: {{ section.settings.color_button_secondary.red }}, {{ section.settings.color_button_secondary.green }}, {{ section.settings.color_button_secondary.blue }}; 
+      --colors-line-secondary-button: {{ section.settings.color_button_secondary.red }}, {{ section.settings.color_button_secondary.green }}, {{ section.settings.color_button_secondary.blue }}; 
+    {%- endif %}
+  }
+  {% if section.settings.colors_text_link.alpha != 0.0 -%}
+    .button--{{ section.id }}.button-text-link, .button--{{ section.id }}.button-text-link::after, .button--{{ section.id }}.button-text-link::before {
+      --colors-text-link: {{ section.settings.colors_text_link.red }}, {{ section.settings.colors_text_link.green }}, {{ section.settings.colors_text_link.blue }};
+    }
+  {%- endif %}
+  .heading-{{ section.id }}{
+    font-size: {{ font_size_heading | times: 0.5 }}rem;
+  }
+  .content-text-{{ section.id }} {
+    font-size: {{ size_text | times: 0.9 }}rem;
+  }
+  @media (min-width: 768px) {
+    .content-text-{{ section.id }} {
+      font-size: {{ size_text }}rem;
+    }
+    .heading-{{ section.id }}{
+      font-size: {{ font_size_heading }}rem;
+    }
+  }
+  {% if section.settings.content_position == "custom" -%}
+    @media screen and (min-width: 1024px) {
+      .promotion-banner--{{ section.id }} {
+        left:{{ section.settings.content_horizontal }}%;
+        top:{{ section.settings.content_vertical }}%;
+        transform: translate(-{{ section.settings.content_horizontal }}%,-{{ section.settings.content_vertical }}%);
+      }
+    }
+  {%- endif %}
+  .product-title-{{ section.id }} {
+    font-size: {{ settings.text_base_size | times: 0.01 | times: 0.8 }}rem;
+  }
+  @media (min-width: 768px) {
+    .product-title-{{ section.id }} {
+      font-size: {{ settings.text_base_size | times: 0.01 }}rem;
+    }
+  }
+  {% if section.settings.video_desktop_height != "natural" -%}
+    @media (min-width: 768px) {
+      .video-desktop-height-{{ section.id }} {
+        {% if desktop_video_type == 'video_select' -%}
+          width: min(calc({{ section.settings.video_desktop_height }}vh * {{ section.settings.video.aspect_ratio }}), 100vw);
+        {%- else -%}
+          width: min(calc({{ section.settings.video_desktop_height }}vh * 16/9), 100vw);
+        {%- endif %}
+        {% if section.settings.full_width -%}
+          max-width: 100vw;
+        {%- endif %}
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+  {%- endif %}
+  {% if section.settings.video_mobile_height != "natural" -%}
+    @media (max-width: 767px) {
+      .video-mobile-height-{{ section.id }} {
+        {% if mobile_video_type == 'video_select' -%}
+          width: min(calc({{ section.settings.video_mobile_height }}vh * {{ section.settings.video.aspect_ratio }}), 100vw);
+        {%- else -%}
+          width: min(calc({{ section.settings.video_mobile_height }}vh * 16/9), 100vw);
+        {%- endif %}
+        {% if section.settings.full_width_mobile -%}
+          max-width: 100vw;
+        {%- endif %}
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+  {%- endif %}
+  {% if rounded_desktop -%} 
+    @media (min-width: 768px) {
+      .video-with-text-wrapper-{{ section.id }} {
+        {% if section.blocks != blank and section.blocks[0].settings.list_background_color_light.alpha != 0.0 -%}
+          border-top-left-radius: 10px;
+          border-top-right-radius: 10px;
+        {%- else -%}
+          border-radius: 10px;
+        {%- endif %}
+      }
+      .dark .video-with-text-wrapper-{{ section.id }} {
+        {% if section.blocks != blank and section.blocks[0].settings.list_background_color_dark.alpha != 0.0 -%}
+          border-top-left-radius: 10px;
+          border-top-right-radius: 10px;
+          border-bottom-left-radius: 0px;
+          border-bottom-right-radius: 0px;
+        {%- else -%}
+          border-radius: 10px;
+        {%- endif %}
+      }
+      .video-with-text-product-container-{{ section.id }} {
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+      }
+    }
+  {%- endif %}
+  {% if rounded_mobile -%}
+    @media (max-width: 767px) {
+      .video-with-text-wrapper-{{ section.id }} {
+        {% if section.blocks != blank and section.blocks[0].settings.list_background_color_light.alpha != 0.0 -%}
+          border-top-left-radius: 10px;
+          border-top-right-radius: 10px;
+        {%- else -%}
+          border-radius: 10px;
+        {%- endif %}
+      }
+      .dark .video-with-text-wrapper-{{ section.id }} {
+        {% if section.blocks != blank and section.blocks[0].settings.list_background_color_dark.alpha != 0.0 -%}
+          border-top-left-radius: 10px;
+          border-top-right-radius: 10px;
+          border-bottom-left-radius: 0px;
+          border-bottom-right-radius: 0px;
+        {%- else -%}
+          border-radius: 10px;
+        {%- endif %}
+      }
+      .video-with-text-product-container-{{ section.id }} {
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+      }
+    }
+  {%- endif %}
+  {% if section.settings.video != blank and section.settings.mobile_video -%}
+    .video-height-{{ section.id }} {
+      padding-bottom: {{ 1 | divided_by: section.settings.mobile_video.aspect_ratio | times: 100 }}%;
+    }
+    @media (min-width: 768px) {
+      .video-height-{{ section.id }} {
+        padding-bottom: {{ 1 | divided_by: section.settings.video.aspect_ratio | times: 100 }}%;
+      }
+    }
+  {% elsif section.settings.video != blank and section.settings.mobile_video_url == blank -%}
+    .video-height-{{ section.id }} {
+      padding-bottom: {{ 1 | divided_by: section.settings.video.aspect_ratio | times: 100 }}%;
+    }
+  {% elsif section.settings.video != blank and section.settings.mobile_video_url != blank -%}
+    .video-height-{{ section.id }} {
+      padding-bottom: 56.25%;
+    }
+    @media (min-width: 768px) {
+      .video-height-{{ section.id }} {
+        padding-bottom: {{ 1 | divided_by: section.settings.video.aspect_ratio | times: 100 }}%;
+      }
+    }
+  {% elsif section.settings.mobile_video != blank and section.settings.video_url == blank -%}
+    .video-height-{{ section.id }} {
+      padding-bottom: {{ 1 | divided_by: section.settings.mobile_video.aspect_ratio | times: 100 }}%;
+    }
+  {% elsif section.settings.mobile_video != blank and section.settings.video_url != blank -%}
+    .video-height-{{ section.id }} {
+      padding-bottom: {{ 1 | divided_by: section.settings.mobile_video.aspect_ratio | times: 100 }}%;
+    }
+    @media (min-width: 768px) {
+      .video-height-{{ section.id }} {
+        padding-bottom: 56.25%;
+      }
+    }
+  {%- endif %}
+{% endstyle %}
+<div {% if section.blocks[0].settings.list_products != blank and section.blocks[0].settings.show_add_all %}x-data="xProductsList"{% endif %} class="add-all-container-{{ section.id }} x-container-vwt pt-[{{ section.settings.top_padding_mobile }}px] md:pt-[{{ section.settings.top_padding }}px] pb-[{{ section.settings.bottom_padding_mobile }}px] md:pb-[{{ section.settings.bottom_padding }}px]{% if section.settings.full_width_mobile %} pl-0 pr-0{% else %} pl-5 pr-5{% endif %}{% if section.settings.full_width %} md:pr-0 md:pl-0{% else %} x-pgw page-width md:pl-5 md:pr-5{% endif %}{% if section.settings.video_desktop_height != "natural" %} video-desktop-height-{{ section.id }}{% endif %}{% if section.settings.video_mobile_height != "natural" %} video-mobile-height-{{ section.id }}{% endif %}">
+  <div x-data="{ intersect: false }" x-intersect.once="intersect = true" class="video-with-text-wrapper-{{ section.id }} video-height-{{ section.id }} relative overflow-hidden w-full h-0 pb-[56.25%]">
+    <div class="z-20 absolute top-0 left-0 bottom-0 right-0 image-treatment-overlay pointer-events-none opacity-{{ section.settings.overlay_opacity }} max-w-full max-h-full"></div>
+      {%- if section.settings.sub_heading_video != blank or section.settings.heading != blank or section.settings.text != blank or section.settings.button_label != blank -%}
+        <div class="video-with-text-content{% if section.settings.content_position != "custom" %} x-pgw page-width ml-5 mr-5 lg:mx-auto absolute top-0 left-0 bottom-0 right-0{% else %} w-full h-full{% endif %} z-20 pointer-events-none">
+          <div class="anm-fade-paragraph promotion-banner--{{ section.id }} w-full overflow-hidden absolute top-1/2 -translate-y-1/2 lg:max-w-3xl lg:w-3/5 left-0 right-0 text-{{ section.settings.content_alignment }} rtl:text-{% if section.settings.content_alignment == 'center' %}center{% elsif section.settings.content_alignment == 'left' %}right{% else %}left{% endif -%}
+            {%- if section.settings.content_position != "custom" %} lg:promotion-alignment--{{ section.settings.content_position }}{% else %} p-5 z-20{% endif -%}"
+          >
+            <div x-intersect.once="$el.classList.add('is-visible')" class="anm-fade-element relative{% if section.settings.content_alignment == "center" %} bg-gradient-radial{% endif %} empty:hidden inline-block w-full max-h-full pt-2 pb-2">
+              {%- if section.settings.sub_heading_video != blank -%}
+                <p class="h3 leading-tight overflow-hidden p-break-words pt-2 pb-1 md:pb-2 image-treatment-text md:font-medium pointer-events-auto">
+                  {{ section.settings.sub_heading_video }}
+                </p>
+              {%- endif -%}
+              {%- if section.settings.heading != blank -%}
+                {% render 'heading-highlight',
+                  headingId: section.id,
+                  heading: section.settings.heading,
+                  highlight_type: section.settings.highlight_type,
+                  class: 'leading-tight h2 block p-break-words image-treatment-text font-semibold pointer-events-auto',
+                  heading_tag: section.settings.heading_tag,
+                %}
+              {%- endif -%}
+              {% if section.settings.text != blank %}
+                <div class="content-text-{{ section.id }} image-treatment-text rte mt-2 lg:mt-4 pointer-events-auto">
+                  {{ section.settings.text }}
+                </div>
+              {% endif %}
+              {%- if section.settings.button_label != blank -%}
+                <a class="p-break-words empty:hidden pointer-events-auto inline-block button mx-auto pl-6 pr-6 lg:pl-9 lg:pr-9 pt-2.5 pb-2.5 md:pt-3 md:pb-3 button--{{ section.id }} pointer-events-auto{% if section.settings.show_button_style == 'secondary' %} button-outline mt-3{% elsif section.settings.show_button_style == 'text-link' %} button-text-link mt-1{% else %} button-solid mt-3{% endif %}{% unless section.settings.button_link != blank %} hover:cursor-not-allowed disable-btn-animation opacity-70{% endunless %}"{% if section.settings.button_link != blank %}href="{{ section.settings.button_link }}"{% if section.settings.open_new_window %} target="_blank"{% endif %}{% endif %}>
+                  {% render 'button-label', button_label: section.settings.button_label, show_button_style: section.settings.show_button_style %}
+                </a>
+              {%- endif -%}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    <div id="add-all-button-container-{{ section.id }}" class="absolute bottom-5 rtl:left-5 rtl:right-[unset] right-5 hidden md:block md:empty:hidden"></div>
+    {% if check_video_mobile and check_video_desktop %}
+      <div
+        x-intersect:leave="$store.xVideo.pause($el)"
+        @click.stop="$store.xVideo.togglePlay($el)"
+        {% if desktop_video_type == 'video_select' %}x-intersect="$store.xVideo.play($el)"{% endif %}
+        {% if desktop_video_type == 'youtube' or desktop_video_type == 'vimeo' %}
+          x-intersect.once="$store.xVideo.externalLoad($el, '{{ desktop_video_type }}', '{{ desktop_video_id }}', true, '{{ video_alt }}', 1)"
+          x-intersect="$store.xVideo.play($el)"
+        {% endif %}
+        class="video-hero external-video w-full h-full absolute hidden md:block"
+      >
+        {% unless check_video_desktop %}
+          <div class="w-full h-full flex justify-center items-center absolute bg-[#c9c9c9]">
+            <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+              {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+            </span>
+          </div>
+        {% endunless %}
+        {% if desktop_video_type == 'video_select' %}
+          {% assign image_cover = section.settings.video.preview_image %}
+          {% if image_cover != blank %}
+            {% # theme-check-disable ImgLazyLoading %}
+              <img
+                srcset="{{ image_cover | image_url: width: 375 }} 375w,
+                {{ image_cover | image_url: width: 450 }} 450w,
+                {{ image_cover | image_url: width: 750 }} 750w,
+                {{ image_cover | image_url: width: 900 }} 900w,
+                {{ image_cover | image_url: width: 1100 }} 1100w,
+                {{ image_cover | image_url: width: 1500 }} 1500w,
+                {{ image_cover | image_url: width: 1780 }} 1780w"
+                sizes="100vw"
+                src="{{ image_cover | image_url: width: 1780 }}"
+                alt="{{ image_cover.alt | escape }}"
+                class="object-cover absolute top-0 left-0 h-full w-full img-thumbnail animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                width="{{ image_cover.width }}"
+                height="{{ image_cover.height }}"
+                style="object-position:{{ image_cover.presentation.focal_point }};"
+              >
+            {% # theme-check-enable ImgLazyLoading %}
+          {% endif %}
+          <template x-if="intersect">
+            {{ section.settings.video
+              | video_tag:
+                image_size: "1100x",
+                loop: true,
+                controls: false,
+                muted: true,
+                class: "w-full h-full absolute top-0 left-0 video z-10",
+                poster: '',
+                alt: section.settings.video.alt
+              | replace: '<img ', '<img loading="lazy" hidden alt="" '
+            }} 
+          </template>
+          <div class="button-play absolute top-1/2 left-1/2">
+            <div class="cursor-pointer absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] md:w-[60px] md:h-[60px] rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 disabled:cursor-not-allowed">
+              <span class="pointer-events-none duration-200 bg-button-play absolute w-4 h-5 md:w-4 md:h-5 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+              </span>
+            </div>
+          </div>
+          {% if section.settings.show_sound_control %}
+            <button x-data="{ muted: true }"
+              class="button-sound-control bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 w-[35px] h-[35px] md:w-[34px] md:h-[34px] flex items-center justify-center absolute right-2 rtl:left-2 rtl:right-auto cursor-pointer
+                {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+                {%- if section.blocks[0].settings.show_add_all %} md:top-2 bottom-2{% else %} bottom-2{% endif -%}"
+              @click.stop="$store.xVideo.toggleMute($el); muted=!muted"
+              aria-label="button sound control"
+            >
+              <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="muted">
+                {% render 'icon-media', icon: 'icon-unmute' %}
+              </span>
+              <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="!muted" x-cloak>
+                {% render 'icon-media', icon: 'icon-mute' %}
+              </span>
+            </button>
+          {% endif %}
+        {% endif %}
+      </div>
+      <div
+        x-intersect:leave="$store.xVideo.pause($el)"
+        @click.stop="$store.xVideo.togglePlay($el)"
+        {% if mobile_video_type == 'video_select' %}x-intersect="$store.xVideo.play($el)"{% endif %}
+        {% if mobile_video_type == 'youtube' or mobile_video_type == 'vimeo' %}
+          x-intersect.once="$store.xVideo.externalLoad($el, '{{ mobile_video_type }}', '{{ mobile_video_id }}', true, '{{ video_alt }}', 1)"
+          x-intersect="$store.xVideo.play($el)"
+        {% endif %}
+        class="video-hero external-video w-full h-full absolute block md:hidden"
+      >
+        {% unless check_video_mobile %}
+          <div class="w-full h-full flex justify-center items-center absolute bg-[#c9c9c9]">
+            <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+              {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+            </span>
+          </div>
+        {% endunless %}
+        {% if mobile_video_type == 'video_select' %}
+          {% assign image_cover = section.settings.mobile_video.preview_image %}
+          {% if image_cover != blank %}
+            {% # theme-check-disable ImgLazyLoading %}
+              <img
+                srcset="{{ image_cover | image_url: width: 375 }} 375w,
+                {{ image_cover | image_url: width: 450 }} 450w,
+                {{ image_cover | image_url: width: 750 }} 750w,
+                {{ image_cover | image_url: width: 900 }} 900w,
+                {{ image_cover | image_url: width: 1100 }} 1100w,
+                {{ image_cover | image_url: width: 1500 }} 1500w,
+                {{ image_cover | image_url: width: 1780 }} 1780w"
+                sizes="100vw"
+                src="{{ image_cover | image_url: width: 1780 }}"
+                alt="{{ image_cover.alt | escape }}"
+                class="object-cover absolute top-0 left-0 h-full w-full img-thumbnail animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                width="{{ image_cover.width }}"
+                height="{{ image_cover.height }}"
+                style="object-position:{{ image_cover.presentation.focal_point }};"
+              >
+            {% # theme-check-enable ImgLazyLoading %}
+          {% endif %}
+          <template x-if="intersect">
+            {{ section.settings.mobile_video
+              | video_tag:
+                image_size: "1100x",
+                loop: true,
+                controls: false,
+                muted: true,
+                class: "w-full h-full absolute top-0 left-0 video",
+                poster: '',
+                alt: section.settings.mobile_video.alt
+              | replace: '<img ', '<img loading="lazy" hidden alt="" '
+            }} 
+          </template>
+          <div class="button-play absolute top-1/2 left-1/2">
+            <div class="cursor-pointer absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] md:w-[60px] md:h-[60px] rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 disabled:cursor-not-allowed">
+              <span class="pointer-events-none duration-200 bg-button-play absolute w-4 h-5 md:w-4 md:h-5 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+              </span>
+            </div>
+          </div>
+          {% if section.settings.show_sound_control %}
+            <button x-data="{ muted: true }"
+              class="button-sound-control bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 w-[35px] h-[35px] md:w-[34px] md:h-[34px] flex items-center justify-center absolute right-2 rtl:left-2 rtl:right-auto cursor-pointer
+                {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+                {%- if section.blocks[0].settings.show_add_all %} md:top-2 bottom-2{% else %} bottom-2{% endif -%}"
+              @click.stop="$store.xVideo.toggleMute($el); muted=!muted"
+              aria-label="button sound control"
+            >
+              <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="muted">
+                {% render 'icon-media', icon: 'icon-unmute' %}
+              </span>
+              <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="!muted" x-cloak>
+                {% render 'icon-media', icon: 'icon-mute' %}
+              </span>
+            </button>
+          {% endif %}
+        {% endif %}
+      </div>
+    {% elsif check_video_mobile %}
+      <div
+        x-intersect:leave="$store.xVideo.pause($el)"
+        @click.stop="$store.xVideo.togglePlay($el)"
+        {% if mobile_video_type == 'video_select' %}x-intersect="$store.xVideo.play($el)"{% endif %}
+        {% if mobile_video_type == 'youtube' or mobile_video_type == 'vimeo' %}
+          x-intersect.once="$store.xVideo.externalLoad($el, '{{ mobile_video_type }}', '{{ mobile_video_id }}', true, '{{ video_alt }}', 1)"
+          x-intersect="$store.xVideo.play($el)"
+        {% endif %}
+        class="video-hero external-video w-full h-full absolute"
+      >
+        {% unless check_video_mobile %}
+          <div class="w-full h-full flex justify-center items-center absolute bg-[#c9c9c9]">
+            <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+              {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+            </span>
+          </div>
+        {% endunless %}
+        {% if mobile_video_type == 'video_select' %}
+          {% assign image_cover = section.settings.mobile_video.preview_image %}
+          {% if image_cover != blank %}
+            {% # theme-check-disable ImgLazyLoading %}
+              <img
+                srcset="{{ image_cover | image_url: width: 375 }} 375w,
+                {{ image_cover | image_url: width: 450 }} 450w,
+                {{ image_cover | image_url: width: 750 }} 750w,
+                {{ image_cover | image_url: width: 900 }} 900w,
+                {{ image_cover | image_url: width: 1100 }} 1100w,
+                {{ image_cover | image_url: width: 1500 }} 1500w,
+                {{ image_cover | image_url: width: 1780 }} 1780w"
+                sizes="100vw"
+                src="{{ image_cover | image_url: width: 1780 }}"
+                alt="{{ image_cover.alt | escape }}"
+                class="object-cover absolute top-0 left-0 h-full w-full img-thumbnail animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                width="{{ image_cover.width }}"
+                height="{{ image_cover.height }}"
+                style="object-position:{{ image_cover.presentation.focal_point }};"
+              >
+            {% # theme-check-enable ImgLazyLoading %}
+          {% endif %}
+          <template x-if="intersect">
+            {{ section.settings.mobile_video
+              | video_tag:
+                image_size: "1100x",
+                loop: true,
+                controls: false,
+                muted: true,
+                class: "w-full h-full absolute top-0 left-0 video",
+                poster: '',
+                alt: section.settings.mobile_video.alt
+              | replace: '<img ', '<img loading="lazy" hidden alt="" '
+            }} 
+          </template>
+          <div class="button-play absolute top-1/2 left-1/2">
+            <div class="cursor-pointer absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] md:w-[60px] md:h-[60px] rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 disabled:cursor-not-allowed">
+              <span class="pointer-events-none duration-200 bg-button-play absolute w-4 h-5 md:w-4 md:h-5 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+              </span>
+            </div>
+          </div>
+          {% if section.settings.show_sound_control %}
+            <button x-data="{ muted: true }"
+              class="button-sound-control bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 w-[35px] h-[35px] md:w-[34px] md:h-[34px] flex items-center justify-center absolute right-2 rtl:left-2 rtl:right-auto cursor-pointer
+                {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+                {%- if section.blocks[0].settings.show_add_all %} md:top-2 bottom-2{% else %} bottom-2{% endif -%}"
+              @click.stop="$store.xVideo.toggleMute($el); muted=!muted"
+              aria-label="button sound control"
+            >
+              <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="muted">
+                {% render 'icon-media', icon: 'icon-unmute' %}
+              </span>
+              <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="!muted" x-cloak>
+                {% render 'icon-media', icon: 'icon-mute' %}
+              </span>
+            </button>
+          {% endif %}
+        {% endif %}
+      </div>
+    {% elsif check_video_desktop %}
+      <div
+        x-intersect:leave="$store.xVideo.pause($el)"
+        @click.stop="$store.xVideo.togglePlay($el)"
+        {% if desktop_video_type == 'video_select' %}x-intersect="$store.xVideo.play($el)"{% endif %}
+        {% if desktop_video_type == 'youtube' or desktop_video_type == 'vimeo' %}
+          x-intersect.once="$store.xVideo.externalLoad($el, '{{ desktop_video_type }}', '{{ desktop_video_id }}', true, '{{ video_alt }}', 1)"
+          x-intersect="$store.xVideo.play($el)"
+        {% endif %}
+        class="video-hero external-video w-full h-full absolute"
+      >
+        {% unless check_video_desktop %}
+          <div class="w-full h-full flex justify-center items-center absolute bg-[#c9c9c9]">
+            <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+              {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+            </span>
+          </div>
+        {% endunless %}
+        {% if desktop_video_type == 'video_select' %}
+          {% assign image_cover = section.settings.video.preview_image %}
+          {% if image_cover != blank %}
+            {% # theme-check-disable ImgLazyLoading %}
+              <img
+                srcset="{{ image_cover | image_url: width: 375 }} 375w,
+                {{ image_cover | image_url: width: 450 }} 450w,
+                {{ image_cover | image_url: width: 750 }} 750w,
+                {{ image_cover | image_url: width: 900 }} 900w,
+                {{ image_cover | image_url: width: 1100 }} 1100w,
+                {{ image_cover | image_url: width: 1500 }} 1500w,
+                {{ image_cover | image_url: width: 1780 }} 1780w"
+                sizes="100vw"
+                src="{{ image_cover | image_url: width: 1780 }}"
+                alt="{{ image_cover.alt | escape }}"
+                class="object-cover absolute top-0 left-0 h-full w-full img-thumbnail animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                width="{{ image_cover.width }}"
+                height="{{ image_cover.height }}"
+                style="object-position:{{ image_cover.presentation.focal_point }};"
+              >
+            {% # theme-check-enable ImgLazyLoading %}
+          {% endif %}
+          <template x-if="intersect">
+            {{ section.settings.video
+              | video_tag:
+                image_size: "1100x",
+                loop: true,
+                controls: false,
+                muted: true,
+                class: "w-full h-full absolute top-0 left-0 video",
+                poster: '',
+                alt: section.settings.video.alt
+              | replace: '<img ', '<img loading="lazy" hidden alt="" '
+            }} 
+          </template>
+          <div class="button-play absolute top-1/2 left-1/2">
+            <div class="cursor-pointer absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] md:w-[60px] md:h-[60px] rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 disabled:cursor-not-allowed">
+              <span class="pointer-events-none duration-200 bg-button-play absolute w-4 h-5 md:w-4 md:h-5 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+              </span>
+            </div>
+          </div>
+          {% if section.settings.show_sound_control %}
+            <button x-data="{ muted: true }"
+              class="button-sound-control bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 w-[35px] h-[35px] md:w-[34px] md:h-[34px] flex items-center justify-center absolute right-2 rtl:left-2 rtl:right-auto cursor-pointer
+                {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+                {%- if section.blocks[0].settings.show_add_all %} md:top-2 bottom-2{% else %} bottom-2{% endif -%}"
+              @click.stop="$store.xVideo.toggleMute($el); muted=!muted"
+              aria-label="button sound control"
+            >
+              <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="muted">
+                {% render 'icon-media', icon: 'icon-unmute' %}
+              </span>
+              <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="!muted" x-cloak>
+                {% render 'icon-media', icon: 'icon-mute' %}
+              </span>
+            </button>
+          {% endif %}
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="w-full h-full flex justify-center items-center absolute bg-[#c9c9c9]">
+        <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+          {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+        </span>
+      </div>
+    {% endif %}
+  </div>
+  {%- for block in section.blocks -%}
+    {% if block.settings.list_products != blank %}
+      {% assign product_count = block.settings.list_products.count %}
+    {% else %}
+      {% assign product_count = 5 %}
+    {% endif %}
+    {% style %}
+      @media (min-width: 1024px) {
+        #x-video-with-text-product-{{ block.id }}-{{ section.id }}.x-splide:not(.disable-effect-hover):hover .splide__arrows .splide__arrow {
+          --tw-translate-x: 0rem;
+        }
+      }
+      .bg-list-{{ section.id }} {
+        {% if block.settings.list_background_color_light.alpha != 0.0 -%}
+          background: {{ block.settings.list_background_color_light }};
+        {%- endif %}
+      }
+      .dark .bg-list-{{ section.id }} {
+        {% if block.settings.list_background_color_dark.alpha != 0.0 -%}
+          background: {{ block.settings.list_background_color_dark }};
+        {%- else -%}
+          background: transparent;
+        {%- endif %}
+      }
+      .bg-card-{{ section.id }} {
+        border-width: 1px;
+        {% if block.settings.card_background_color_light.alpha != 0.0 -%}
+          background: {{ block.settings.card_background_color_light }};
+        {%- else -%}
+          background: rgb(var(--colors-background-secondary));
+        {%- endif %}
+        {% if block.settings.card_border_color_light.alpha != 0.0 -%}
+          border-color: {{ block.settings.card_border_color_light }};
+        {%- endif %}
+      }
+      .dark .bg-card-{{ section.id }} {
+        {% if block.settings.card_background_color_dark.alpha != 0.0 -%}
+          background: {{ block.settings.card_background_color_dark }};
+        {%- else -%}
+          background: rgb(var(--colors-background-secondary));
+        {%- endif %}
+        {% if block.settings.card_border_color_dark.alpha != 0.0 -%}
+          border-color: {{ block.settings.card_border_color_dark }};
+        {%- else -%}
+          border-color: rgb(var(--colors-line-and-border));
+        {%- endif %}
+      }
+    {% endstyle %}
+    <div 
+      x-cloak
+      id="x-video-with-text-product-{{ block.id }}-{{ section.id }}" 
+      class="x-splide splide video-with-text-product-container-{{ section.id }} visible overflow-hidden relative pt-4 pb-4 pr-4 pl-4 md:pt-7 md:pb-7 md:pl-7 md:pr-7 bg-list-{{ section.id }}"
+      x-intersect.once.margin.200px='$store.xSplide.load($el, {
+        {% if product_count > 3 -%}
+          "type": "loop",
+        {%- else -%}
+          "type": "slide",
+        {%- endif %}
+        "videoProduct": true,
+        "pagination": false,
+        "updateOnMove": "true",
+        "speed": 500,
+        "perPage": 1,
+        "perMove": 1,
+        {% if product_count > 1 -%}
+          "gap": 16,
+        {%- endif %}
+        "progressBar": {{ product_count }},
+        {% if settings.lang_direction contains request.locale.iso_code -%}
+          "direction": "rtl",
+        {%- endif %}
+        "mediaQuery": "min",
+        "breakpoints": {
+          768: {
+            "fixedWidth": 400
+          }
+        },
+        "classes": {
+          "arrows": "splide__arrows hidden md:block"
+        },
+        "events": [
+          {
+            "event": "ready",
+            "callback": () => {
+              document.dispatchEvent(new CustomEvent("eurus:{{ section.id }}:splide-ready"));
+              let slide = $el.querySelector(".splide__list");
+              if (slide) {
+                slide.classList.remove("w-fit", "m-auto");
+                if (slide.scrollWidth > slide.clientWidth) {
+                  slide.classList.remove("justify-center");
+                  $el.querySelector(".splide__arrows").classList.remove("hidden");
+                } else {
+                  slide.classList.add("justify-center");
+                  $el.querySelector(".splide__arrows").classList.add("hidden");
+                }
+              }
+            }
+          },
+          {
+            "event": "resized",
+            "callback": () => {
+              let slide = $el.querySelector(".splide__list");
+              if (slide) {
+                if (slide.scrollWidth > slide.clientWidth) {
+                  slide.classList.remove("justify-center")
+                  $el.querySelector(".splide__arrows").classList.remove("hidden");
+                } else {
+                  slide.classList.add("justify-center");
+                  $el.querySelector(".splide__arrows").classList.add("hidden");
+                }
+              }
+            }
+          }
+        ]
+      });'
+      x-intersect.once='$el.classList.add("is-ready-to-animate")'
+    >
+      <div class="splide__arrows flex items-center">
+        <button class="splide__arrow splide__arrow--prev hidden md:block button-arrow p-3 rounded-full z-10 w-11 h-11 after:text-[20px] rtl:rotate-180 disabled:cursor-not-allowed disabled:opacity-30 absolute top-1/2 -mt-6 left-0 rtl:left-auto rtl:right-0 duration-200 lg:transition-all lg:ease-in-out lg:-translate-x-full rtl:lg:translate-x-full" aria-label="previous slide">
+          <span class="hidden">previous slide</span>
+          {% render 'icon-labels-bags', icon: 'chevron-left' %}
+        </button>
+        <button class="splide__arrow splide__arrow--next hidden md:block button-arrow p-3 rounded-full z-10 w-11 h-11 after:text-[20px] rtl:rotate-180 disabled:cursor-not-allowed disabled:opacity-30 absolute top-1/2 -mt-6 right-0 rtl:right-auto rtl:left-0 duration-200 lg:transition-all lg:ease-in-out lg:translate-x-full rtl:lg:-translate-x-full" aria-label="next slide">
+          <span class="hidden">next slide</span>
+          {% render 'icon-labels-bags', icon: 'chevron-right' %}
+        </button>
+      </div>
+      <div class="splide__track h-full w-full md:cursor-grab">
+        <div class="splide__list flex flex-row h-full translate-x-0 w-fit m-auto">
+          {% if block.settings.list_products != blank %}
+            {% for product in block.settings.list_products %} 
+              {% style %}
+                .x-slide-animation-duration-{{ forloop.index }} {
+                  --delay-time: {{ forloop.index0 | times: 100 | append: 'ms' }}
+                }
+              {% endstyle %}
+              <a x-slide-index="{{ forloop.index | minus: 1 }}" class="{% unless settings.disable_carousel_animation %}x-slide-animation x-slide-animation-duration-{{ forloop.index }}{% endunless %} flex splide__slide x-splide-slide {% if product_count > 1 %}mr-4 rtl:ml-4 rtl:mr-0{% endif %} md:w-[400px] w-full max-w-full justify-center" href="{{ product.url }}">
+                <div class="bg-card-{{ section.id }} items-center flex h-full w-full max-w-full gap-x-2 md:gap-x-5 pt-4 pb-4 pr-4 pl-4 md:p-6 {% if settings.edges_type == 'rounded_corners' %}rounded-[10px]{% endif %}">
+                  {% if product.featured_image != blank %}
+                    {% # theme-check-disable ImgLazyLoading %}
+                    <img
+                      srcset="{{ product.featured_media | image_url: width: 225 }} 225w,
+                        {{ product.featured_media | image_url: width: 375 }} 375w,
+                        {{ product.featured_media | image_url: width: 450 }} 450w,
+                        {{ product.featured_media | image_url: width: 750 }} 750w,
+                        {{ product.featured_media | image_url: width: 900 }} 900w,
+                        {{ product.featured_media | image_url: width: 1100 }} 1100w,
+                        {{ product.featured_media | image_url: width: 1500 }} 1500w
+                        {% if product.featured_media.width %},{{ product.featured_media | image_url }} {{ product.featured_media.width }}w{% endif %}" 
+                      src="{{ product.featured_media | image_url: width: 1080 }}"
+                      alt="{{ product.featured_image.alt | escape }}"  
+                      width="{{ product.featured_image.width }}"
+                      height="{{ product.featured_image.height }}"
+                      {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                      class="w-[72px] h-[72px] min-w-[72px] min-h-[72px] object-cover {% if settings.edges_type == 'rounded_corners' %}rounded-[10px]{% endif %}"
+                    >
+                    {% # theme-check-enable ImgLazyLoading %}
+                  {% else %}
+                    <div class="w-[72px] h-[72px] min-w-[72px] min-h-[72px]">
+                      <div class="h-0 w-full relative pb-[100%] overflow-hidden {% if settings.edges_type == 'rounded_corners' %}rounded-[10px]{% endif %}">
+                        <div class="bg-[#c9c9c9] flex justify-center absolute top-0 left-0 w-full h-full items-center">
+                          {% render 'icon-placeholder', icon: 'icon-product', class: "w-[72px] h-[72px] min-w-[72px] min-h-[72px]" %}
+                        </div>
+                      </div>
+                    </div>
+                  {% endif %}
+                  <div class="flex flex-col w-1/2 h-fit flex-grow">
+                    {%- if block.settings.show_rating -%}
+                      {% render 'review-product', product: product, video_with_text: true %}
+                    {%- endif -%}
+                    <p class="product-title-{{ section.id }} h3 text-[100%] mb-3 rte p-break-words line-clamp-2 rtl:text-right">{{ product.title }}</p>
+                    {% render 'price', product: product, align_left: true %}
+                  </div>
+                  {% if block.settings.enable_quickview %}
+                    <div class="button-quickview-icon z-[15] self-center" x-show="$store.xQuickView && $store.xQuickView.enabled" x-cloak>
+                      <div>
+                        {%- capture data_for_customer_event -%}
+                          {
+                            "product": {
+                              "title": "{{ product.title | escape }}",
+                              "listName": "{{ collection.title | default: '' | escape }}",
+                              "sku": "{{ product.id }}",
+                              "currencyCode": "{{ cart.currency.iso_code }}",
+                              "price": {{ product.price }},
+                              "vendor": "{{ product.vendor | escape }}"
+                            }
+                          }
+                        {%- endcapture %}
+                        <button
+                          @click.prevent='$store.xQuickView && $store.xQuickView.open(); $store.xCustomerEvent.fire("product_selected", $el);' 
+                          x-on:mouseover="$store.xQuickView && $store.xQuickView.load('{{ product.url | within: collection | split: "?" | first }}', $el, '{{ section.id }}-{{ product.id }}-{{ block.id }}')" 
+                          x-on:focus="$store.xQuickView && $store.xQuickView.load('{{ product.url | within: collection | split: "?" | first }}', $el, '{{ section.id }}-{{ product.id }}-{{ block.id }}')" 
+                          class="button label-btn-quickview button--quickview not-icon leading-normal empty:hidden z-50 h-full"
+                          :class="$store.xQuickView && $store.xQuickView.show_atc_button ? 'p-3 rounded-full button-disable-effect' : 'w-full pt-3 pb-3 button-solid'"
+                          x-customer-event-data="{{ data_for_customer_event | escape }}"
+                          aria-label="{{ 'products.product.button_quickview' | t }}"
+                        >
+                          <span x-show="$store.xQuickView && $store.xQuickView.show_atc_button" class="w-4 h-4 flex items-center">
+                            {%- render 'icon-alls', icon: 'icon-search-quickview' -%}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  {% endif %}  
+                  {% assign product_form_id = 'product-form-' | append: block.id %}
+                  {% liquid
+                    assign can_show_preorder = false
+                    if settings.preorder_show == 'yes' or settings.preorder_show == 'on_backordered' and product.selected_or_first_available_variant.inventory_policy == 'continue' and product.selected_or_first_available_variant.inventory_quantity < 1 and product.selected_or_first_available_variant.inventory_management != nil
+                      if settings.applied_products_preorder == blank and settings.applied_collections_preorder == blank
+                        assign can_show_preorder = true
+                      else 
+                        assign list_product = ''
+                        for prod in settings.applied_products_preorder
+                          assign list_product = list_product | append: ';' | append: prod.id
+                        endfor 
+                        for collec in settings.applied_collections_preorder
+                          for prod in collec.products 
+                            assign list_product = list_product | append: ';' | append: prod.id
+                          endfor
+                        endfor
+                        if list_product contains product.id 
+                          assign can_show_preorder = true
+                        endif
+                      endif
+                    endif 
+                    assign disable_cart_edt = false
+                    if product.gift_card? or can_show_preorder and settings.hide_when_pre_order
+                      assign disable_cart_edt = true
+                    endif
+                  %}
+                  {%- form 'product', product, id: product_form_id, class: 'form h-full product-form', novalidate: 'novalidate', data-type: 'add-to-cart-form', x-ref: 'product_form' -%}
+                    <input type="hidden" aria-hidden="true" name="id" class="product-id" value="{{ product.selected_or_first_available_variant.id }}">
+                    {% if settings.show_in_cart_items != 'none' %}
+                      {% if settings.hide_when_pre_order %}                   
+                        <div class="hidden" id="cart-edt-{{ section.id }}">
+                          {% if can_show_preorder == false %}
+                            {% render 'estimate-shipping-cart', product: product, message: settings.message_estimate_cart, disable_cart_edt: disable_cart_edt %}
+                          {% endif %}
+                        </div>
+                      {% else %}
+                        <div class="hidden" id="cart-edt-{{ section.id }}">
+                          {% render 'estimate-shipping-cart', product: product, message: settings.message_estimate_cart, disable_cart_edt: disable_cart_edt %}
+                        </div>
+                      {% endif %}
+                    {% endif %}
+                    {% if settings.preorder_show != 'no' %}
+                      <div class="hidden" id="preorder-{{ section.id }}">
+                        {% if can_show_preorder %}
+                          {% liquid  
+                            assign message_preorder = 'general.preorder.message_preorder' | t
+                            if settings.message_preorder != blank
+                              assign message_preorder = settings.message_preorder
+                            endif 
+                          %}
+                          <input name="properties[{{ 'general.preorder.name' | t }}]" aria-label="Preorder" class="hidden preorder-edt-properties" value="{{ message_preorder }}"/>
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  {%- endform -%}
+                </div>
+              </a>
+            {% endfor %}
+          {% else %}
+            {% for i in (1..5) -%}
+              {% style %}
+                .x-slide-animation-duration-{{ forloop.index }} {
+                  --delay-time: {{ forloop.index0 | times: 100 | append: 'ms' }}
+                }
+              {% endstyle %}
+              <div x-slide-index="{{ forloop.index | minus: 1 }}" class="{% unless settings.disable_carousel_animation %}x-slide-animation x-slide-animation-duration-{{ forloop.index }}{% endunless %} flex splide__slide x-splide-slide justify-center">
+                <div class="bg-card-{{ section.id }} flex items-center h-full w-full gap-x-5 p-6 {% if settings.edges_type == 'rounded_corners' %}rounded-[10px]{% endif %}">
+                  <div class="product-image w-16">
+                    <div class='bg-[#c9c9c9] flex justify-center w-full items-center aspect-square{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}'>
+                      {%- render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}
+                    </div>
+                  </div>
+                  <div class="ml-3 rtl:mr-3 rtl:ml-0 flex flex-row flex-1">
+                    <div>
+                      <h3 class="product-card-heading mb-3 p-break-words leading-tight text-[{{ settings.text_base_size | times: 0.007875 }}rem] md:text-[{{ settings.text_base_size | times: 0.00875 }}rem]">{{ 'onboarding.product_title' | t }}</h3>
+                      <div>{% render 'price' %}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+        {% unless product_count == 1 %}
+          <div class="md:hidden items-center flex w-full gap-5 mt-6 ml-auto mr-auto">
+            <div class="splide-progress inline-block grow rounded-md">
+              {% liquid
+                assign width_bar = 2 | times: 1.0 | divided_by: product_count
+                assign mobile_width_bar = 1 | times: 1.0 | divided_by: product_count
+              %} 
+              {% style %}
+                .splide-progress-bar-{{ section.id }} {
+                  width: {{ mobile_width_bar | times: 100 }}%;
+                }
+                @media (min-width: 768px) {
+                  .splide-progress-bar-{{ section.id }} {
+                    width: {{ width_bar | times: 100 }}%;
+                  }
+                }
+              {% endstyle %}
+              <div class="splide-progress-bar-{{ section.id }} splide-progress-bar rounded-md"></div>
+            </div>
+          </div>
+        {% endunless %}
+      </div>
+      {% if block.settings.list_products != blank and block.settings.show_add_all %}
+        {% assign can_add_all = true %}
+        {% for product in block.settings.list_products %}
+          {% unless product.available %}
+            {% assign can_add_all = false %}
+          {% endunless %}
+        {% endfor %}
+        <template x-teleport="#add-all-button-container-{{ section.id }}">
+          <button {% unless can_add_all %}disabled :class="{ 'disable-btn-animation': true }"{% endunless %} @click.prevent="handleAddToCart($el, '.add-all-container-{{ section.id }}', '.splide__slide:not(.splide__slide--clone) .product-form', '{{ settings.name_edt | default: "Note" }}')" class="button--{{ section.id }} button button-solid w-full pt-3 pb-3 pl-8 pr-8 z-[15] disabled:cursor-not-allowed disabled:opacity-60 {% if settings.edges_type == 'rounded_corners' %}rounded-full{% endif %}">
+            {% assign button_label = 'products.product.add_all_to_cart' | t | append: ' (' | append: product_count | append: ')' %}
+            <span :class="{ 'lg:block opacity-0 is-focus-button' : loading }">
+              <span class="flex items-center justify-center gap-3 rtl:flex-row-reverse">
+                <span class="icon-separator-{{ section.id }} inline-block w-9 h-6 min-w-9 min-h-6 border-r rtl:border-l pr-3 rtl:pl-3 rtl:pr-0 rtl:border-r-0">
+                  {% render 'icon-labels-bags', icon: 'shopping-bag' %}
+                </span>
+                {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+              </span>
+            </span>
+            <div class="lg:inline-block animate-spin w-4 h-4 md:w-5 md:h-5 absolute top-[calc(50%-8px)] left-[calc(50%-8px)] md:top-[calc(50%-10px)] md:left-[calc(50%-10px)]" x-show="loading" x-cloak>
+              {% render 'icon-alls', icon: 'icon-loading' %}
+            </div>
+          </button>
+        </template>
+        <div class="block md:hidden mt-6 mb-8">
+          <button {% unless can_add_all %}disabled :class="{ 'disable-btn-animation': true }"{% endunless %} @click.prevent="handleAddToCart($el, '.add-all-container-{{ section.id }}', '.splide__slide:not(.splide__slide--clone) .product-form', '{{ settings.name_edt | default: "Note" }}')" class="button--{{ section.id }} button button-solid w-full pt-4 pb-4 pl-8 pr-8 md:pl-10 md:pr-10 z-[15] disabled:cursor-not-allowed disabled:opacity-60 {% if settings.edges_type == 'rounded_corners' %}rounded-full{% endif %}">
+            {% assign button_label = 'products.product.add_all_to_cart' | t | append: ' (' | append: product_count | append: ')' %}
+            <span :class="{ 'lg:block opacity-0 is-focus-button' : loading }">
+              <span class="flex items-center justify-center gap-3 rtl:flex-row-reverse">
+                <span class="icon-separator-{{ section.id }} inline-block w-9 h-6 min-w-9 min-h-6 border-r rtl:border-l pr-3 rtl:pl-3 rtl:pr-0 rtl:border-r-0">
+                  {% render 'icon-labels-bags', icon: 'shopping-bag' %}
+                </span>
+                {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+              </span>
+            </span>
+            <div class="lg:inline-block animate-spin w-4 h-4 md:w-5 md:h-5 absolute top-[calc(50%-8px)] left-[calc(50%-8px)] md:top-[calc(50%-10px)] md:left-[calc(50%-10px)]" x-show="loading" x-cloak>
+              {% render 'icon-alls', icon: 'icon-loading' %}
+            </div>
+          </button>
+        </div>
+        <div class="pl-4 pr-4 mt-2 md:pl-0 md:pr-0">
+          <div class="flex relative w-full mt-2 md:mt-0 pt-3 pb-3 pr-3.5 pl-3.5 bg-[rgba(var(--color-error),0.2)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" x-cloak x-show="errorMessage">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3">{% render 'icon-alls', icon: 'icon-error' %}</span>
+            <span class="cart-warning text-small pl-5"></span>
+          </div>
+        </div>
+      {% endif %}  
+    </div>
+  {% endfor %}
+</div>
+{% if section.blocks[0].settings.list_products != blank and section.blocks[0].settings.show_add_all %}
+  <script src="{{ 'product-list.js' | asset_url }}" defer></script>
+{% endif %}
+<script src="{{ 'video.js' | asset_url }}" defer></script>
+{% schema %}
+{
+  "name": "t:sections.video_hero.name",
+  "tag": "section",
+  "class": "section section-video-hero x-section",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer",
+      "aside"
+    ]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.section_and_blocks.video_hero"
+    },
+    {
+      "type": "text",
+      "id": "sub_heading_video",
+      "label": "t:sections.all.text.subheading"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:sections.all.text.heading",
+      "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+    },
+    {
+      "type": "select",
+      "id": "highlight_type",
+      "default": "underline",
+      "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+      "options": [
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        },
+        {
+          "value": "font_highlight",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "heading_size_video",
+      "min": 50,
+      "max": 200,
+      "step": 10,
+      "unit": "%",
+      "label": "t:sections.all.text.heading_size",
+      "default": 100
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "default": "h2",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "p",
+          "label": "p"
+        }
+      ]
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "t:sections.all.text.text"
+    },
+    {
+      "type": "range",
+      "id": "text_size",
+      "min": 50,
+      "max": 200,
+      "step": 10,
+      "unit": "%",
+      "default": 100,
+      "label": "t:sections.all.text.text_size"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 10,
+      "unit": "%",
+      "label": "t:sections.all.overlay_opacity.label",
+      "default": 0
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:sections.all.button.label"
+    },
+    {
+      "type": "select",
+      "id": "show_button_style",
+      "options": [
+        {
+          "value": "primary",
+          "label": "t:sections.all.button.button_style.primary"
+        },
+        {
+          "value": "secondary",
+          "label": "t:sections.all.button.button_style.secondary"
+        },
+        {
+          "value": "text-link",
+          "label": "t:settings_schema.colors.colors_text_link"
+        }
+      ],
+      "label": "t:sections.all.button.button_style.label",
+      "default": "primary"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:sections.all.button.link"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_new_window",
+      "default": false,
+      "label": "t:sections.all.open_new_window.label"
+    },
+    {
+      "type": "select",
+      "id": "content_position",
+      "options": [
+        {
+          "value": "top-left",
+          "label": "t:sections.all.content_position.options__1.label"
+        },
+        {
+          "value": "top-center",
+          "label": "t:sections.all.content_position.options__2.label"
+        },
+        {
+          "value": "top-right",
+          "label": "t:sections.all.content_position.options__3.label"
+        },
+        {
+          "value": "center-left",
+          "label": "t:sections.all.content_position.options__4.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_position.options__5.label"
+        },
+        {
+          "value": "center-right",
+          "label": "t:sections.all.content_position.options__6.label"
+        },
+        {
+          "value": "bottom-left",
+          "label": "t:sections.all.content_position.options__7.label"
+        },
+        {
+          "value": "bottom-center",
+          "label": "t:sections.all.content_position.options__8.label"
+        },
+        {
+          "value": "bottom-right",
+          "label": "t:sections.all.content_position.options__9.label"
+        },
+        {
+          "value": "custom",
+          "label": "t:sections.promotion-banner.settings.desktop_content_position.options__10.label"
+        }
+      ],
+      "default": "center",
+      "label": "t:sections.promotion-banner.settings.desktop_content_position.label"
+    },
+    {
+      "type": "range",
+      "id": "content_horizontal",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "t:sections.promotion-banner.settings.content_horizontal.label",
+      "default": 50,
+      "info": "t:sections.all.content_position.custom_position_info"
+    },
+    {
+      "type": "range",
+      "id": "content_vertical",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "t:sections.promotion-banner.settings.content_vertical.label",
+      "default": 50,
+      "info": "t:sections.all.content_position.custom_position_info"
+    },
+    {
+      "type": "select",
+      "id": "content_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ],
+      "default": "center",
+      "label": "t:sections.all.alignment.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.video.settings.desktop_video"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "t:sections.video.name"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_sound_control",
+      "label": "t:sections.video.settings.show_sound_control.label",
+      "default": false
+    },
+    {
+      "type": "video_url",
+      "id": "video_url",
+      "accept": [
+        "youtube",
+        "vimeo"
+      ],
+      "default": "https://www.youtube.com/watch?v=_9VUPq3SxOc",
+      "label": "t:sections.video.settings.video_url.label",
+      "info": "t:sections.video.settings.video_url.info"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.video.settings.header_video_url.label"
+    },
+    {
+      "type": "text",
+      "id": "video_alt_text",
+      "label": "t:sections.video.settings.video_alt_text.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.video.settings.mobile_video.label"
+    },
+    {
+      "type": "video",
+      "id": "mobile_video",
+      "label": "t:sections.video.settings.mobile_video.label"
+    },
+    {
+      "type": "video_url",
+      "id": "mobile_video_url",
+      "accept": [
+        "youtube",
+        "vimeo"
+      ],
+      "label": "t:sections.video.settings.mobile_video.mobile_url",
+      "info": "t:sections.video.settings.video_url.info"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.video.settings.header_video_url.label"
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.colors.name"
+    },
+    {
+      "type": "color",
+      "id": "color_button",
+      "label": "t:sections.all.button.color_button",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_text_button",
+      "label": "t:sections.all.button.color_text_button",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_button_hover",
+      "label": "t:sections.all.button.color_button_hover",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_text_button_hover",
+      "label": "t:sections.all.button.color_text_button_hover",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_button_secondary",
+      "label": "t:sections.all.button.colors_button_secondary",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_text",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.button.secondary_button_text"
+    },
+    {
+      "type": "color",
+      "id": "colors_text_link",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:settings_schema.colors.colors_text_link"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "label": "t:sections.all.full_width.label",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "adapt_corners_desktop",
+      "label": "t:sections.slideshow.settings.enable_adapt",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "rounded_corners",
+      "default": false,
+      "label": "t:sections.featured-product.blocks.rounded_corner.label",
+      "visible_if": "{{ section.settings.adapt_corners_desktop == false }}"
+    },
+    {
+      "type": "select",
+      "id": "video_desktop_height",
+      "label": "t:sections.video.settings.video_desktop_height.label",
+      "options": [
+        {
+          "label": "t:sections.all.image_ratio.options__1.label",
+          "value": "natural"
+        },
+        {
+          "label": "t:settings_schema.cart.settings.cart_drawer_size_mobile.fullscreen.label",
+          "value": "100"
+        },
+        {
+          "label": "t:sections.video.settings.video_desktop_height.option__3",
+          "value": "70"
+        }
+      ],
+      "default": "natural"
+    },
+    {
+      "type": "range",
+      "id": "top_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 28
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width_mobile",
+      "label": "t:sections.all.full_width.label",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "adapt_corners_mobile",
+      "label": "t:sections.slideshow.settings.enable_adapt",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "rounded_corners_mobile",
+      "default": false,
+      "label": "t:sections.featured-product.blocks.rounded_corner.label",
+      "visible_if": "{{ section.settings.adapt_corners_mobile == false }}"
+    },
+    {
+      "type": "select",
+      "id": "video_mobile_height",
+      "label": "t:sections.video.settings.video_desktop_height.label",
+      "options": [
+        {
+          "label": "t:sections.all.image_ratio.options__1.label",
+          "value": "natural"
+        },
+        {
+          "label": "t:settings_schema.cart.settings.cart_drawer_size_mobile.fullscreen.label",
+          "value": "100"
+        }
+      ],
+      "default": "natural"
+    },
+    {
+      "type": "range",
+      "id": "top_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 20
+    }
+  ],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "t:settings_schema.cart.product",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "product_list",
+          "id": "list_products",
+          "limit": 20,
+          "label": "t:settings_schema.cart.product"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_rating",
+          "default": false,
+          "label": "t:sections.slideshow.blocks.product.show_rating"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_quickview",
+          "default": true,
+          "label": "t:sections.quick_view.settings.enable_quickview.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_add_all",
+          "default": true,
+          "label": "t:sections.video_hero.blocks.settings.show_add_all.label"
+        },
+        {
+          "type": "header",
+          "content": "t:settings_schema.colors.name"
+        },
+        {
+          "type": "color",
+          "id": "list_background_color_light",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.video_hero.blocks.settings.list_background_color_light.label"
+        },
+        {
+          "type": "color",
+          "id": "card_background_color_light",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.testimonials.item_background_color_light.label"
+        },
+        {
+          "type": "color",
+          "id": "card_border_color_light",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.video_hero.blocks.settings.card_border_color_light.label"
+        },
+        {
+          "type": "color",
+          "id": "list_background_color_dark",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.video_hero.blocks.settings.list_background_color_dark.label"
+        },
+        {
+          "type": "color",
+          "id": "card_background_color_dark",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.testimonials.item_background_color_dark.label"
+        },
+        {
+          "type": "color",
+          "id": "card_border_color_dark",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.video_hero.blocks.settings.card_border_color_dark.label"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.video_hero.name",
+      "category": "t:categories.storytelling"
+    }
+  ]
+}
+{% endschema %}

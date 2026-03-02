@@ -1,0 +1,252 @@
+{%  liquid 
+if settings.lang_direction contains request.locale.iso_code
+  assign is_rtl = true
+else
+  assign is_rtl = false
+endif
+%}
+<div
+  class="pt-[{{ section.settings.top_padding_mobile }}px] md:pt-[{{ section.settings.top_padding }}px] pb-[{{ section.settings.bottom_padding_mobile }}px] md:pb-[{{ section.settings.bottom_padding }}px] px-5"
+  x-data="{ currentTab: 'login' }"
+  x-init="() => {
+    if (window.location.href.includes('#recover')) {
+      currentTab = 'recover';
+    }
+  }"
+>
+  <div id="recover" x-show="currentTab == 'recover'" x-cloak>
+    <h1 class="h2 text-center mb-2.5 outline-none" tabindex="-1">{{ 'customer.recover_password.title' | t }}</h1>
+    <div>
+      <p class="text-center mb-11">
+        {{ 'customer.recover_password.subtext' | t }}
+      </p>
+      {%- form 'recover_customer_password' -%}
+        {% assign recover_success = form.posted_successfully? %}
+        <div class="relative mr-auto ml-auto mb-3 max-w-[570px]">
+          <input type="email"
+            id="RecoverEmail"
+            class="w-full input border px-5 lg:px-8 pt-5 pb-1 md:pt-5 md:pb-2 focus:outline-none focus:border-current bg-transparent placeholder:opacity-0{% if form.errors %} border-[rgba(var(--color-error))] focus:border-[rgba(var(--color-error))]{% endif %}{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% else %} rounded-none{% endif %}{% if is_rtl %} text-right{% endif %}"
+            value=""
+            name="email"
+            autocorrect="off"
+            autocapitalize="off"
+            autocomplete="email"
+            aria-required="true"
+            required="required" 
+            {% if form.errors %}
+              aria-invalid="true"
+              aria-describedby="RecoverEmail-email-error"
+              autofocus
+            {% endif %}
+            placeholder="{{ 'customer.login_page.email' | t }}"
+          >
+          <label
+            for="RecoverEmail"
+            class="absolute top-1/2{% if is_rtl %} right-5 lg:right-8{% else %} left-5 lg:left-8{% endif %} duration-300 -translate-y-1/2 input_focus:text-xs input_focus:top-3.5 input_not_empty:top-3.5 input_not_empty:text-xs"
+          >
+            {{ 'customer.login_page.email' | t }}
+          </label>
+        </div>
+        {%- if form.errors -%}
+          <small id="RecoverEmail-email-error" class="block w-full max-w-[570px] mr-auto ml-auto text-normal">
+            <span class="mr-1 rtl:ml-1 rtl:mr-0">{% render 'icon-alls', icon: 'icon-error', enable_customer_page: true %}</span>
+            {{ form.errors.messages.form }}
+          </small>
+        {%- endif -%}
+        <div class="flex justify-center">
+          <button class="button button-solid w-full block mr-auto ml-auto mt-3 max-w-[570px] pt-2.5 pb-2.5 md:pt-3 md:pb-3 leading-normal mb-2">
+            {% assign button_label = 'customer.login_page.submit' | t %}
+            <span class="flex items-center justify-center">
+              {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+            </span>
+          </button>
+        </div>
+        <a
+          class="block w-full max-w-[570px] not-icon mr-auto ml-auto text-center disable-effect underline underline-offset-2 hover:opacity-100 text-[rgb(var(--colors-text-link))]"
+          href="#login"
+          @click.prevent="currentTab = 'login'"
+          data-no-instant
+        >
+          {{ 'customer.login_page.cancel' | t }}
+        </a>
+      {%- endform -%}
+    </div>
+  </div>
+  <div id="login" x-show="currentTab == 'login'" x-cloak>
+    <h1 class="h2 text-center mb-10" tabindex="-1">{{ 'customer.login_page.title' | t }}</h1>
+    <div>
+      {%- if recover_success == true -%}
+        <div class="flex items-center text-center max-w-[570px] pl-4 pr-4 pt-3.5 pb-3.5 mb-5 ml-auto mr-auto bg-[rgba(var(--color-success),0.1)] focus:shadown-none focus-visible:outline-none focus:outline-none focus-visible:shadow-none" >
+          <span class="inline-block w-5 mr-2 rtl:mr-0 rtl:ml-2 selection:bg-[rgba(var(--color-success),0.2)] text-[rgba(var(--color-success))]">
+            {%- render 'icon-alls', icon: 'icon-success' %}
+          </span>
+          <p class="outline-none z-10" tabindex="-1" autofocus>
+            {{ 'customer.recover_password.success' | t }}
+          </p>
+        </div>
+      {%- endif -%}
+      {%- form 'customer_login' -%}
+        {%- if form.errors -%}
+          <div class="max-w-[570px] pt-3.5 pb-3.5 ml-auto mr-auto focus:shadown-none focus-visible:outline-none focus:outline-none focus-visible:shadow-none">
+            <h2 class="text-large w-full max-w-[570px] ml-auto mr-auto outline-none" tabindex="-1" autofocus>
+              <span>
+                {% render 'icon-alls', icon: 'icon-error', enable_customer_page: true %}
+              </span>
+              {{ 'templates.contact.form.error_heading' | t }}
+            </h2>
+            <ul class="w-full flex pl-12 rtl:pl-0 rtl:pr-12">
+              <li class="list-disc">
+                {{ 'templates.contact.form.error_login' | t }}
+              </li>
+            </ul>
+          </div>
+        {%- endif -%}
+        <div class="relative mr-auto ml-auto mb-3 max-w-[570px]">
+          <input
+            id="CustomerEmail"
+            class="w-full input border px-5 lg:px-8 pt-5 pb-1 md:pt-5 md:pb-2 focus:outline-none focus:border-current bg-transparent placeholder:opacity-0{% if form.errors contains 'form' %} border-[rgba(var(--color-error))] focus:border-[rgba(var(--color-error))]{% endif %}{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% else %} rounded-none{% endif %}{% if is_rtl %} text-right{% endif %}"
+            type="email"
+            name="customer[email]"
+            autocomplete="email"
+            autocorrect="off"
+            autocapitalize="off"
+            aria-required="true"
+            required="required" 
+            {% if form.errors contains 'form' %}
+              aria-invalid="true"
+            {% endif %}
+            placeholder="{{ 'customer.login_page.email' | t }}"
+          >
+          <label
+            for="CustomerEmail"
+            x-cloak
+            class="absolute top-1/2{% if is_rtl %} right-5 lg:right-8{% else %} left-5 lg:left-8{% endif %} duration-300 -translate-y-1/2 input_focus:text-xs input_focus:top-3.5 input_not_empty:top-3.5 input_not_empty:text-xs"
+          >
+            {{ 'customer.login_page.email' | t }}
+          </label>
+        </div>
+        {%- if form.password_needed -%}
+          <div class="relative mr-auto ml-auto mb-2.5 max-w-[570px]">
+            <input
+              id="CustomerPassword"
+              class="w-full input border px-5 lg:px-8 pt-5 pb-1 md:pt-5 md:pb-2 focus:outline-none focus:border-current bg-transparent placeholder:opacity-0{% if form.errors contains 'form' %} border-[rgba(var(--color-error))] focus:border-[rgba(var(--color-error))]{% endif %}{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% else %} rounded-none{% endif %}{% if is_rtl %} text-right{% endif %}"
+              type="password"
+              value=""
+              name="customer[password]"
+              autocomplete="off"
+              aria-required="true"
+              required="required" 
+              {% if form.errors contains 'form' %}
+                aria-invalid="true"
+              {% endif %}
+              placeholder="{{ 'customer.login_page.password' | t }}"
+            >
+            <label 
+              for="CustomerPassword"
+              x-cloak
+              class="absolute top-1/2 duration-300{% if is_rtl %} right-5 lg:right-8{% else %} left-5 lg:left-8{% endif %} -translate-y-1/2 input_focus:text-xs input_focus:top-3.5 input_not_empty:top-3.5 input_not_empty:text-xs"
+            >
+              {{ 'customer.login_page.password' | t }}
+            </label>
+          </div>
+          <div class="block w-full max-w-[570px] mr-auto ml-auto mb-2.5{% if is_rtl %} text-right{% endif %}">
+            <a
+              class="nav-link relative effect-inline inline-block hover:opacity-100 hover:text-[rgb(var(--colors-text-link))]"
+              href="#recover"
+              @click.prevent="currentTab = 'recover'"
+              data-no-instant
+            >
+              {{ 'customer.login_page.forgot_password' | t }}
+            </a>
+          </div>
+        {%- endif -%}
+        <div class="w-full flex justify-center">
+          <button class="button button-solid w-full block mr-auto ml-auto max-w-[570px] py-2.5 md:py-3 leading-normal mt-6 md:mt-9 mb-5">
+            {% assign button_label = 'customer.login_page.sign_in' | t %}
+            <span class="flex items-center justify-center">
+              {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+            </span>
+          </button>
+        </div>
+        <div class="block w-full max-w-[570px] mr-auto ml-auto mb-2.5 text-center">
+          <a
+            class="nav-link relative effect-inline inline-block hover:opacity-100 hover:text-[rgb(var(--colors-text-link))]"
+            href="{{ routes.account_register_url }}"
+            data-no-instant
+          >
+            {{ 'customer.login_page.create_account' | t }}
+          </a>
+        </div>
+      {%- endform -%}
+    </div>
+    {%- if shop.checkout.guest_login -%}
+      <div>
+        <hr>
+        <h2 class="text-center">{{ 'customer.login_page.guest_title' | t }}</h2>
+        {%- form 'guest_login' -%}
+          <button class="button button-solid w-full block mr-auto ml-auto max-w-[570px] pt-2.5 pb-2.5 md:pt-3 md:pb-3 mt-6 md:mt-9 mb-5 leading-normal">
+            {% assign button_label = 'customer.login_page.guest_continue' | t %}
+            <span class="flex items-center justify-center">
+              {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+            </span>
+          </button>
+        {%- endform -%}
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "t:sections.main-login.name",
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "top_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 52
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 52
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "range",
+      "id": "top_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 44
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 44
+    }
+  ]
+}
+{% endschema %}

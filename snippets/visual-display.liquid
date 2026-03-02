@@ -1,0 +1,69 @@
+{% comment %}
+  Renders a visual display element, currently just a swatch. If wrapped in "visual-display-parent" and "visual-display-parent--swatch" classes, this will receive hover and focus states.
+
+  Add a class of "active" or "disabled" to the parent element to change the state of the visual display.
+
+  Accepts:
+  - type: {String} Can be "colors" or "image", or nothing to represent an empty state.
+  - value: {Object} Will be an array of color drops, or image drop, depending on the "type"
+  - presentation: {String} Can only be "swatch"
+
+  Usage:
+  {% render 'visual-display', filter_value: filter_value, type: value.display.type, value: value.display.value, presentation: filter.presentation %}
+{% endcomment %}
+{% liquid 
+  assign visual_style_compact = true
+  if settings.visual_value_style != "compact"
+    assign visual_style_compact = false
+  endif
+%}
+{% comment %} Visual style default value is compact, if it is not compact, it is large {% endcomment %}
+{%- case presentation -%}
+  {%- when 'swatch' -%}
+    {%- liquid
+      assign swatch_value = null
+      if swatch.image
+        assign image_url = swatch.image | image_url: width: 50
+        assign swatch_value = 'url(' | append: image_url | append: ')'
+        assign swatch_focal_point = swatch.image.presentation.focal_point
+      elsif swatch.color
+        assign swatch_value = 'rgb(' | append: swatch.color.rgb | append: ')'
+      endif
+    -%}
+    
+    {% if visual_style_compact %}
+      <div
+        class="color-filter h-7 w-7 min-w-[28px] rounded-full ml-0.5{% unless settings.filter_display_text %} mr-3{% endunless %}"
+        style="background: {{ swatch_value }};{% if swatch_focal_point %}background-position: {{ swatch_focal_point }}{% endif %}"
+      ></div>
+    {% else %}
+      <div class="h-[70px] w-[70px] min-w-[70px] overflow-hidden color-filter ml-0.5">
+        <div class="w-full h-full"
+          style="background: {{ swatch_value }};{% if swatch_focal_point %}background-position: {{ swatch_focal_point }}{% endif %}"></div>
+      </div>
+    {% endif %}
+  {%- when 'image' -%}
+    {% if filter_value.image %}
+      {% if visual_style_compact %}
+        <div class="color-filter h-7 w-7 min-w-[28px] rounded-full overflow-hidden top-0 left-0 ml-0.5{% unless settings.filter_display_text %} mr-3{% endunless %}">
+          {{
+            filter_value.image
+            | image_url: width: 300
+            | image_tag: alt: filter_value.alt, class: 'object-cover w-full h-full'
+          }}
+        </div>
+      {% else %}
+        <div class="h-[70px] w-[70px] min-w-[70px] overflow-hidden color-filter ml-0.5">
+          {{
+            filter_value.image
+            | image_url: width: 300
+            | image_tag: alt: filter_value.alt, class: 'w-full h-full object-cover top-0 left-0'
+          }}
+        </div>
+      {% endif %}
+    {% endif %}
+{%- endcase -%}
+{% if settings.filter_display_text %}
+  <span class="p-break-words inline-block w-full ml-3">{{ filter_value.label | escape }} ({{ filter_value.count }})</span>
+{% endif %}
+  

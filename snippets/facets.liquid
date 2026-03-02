@@ -1,0 +1,547 @@
+{% comment %}
+  Renders facets (filtering and sorting)
+
+  Accepts:
+  - results: {Object} Collection or Search object
+  - enable_filtering: {Boolean} Show filtering when true
+  - enable_sorting: {Boolean} Show sorting when true
+  - filter_type: {String} Type of filter
+  - number_products: {String} list number of products of 1 page
+  - products_per_page: {int} number of products of 1 page
+  - collection_page: {Boolean} belongs to the collection page
+  - search_page: {Boolean} belongs to the search page
+  - show_filter: {Boolean} Do not show filter when collection size < 1 or filter.type = price_range
+  - sticky_filter: {Boolean} Apply top sticky facets
+  Usage:
+  {% render 'facets', results: collection, enable_filtering: true, enable_sorting: true %}
+{% endcomment %}
+{%- liquid
+  assign sort_by = results.sort_by | default: results.default_sort_by
+  assign total_active_values = 0
+  if results.url
+    assign results_url = results.url
+  else
+    assign terms = results.terms | escape
+    assign results_url = '?q=' | append: terms | append: '&options%5Bprefix%5D=last&sort_by=' | append: sort_by
+  endif
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+  assign result_size = results.results_count
+  if settings.gift_wrapping_product != blank
+    for item in results
+      if settings.gift_wrapping_product == item
+        assign result_size = result_size | minus: 1
+      endif
+    endfor
+  endif
+
+  assign rounded_filter = 'square'
+  if section.settings.filter_edge_style == 'rounded'
+    assign rounded_filter = 'rounded'
+  elsif section.settings.filter_edge_style == 'adapt'
+    if settings.buttons_type == 'mixed' or settings.buttons_type == 'rounded_corners'
+      assign rounded_filter = 'rounded_corners'
+    elsif settings.buttons_type == 'rounded'
+      assign rounded_filter = 'rounded'
+    endif
+  endif
+-%}
+<div class="relative{% if filter_type == 'above' %} md:mb-3{% else %} mb-6 md:mb-7{% endif %}{% if sticky_filter and filter_type == 'aside' %} sticky top-[calc(var(--height-header)+70px)] duration-300{% endif %}">
+  <div class="facets">
+    <template x-teleport="#header-filter">
+      <div id="FacetsWrapperDesktop"
+        class="flex justify-between"
+        x-data="{ isSticky: false }"
+        {%- if sticky_filter -%}
+          x-init="() => { 
+            const sectionAnnouncement = document.querySelector('#x-announcement');
+            if (sectionAnnouncement) {
+              const isStickyAnnouncement = sectionAnnouncement.getAttribute('data-is-sticky');
+              const header = document.querySelector('#sticky-header');
+              let isStickyHeader = false;
+              const onScroll = () => {
+                isStickyHeader = header.classList.contains('always-animation') || header.classList.contains('on-scroll-up-animation');
+                if (isStickyAnnouncement && isStickyHeader) {
+                  isSticky = $el.getBoundingClientRect().top <= (sectionAnnouncement.offsetHeight + header.offsetHeight + 2);
+                } else if (isStickyAnnouncement) {
+                  isSticky = $el.getBoundingClientRect().top <= sectionAnnouncement.offsetHeight + 2;
+                } else if (isStickyHeader) {
+                  isSticky = $el.getBoundingClientRect().top <= header.offsetHeight + 2;
+                } else {
+                  isSticky = $el.getBoundingClientRect().top <= 2;
+                }
+              };
+              window.addEventListener('scroll', onScroll);
+            }
+          }"
+          x-effect="setFilterHeaderHeight()"
+        {%- endif -%}
+        :class="isSticky ? 'border-y' : '{% if rounded_filter != "square" %}rounded-full border{% else %}border-y{% endif %}'"
+      >
+        <div class="flex w-full md:w-auto justify-between">
+          {% if enable_filtering and results.filters != empty %}
+            <div class="{% unless show_filter %}md:hidden{% endunless %}">
+              <button 
+                id="btn-filter"
+                class="flex items-center cursor-pointer{% if filter_type != 'drawer' %} md:hidden{% endif %}{% if is_rtl %}{% if rounded_filter != 'square' %} mr-7{% else %} mr-2.5{% endif %}{% else %}{% if rounded_filter != 'square' %} ml-7{% else %} ml-2.5{% endif %}{% endif %}"
+                @click.prevent="show = true; $store.xPopup.open = true">
+                <span class="w-4 h-3 mr-2">
+                  {% render 'icon-alls', icon: 'icon-filter' %}
+                </span>
+                <span class="pr-5 pt-4 pb-4{% if enable_sorting %} hidden md:block{% endif %}" tabindex="-1">{{ 'products.facets.show_filter' | t }}</span>
+                {% if enable_sorting %}
+                  <span class="pr-5 pt-4 pb-4 md:hidden" tabindex="-1">{{ 'products.facets.filter_and_sort' | t }}</span>
+                {% endif %}
+              </button>
+              {% if filter_type != 'drawer' %}
+                <button 
+                  id="btn-filter-aside"
+                  class="items-center cursor-pointer hidden md:flex{% if rounded_filter != 'square' %} ml-7 rtl:ml-0 rtl:mr-7{% else %} ml-2.5 rtl:ml-0 rtl:mr-2.5{% endif %}"
+                  @click.prevent="showFilterAside = !showFilterAside">
+                  <span class="w-4 h-3 mr-2 rtl:mr-0 rtl:ml-2">
+                    {% render 'icon-alls', icon: 'icon-filter' %}
+                  </span>
+                  {% if section.settings.default_hide_filtering %}
+                    <span class="pr-5 rtl:pr-0 rtl:pl-5 pt-4 pb-4" tabindex="-1">
+                      <span x-show="!showFilterAside">{{ 'products.facets.hide_filter' | t }}</span>
+                      <span x-show="showFilterAside">{{ 'products.facets.show_filter' | t }}</span>
+                    </span>
+                  {% else %}
+                    <span class="pr-5 rtl:pr-0 rtl:pl-5 pt-4 pb-4" tabindex="-1">
+                      <span x-show="showFilterAside">{{ 'products.facets.hide_filter' | t }}</span>
+                      <span x-show="!showFilterAside">{{ 'products.facets.show_filter' | t }}</span>
+                    </span>
+                  {% endif %}
+                </button>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+       
+        <div class="{% if enable_filtering and results.filters != empty %}hidden{% else %}flex{% endif %} md:flex items-center{% if rounded_filter != 'square' %} mr-7 rtl:mr-0 rtl:ml-7{% endif %}">
+          <div class="hidden md:flex md:mr-6 rtl:md:mr-0 rtl:md:ml-6">
+            <button @click="toggleLayout(true)" :class="!listLayout && 'opacity-50'" class="inline-block w-6 pr-1 pl-1 h-12 pt-3.5 pb-3.5 cursor-pointer" aria-label="list layout">{% render 'icon-alls', icon: 'icon-list' %}</button>
+            <button @click="toggleLayout(false)" :class="listLayout && 'opacity-50'" class="inline-block w-6 pr-1 pl-1 h-12 pt-3.5 pb-3.5 cursor-pointer mr-1 rtl:mr-0 rtl:ml-1" aria-label="grid layout">{% render 'icon-alls', icon: 'icon-grid' %}</button>
+          </div>
+          {%- if enable_sorting -%}
+            <div class="{% if enable_filtering and show_filter %}hidden{% else %}flex{% endif %} md:flex items-center">
+              <p class="whitespace-nowrap">
+                {{ 'products.facets.sort_by_label' | t }}
+              </p>
+              <div class="flex relative ml-1 rtl:ml-0 rtl:mr-1 eurus">
+                {%- assign sort_by = results.sort_by | default: results.default_sort_by -%}
+                <select
+                  id="FormSelectFilter"
+                  class="pt-3.5 pb-3.5 pr-7 pl-2 rtl:pl-7 rtl:pr-2 cursor-pointer border focus:outline-none focus-visible:border bg-transparent border-[rgba(var(--background-color))] focus-visible:border-current"
+                  name="sort_by"
+                  form="FacetFiltersForm"
+                  aria-label="Sort by"
+                  aria-describedby="a11y-refresh-page-message"
+                  @change="onSubmit(0)"
+                >
+                  {%- for option in results.sort_options -%}
+                    <option class="bg-[rgba(var(--background-color),1)]" value="{{ option.value | escape }}"{% if option.value == sort_by %} selected="selected"{% endif %}>{{ option.name | escape }}</option>
+                  {%- endfor -%}
+                </select> 
+                <span class="absolute top-1/2 right-2 rtl:right-auto rtl:left-2 -translate-y-1/2 w-2.5">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+              </div>
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+    </template>
+    {% if show_filter %}
+      {% capture active_filters_html %}
+        <ul class="active-filter flex flex-wrap gap-2 mt-4 mb-4{% if filter_type != 'above' %} md:mb-5{% endif %}">
+          {%- for filter in results.filters -%}
+            {%- for value in filter.active_values -%}
+              <li>
+                <button 
+                  @click.prevent="removeFilter(`{{ value.url_to_remove }}`)" 
+                  class="px-3 py-1.5 cursor-pointer flex items-center bg-[rgba(var(--colors-text),0.05)]{% if rounded_filter == 'rounded' %} rounded-full{% elsif rounded_filter == 'rounded_corners' %} rounded{% endif %}"
+                >
+                  <span class="active-filter-control">
+                    {{ value.label | escape }}
+                  </span>
+                  <span class="md:w-2.5 md:h-2.5 md:min-w-[10px] min-w-[8px] ml-2 rtl:mr-2 rtl:ml-0 w-2 h-2 cursor-pointer inline-block">{% render 'icon-alls', icon: 'icon-close' %}</span>
+                </button>
+              </li>
+            {%- endfor -%}
+            {% if filter.type == "price_range" %}
+              {%- if filter.min_value.value != nil or filter.max_value.value != nil -%}
+                <li>
+                  <button 
+                    @click.prevent="removeFilter(`{{ filter.url_to_remove }}`)"
+                    class="px-3 py-1.5 cursor-pointer flex items-center bg-[rgba(var(--colors-text),0.05)]{% if rounded_filter == 'rounded' %} rounded-full{% elsif rounded_filter == 'rounded_corners' %} rounded{% endif %}"
+                  >
+                    <span class="active-filter-control{% if is_rtl %} ltr{% endif %}">
+                      {% if filter.min_value.value %}
+                        {% if settings.currency_code_enable %}
+                          {{ filter.min_value.value | money_with_currency }}
+                        {% else %}
+                          {{ filter.min_value.value | money }}
+                        {% endif %}
+                      {% else %}
+                        {% if settings.currency_code_enable %}
+                          {{ 0 | money_with_currency }}
+                        {% else %}
+                          {{ 0 | money }}
+                        {% endif %}
+                      {% endif %} - 
+                      {% if filter.max_value.value %}
+                        {% if settings.currency_code_enable %}
+                          {{ filter.max_value.value | money_with_currency }}
+                        {% else %}
+                          {{ filter.max_value.value | money }}
+                        {% endif %}
+                      {% else %}
+                        {% if settings.currency_code_enable %}
+                          {{ filter.range_max | money_with_currency }}
+                        {% else %}
+                          {{ filter.range_max | money }}
+                        {% endif %}
+                      {% endif %}
+                    </span>
+                    <span class="ml-2 rtl:mr-2 rtl:ml-0 md:w-2.5 md:h-2.5 md:min-w-[10px] min-w-[8px] w-2 h-2 inline-block">{% render 'icon-alls', icon: 'icon-close' %}</span>
+                  </button>
+                </li>
+              {%- endif -%}
+            {% endif %}
+          {%- endfor -%}
+          <li class="flex items-center type-aside:hidden ml-2 md:ml-4 rtl:ml-0 rtl:mr-2 rtl:md:mr-4 rtl:md:ml-0">
+            <button @click.prevent="removeFilter(`{{ results_url }}`)" class="cursor-pointer underline underline-offset-2">
+              <span>
+                {{ 'templates.search.clear_all' | t }}
+              </span>
+            </button>
+          </li>
+        </ul>
+      {% endcapture %}
+      
+      {% if only_show_advanded_filter %}
+        <div id="active-filter-tag" class="hidden md:block">
+          {% if active_filters_html contains 'active-filter-control' %}
+            <ul class="active-filter flex flex-wrap gap-2 mt-4 mb-4{% if filter_type != 'above' %} md:mb-5{% endif %}">
+              {%- for filter in results.filters -%}
+                {%- for value in filter.active_values -%}
+                  <li>
+                    <button 
+                      @click.prevent="removeFilter(`{{ value.url_to_remove }}`)"
+                      class="px-3 py-1.5 cursor-pointer flex items-center bg-[rgba(var(--colors-text),0.05)]{% if rounded_filter == 'rounded' %} rounded-full{% elsif rounded_filter == 'rounded_corners' %} rounded{% endif %}"
+                    >
+                      <span class="active-filter-control">
+                        {{ value.label | escape }}
+                      </span>
+                      <span class="md:w-2.5 md:h-2.5 md:min-w-[10px] min-w-[8px] ml-2 rtl:mr-2 rtl:ml-0 w-2 h-2 cursor-pointer inline-block">{% render 'icon-alls', icon: 'icon-close' %}</span>
+                    </button>
+                  </li>
+                {%- endfor -%}
+                {% if filter.type == "price_range" %}
+                  {%- if filter.min_value.value != nil or filter.max_value.value != nil -%}
+                    <li>
+                      <button
+                        @click.prevent="removeFilter(`{{ filter.url_to_remove }}`)"
+                        class="px-3 py-1.5 cursor-pointer flex items-center bg-[rgba(var(--colors-text),0.05)]{% if rounded_filter == 'rounded' %} rounded-full{% elsif rounded_filter == 'rounded_corners' %} rounded{% endif %}"
+                      >
+                        <span class="active-filter-control{% if is_rtl %} ltr{% endif %}">
+                          {% if filter.min_value.value %}
+                            {% if settings.currency_code_enable %}
+                              {{ filter.min_value.value | money_with_currency }}
+                            {% else %}
+                              {{ filter.min_value.value | money }}
+                            {% endif %}
+                          {% else %}
+                            {% if settings.currency_code_enable %}
+                              {{ 0 | money_with_currency }}
+                            {% else %}
+                              {{ 0 | money }}
+                            {% endif %}
+                          {% endif %} - 
+                          {% if filter.max_value.value %}
+                            {% if settings.currency_code_enable %}
+                              {{ filter.max_value.value | money_with_currency }}
+                            {% else %}
+                              {{ filter.max_value.value | money }}
+                            {% endif %}
+                          {% else %}
+                            {% if settings.currency_code_enable %}
+                              {{ filter.range_max | money_with_currency }}
+                            {% else %}
+                              {{ filter.range_max | money }}
+                            {% endif %}
+                          {% endif %}
+                        </span>
+                        <span class="ml-2 rtl:mr-2 rtl:ml-0 md:w-2.5 md:h-2.5 md:min-w-[10px] min-w-[8px] w-2 h-2 inline-block">{% render 'icon-alls', icon: 'icon-close' %}</span>
+                      </button>
+                    </li>
+                  {%- endif -%}
+                {% endif %}
+              {%- endfor -%}
+              <li class="flex items-center type-aside:hidden ml-2 md:ml-4 rtl:ml-0 rtl:mr-2 rtl:md:mr-4 rtl:md:ml-0">
+                <button @click.prevent="removeFilter(`{{ results_url }}`)" class="cursor-pointer underline underline-offset-2">
+                  <span>
+                    {{ 'templates.search.clear_all' | t }}
+                  </span>
+                </button>
+              </li>
+            </ul>
+          {% endif %}
+        </div>
+      {% endif %}
+      {% if enable_filtering and results.filters != empty %}
+        <form class="grid{% if filter_type != 'drawer' %} form-aside{% endif %}">
+          {% if filter_type != 'drawer' %}
+              {%- if results.terms -%}
+                <input type="hidden" aria-hidden="true" name="q" value="{{ results.terms | escape }}">
+                <input name="options[prefix]" type="hidden" value="last">
+              {%- endif -%}
+              {% comment %} filter aside {% endcomment %}
+              {% if filter_type == 'aside' %}
+                <div class="pl-2.5 pr-2.5 overflow-auto scrollbar-body hidden md:block md:max-h-[80vh] type-aside">
+                  <div id="active-filter-tag">
+                    {% if active_filters_html contains 'active-filter-control' %}
+                      <div class="flex justify-between pb-3 border-b">
+                        <p class="text-large text-[rgba(var(--colors-heading))] leading-none font-semibold">{{ 'products.facets.filter_by_label' | t }}</p>
+                        <button @click.prevent="removeFilter(`{{ results_url }}`)" class="cursor-pointer underline underline-offset-2">
+                          <span>
+                            {{ 'templates.search.clear_all' | t }}
+                          </span>
+                        </button>
+                      </div>
+                      {{ active_filters_html }}
+                    {% else %}
+                      <div class="flex justify-between pb-3 border-b">
+                        <p class="text-large text-[rgba(var(--colors-heading))] leading-none font-semibold">{{ 'products.facets.filter_by_label' | t }}</p>
+                      </div>
+                    {% endif %}
+                  </div>
+                  {% if section.settings.enable_advanced_filter and filter_used != "" %}
+                    {%- for filter in results.filters -%}
+                      {%- assign total_active_values = total_active_values | plus: filter.active_values.size -%}
+                        {% unless filter_used contains filter.label %}
+                          {% render 'input-filter', 
+                            filter: filter,
+                            filter_type: 'aside',
+                            index: forloop.index,
+                            expand_filter: expand_filter
+                          %}
+                        {% endunless %}
+                    {%- endfor -%}
+                  {% else %}
+                    {%- for filter in results.filters -%}
+                      {% render 'input-filter', 
+                        filter: filter,
+                        filter_type: 'aside',
+                        index: forloop.index,
+                        expand_filter: expand_filter
+                      %}
+                    {%- endfor -%}
+                  {% endif %}
+                </div>
+              {% endif %}
+              {% comment %} end filter aside {% endcomment %}
+              {% if filter_type == 'above' %}
+                <div class="md:flex flex-wrap gap-2 hidden">
+                  {% if section.settings.enable_advanced_filter and filter_used != "" %}
+                    {%- for filter in results.filters -%}
+                      {%- assign total_active_values = total_active_values | plus: filter.active_values.size -%}
+                      {% unless filter_used contains filter.label %}
+                        {% render 'input-filter', 
+                          filter: filter,
+                          filter_type: 'above',
+                          index: forloop.index,
+                          filter_above: true,
+                          expand_filter: false
+                        %}
+                      {% endunless %}
+                    {%- endfor -%}
+                  {% else %}
+                    {%- for filter in results.filters -%}
+                      {%- assign total_active_values = total_active_values | plus: filter.active_values.size -%}
+                      {% render 'input-filter', 
+                        filter: filter,
+                        filter_type: 'above',
+                        index: forloop.index,
+                        filter_above: true,
+                        expand_filter: false
+                      %}
+                    {%- endfor -%}
+                  {% endif %}
+                </div>
+                <div id="active-filter-tag" class="hidden md:block">
+                  {% if active_filters_html contains 'active-filter-control' %}
+                    {{ active_filters_html }}
+                  {% endif %}
+                </div>
+              {% endif %}
+              {% if results.current_vendor or results.current_type %}
+                <input type="hidden" aria-hidden="true" name="q" value="{{ results.current_vendor }}{{ results.current_type }}">
+              {% endif %}           
+          {% endif %}
+          <div id="active-filter-tag" class="block md:hidden">
+            {% if active_filters_html contains 'active-filter-control' %}
+              {{ active_filters_html }}
+            {% endif %}
+          </div>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+<form id="FacetFiltersForm" class="grid form-drawer">
+  {%- if results.terms -%}
+    <input type="hidden" aria-hidden="true" name="q" value="{{ results.terms | escape }}">
+    <input name="options[prefix]" type="hidden" value="last">
+  {%- endif -%}
+  {% if enable_filtering and results.filters != empty %}
+    <div x-show="show" 
+      id="ProductFilter"
+      class="fixed top-0 right-0 left-0 bottom-0 flex flex-col justify-end md:flex-row md:justify-start bg-[#acacac] bg-opacity-30 z-[60]"
+      @keyup.escape="show=false; _filterRemoveFocus(); $store.xPopup.close()" x-cloak>
+      <div 
+        class="{% if settings.edges_type == 'rounded_corners' %}md:h-auto md:m-2.5 md:rounded-[10px]{% else %}md:h-full{% endif %} w-full md:w-96 relative bg-[rgba(var(--background-color))]" 
+        x-show="show" 
+        x-cloak 
+        x-intersect.full="_filterFocus()"
+        @click.away="show = false; $store.xPopup.open = false;"
+        x-transition:enter="transition-all ease-in-out duration-500"
+        x-transition:enter-start="opacity-0 transform translate-y-1/3{% if is_rtl %} md:translate-x-1/3{% else %} md:-translate-x-1/3{% endif %} md:translate-y-0"
+        x-transition:enter-end="opacity-100 transform translate-y-0 md:translate-x-0 md:translate-y-0"
+        x-transition:leave="transition-all ease-in-out duration-500"
+        x-transition:leave-end="opacity-0 transform translate-y-1/3 {% if is_rtl %}md:translate-x-1/3{% else %}md:-translate-x-1/3{% endif %} md:translate-y-0"
+      >  
+        <button 
+          id="CloseFilter" 
+          aria-label="Close filter"
+          class="icon-close-container bg-[rgb(var(--colors-line-and-border))] group-close-btn rounded-full absolute right-2 rtl:right-auto rtl:left-2 top-2 md:top-2 cursor-pointer" 
+          @click.prevent="_filterRemoveFocus(); show = false; $store.xPopup.close()">
+          {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+        </button>
+        <div class="md:hidden pb-5 border-b border-solid ml-5 mr-5 pt-5">
+          {%- unless results.filters == empty -%}
+            <p class="font-semibold text-[{{ settings.text_base_size | times: 0.00875 | times: 1.1 }}rem] mb-2" tabindex="-1">{{ 'products.facets.filter_and_sort' | t }}</p>
+          {%- endunless -%}
+          <div>
+            {%- if section.settings.enable_collection_count -%}
+              <p id="ProductCountDrawer" class="md:border-l md:border-solid">
+                {%- if results.results_count -%}
+                  {{ 'templates.search.results_with_count' | t: terms: results.terms, count: results.results_count }}
+                {%- elsif results.products_count == results.all_products_count -%}
+                  {{ 'products.facets.product_count_simple' | t: count: results.products_count }}
+                {%- else -%}
+                  {{ 'products.facets.product_count' | t: product_count: results.products_count, count: results.all_products_count }}
+                {%- endif -%}
+              </p>
+            {%- endif -%}
+            {% if search_page %}
+              <p id="ProductCountDrawer" class="md:border-l md:border-solid">
+                {%- if search.results_count -%}
+                  {{ 'templates.search.results_with_count' | t: terms: search.terms, count: search.results_count }}
+                {%- elsif search.products_count == search.all_products_count -%}
+                  {{ 'products.facets.product_count_simple' | t: count: search.products_count }}
+                {%- else -%}
+                  {{ 'products.facets.product_count' | t: product_count: search.products_count, count: search.all_products_count }}
+                {%- endif -%}
+              </p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="pl-5 pr-5 md:pl-9 md:pr-9 overflow-auto pt-0 mb-12 md:pt-10 md:mb-10 max-h-[50vh] md:max-h-[calc(100vh-80px)] scrollbar-body">  
+          {% if show_filter %}
+            <div class="{% if filter_type != 'drawer' %}md:hidden{% endif %}" id="active-filter-tag-mobile">
+              {% if active_filters_html contains 'active-filter-control' %}
+                {{ active_filters_html }}
+              {% endif %}
+            </div>
+            {% if section.settings.enable_advanced_filter and filter_used != "" %}
+              {%- for filter in results.filters -%}
+                {%- assign total_active_values = total_active_values | plus: filter.active_values.size -%}
+                {% unless filter_used contains filter.label %}
+                  {% render 'input-filter', 
+                    filter: filter,
+                    filter_type: 'drawer',
+                    index: forloop.index,
+                    expand_filter: expand_filter
+                  %}
+                {% endunless %}
+              {%- endfor -%}
+            {% else %}
+              {%- for filter in results.filters -%}
+                {%- assign total_active_values = total_active_values | plus: filter.active_values.size -%}
+                {% render 'input-filter', 
+                  filter: filter,
+                  filter_type: 'drawer',
+                  index: forloop.index,
+                  expand_filter: expand_filter
+                %}
+              {%- endfor -%}
+            {% endif %}
+          {% endif %}
+          {%- if enable_sorting -%}
+            <div class="md:hidden mt-3">
+              <div class="flex pt-4 pb-4 relative justify-between items-center">
+                <p>
+                  <label for="SortBy">{{ 'products.facets.sort_by_label' | t }}</label>
+                </p>
+                <div class="flex justify-between eurus">
+                  {%- assign sort_by = results.sort_by | default: results.default_sort_by -%}
+                  <select
+                    class="cursor-pointer pt-1 pb-1 pl-2 rtl:pl-7 pr-7 rtl:pr-2 focus:outline-none focus-visible:outline-none bg-transparent"
+                    name="sort_by"
+                    aria-describedby="a11y-refresh-page-message"
+                    @change="onSubmit(0)"
+                    :disabled="isDesktop"
+                    aria-label="Sort by"
+                  >
+                    {%- for option in results.sort_options -%}
+                      <option class="bg-[rgba(var(--background-color),1)]" value="{{ option.value | escape }}"{% if option.value == sort_by %} selected="selected"{% endif %}>{{ option.name | escape }}</option>
+                    {%- endfor -%}
+                  </select>
+                  <span class="w-3 absolute right-2 rtl:right-auto rtl:left-2 top-1/2 -translate-y-1/2">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+                </div>
+              </div>
+            </div>
+          {%- endif -%} 
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  {% comment %} end filter drawer {% endcomment %}
+  {% if results.current_vendor or results.current_type %}
+    <input type="hidden" aria-hidden="true" name="q" value="{{ results.current_vendor }}{{ results.current_type }}">
+  {% endif %}
+  {% if collection_page and number_products != blank %}
+    <div id="ProductPerPage">
+      <template x-teleport="#perpage-collection">
+        <div class="flex items-center justify-center md:justify-start mb-5 lg:mb-0{% if number_products.size < 2 %} hidden{% endif %}">
+          <p class="w-max font-normal">{{ 'blogs.show' | t }}</p>
+          <div class="w-fit relative flex items-center mx-3 eurus">
+            <select 
+              class="cursor-pointer leading-normal font-medium py-1 bg-transparent focus:outline-none focus-visible:border-current border border-solid pl-3 rtl:pl-8 pr-8 rtl:pr-3{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" 
+              @change="renderPagination()" 
+              aria-label="Pagination"
+            >
+              {%- for number in number_products -%}
+                <option 
+                  class="bg-[rgba(var(--background-color),1)] cursor-pointer"
+                  value="{{ number }}"
+                  {% if products_per_page == number %} selected="selected"{% endif %}
+                >
+                  {{ number | escape }}
+                </option>
+              {%- endfor -%}
+            </select>
+            <span class="w-3 pointer-events-none absolute select-none right-2 rtl:right-auto rtl:left-2 top-1/2 -translate-y-1/2">
+              {% render 'icon-alls', icon: 'icon-caret' %}
+            </span>
+          </div>
+          <p class="w-max font-normal">{{ 'blogs.per_page' | t }}</p>
+        </div>
+      </template>
+    </div>
+  {% endif %}
+</form>
+<script src="{{ 'facets.js' | asset_url }}" defer="defer"></script>

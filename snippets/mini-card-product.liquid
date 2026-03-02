@@ -1,0 +1,134 @@
+{% comment %}
+    Renders a mini product card
+
+    Accepts:
+    - card_product: {Object} Product Liquid object (optional)
+    - media_aspect_ratio: {String} Size of the product image card. Values are "square" and "portrait". Default is "square" (optional)
+    - ratio: media_aspect_ratio in number
+
+    Usage:
+    {% render 'mini-card-product', card_product: product %}
+{% endcomment %}
+
+{%- capture data_for_customer_event -%}
+  {
+    "product": {
+      "title": "{{ card_product.title | escape }}",
+      "listName": "{{ collection.title | default: list_name | escape }}",
+      "sku": "{{ card_product.id }}",
+      "currencyCode": "{{ cart.currency.iso_code }}",
+      "price": {{ card_product.price }},
+      "vendor": "{{ card_product.vendor }}"
+    }
+  }
+{%- endcapture %}
+{% liquid
+  assign shipping_insurance = false
+  if settings.enable_shipping_insurance and settings.product_shipping_insurance != blank and settings.product_shipping_insurance.selected_or_first_available_variant.available
+    assign shipping_insurance = settings.product_shipping_insurance.selected_or_first_available_variant.id
+    for item in cart.items
+      if item.product.selected_or_first_available_variant.id == settings.product_shipping_insurance.selected_or_first_available_variant.id
+        assign shipping_insurance = false
+      endif
+    endfor
+  endif
+%}
+<div class="group relative h-auto {{ class_splide }}">
+  <div class="card h-full gap-3 flex bg-[rgba(var(--colors-text),0.05)] lg:bg-none p-2 lg:p-0 lg:pb-5 lg:border-b{% if settings.edges_type == 'rounded_corners' %} rounded-[6px]{% endif %}">
+    <div class="relative z-20 cursor-pointer w-16 min-w-[64px]">
+      <a href="{{ card_product.url }}"
+        class="block disable-effect h-full"
+        @click='$store.xCustomerEvent.fire("product_selected", $el)'
+        x-customer-event-data="{{ data_for_customer_event | escape }}"
+      >
+        <div class="w-full relative h-full{% if settings.edges_type == 'rounded_corners' %} rounded-[6px]{% endif %}{% if card_product.featured_media or media_aspect_ratio != "natural" %} overflow-hidden before:h-0 before:block h-0 z-0 {% endif %}{% unless media_aspect_ratio == "natural" %} pb-[{{ ratio | times: 100.0 }}%]{% else %}{% if card_product.featured_media.media_type == "model" or card_product.featured_media == blank %} pb-[100%]{% endif %}{% endunless %}"{% if media_aspect_ratio == "natural" and card_product.featured_media and card_product.featured_media.media_type != "model" %}style="padding-bottom: {{ 1 | divided_by: card_product.featured_media.aspect_ratio | times: 100 }}%;"{% endif %}>
+          {%- if card_product.featured_media -%}
+            <div class="absolute top-0 left-0 w-full h-full image-hover">
+              {% # theme-check-disable ImgLazyLoading %}
+              <img
+                src="{{ card_product.featured_media | image_url: width: 168 }}"
+                alt="{{ card_product.featured_media.alt | split: "#" | first | escape }}"
+                class="w-full h-full object-cover transition duration-300 z-10 ease-out"
+                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                width="{{ card_product.featured_media.width }}"
+                height="{{ card_product.featured_media.height }}"
+              >
+              {% # theme-check-enable ImgLazyLoading %}
+              </div>
+          {%- else -%}
+            <div class='bg-[#c9c9c9] flex{% unless image_ratio == "natural" %} absolute{% endunless %} top-0 left-0 w-full h-full items-center'>
+              {% render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}
+            </div>
+          {%- endif -%}
+        </div>
+      </a>
+    </div>
+    <div class="flex grow gap-4">
+      <div class="grow">
+        <div class="mb-2 leading-tight">
+          <a href="{{ card_product.url }}"
+            id="{{ card_product.id }}"
+            class="disable-effect hover-text-link cursor-pointer duration-200 p-break-words text-[rgba(var(--colors-heading))]"
+            @click='$store.xCustomerEvent.fire("product_selected", $el)'
+            x-customer-event-data="{{ data_for_customer_event | escape }}"
+          >
+            {{ card_product.title | escape }}
+          </a>
+        </div>
+        {% render 'price', product: card_product %}
+      </div>
+      <div>
+        <template x-if="$store.xQuickView && $store.xQuickView.enabled">
+          {%- if card_product.has_only_default_variant -%}
+            <div x-data="xProductCart" x-show="$store.xQuickView.show_atc_button">
+              {%- assign product_form_id = 'product-form-' | append: section.id -%}
+                {%- form 'product', card_product, id: product_form_id, class: 'form', novalidate: 'novalidate', data-type: 'add-to-cart-form', x-ref: 'product_form' -%}
+                <input type="hidden" aria-hidden="true" name="id" value="{{ card_product.selected_or_first_available_variant.id }}">
+                <button
+                  type="submit"
+                  name="add"
+                  @click.prevent="errorMessage == false && addToCart($event)"
+                  class="relative button button-action not-icon {% if settings.edges_type == 'rounded_corners' %}rounded-[10px]{% endif %} w-[36px] inline-block pt-2.5 pb-2.5 pr-2.5 pl-2.5"
+                  {% if settings.enable_shipping_insurance and settings.shipping_insurance_added_by_default and shipping_insurance %}
+                    x-init="loadInsurance('{{ shipping_insurance }}')"
+                  {% endif %}
+                  {% if settings.enable_shipping_insurance and settings.product_shipping_insurance != blank and settings.product_shipping_insurance.id == card_product.id %}
+                    style="display: none;"
+                  {% endif %}
+                  {% if card_product.selected_or_first_available_variant.available == false %}
+                    disabled
+                    aria-label="{{ 'products.product.sold_out' | t }}"
+                  {% else %}
+                    aria-label="{{ 'products.product.add_to_cart' | t }}"
+                  {% endif %}>
+                  <span :class="loading && 'opacity-0'" class="block">{% render 'icon-alls', icon: 'icon-add-complementary' %}</span>
+                  <div class="inline-block w-5 h-5 animate-spin absolute top-[calc(50%-10px)] left-[calc(50%-10px)]" x-show="loading" x-cloak>
+                    {% render 'icon-alls', icon: 'icon-loading' %}
+                  </div>
+                </button>
+              {%- endform -%}
+            </div>
+          {% endif %}
+          <div x-show="{% if card_product.has_only_default_variant %}false{% else %}true{% endif %} || !$store.xQuickView.show_atc_button">
+            <div
+              id="current-variant-{{ section.id }}-{{ card_product.id }}-{{ block_id }}" 
+              class="current-variant hidden"
+            >
+              {{ card_product.selected_or_first_available_variant.id }}
+            </div>
+            <button
+              class="button button-action not-icon {% if settings.edges_type == 'rounded_corners' %}rounded-[10px]{% endif %} w-[36px] inline-block pt-2.5 pb-2.5 pr-2.5 pl-2.5"
+              @click.prevent='$store.xQuickView && $store.xQuickView.open(true); $store.xCustomerEvent.fire("product_selected", $el);'
+              x-on:mouseover="$store.xQuickView && $store.xQuickView.load('{{ card_product.url | within: collection | split: "?" | first }}', $el, '{{ section.id }}-{{ card_product.id }}-{{ block_id }}')"
+              x-on:focus="$store.xQuickView && $store.xQuickView.load('{{ card_product.url | within: collection | split: "?" | first }}', $el, '{{ section.id }}-{{ card_product.id }}-{{ block_id }}')"
+              x-customer-event-data="{{ data_for_customer_event | escape }}"
+              aria-label="{{ 'products.product.add_to_cart' | t }}"
+            >
+              <span>{% render 'icon-alls', icon: 'icon-add-complementary' %}</span>
+            </button>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,103 @@
+{% comment %}
+  Renders product description
+
+  Accepts:
+  - block: {Object} Block Liquid object
+  - show_content_center: {Boolean} Show content center. Default: false
+  Usage:
+  {% render 'product-description', product: product, block: block, show_content_center: show_content_center %}
+{% endcomment %}
+{%- liquid 
+  assign content = block.settings.custom_description
+  if content != blank
+    if content contains 'custom.'
+      assign split_text = content | newline_to_br | strip_newlines | replace: '<br />', '<br/> ' | replace: '<br/ >', '<br/> ' | replace: '<br/>', '<br/> ' | replace: '<p>', ' <p>' | split: ' '
+      for mtf_text in split_text
+        if mtf_text contains 'custom.'
+          assign key_metafield = mtf_text | remove: " " | strip_html
+          assign option_key_metafield = key_metafield | split: '.'
+          if settings.default_select_available_variant
+            assign option_value_metafield = product.selected_or_first_available_variant.metafields[option_key_metafield.first][option_key_metafield.last] | metafield_tag
+          else
+            assign option_value_metafield = product.selected_variant.metafields[option_key_metafield.first][option_key_metafield.last] | metafield_tag
+          endif
+          assign option_value_metafield_product = product.metafields[option_key_metafield.first][option_key_metafield.last] | metafield_tag
+          if option_value_metafield != blank 
+            assign content = content | replace: key_metafield, option_value_metafield
+          endif
+          if option_value_metafield_product != blank
+            assign content = content | replace: key_metafield, option_value_metafield_product
+          endif
+          if option_value_metafield == blank and option_value_metafield_product == blank
+            assign content = content | replace: key_metafield, ''
+          endif
+        endif
+      endfor
+
+      assign stripped_content = content | strip_html | strip
+      if stripped_content == ''
+        assign content = product.description
+      endif
+    endif
+  else
+    assign content = product.description
+  endif
+-%}
+<div id="product-description-block-{{ section.id }}" class="x-block-description w-full{% if block.settings.show_in_tab %} cursor-pointer border-y border-solid accordion mb-4 md:mb-6{% else %} mb-2{% endif %}">
+  {%- if content != blank -%}
+    <div class="w-full relative" {% if block.settings.show_in_tab %}{% if block.settings.open_by_default %} x-data="{open: true}"{% else %} x-data="{open: false}"{% endif %}{% endif %}{{ block.shopify_attributes }}>
+      {%- if block.settings.show_in_tab -%}
+        <button class="flex relative gap-x-[10px] items-center pl-2 pr-2 pt-3 pb-3 w-full{% if block.settings.make_content_center or show_content_center %} justify-center{% endif %}" @click.prevent="open = !open">
+          {% if block.settings.icon != 'none' %}
+            {% unless block.settings.custom_image == blank and block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+              <span class="inline-block relative w-[30px] h-[30px] min-w-[30px] text-[rgb(var(--colors-text))]">
+                {% if block.settings.custom_image != blank %}
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <img 
+                    src="{{ block.settings.custom_image | image_url: width: 30 }}"
+                    alt="{{ block.settings.custom_image.alt | escape }}"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    width="{{ block.settings.custom_image.width }}"
+                    height="{{ block.settings.custom_image.height }}"
+                    style="object-position: {{ block.settings.custom_image.presentation.focal_point }}"
+                    class="object-cover absolute top-0 left-0 w-full h-full"
+                  >
+                  {% # theme-check-enable ImgLazyLoading %}
+                {% else %}
+                  {% if block.settings.custom_icon == blank %}
+                    {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                      {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                    {% else %}
+                      {% render 'icon-labels-bags', icon: block.settings.icon %}
+                    {% endif %}
+                  {% else %}
+                    {{ block.settings.custom_icon }}
+                  {% endif %}
+                {% endif %}
+              </span>
+            {% endunless %}
+          {% endif %}
+          <p class="font-medium">{{ block.settings.heading | escape }}</p>
+          <span class="w-2.5 inline-block absolute right-2 rtl:left-2 rtl:right-auto top-1/2 duration-500 -translate-y-1/2{% if block.settings.open_by_default %} rotate-180{% endif %}" :class="open ? 'rotate-180' : 'rotate-0'">
+            {% render 'icon-alls', icon: 'icon-caret' %}
+          </span>
+        </button>
+      {%- endif -%}
+      <div class="{% if block.settings.show_in_tab %} pl-2 pr-2 border-t border-solid border-[rgb(var(--colors-text),1)]{% endif %}" 
+        {%- if block.settings.show_in_tab -%}
+          x-show="open"{% unless block.settings.open_by_default %} x-cloak{% endunless %} x-collapse
+        {%- endif -%}>
+        <div class="rte{% if block.settings.make_content_center or show_content_center %} text-center{% endif %}{% if block.settings.show_in_tab %} pt-2{% endif %} pb-2">
+          {%- render 'truncate-text', 
+            number_of_lines_shown: block.settings.number_of_lines_shown 
+            blockID: block.id,
+            quick_view: quick_view,
+            content: content,
+            read_more_label: block.settings.read_more_label,
+            see_less_label: block.settings.see_less_label
+          -%}
+        </div>
+      </div>
+    </div>
+  {%- endif -%}
+</div>

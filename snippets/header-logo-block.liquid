@@ -1,0 +1,82 @@
+{% comment %}
+    Renders a block logo
+
+    Accepts:
+    - logo_above: {Boolean} Logo above
+    - class_logo: {Object} The class of logo
+    Usage:
+    {% render 'header-logo-block' %}
+{% endcomment %}
+{%- liquid 
+  assign logo_pos = 'left'
+  if section.settings.logo_position == 'center-left'
+    assign logo_pos = 'center'
+  endif
+
+  assign enable_compact_menu = false
+  if section.settings.enable_hamburger_menu or section.settings.enable_hamburger_menu == false and section.settings.enable_drawer_menu
+    assign enable_compact_menu = true
+  endif
+
+  if section.settings.logo_position == 'left-left' or enable_compact_menu and logo_pos == 'left'
+    if section.blocks.size > 0 
+      assign show_border = true
+    elsif section.settings.menu != blank
+      assign show_border = true
+    endif
+  endif
+-%}
+<div class="flex{% if logo_above %} lg:py-2 items-center{% endif %}{% if show_border %}{% if settings.lang_direction contains request.locale.iso_code %} lg:ml-3 {% if enable_compact_menu %}lg:pl-5 lg:border-l {% else %}lg:pl-110{% endif %}{% else %} lg:mr-3 {% if enable_hamburger %}lg:pr-5 lg:border-r{% else %}lg:pr-11{% endif %}{% endif %}{% endif %}">
+  <a href="{{ routes.root_url }}" class="{{ class_logo }} disable-effect inline-block">
+    {%- if section.settings.logo_dark != blank -%}
+      {%- assign logo_alt = section.settings.logo_dark.alt | default: shop.name | escape -%}
+      <img
+        src="{{ section.settings.logo_dark | image_url: width: section.settings.logo_dark.width }}"
+        alt="{{ logo_alt }}"
+        sizes="(min-width: 768px) {{ section.settings.logo_width }}px, {{ section.settings.logo_width_mobile }}px"
+        srcset="{{ section.settings.logo_dark | image_url: width: 50 }} 50w,
+          {{ section.settings.logo_dark | image_url: width: 100 }} 100w,
+          {{ section.settings.logo_dark | image_url: width: 150 }} 150w,
+          {{ section.settings.logo_dark | image_url: width: 200 }} 200w,
+          {{ section.settings.logo_dark | image_url: width: 250 }} 250w,
+          {{ section.settings.logo_dark | image_url: width: 300 }} 300w,
+          {{ section.settings.logo_dark | image_url: width: 400 }} 400w,
+          {{ section.settings.logo_dark | image_url: width: 500 }} 500w,
+          {{ section.settings.logo_dark | image_url: width: 600 }} 600w"
+        width="{{ section.settings.logo_dark.width }}"
+        height="{{ section.settings.logo_dark.height }}"
+        class="header-logo hidden absolute dark:block dark:relative mx-auto{% if logo_above %} md:mx-auto{% else %} md:ml-0{% endif %}"
+        loading="eager"
+        fetchpriority="high"
+        decoding="sync"
+      />
+    {%- else -%}
+      <span class="hidden dark:block h-0 dark:h-auto mx-auto{% if logo_above %} md:mx-auto{% else %} md:ml-0{% endif %}">{{ shop.name }}</span>
+    {%- endif -%}
+    {%- if section.settings.logo != blank -%}
+      {%- assign logo_alt = section.settings.logo.alt | default: shop.name | escape -%}
+      <img
+        src="{{ section.settings.logo | image_url: width: section.settings.logo.width }}"
+        alt="{{ logo_alt }}"
+        sizes="(min-width: 768px) {{ section.settings.logo_width }}px, {{ section.settings.logo_width_mobile }}px"
+        srcset="{{ section.settings.logo | image_url: width: 50 }} 50w,
+          {{ section.settings.logo | image_url: width: 100 }} 100w,
+          {{ section.settings.logo | image_url: width: 150 }} 150w,
+          {{ section.settings.logo | image_url: width: 200 }} 200w,
+          {{ section.settings.logo | image_url: width: 250 }} 250w,
+          {{ section.settings.logo | image_url: width: 300 }} 300w,
+          {{ section.settings.logo | image_url: width: 400 }} 400w,
+          {{ section.settings.logo | image_url: width: 500 }} 500w,
+          {{ section.settings.logo | image_url: width: 600 }} 600w"
+        width="{{ section.settings.logo.width }}"
+        height="{{ section.settings.logo.height }}"
+        class="header-logo block dark:hidden dark:absolute mx-auto{% if logo_above %} md:mx-auto{% else %} md:ml-0{% endif %}"
+        loading="eager"
+        fetchpriority="high"
+        decoding="sync"
+      />
+    {%- else -%}
+      <span class="block dark:hidden dark:max-h-0 mx-auto{% if logo_above %} md:mx-auto{% else %} md:ml-0{% endif %}">{{ shop.name }}</span>
+    {%- endif -%}
+  </a>
+</div>

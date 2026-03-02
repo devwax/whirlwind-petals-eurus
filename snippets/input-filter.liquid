@@ -1,0 +1,351 @@
+{% comment %}
+  Accepts:
+  - results: {Object} Collection or Search object
+  - enable_filtering: {Boolean} Show filtering when true
+  - enable_sorting: {Boolean} Show sorting when true
+  - filter_type: {String} Type of filter
+  - number_products: {String} list number of products of 1 page
+  - products_per_page: {int} number of products of 1 page
+  - collection_page: {Boolean} belongs to the collection page
+  - search_page: {Boolean} belongs to the search page
+  Usage:
+  {% render 'facets', results: collection, enable_filtering: true, enable_sorting: true %}
+{% endcomment %}
+{% liquid 
+  assign total_active_values = total_active_values | plus: filter.active_values.size
+  case filter.presentation
+    when 'swatch'
+      assign has_visual_display = true
+    when 'image'
+      assign has_visual_display = true
+    else
+      assign has_visual_display = false
+  endcase
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+    
+  assign rounded_filter = 'square'
+  if section.settings.filter_edge_style == 'rounded'
+    assign rounded_filter = 'rounded'
+  elsif section.settings.filter_edge_style == 'adapt'
+    if settings.buttons_type == 'mixed' or settings.buttons_type == 'rounded_corners'
+      assign rounded_filter = 'rounded_corners'
+    elsif settings.buttons_type == 'rounded'
+      assign rounded_filter = 'rounded'
+    endif
+  endif
+%}
+{% case filter.type %}
+  {% when 'boolean' or 'list' %}
+    <div @click="getPopupPosition($el)" x-data="{open: {{ expand_filter }}}" class="js-filter relative" data-index="{{ filter_type }}-{{ index }}"{% if filter_type == 'above' %} x-intersect.once="setPositionOptionFilter($el)"{% endif %}>
+      <button 
+        @click.prevent="open=!open" 
+        {% if filter_type == 'above' %}:class="open && 'md:shadow-[rgba(0,0,0,0.16)_0px_0px_0px,rgb(var(--colors-heading))_0px_0px_0px_1px] md:border-[rgb(var(--colors-heading))]'"{% endif %} 
+        class="facets__summary w-full relative cursor-pointer flex pt-3 pb-3 border-solid items-center border-b justify-between
+          {%- if filter_type == 'above' %} md:border md:py-3 md:px-4
+            {%- if rounded_filter == 'rounded' %} rounded-full{% elsif rounded_filter == 'rounded_corners' %} rounded{% endif -%}
+          {%- endif -%}
+        "
+        aria-label="{{ filter.label }} ({{ 'products.facets.filters_selected.one' | t: count: filter.active_values.size }})"
+      >
+        <span class="text-medium text-[rgba(var(--colors-heading))]{% if filter_type == 'above' %}{% if is_rtl %} md:ml-7{% else %} md:mr-7{% endif %}{% endif %}">{{ filter.label | escape }}<span class="{% if filter.active_values.size == 0 %} hidden{% endif %}"> ({{ filter.active_values.size }})</span></span>
+        <span class="h-2.5 w-2.5 inline-block duration-300{% if expand_filter %} rotate-180{% endif %}" :class="open ? 'rotate-180':'rotate-0'">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+      </button>
+      <div {% if filter_type != 'above' %}class="border-b md:border-0 border-solid" x-collapse{% else %}class="popup-above max-h-[calc(75vh-var(--height-header))] scrollbar-body overflow-auto border-b md:border-0 border-solid md:absolute md:top-[calc(100%+10px)] md:p-4 md:z-20 md:bg-[rgba(var(--background-color))] md:w-max max-w-xs md:shadow-[rgba(0,0,0,0.15)_0px_5px_15px_0px]" @click.away="open=false"{% endif %} x-show="open"{% unless expand_filter %} x-cloak{% endunless %}>
+        <div class="flex justify-between py-4 text-[{{ settings.text_base_size | times: 0.007875 | times: 0.9 }}rem] md:text-[{{ settings.text_base_size | times: 0.00875 | times: 0.9 }}rem]{% if filter_type == 'above' %} md:pt-1 md:pb-2 border-b{% endif %}">
+          <div>
+            <span class="facets__selected">{{ 'products.facets.filters_selected' | t: count: filter.active_values.size }}</span>
+            {% if filter.operator == 'AND' %}
+              <p class="pt-1">{{ 'products.facets.match_all' | t }}</p>
+            {% endif %}
+          </div>
+          <button @click.prevent="removeFilter(`{{ filter.url_to_remove }}`)" class="facet-reset cursor-pointer{% if is_rtl %} mr-5{% else %} ml-5{% endif %}">
+            {{ 'products.facets.reset' | t }}
+          </button>
+        </div>
+        {%- liquid
+          assign sorted_values = filter.values
+          if filter.operator == 'AND'
+            assign active_filter_values = filter.values | where: 'active', true
+            assign inactive_filter_values = filter.values | where: 'active', false
+            assign sorted_values = active_filter_values | concat: inactive_filter_values
+          endif
+        -%}
+        <div class="md:pb-5 pb-4{% if filter_type == 'above' %}{% if is_rtl %} pl-2{% else %} pr-2{% endif %} pt-3 scrollbar-body overflow-y-auto{% else %} pt-1{% endif %}">
+          {% if has_visual_display %}
+            <ul role="list" class="{% if settings.filter_display_text != true and settings.visual_value_style == 'compact' %} flex flex-wrap{% else %} grid grid-cols-2 gap-x-5{% endif %}" >
+              {%- for value in sorted_values -%}
+                <li class="list-none eurus mb-3">
+                  <label for="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}"
+                    class="{% if value.count > 0 %}cursor-pointer {% endif %}relative{% if settings.filter_display_text %} flex{% else %} inline-block{% endif %}">
+                    <input type="checkbox"
+                      id="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}"
+                      class="input-color-filter checkbox checkbox-checked opacity-0 checked:border-[rgba(var(--colors-text-link))] checked:bg-[rgba(var(--colors-text-link))] absolute cursor-pointer
+                        {%- if is_rtl %} ml-3{% else %} mr-3{% endif -%}
+                        {%- if settings.visual_value_style == "compact" %} min-w-[24px] h-6 w-6{% else %} h-[70px] min-w-[70px]{% endif -%}
+                        {%- if filter.operator == 'AND' %} filter-and{% endif %}{% if rounded_filter != 'square' %} rounded{% else %} rounded-none{% endif -%}
+                      "
+                      name="{{ value.param_name }}"
+                      value="{{ value.value }}"
+                      {% if value.active %}checked{% endif %}
+                      {% if value.count == 0 and value.active == false %}disabled{% endif %}
+                      @change="onSubmit()"
+                    >
+                      {% render 'visual-display',
+                        filter_value: value,
+                        value: value.display.value,
+                        swatch: value.swatch,
+                        presentation: filter.presentation
+                      %}
+                  </label>
+                </li>
+              {%- endfor -%}
+            </ul>
+          {% elsif settings.color_option_name contains filter.label %}
+            <ul role="list" class="{% if filter.values.size > 6 %}grid grid-cols-2 gap-x-5{% endif %}">
+              {%- for value in sorted_values -%}
+                {%- liquid
+                    assign color_option_values = settings.color_option_values | newline_to_br | strip_newlines | split: '<br />'
+                    assign color_custom = blank
+                    assign swatch_image = false
+                    assign color_value = ''
+                    for color_option_value in color_option_values reversed
+                      assign option_key = color_option_value | split: ':' | first
+                      assign option_value = color_option_value | split: ':' | last | strip
+                      if option_key == value.label and option_value contains '.'
+                        assign color_custom = option_key
+                        assign swatch_image = true
+                        assign color_value = option_value
+                        break
+                      endif
+                      assign multi_colors = option_value | remove_first: '#' | split: '#'
+                      if option_key == value.label
+                        assign color_custom = option_key
+                        assign color_value = option_value
+                        break
+                      endif
+                    endfor  
+                -%}
+                {% if color_custom != blank %}
+                  {%- style %}
+                    {% if swatch_image %}
+                      [data-swatch-filter="{{ color_custom }}"]:before {
+                        background-image: url({{ color_value | file_img_url: "100x100" }});
+                      }
+                    {% elsif multi_colors.size == 3 %}
+                      [data-swatch-filter="{{ color_custom }}"]:before {
+                        background: linear-gradient(45deg, {{ '#' | append: multi_colors[0] }}, {{ '#' | append: multi_colors[0] }} 33.3%, {{ '#' | append: multi_colors[1] }} 33.3%, {{ '#' | append: multi_colors[1] }} 66.6%, {{ '#' | append: multi_colors[2] }} 66.6%, {{ '#' | append: multi_colors[2] }});
+                      }
+                    {% elsif multi_colors.size == 2 %}
+                      [data-swatch-filter="{{ color_custom }}"]:before {
+                        background: linear-gradient(45deg, {{ '#' | append: multi_colors[0] }}, {{ '#' | append: multi_colors[0] }} 50%, {{ '#' | append: multi_colors[1] }} 50%, {{ '#' | append: multi_colors[1] }});
+                      }
+                    {% else %}
+                      [data-swatch-filter="{{ color_custom }}"]:before {
+                        background: {{ color_value }};
+                      }
+                    {% endif %}
+                  {%- endstyle %}
+                {% endif %}
+                <li class="list-none mb-3 eurus pl-0.5">
+                  <label for="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}" class="flex items-center relative{% if value.count > 0 %} cursor-pointer{% endif %}">
+                    <input type="checkbox"
+                      id="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}"
+                      class="input-color-filter checkbox checkbox-checked opacity-0 h-6 w-6 min-w-[24px] checked:border-[rgba(var(--colors-text-link))] checked:bg-[rgba(var(--colors-text-link))] relative cursor-pointer
+                        {%- if is_rtl %} ml-3{% else %} mr-3{% endif -%}
+                        {%- if filter.operator == 'AND' %} filter-and{% endif -%}
+                        {%- if rounded_filter != 'square' %} rounded{% else %} rounded-none{% endif -%}
+                      "
+                      name="{{ value.param_name }}"
+                      value="{{ value.value }}"
+                      {% if value.active %}checked{% endif %}
+                      {% if value.count == 0 and value.active == false %}disabled{% endif %}
+                      @change="onSubmit()"
+                    >
+                    <span class="color-filter absolute top-0{% if is_rtl %} right-0{% else %} left-0{% endif %} h-6 w-6 rounded-full"
+                      {% if color_custom != blank %}
+                        data-swatch-filter="{{ color_custom }}"
+                      {% else %}
+                        style="background: {{ value.label | split: ' ' | last | handle }};"
+                      {% endif %}
+                      aria-label="{{ value.label | escape }}"></span>
+                    <span class="p-break-words">{{ value.label | escape }} ({{ value.count }})</span>
+                  </label>
+                </li> 
+              {%- endfor -%}
+            </ul>
+          {% else %}
+            <ul role="list">
+              {%- for value in sorted_values -%}
+                <li class="list-none mb-3 eurus">
+                  <label for="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}" class="flex items-center{% if value.count > 0 %} cursor-pointer{% endif %}">
+                    <input type="checkbox"
+                      id="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}"
+                      class="checkbox checkbox-checked h-6 w-6 min-w-[24px] border checked:border-[rgba(var(--colors-text-link))] checked:bg-[rgba(var(--colors-text-link))] relative cursor-pointer
+                        {%- if is_rtl %} ml-2{% else %} mr-2{% endif -%}
+                        {%- if filter.operator == 'AND' %} filter-and{% endif -%}
+                        {%- if rounded_filter != 'square' %} rounded{% else %} rounded-none{% endif -%}
+                      "
+                      name="{{ value.param_name }}"
+                      value="{{ value.value }}"
+                      {% if value.active %}checked{% endif %}
+                      {% if value.count == 0 and value.active == false %}disabled{% endif %}
+                      @change="onSubmit()"
+                    >
+                    <span class="p-break-words">{{ value.label | escape }} ({{ value.count }})</span>
+                  </label>
+                </li>
+              {%- endfor -%}
+            </ul> 
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% when 'price_range' %}
+    {% liquid
+      assign currencies_using_comma_decimals = 'ANG,ARS,BRL,BYN,BYR,CLF,CLP,COP,CRC,CZK,DKK,EUR,HRK,HUF,IDR,ISK,MZN,NOK,PLN,RON,RUB,SEK,TRY,UYU,VES,VND' | split: ','
+      assign uses_comma_decimals = false
+      if currencies_using_comma_decimals contains cart.currency.iso_code
+        assign uses_comma_decimals = true
+      endif
+    %}
+    <div x-data="{open: {{ expand_filter }}}" class="js-filter relative" data-index="{{ filter_type }}-{{ index }}"{% if filter_type == 'above' %}  x-intersect.once="setPositionOptionFilter($el)"{% endif %}>
+      <button 
+        @click.prevent="open=!open"
+        {% if filter_type == 'above' %}:class="open && 'md:shadow-[rgba(0,0,0,0.16)_0px_0px_0px,rgb(var(--colors-heading))_0px_0px_0px_1px] md:border-[rgb(var(--colors-heading))]'"{% endif %} 
+        class="facets__summary w-full relative cursor-pointer flex pt-3 pb-3 border-solid items-center border-b justify-between
+          {%- if filter_type == 'above' %} md:border md:py-3 md:px-4
+            {%- if rounded_filter == 'rounded' %} rounded-full{% elsif rounded_filter == 'rounded_corners' %} rounded{% endif -%}
+          {%- endif -%}
+        "
+      >
+        <span class="text-medium text-[rgba(var(--colors-heading))]{% if filter_type == 'above' %}{% if is_rtl %} md:ml-7{% else %} md:mr-7{% endif %}{% endif %}">{{ filter.label | escape }}</span>
+        <span class="h-2.5 w-2.5 inline-block duration-300{% if expand_filter %} rotate-180{% endif %}" :class="open ? 'rotate-180':'rotate-0'">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+      </button>
+      <div {% if filter_type != 'above' %}class="border-b md:border-0 border-solid" x-collapse{% else %}class="popup-above max-h-[calc(75vh-var(--height-header))] scrollbar-body overflow-auto border-b md:border-0 border-solid md:absolute md:top-[calc(100%+10px)] md:p-4 md:z-20 md:bg-[rgba(var(--background-color))] md:w-max min-w-[266px] md:shadow-[rgba(0,0,0,0.15)_0px_5px_15px_0px]" @click.away="open=false"{% endif %} x-show="open"{% unless expand_filter %} x-cloak{% endunless %}>
+        <div class="{% if filter_type == 'above' %}pt-1 pb-2 mb-6 border-b mx-1 {% else %}pt-4 pb-4 {% endif %}justify-end flex text-[{{ settings.text_base_size | times: 0.007875 | times: 0.9 }}rem] md:text-[{{ settings.text_base_size | times: 0.00875 | times: 0.9 }}rem]">
+          <button @click.prevent="removeFilter(`{{ filter.url_to_remove }}`)" class="facet-reset cursor-pointer{% if is_rtl %} mr-5{% else %} ml-5{% endif %}">
+            {{ 'products.facets.reset' | t }}
+          </button>
+        </div>
+        <div class="flex pb-4 md:mb-4 items-center justify-between">
+          <div x-intersect.once="rangePrice($el)" class="w-full range-price-filter px-1">
+            <div x-intersect.once="initRange($el)" class="w-full text-[rgb(var(--colors-text),0.7)]">
+              <div class="slider h-1.5 relative border border-solid">
+                <div style="{% if is_rtl %}left: var(--right_range); right: var(--left_range);{% else %}left: var(--left_range); right: var(--right_range);{% endif %}" class="progress h-full absolute bg-[rgb(var(--colors-text-link))] left-0 right-0"></div>
+              </div>
+              <div class="range-input relative">
+                <input 
+                  @change="onSubmit()"
+                  aria-label="Filter range min"
+                  class="absolute -translate-x-1 rtl:translate-x-1 range-min w-full bg-none h-1.5 -top-1.5 pointer-events-none appearance-none
+                    {%- if rounded_filter != 'square' %} rounded-range{% else %} square-range{% endif -%}
+                    {%- if filter.operator == 'AND' %} filter-and{% endif -%}
+                  "
+                  name="{{ filter.min_value.param_name }}"
+                  {%- if filter.min_value.value -%}
+                    {%- if uses_comma_decimals -%}value="{{ filter.min_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"{%- else -%}value="{{ filter.min_value.value | money_without_currency | replace: ',', '' }}"{% endif %}
+                  {%- else -%}
+                    value="0"
+                  {%- endif -%}
+                  type="range"
+                  placeholder="0"
+                  min="0"
+                  defaultValue="0"
+                  {%- if uses_comma_decimals -%}max="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"{%- else -%}max="{{ filter.range_max | money_without_currency | replace: ',', '' }}"{% endif %}
+                  step=".01"
+                  form="ranger-price"
+                  id="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}-range-min"
+                >
+                <input 
+                  @change="onSubmit()"
+                  aria-label="Filter range max"
+                  class="absolute translate-x-1 rtl:-translate-x-1 range-max w-full bg-none h-1.5 -top-1.5 pointer-events-none appearance-none
+                    {%- if rounded_filter != 'square' %} rounded-range{% else %} square-range{% endif -%}
+                    {%- if filter.operator == 'AND' %} filter-and{% endif -%}
+                  "
+                  type="range"
+                  min="1"
+                  {%- if filter.max_value.value -%}
+                    {%- if uses_comma_decimals -%}value="{{ filter.max_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"{%- else -%}value="{{ filter.max_value.value | money_without_currency | replace: ',', '' }}"{% endif %}
+                  {%- else -%}
+                    value="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                  {%- endif -%}
+                  {%- if uses_comma_decimals -%}
+                    placeholder="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                    max="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                    defaultValue="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                  {%- else -%}
+                    placeholder="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                    max="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                    defaultValue="{{ filter.range_max | money_without_currency | replace: ',', '' | replace: ',', '.' }}"
+                  {% endif %}
+                  form="ranger-price"
+                  step=".01"
+                  id="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}-range-max"
+                >
+              </div>
+              <input @change="onSubmit()" class="price-input absolute opacity-0 -z-10{% if filter.operator == 'AND' %} filter-and{% endif %}"
+                name="{{ filter.min_value.param_name }}"
+                aria-label="Filter price min"
+                x-ref="filter_price_gte"
+                {%- if filter.min_value.value -%}
+                  {%- if uses_comma_decimals -%}value="{{ filter.min_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"{%- else -%}value="{{ filter.min_value.value | money_without_currency | replace: ',', '' }}"{% endif %}
+                {%- endif -%}
+                type="number"
+                placeholder="0"
+                min="0"
+                defaultValue="0"
+                {%- if uses_comma_decimals -%}max="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"{%- else -%}max="{{ filter.range_max | money_without_currency | replace: ',', '' }}"{% endif %}
+                step=".01"
+                id="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}-min"
+              >
+              <input @change="onSubmit()" class="price-input absolute opacity-0 -z-10{% if filter.operator == 'AND' %} filter-and{% endif %}" name="{{ filter.max_value.param_name }}" 
+                aria-label="Filter price max"
+                x-ref="filter_price_lte" type="number" min="0"
+                {%- if filter.max_value.value -%}
+                  {%- if uses_comma_decimals -%}value="{{ filter.max_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"{%- else -%}value="{{ filter.max_value.value | money_without_currency | replace: ',', '' }}"{% endif %}
+                {%- endif -%}
+                {%- if uses_comma_decimals -%}
+                  placeholder="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                  max="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                  defaultValue="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                {%- else -%}
+                  placeholder="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                  max="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                  defaultValue="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                {% endif %}
+                step=".01"
+                id="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}-max"
+              >
+              <div class="w-full flex justify-between mt-3">
+                <div class="flex items-center">
+                  <span>{{ cart.currency.symbol }}</span>
+                  <p class="price-preview">
+                    {%- if filter.min_value.value -%}
+                      {{ filter.min_value.value | money_without_currency }}
+                    {%- else -%}
+                    0
+                    {%- endif -%}
+                  </p>
+                </div>
+                <div class="flex items-center">
+                  <span>{{ cart.currency.symbol }}</span>
+                  <p class="price-preview">
+                    {%- if filter.max_value.value -%}
+                      {{ filter.max_value.value | money_without_currency }}
+                    {%- else -%}
+                      {{ filter.range_max | money_without_currency }}
+                    {%- endif -%}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+{% endcase %}

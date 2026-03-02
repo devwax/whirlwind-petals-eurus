@@ -1,0 +1,151 @@
+{%- liquid 
+  assign icon_1 = settings.highlight_icon_1_metafield | split: "."
+  assign highlight_icon_1 = card_product.metafields[icon_1.first][icon_1.last]
+  assign icon_2 = settings.highlight_icon_2_metafield | split: "."
+  assign highlight_icon_2 = card_product.metafields[icon_2.first][icon_2.last]
+  assign icon_3 = settings.highlight_icon_3_metafield | split: "."
+  assign highlight_icon_3 = card_product.metafields[icon_3.first][icon_3.last]
+  assign icon_4 = settings.highlight_icon_4_metafield | split: "."
+  assign highlight_icon_4 = card_product.metafields[icon_4.first][icon_4.last]
+-%}
+<div 
+  class="flex flex-wrap gap-[3px] rtl:flex-row-reverse {% if settings.lang_direction contains request.locale.iso_code %}rtl {% else %}ltr {% endif %}{% if is_shop_the_look %}pr-0 pl-0 md:justify-{{ content_alignment }}{% else %}pr-0 pl-0 justify-{{ content_alignment }}{% endif %} items-center list-layout:mt-4 list-layout:justify-start rtl:list-layout:justify-end empty:hidden"
+  x-data="{setPosition(el) {
+    parentEl = el.closest('.x-highlight-icon').getBoundingClientRect();
+    el.style.setProperty('--maxwidth-tooltip', parentEl.width - 20 + 'px');
+    elRect = el.getBoundingClientRect();
+    let spacingLeft = elRect.left - parentEl.left;
+    if (spacingLeft < 0) {
+      el.style.setProperty('--left-tooltip', Math.abs(spacingLeft) + 'px');
+    }
+    let spacingRight = parentEl.right - elRect.right;
+    if (spacingRight < 0) {
+      el.style.setProperty('--left-tooltip', spacingRight + 'px');
+    } 
+  }}"
+  x-init="$el.innerHTML = $el.innerHTML.trim();"
+>
+  {%- liquid 
+    assign mt_label_icon_1 = settings.highlight_icon_1_label | split: "."
+    assign label_icon_1 = card_product.metafields[mt_label_icon_1.first][mt_label_icon_1.last]
+  -%}
+  {%- if highlight_icon_1 != blank -%} 
+    {% if highlight_icon_1.type == 'file_reference' %}
+      <div class="relative flex highlight-icon">
+        {% # theme-check-disable ImgLazyLoading %}
+        <img
+          src="{{ highlight_icon_1 | image_url: width: 100 }}"
+          alt="{{ highlight_icon_1.value.alt | escape }}"
+          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+          width="{{ highlight_icon_1.value.width }}"
+          height="{{ highlight_icon_1.value.height }}"
+          class="h-[30px]"
+          style="width: {{ highlight_icon_1.value.aspect_ratio | times: 30 }}px"
+        />
+        {% # theme-check-enable ImgLazyLoading %}
+        {% if label_icon_1 != blank %}
+          <div x-intersect.once="setPosition($el)" class="absolute mb-3 p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-full{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label_icon_1 }}</div>
+        {% endif %}
+      </div>    
+      {% elsif highlight_icon_1.type == 'single_line_text_field' %}
+        <div class="relative flex highlight-icon">{%- render 'icon-card-product-new-alls', icon: highlight_icon_1, label: label_icon_1 -%}</div>
+    {% endif %}   
+  {% else %}
+    {% if label_icon_1 != blank %}
+      <div class="text-center bg-[rgba(var(--colors-text),0.2)] pt-0.5 pb-0.5 pl-2.5 pr-2.5{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">{{ label_icon_1 }}</div>
+    {% endif %}
+  {%- endif -%}
+
+  {%- liquid 
+    assign mt_label_icon_2 = settings.highlight_icon_2_label | split: "."
+    assign label_icon_2 = card_product.metafields[mt_label_icon_2.first][mt_label_icon_2.last]
+  -%}
+  {%- if highlight_icon_2 != blank -%} 
+    {% if highlight_icon_2.type == 'file_reference' %}
+      <div class="relative flex highlight-icon">
+        {% # theme-check-disable ImgLazyLoading %}
+        <img
+          src="{{ highlight_icon_2 | image_url: width: 100 }}"
+          alt="{{ highlight_icon_2.value.alt | escape }}"
+          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+          width="{{ highlight_icon_2.value.width }}"
+          height="{{ highlight_icon_2.value.height }}"
+          class="h-[30px]"
+          style="width: {{ highlight_icon_2.value.aspect_ratio | times: 30 }}px"
+        />
+        {% # theme-check-enable ImgLazyLoading %}
+        {% if label_icon_2 != blank %}
+          <div x-intersect.once="setPosition($el)" class="absolute mb-3 p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-full{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label_icon_2 }}</div>
+        {% endif %}
+      </div>    
+      {% elsif highlight_icon_2.type == 'single_line_text_field' %}
+        <div class="relative flex highlight-icon">{%- render 'icon-card-product-new-alls', icon: highlight_icon_2, label: label_icon_2 -%}</div>
+    {% endif %}   
+  {% else %}
+    {% if label_icon_2 != blank %}
+      <div class="text-center bg-[rgba(var(--colors-text),0.2)] pt-0.5 pb-0.5 pl-2.5 pr-2.5{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">{{ label_icon_2 }}</div>
+    {% endif %}
+  {%- endif -%}
+
+  {%- liquid 
+    assign mt_label_icon_3 = settings.highlight_icon_3_label | split: "."
+    assign label_icon_3 = card_product.metafields[mt_label_icon_3.first][mt_label_icon_3.last]
+  -%}
+  {%- if highlight_icon_3 != blank -%} 
+    {% if highlight_icon_3.type == 'file_reference' %}
+      <div class="relative flex highlight-icon">
+        {% # theme-check-disable ImgLazyLoading %}
+        <img
+          src="{{ highlight_icon_3 | image_url: width: 100 }}"
+          alt="{{ highlight_icon_3.value.alt | escape }}"
+          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+          width="{{ highlight_icon_3.value.width }}"
+          height="{{ highlight_icon_3.value.height }}"
+          class="h-[30px]"
+          style="width: {{ highlight_icon_3.value.aspect_ratio | times: 30 }}px"
+        />
+        {% # theme-check-enable ImgLazyLoading %}
+        {% if label_icon_3 != blank %}
+          <div x-intersect.once="setPosition($el)" class="absolute mb-3 p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-full{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label_icon_3 }}</div>
+        {% endif %}
+      </div>    
+      {% elsif highlight_icon_3.type == 'single_line_text_field' %}
+        <div class="relative flex highlight-icon">{%- render 'icon-card-product-new-alls', icon: highlight_icon_3, label: label_icon_3 -%}</div>
+    {% endif %}   
+  {% else %}
+    {% if label_icon_3 != blank %}
+      <div class="text-center bg-[rgba(var(--colors-text),0.2)] pt-0.5 pb-0.5 pl-2.5 pr-2.5{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">{{ label_icon_3 }}</div>
+    {% endif %}
+  {%- endif -%}
+
+  {%- liquid 
+    assign mt_label_icon_4 = settings.highlight_icon_4_label | split: "."
+    assign label_icon_4 = card_product.metafields[mt_label_icon_4.first][mt_label_icon_4.last]
+  -%}
+  {%- if highlight_icon_4 != blank -%} 
+    {% if highlight_icon_4.type == 'file_reference' %}
+      <div class="relative flex highlight-icon">
+        {% # theme-check-disable ImgLazyLoading %}
+        <img
+          src="{{ highlight_icon_4 | image_url: width: 100 }}"
+          alt="{{ highlight_icon_4.value.alt | escape }}"
+          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+          width="{{ highlight_icon_4.value.width }}"
+          height="{{ highlight_icon_4.value.height }}"
+          class="h-[30px]"
+          style="width: {{ highlight_icon_4.value.aspect_ratio | times: 30 }}px"
+        />
+        {% # theme-check-enable ImgLazyLoading %}
+        {% if label_icon_4 != blank %}
+          <div x-intersect.once="setPosition($el)" class="absolute mb-3 p-break-words left-[calc(50%+var(--left-tooltip))] opacity-0 -z-10 highlight-icon-tooltip bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-full{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">{{ label_icon_4 }}</div>
+        {% endif %}
+      </div>    
+      {% elsif highlight_icon_4.type == 'single_line_text_field' %}
+        <div class="relative flex highlight-icon">{%- render 'icon-card-product-new-alls', icon: highlight_icon_4, label: label_icon_4 -%}</div>
+    {% endif %}   
+  {% else %}
+    {% if label_icon_4 != blank %}
+      <div class="text-center bg-[rgba(var(--colors-text),0.2)] pt-0.5 pb-0.5 pl-2.5 pr-2.5{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">{{ label_icon_4 }}</div>
+    {% endif %}
+  {%- endif -%}
+</div>

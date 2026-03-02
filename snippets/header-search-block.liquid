@@ -1,0 +1,181 @@
+{% liquid
+assign search_type =  'query,' | append: settings.search_type 
+if settings.lang_direction contains request.locale.iso_code
+  assign is_rtl = true
+else
+  assign is_rtl = false
+endif
+%}
+<div x-data="xModalSearch('{{ search_type }}','{{ settings.search_desktop_maximun_results }}',{{ settings.search_mobile_maximun_results }}, '{{ 'templates.search.product_type_default' | t }}')" 
+  class="header-search {% if settings.mobile_search_position == 'header' %}flex lg:flex{% else %}hidden md:flex{% endif %} items-center justify-center" 
+  x-init="if ($store.xModal.activeElement == 'SearchOpen') {  open('open_search'); $store.xHeaderMenu.hideMenu($el); }"
+  x-on:click.away="close('open_search');"
+  @keyup.escape="close('open_search'); $store.xModal.removeFocus();"
+>
+  <a 
+    id="SearchOpen"
+    href="{{ routes.search_url }}" 
+    aria-label="search"
+    class="flex items-center cursor-pointer justify-center link focus-inset bg-none" 
+    @click.prevent="setTimeout(() => { $store.xModal.setActiveElement('SearchOpen'); open('open_search'); $store.xHeaderMenu.hideMenu($el); }, 0)"
+  >
+    <span class="w-11 h-10 px-3 pt-2.5 pb-2">{% render 'icon-alls', icon: 'icon-search', animation_class: 'icon-animation' %}</span>
+  </a>
+  <div 
+    id="FormSearch" 
+    x-ref="open_search" 
+    class="x-search-popup popup-hidden background-header shadow-sm lg:shadow-none absolute top-0 left-0 right-0 z-50 gradient transition-all duration-300 ease-in-out"
+  >
+    <div class="pb-16 pl-5 pr-5 lg:pl-24 lg:pr-24 pt-14 lg:pb-16 flex items-center justify-center w-full h-full relative lg:shadow-sm text-[rgb(var(--colors-text-header))]" tabindex="-1">
+      {%- if settings.predictive_search_enabled -%}
+        <div class="relative max-w-6xl w-full" data-loading-text="{{ 'accessibility.loading' | t }}">
+      {%- endif -%}
+      <div class="max-w-[62rem] mx-auto w-full{% if settings.search_refined %} border-b{% endif %}">
+        <div class="relative field rtl:flex-row-reverse rtl:md:flex-row pr-5 lg:pr-0 flex{% unless settings.search_refined %} pl-5 lg:pl-0{% endunless %}">
+          {% if settings.search_refined %}
+            <div class="md:relative search-categories flex items-center flex-shrink-0">
+              <div 
+                class="inline-flex lg:inline-block{% if is_rtl %} border-l ml-2 pl-3.5{% else %} border-r mr-2 pr-3.5{% endif %}"
+                x-data="{ 
+                  open: false
+                }" 
+                @keyup.escape="open = false">
+                <button 
+                  @click.prevent="open = ! open;"
+                  class="relative py-1 w-28 md:w-44{% if is_rtl %} text-right pl-5{% else %} text-left pr-5{% endif %} cursor-pointer hover-text-link duration-200 transition"
+                  aria-expanded="false" 
+                  aria-controls="CategoriesList" 
+                >
+                  <span class="line-clamp-1 p-break-words" x-text="productTypeSelected"></span>
+                  <span class="opacity-60 absolute w-2.5 h-2.5 top-1/2 -translate-y-1/2 flex{% if is_rtl %} left-0{% else %} right-0{% endif %}" :class="open && ' -rotate-180'">
+                    {% render 'icon-alls', icon: 'icon-caret' %}
+                  </span>
+                </button>
+                <div 
+                  x-show="open" 
+                  @click.away="open = false" 
+                  x-cloak
+                >
+                  <div 
+                    x-show="open" 
+                    x-transition:enter="transition-all ease-in-out duration-500"
+                    x-transition:enter-start="opacity-0 transform -translate-y-4"
+                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                    x-transition:leave="transition-all ease-in-out duration-500"
+                    x-transition:leave-end="opacity-0 transform -translate-y-4"
+                    class="absolute pt-6 pb-7 z-50{% if is_rtl %} right-0{% else %} left-0{% endif %} top-[calc(100%+12px)] lg:bottom-auto background-header shadow-[0_0_6px_-4px_rgba(var(--colors-text))]">
+                    <ul 
+                      role="list" 
+                      id="CategoriesList"
+                      class="w-full md:w-auto md:min-w-[15rem] pl-7 pr-7{% if is_rtl %} right-0{% else %} left-0{% endif %} max-h-[15rem] overflow-y-auto scrollbar-body scrollbar-visible">
+                      <li 
+                        tabindex="0"
+                        class="cursor-pointer py-1 duration-200 transition text-[rgb(var(--colors-text-header))]" 
+                        @click="setProductType('{{ 'templates.search.product_type_default' | t }}', 'product_type'); open = false">
+                        <p
+                          class="nav-link inline-block hover-text-link relative p-break-words"
+                          :class="productTypeSelected == '{{ 'templates.search.product_type_default' | t }}' && 'border-b link-active'"
+                          href="#"
+                          data-no-instant>
+                          {{ 'templates.search.product_type_default' | t }}
+                        </p>
+                      </li>
+                      {% for product_type in shop.types %}
+                        {% if product_type != blank %}
+                          <li 
+                            tabindex="0"
+                            class="product-type-item cursor-pointer py-1 duration-200 transition text-[rgb(var(--colors-text-header))]" 
+                            @keyup.enter="setProductType(`{{ product_type }}`, 'product_type');"
+                            @click="setProductType(`{{ product_type }}`, 'product_type'); open = false">
+                            <p
+                              class="nav-link inline-block hover-text-link relative p-break-words"
+                              :class="productTypeSelected == `{{ product_type }}` && 'border-b effect-inline'"
+                              href="#"
+                              data-no-instant>
+                              {{ product_type }}
+                            </p>
+                          </li>
+                        {% endif %}
+                      {%- endfor -%}
+                    </ul>
+                  </div>
+                </div>
+                <input type="hidden" aria-hidden="true" name="product_type" id="product_type" value="product_type:" data-disclosure-input tabindex="-1"/>
+              </div>
+            </div>
+          {% endif %}
+          <form id="form-search-{{ section.id }}" class="grow" action="{{ routes.search_url }}" method="get" role="search">
+            {% style %}
+              .input-search::placeholder {
+                {% if settings.search_prompts_font == "search_prompts_font_text" %}
+                  font-family: var(--font-body-family);
+                {% else %}
+                  font-family: var(--font-heading-family);
+                {% endif %}
+              }
+            {% endstyle %}
+            <input 
+              x-data="xSearchPrompts($el, ['{{ settings.search_prompts_1 }}', '{{ settings.search_prompts_2 }}', '{{ settings.search_prompts_3 }}'], {% if settings.search_prompts_mobile %}true{% else %}false{% endif %})"
+              id="search-in-modal"
+              aria-label="Search"
+              class="peer input-search focus-visible:outline-none{% if settings.search_refined %} py-3{% else %} py-4 border-b{% endif %}{% if is_rtl %} pl-[4.5rem] pr-4 lg:pr-2 lg:pl-20 text-right{% else %} pr-[4.5rem] pl-4 lg:pl-2 lg:pr-20 text-left{% endif %} w-full appearance-none relative outline-none bg-transparent placeholder:text-current placeholder:opacity-60"
+              type="search"
+              name="q"
+              value=""
+              x-on:keyup="keyUp()"
+              @focus="focusForm()"
+              autofocus
+              placeholder="{{ 'general.search.search' | t }}"
+            >
+            <input type="hidden" aria-hidden="true" name="options[prefix]" value="last">
+            <button 
+              class="btn-search absolute none_border w-7 h-7 p-1 top-1/2 -translate-y-1/2 opacity-60 bg-none text-current{% if is_rtl %} lg:left-2{% if settings.search_refined %} left-2{% else %} left-7{% endif %}{% else %} lg:right-2{% if settings.search_refined %} right-2{% else %} right-7{% endif %}{% endif %}"
+              aria-label="{{ 'general.search.search' | t }}">
+              {%- render 'icon-alls', icon: 'icon-search', animation_class: 'icon-animation' -%}
+            </button>
+            {% if settings.show_speech_search %}
+              <button aria-label="Search speech" class="search__speech absolute cursor-pointer w-7 h-7 p-1{% if is_rtl %}{% if settings.search_refined %} left-10{% else %} left-16{% endif %} lg:left-12{% else %}{% if settings.search_refined %} right-10{% else %} right-16{% endif %} lg:right-12{% endif %} top-1/2 -translate-y-1/2 opacity-60 bg-none text-current" x-data="xSpeechSearch($el)" x-init="initSpeechSearch()" x-show="show">
+                {% render 'icon-alls', icon: 'icon-voice' %}
+              </button>
+              <script src="{{ 'speech-search.js' | asset_url }}" defer></script>
+            {% endif %}
+            {%- if settings.predictive_search_enabled -%}
+              <div id="search-result" class="md:max-h-96 absolute top-[calc(100%+12px)] w-full left-0 {% if is_rtl %} rtl{% endif %}" tabindex="-1" data-predictive-search x-html="result" x-show="loading == false">
+                <div class="predictive-search__loading-state">
+                  <svg aria-hidden="true" focusable="false" role="presentation" class="spinner" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="path" fill="none" stroke-width="6" cx="33" cy="33" r="30"></circle>
+                  </svg>
+                </div>
+              </div>
+              {% if settings.search_recomendation != blank or settings.popular_product_search != blank %}
+                <div 
+                  id="suggest-search" class="absolute top-[calc(100%+12px)] w-full left-0 {% if is_rtl %} rtl{% endif %}" 
+                  tabindex="-1" 
+                  data-predictive-search 
+                  x-cloak 
+                  :class="showSuggest ? 'block' : 'hidden'">
+                  {%- 
+                    render 'suggest-search', 
+                    search_recomendation: settings.search_recomendation, 
+                    popular_product_search: settings.popular_product_search 
+                  -%}
+                </div>
+              {% endif %}
+            {%- endif -%}
+          </form>
+        </div>
+      </div>
+      {%- if settings.predictive_search_enabled -%}
+        </div>
+      {%- endif -%}
+      <button 
+        id="SearchClose"
+        aria-label="Search close"
+        class="link link--text focus-inset group-close-btn rounded-full cursor-pointer w-fit icon-close-container absolute top-2 opacity-60{% if is_rtl %} left-2{% else %} right-2{% endif %}"
+        x-on:click="close('open_search'); $store.xModal.removeFocus();"
+      >
+        {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+      </button>
+    </div>
+  </div>
+</div> 

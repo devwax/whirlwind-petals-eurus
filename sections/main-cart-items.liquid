@@ -1,0 +1,1920 @@
+{%- liquid 
+  assign name_edt = settings.name_edt
+  if settings.name_edt == blank
+    assign name_edt = 'general.estimate_delivery' | t
+  endif
+  if name_edt == blank
+    assign name_edt = 'Note'
+  endif
+  assign ratio = 100
+  case settings.product_image_ratio
+    when "portrait"
+      assign ratio = 150
+    when "landscape"
+      assign ratio = 75
+    when "wide"
+      assign ratio = 56.25
+    when "3/4"
+      assign ratio = 133
+  endcase
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+  assign show_side_bar = false
+  if settings.cart_page_layout == 'side' and settings.show_cart_note or section.blocks.size > 0 or settings.show_cart_custom_field
+    assign show_side_bar = true
+  endif
+  if settings.free_shipping_code != blank
+    assign free_shipping_codes = settings.free_shipping_code | newline_to_br | strip_newlines | split: '<br />'
+  endif
+-%}
+{% style %}
+  {%- if settings.enable_featured_discount -%}
+    .text-removed-discount {
+      font-size: {{ settings.text_base_size | times: 0.0075 | times: 0.9 }}rem;
+    }
+    @media(min-width: 768px) {
+      .text-removed-discount {
+        font-size: {{ settings.text_base_size | times: 0.0075 }}rem;
+      }
+    }
+    {% endif %}
+  .child-cart-item {
+    font-size: 90%;
+  }
+  .child-cart-item:not(.last-child) .child-item-img-container::after {
+    content: var(--tw-content);
+    position: absolute;
+    top: 0;
+    {% if is_rtl %}
+      right: 7px;
+      border-right-width: 1px;
+    {% else %}
+      left: 7px;
+      border-left-width: 1px;
+    {% endif %}
+    height: 100%;
+  }
+  .parent-item-img::before {
+    content: var(--tw-content);
+    position: absolute;
+    bottom: 0;
+    {% if is_rtl %}
+      right: 7px;
+      border-right-width: 1px;
+    {% else %}
+      left: 7px;
+      border-left-width: 1px;
+    {% endif %}
+    height: calc(100% - 32px);
+  }
+  .child-item-img-container::before {
+    content: var(--tw-content);
+    position: absolute;
+    top: -100%;
+    {% if is_rtl %}
+      right: 7px;
+      border-right-width: 1px;
+    {% else %}
+      left: 7px;
+      border-left-width: 1px;
+    {% endif %}
+    height: 100%;
+  }
+  .child-item-img::after {
+    content: var(--tw-content);
+    position: absolute;
+    top: -24px;
+    {% if is_rtl %}
+      right: calc(-100% + 7px);
+      border-right-width: 1px;
+      border-bottom-right-radius: 10px;
+    {% else %}
+      left: calc(-100% + 7px);
+      border-left-width: 1px;
+      border-bottom-left-radius: 10px;
+    {% endif %}
+    border-bottom-width: 1px;
+    height: calc(50% + 24px);
+    width: calc(100% - 7px);
+  }
+  @media (min-width: 768px) {
+    .child-item-img::after {
+      width: 56px;
+      {% if is_rtl %}
+        right: -57px;
+      {% else %}
+        left: -57px;
+      {% endif %}
+    }
+  }
+  .child-cart-item .text-small {
+    font-size: calc(var(--font-size-small-mobile) * 0.9);
+  }
+  .child-cart-item .text-normal {
+    font-size: calc(var(--font-size-normal-mobile) * 0.9);
+  }
+  @media (min-width: 1024px) {
+    .child-cart-item .text-small {
+      font-size: calc(var(--font-size-small) * 0.9);
+    }
+    .child-cart-item .text-normal {
+      font-size: calc(var(--font-size-normal) * 0.9);
+    }
+  }
+{% endstyle %}
+<div
+  id="main-cart-items"
+  class="x-pgw page-width mx-auto pt-[{{ section.settings.padding_top_mobile }}px] md:pt-[{{ section.settings.padding_top }}px] pb-[{{ section.settings.padding_bottom_mobile }}px] md:pb-[{{ section.settings.padding_bottom }}px]"
+  x-intersect.once="$store.xCartAnalytics.viewCart()">
+  {%- if cart != empty -%}
+    {%- if settings.enable_featured_discount -%}
+      <div class="x-undo-remove-discount-container-cart fixed bottom-8 left-1/2 -translate-x-1/2 w-fit z-[9999]"></div>
+    {% endif %}
+    {% comment %}theme-check-disable TranslationKeyExists{% endcomment %}
+    {% liquid
+      if settings.show_in_cart_items != 'none'
+        assign current_minute = "now" | date: "%M"
+        assign current_time_of_day = "now" | date: "%H" | append: current_minute | plus: 0
+        assign cutoff_time = settings.estimate_delivery_cutoff_hour | append: settings.estimate_delivery_cutoff_minute | plus: 0
+        
+        assign date_update = 0
+        if current_time_of_day > cutoff_time
+          assign date_update = 1
+        endif
+        assign to_date_seconds = date_update | times: 24 | times: 60 | times: 60
+        assign update_date_month = 'now' | date: "%s" | plus: to_date_seconds | date: "%B"
+        assign update_date_day = 'now' | date: "%s" | plus: to_date_seconds | date: "%d"
+        assign update_date_string = 'date_time.month.' | append: update_date_month | t | append: ' ' | append: update_date_day
+        assign is_update_date = true
+        if update_date_string == cart.attributes.datetime-updated
+          assign is_update_date = false
+        endif
+      endif
+    %}
+    {% comment %}theme-check-enable TranslationKeyExists{% endcomment %}
+    <div class="mb-3 mt-3 pt-1.5 flex justify-between"{% if is_update_date %} x-data="xCart" x-init="updateDate(`{{ update_date_string }}`); updateEstimateShippingAll($el)"{% endif %}>
+      {% unless settings.disable_heading_animation %}<div class="overflow-hidden" x-intersect.once="$el.querySelector('.anm-move-up')?.classList.add('active-anm-heading')">{% endunless %}
+        <{{ section.settings.heading_tag }} class="flex items-center h2{% unless settings.disable_heading_animation %} anm-move-up{% endunless %}">{{ 'sections.cart.title' | t }}</{{ section.settings.heading_tag }}>
+      {% unless settings.disable_heading_animation %}</div>{% endunless %}
+      <div class="flex items-center justify-end pb-1.5 lg:pb-2">
+        <a 
+          class="nav-link effect-inline relative hover-text-link leading-normal pt-2.5 lg:pt-3" 
+          href="{{ settings.continue_shopping }}">
+          {{ 'general.continue_shopping' | t }}
+        </a>
+      </div>
+    </div>
+    {% if settings.countdown_timer_message != blank and settings.enable_cart_timer %}
+      <div 
+        id="x-cart-countdown-timer" 
+        x-data='xCartCountdownTimer(
+          {{ settings.countdown_timer_message | escape | json }},
+          {{ settings.countdown_minute_number }},
+          {{ settings.action_after_time_expired | json }}
+        )'
+        x-init="initCountdown('{{ 'sections.popup.mins' | t | downcase }}')"
+      >
+        <div class="countdown-message inline-block pt-3 pb-3 pl-4 pr-4 bg-[rgb(var(--colors-background-secondary))] text-[rgb(var(--colors-text-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-lg{% endif %}">
+          <span x-html="formattedMessage"></span>
+        </div>
+      </div>
+    {% endif %}
+    {% if settings.show_estimate_cart %}
+      {% if settings.message_estimate_cart != blank %}
+        {% assign container_id = '#x-estimate-delivery-' | append: section.id %}
+        <div id="x-estimate-delivery-{{ section.id }}" class="mb-3 pt-0.5 pb-0.5">
+          {%- render 'estimate-delivery-cart',
+            items: cart.items,
+            message: settings.message_estimate_cart,
+            tooltip_text: settings.tooltip_text_cart,
+            tooltip_icon: settings.tooltip_icon_cart,
+            custom_icon: settings.custom_icon_cart,
+            tooltip_message: settings.tooltip_message_cart,
+            tooltip_icon_position: settings.tooltip_icon_position_cart,
+            container_id: container_id,
+            show_background: settings.show_background_estimate_cart,
+            box_type: settings.box_type_estimate_cart,
+            background_color_light: settings.background_color_light_estimate_cart,
+            message_color_light: settings.message_color_light_estimate_cart,
+            background_color_dark: settings.background_color_dark_estimate_cart,
+            message_color_dark: settings.message_color_dark_estimate_cart,
+            bg_tooltip_color_light: settings.bg_tooltip_color_light_estimate_cart,
+            tooltip_color_light: settings.tooltip_color_light_estimate_cart,
+            bg_tooltip_color_dark: settings.bg_tooltip_color_dark_estimate_cart,
+            tooltip_color_dark: settings.tooltip_color_dark_estimate_cart
+          -%}
+        </div>
+      {% endif %}
+    {% endif %}
+    {% render 'freeshipping', main_cart: true %}
+    {% if settings.show_in_cart_items == 'show_cart' %}
+      {% comment %}theme-check-disable TranslationKeyExists{% endcomment %}
+      {%- liquid
+        assign is_update_date = true
+        assign market = localization.country.iso_code
+        assign delivery_date_min_global = 0
+        assign delivery_date_min_custom = 0
+        assign check_data_min_global = false
+      
+        assign delivery_date_max_global = 0
+        assign delivery_date_max_custom = 0
+        assign check_data_max_global = false
+        assign message = settings.message_estimate_cart
+        for item in cart.items
+          assign is_edt_disabled = false
+          for property in item.properties 
+            if property.first == 'Preorder' 
+              assign is_edt_disabled = true
+            endif 
+          endfor
+          if is_edt_disabled
+            continue 
+          endif
+
+          assign requires_shipping = false
+          assign requires_shipping = item.requires_shipping
+
+          if item.product.gift_card? != true and requires_shipping != false
+            if item.product.metafields.custom.delivery_date_min != blank or item.variant.metafields.custom.delivery_date_min != blank
+              if item.variant.metafields.custom.delivery_date_min != blank
+                assign date_min_cart_item = item.variant.metafields.custom.delivery_date_min
+              else 
+                assign date_min_cart_item = item.product.metafields.custom.delivery_date_min
+              endif
+
+              if date_min_cart_item contains ';'
+                assign estimate_mins = date_min_cart_item | split: ";"
+                for estimate_min in estimate_mins
+                  assign code_market_min_custom = estimate_min | split: ":" | first | remove: " "
+                  assign min_custom_value_market = estimate_min | split: ":" | last
+        
+                  if code_market_min_custom == market
+                    assign delivery_date_min_custom_item = min_custom_value_market | plus: 0
+                  endif 
+                endfor
+              elsif date_min_cart_item contains ':'
+                assign code_market_min_custom = date_min_cart_item | split: ":" | first | remove: " "
+                assign min_custom_value_market = date_min_cart_item | split: ":" | last
+      
+                if code_market_min_custom == market
+                  assign delivery_date_min_custom_item = min_custom_value_market | plus: 0
+                endif 
+              else
+                assign delivery_date_min_custom_item = date_min_cart_item | plus: 0
+              endif
+        
+              if delivery_date_min_custom_item > delivery_date_min_custom 
+                assign delivery_date_min_custom = delivery_date_min_custom_item
+              endif 
+            else 
+              assign check_data_min_global = true
+            endif 
+        
+            if item.product.metafields.custom.delivery_date_max != blank or item.variant.metafields.custom.delivery_date_max != blank
+              if item.variant.metafields.custom.delivery_date_max != blank
+                assign date_max_cart_item = item.variant.metafields.custom.delivery_date_max
+              else 
+                assign date_max_cart_item = item.product.metafields.custom.delivery_date_max
+              endif
+              if date_max_cart_item contains ';'
+                assign estimate_maxs = date_max_cart_item | split: ";"
+                for estimate_max in estimate_maxs
+                  assign code_market_max_custom = estimate_max | split: ":" | first | remove: " "
+                  assign max_custom_value_market = estimate_max | split: ":" | last
+        
+                  if code_market_max_custom == market
+                    assign delivery_date_max_custom_item = max_custom_value_market | plus: 0
+                  endif 
+                endfor
+              elsif date_max_cart_item contains ':'
+                assign code_market_max_custom = date_max_cart_item | split: ":" | first | remove: " "
+                assign max_custom_value_market = date_max_cart_item | split: ":" | last
+      
+                if code_market_max_custom == market
+                  assign delivery_date_max_custom_item = max_custom_value_market | plus: 0
+                endif 
+              else
+                assign delivery_date_max_custom_item = date_max_cart_item | plus: 0
+              endif
+        
+              if delivery_date_max_custom_item > delivery_date_max_custom 
+                assign delivery_date_max_custom = delivery_date_max_custom_item
+              endif 
+            else 
+              assign check_data_max_global = true
+            endif 
+          endif
+        endfor
+      
+        if check_data_min_global
+          if settings.estimate_delivery_min contains ';'
+            assign estimate_mins = settings.estimate_delivery_min | split: ";"
+            for estimate_min in estimate_mins
+              assign code_market_min_global = estimate_min | split: ":" | first | remove: " "
+              assign min_global_value_market = estimate_min | split: ":" | last
+      
+              if code_market_min_global == market
+                assign delivery_date_min_global = min_global_value_market | plus: 0
+              endif 
+            endfor
+          elsif settings.estimate_delivery_min contains ':'
+            assign code_market_min_global = settings.estimate_delivery_min | split: ":" | first | remove: " "
+            assign min_global_value_market = settings.estimate_delivery_min | split: ":" | last
+    
+            if code_market_min_global == market
+              assign delivery_date_min_global = min_global_value_market | plus: 0
+            endif 
+          else
+            assign delivery_date_min_global = settings.estimate_delivery_min | plus: 0
+          endif 
+        endif
+      
+        assign delivery_date_min = delivery_date_min_global
+        if delivery_date_min_custom > delivery_date_min_global
+          assign delivery_date_min = delivery_date_min_custom
+        endif 
+      
+        if check_data_max_global
+          if settings.estimate_delivery_max contains ';'
+            assign estimate_maxs = settings.estimate_delivery_max | split: ";"
+            for estimate_max in estimate_maxs
+              assign code_market_max_global = estimate_max | split: ":" | first | remove: " "
+              assign max_global_value_market = estimate_max | split: ":" | last
+      
+              if code_market_max_global == market
+                assign delivery_date_max_global = max_global_value_market | plus: 0
+              endif 
+            endfor
+          elsif settings.estimate_delivery_max contains ':'
+            assign code_market_max_global = settings.estimate_delivery_max | split: ":" | first | remove: " "
+            assign max_global_value_market = settings.estimate_delivery_max | split: ":" | last
+    
+            if code_market_max_global == market
+              assign delivery_date_max_global = max_global_value_market | plus: 0
+            endif 
+          else
+            assign delivery_date_max_global = settings.estimate_delivery_max | plus: 0
+          endif 
+        endif
+      
+        assign delivery_date_max = delivery_date_max_global
+        if delivery_date_max_custom > delivery_date_max_global
+          assign delivery_date_max = delivery_date_max_custom
+        endif 
+        
+        assign current_minute = "now" | date: "%M"
+        assign current_time_of_day = "now" | date: "%H" | append: current_minute | plus: 0
+        assign cutoff_time = settings.estimate_delivery_cutoff_hour | append: settings.estimate_delivery_cutoff_minute | plus: 0
+                          
+        if current_time_of_day > cutoff_time
+          assign delivery_date_min = delivery_date_min | plus: 1
+        endif
+        if current_time_of_day > cutoff_time
+          assign delivery_date_max = delivery_date_max | plus: 1
+        endif
+                          
+        assign now_date = "now" | date: "%w" | plus: 0
+        assign now_second = 'now' | date: "%s" | plus: 0
+        if settings.weekend_delivery_exclusions != 'none'
+          if delivery_date_min == delivery_date_max
+            assign same_min_max = true
+          endif
+          assign number_sunday_before_min = 0
+          assign delivery_date_max_before = delivery_date_max
+          for i in (1..delivery_date_max)
+            assign data_week = now_date | plus: i
+            if data_week > 6 
+              assign number_reduced = data_week | modulo: 7
+              assign data_week = number_reduced
+            endif
+            if data_week == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+              if i <= delivery_date_min 
+                assign delivery_date_min = delivery_date_min | plus: 1
+              endif
+              assign delivery_date_max = delivery_date_max | plus: 1
+            endif
+            if data_week == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+              assign delivery_date_max = delivery_date_max | plus: 1
+                if i <= delivery_date_min 
+                  assign delivery_date_min = delivery_date_min | plus: 1
+                endif
+            endif 
+          endfor
+          assign delivery_date_max_after = delivery_date_max
+          if delivery_date_max_before < delivery_date_max
+            assign number_sunday_before_min = 0
+            assign delivery_date_max_before_new = delivery_date_max_before | plus: 1
+            for i in (delivery_date_max_before_new..delivery_date_max)
+              assign data_week = now_date | plus: i
+              if data_week > 6 
+                assign number_reduced = data_week | modulo: 7
+                assign data_week = number_reduced
+              endif    
+              if data_week == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+                if i <= delivery_date_min 
+                  assign delivery_date_min = delivery_date_min | plus: 1
+                endif
+                assign delivery_date_max = delivery_date_max | plus: 1
+                if settings.weekend_delivery_exclusions contains 'sunday'
+                  if i <= delivery_date_min 
+                    assign delivery_date_min = delivery_date_min | plus: 1
+                    assign number_sunday_before_min = number_sunday_before_min | plus: 1
+                  endif
+                endif
+              endif
+              if data_week == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+                assign delivery_date_max = delivery_date_max | plus: 1
+                if number_sunday_before_min == 0
+                  if i <= delivery_date_min 
+                    assign delivery_date_min = delivery_date_min | plus: 1
+                  endif
+                else
+                  assign number_sunday_before_min = number_sunday_before_min | minus: 1
+                endif
+              endif 
+            endfor
+          endif
+          assign delivery_date_max_before_check = delivery_date_max
+          if delivery_date_max_after < delivery_date_max
+            for n in (1..100)
+              assign number_sunday_before_min = 0
+              assign delivery_date_max_before_new = delivery_date_max_after | plus: 1
+              assign delivery_date_max_before_check = delivery_date_max
+              for i in (delivery_date_max_before_new..delivery_date_max)
+                assign data_week = now_date | plus: i
+                if data_week > 6 
+                  assign number_reduced = data_week | modulo: 7
+                  assign data_week = number_reduced
+                endif    
+                if data_week == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+                  if i <= delivery_date_min 
+                    assign delivery_date_min = delivery_date_min | plus: 1
+                  endif
+                  assign delivery_date_max = delivery_date_max | plus: 1
+                  if settings.weekend_delivery_exclusions contains 'sunday'
+                    if i <= delivery_date_min 
+                      assign delivery_date_min = delivery_date_min | plus: 1
+                      assign number_sunday_before_min = number_sunday_before_min | plus: 1
+                    endif
+                  endif
+                endif
+                if data_week == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+                  assign delivery_date_max = delivery_date_max | plus: 1
+                  if number_sunday_before_min == 0
+                    if i <= delivery_date_min 
+                      assign delivery_date_min = delivery_date_min | plus: 1
+                    endif
+                  else
+                    assign number_sunday_before_min = number_sunday_before_min | minus: 1
+                  endif
+                endif 
+              endfor
+              assign delivery_date_max_after = delivery_date_max
+              if delivery_date_max_before_check >= delivery_date_max
+                break
+              endif
+            endfor
+          endif
+          if same_min_max
+            assign delivery_date_max = delivery_date_min 
+          endif
+          assign to_min_date_seconds = delivery_date_min | times: 24 | times: 60 | times: 60
+          assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60
+        endif
+        if settings.holidays_delivery_exclusions
+          assign holidays_delivery_exclusions = settings.holidays_delivery_exclusions | newline_to_br | strip_newlines | split: '<br />'
+          for holiday in holidays_delivery_exclusions
+            assign before_holidays = delivery_date_max
+            assign to_min_date_seconds = delivery_date_min | times: 24 | times: 60 | times: 60
+            assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60
+            assign min_date_time = 'now' | date: "%s" | plus: to_min_date_seconds | date: "%B %d"
+            assign max_date_time = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%B %d"
+            assign min_date_s = min_date_time | date: "%s" | plus: 0
+            assign max_date_s = max_date_time | date: "%s" | plus: 0
+            assign holiday_s = holiday | date: "%s" | plus: 0
+            assign holiday_format = holiday_s | date: "%B %d"
+            if holiday_format == min_date_time
+              assign delivery_date_min = delivery_date_min | plus: 1
+              assign delivery_date_max = delivery_date_max | plus: 1
+            elsif holiday_format == max_date_time
+              assign delivery_date_max = delivery_date_max | plus: 1
+            elsif holiday_s > min_date_s and holiday_s < max_date_s
+              assign delivery_date_max = delivery_date_max | plus: 1
+            elsif holiday_s < min_date_s and holiday_s > now_second
+              assign delivery_date_min = delivery_date_min | plus: 1
+              assign delivery_date_max = delivery_date_max | plus: 1
+            endif
+              
+            if settings.weekend_delivery_exclusions != 'none' and before_holidays < delivery_date_max
+              assign delivery_date_min_now = now_date | plus: delivery_date_min
+              assign delivery_date_max_now = now_date | plus: delivery_date_max   
+              if delivery_date_min_now > 6
+                assign delivery_date_min_now = delivery_date_min_now | modulo: 7
+              endif
+              if delivery_date_max_now > 6
+                assign delivery_date_max_now = delivery_date_max_now | modulo: 7
+              endif
+              if delivery_date_min_now == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+                assign delivery_date_min = delivery_date_min | plus: 1
+                if settings.weekend_delivery_exclusions contains 'sunday'
+                  assign delivery_date_min = delivery_date_min | plus: 1
+                endif
+              endif
+              if delivery_date_min_now == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+               assign delivery_date_min = delivery_date_min | plus: 1
+              endif 
+              if delivery_date_max_now == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+               assign delivery_date_max = delivery_date_max | plus: 1
+               if settings.weekend_delivery_exclusions contains 'sunday'
+                 assign delivery_date_max = delivery_date_max | plus: 1
+               endif
+              endif
+              if delivery_date_max_now == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+               assign delivery_date_max = delivery_date_max | plus: 1
+              endif
+            endif
+          endfor
+          assign to_min_date_seconds = delivery_date_min | times: 24 | times: 60 | times: 60
+          assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60 
+        endif
+                          
+        assign min_date_month = 'now' | date: "%s" | plus: to_min_date_seconds | date: "%B"
+        assign min_date_day = 'now' | date: "%s" | plus: to_min_date_seconds | date: "%d"
+        assign min_date_string = 'date_time.month.' | append: min_date_month | t | append: ' ' | append: min_date_day
+        assign min_date_month_format =  'date_time.month.' | append: min_date_month | t
+        assign min_date_string = min_date_month_format | append: ' ' | append: min_date_day
+        if settings.date_format_estimate_cart == 'dd-mm'
+          assign min_date_string = min_date_day | append: ' ' | append: min_date_month_format
+        endif
+        assign max_date_month = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%B"
+        assign max_date_day = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%d"
+                          
+        assign max_date_month_format =  'date_time.month.' | append: max_date_month | t
+                          
+        assign max_date_string = max_date_month_format | append: ' ' | append: max_date_day
+        if settings.date_format_estimate_cart == 'dd-mm'
+          assign max_date_string = max_date_day | append: ' ' | append: max_date_month_format
+        endif
+                              
+        if delivery_date_min == 0
+          assign min_date_string = ''
+        endif
+        if delivery_date_max == 0
+          assign max_date_string = ''
+        endif
+        assign message_update = message | replace: 'earliest_delivery_date', min_date_string | replace: 'latest_delivery_date', max_date_string | replace: 'delivery_tooltip', '' | replace: 'Delivery_tooltip', '' | strip_html
+      -%}
+      {% comment %}theme-check-enable TranslationKeyExists{% endcomment %}
+    {% endif %}
+    <div class="items-end md:items-start flex flex-col lg:flex-row lg:gap-10">
+      <div class="w-full{% if show_side_bar %} lg:w-3/4{% endif %}">
+        <form
+          action="{{ routes.cart_url }}"
+          method="post"
+          id="cart"
+          class="relative"
+          x-data="xCart">
+          <table class="w-full{% if is_rtl %} text-right{% else %} text-left{% endif %} cart-items">
+            <thead>
+              <tr class="border-b justify-between flex md:table-row">
+                <th
+                  class="pb-1.5 md:w-6/12"
+                  colspan="2"
+                  scope="col">
+                  <span>{{ 'sections.cart.headings.product' | t }}</span>
+                </th>
+                <th
+                  class="pb-1.5 hidden md:table-cell md:w-2/12"
+                  colspan="1"
+                  scope="col">
+                  <span>{{ 'sections.cart.headings.price' | t }}</span>
+                </th>
+                <th
+                  class="pb-1.5 md:hidden"
+                  colspan="1"
+                  scope="col">
+                  <span>{{ 'sections.cart.headings.total' | t }}</span>
+                </th>
+                <th
+                  class="pb-1.5 hidden md:table-cell md:w-2/12 lg:pl-2"
+                  colspan="1"
+                  scope="col">
+                  <span>{{ 'sections.cart.headings.quantity' | t }}</span>
+                </th>
+                <th
+                  class="pb-1.5 hidden md:table-cell md:w-2/12 lg:pl-2"
+                  colspan="1"
+                  scope="col">
+                  <span>{{ 'sections.cart.headings.total' | t }}</span>
+                </th>
+              </tr>
+            </thead>
+            {% unless settings.show_estimate_cart %}
+              {% assign holiday_list = settings.holidays_delivery_exclusions | newline_to_br | strip_newlines | replace: '<br />', "," %}
+            {% endunless %}
+            <tbody class="border-b" {% unless settings.show_estimate_cart %}x-intersect.once="$store.xEstimateDelivery.countdownCutOffTime('{{ settings.estimate_delivery_cutoff_hour }}', '{{ settings.estimate_delivery_cutoff_minute }}', '{{ 'sections.popup.hours' | t | downcase }}', '{{ 'sections.popup.mins' | t | downcase }}', '{{ settings.cutoff_calculation_type }}', '{{ 'sections.popup.days' | t }}', '{{ 'sections.popup.day' | t }}', '{{ 'sections.popup.hour' | t | downcase }}', '{{ 'sections.popup.min' | t | downcase }}', '{{ settings.weekend_delivery_exclusions }}', '{{ holiday_list }}', '{{ request.locale.iso_code }}')"{% endunless %}>
+              {% liquid 
+                assign parent_key_list = ''
+                for item in cart.items
+                  if item.parent_relationship.parent != blank
+                    assign parent_key_list = parent_key_list | append: item.parent_relationship.parent.key | append: ','
+                  endif
+                endfor
+              %}
+              {%- for item in cart.items -%}
+                {% if item.parent_relationship.parent != blank %}
+                  {% continue %}
+                {% endif %}
+                {% if settings.show_in_cart_items == 'show_item' %}
+                  {% comment %}theme-check-disable TranslationKeyExists{% endcomment %}
+                  {% liquid 
+                    assign is_edt_disabled = false
+                    for property in item.properties 
+                      if property.first == 'Preorder' 
+                        assign is_edt_disabled = true
+                      endif 
+                      if property.first == name_edt
+                        if property.last != message_update 
+                          assign is_update_date = true
+                        endif
+                      endif 
+                    endfor
+
+                    assign message = settings.message_estimate_cart
+                    assign market = localization.country.iso_code
+                    assign delivery_date_min = 0
+                    assign delivery_date_max = 0
+                    assign data_min = settings.estimate_delivery_min
+                    if item.variant.metafields.custom.delivery_date_min != blank
+                      assign data_min = item.variant.metafields.custom.delivery_date_min
+                    elsif item.product.metafields.custom.delivery_date_min != blank
+                      assign data_min = item.product.metafields.custom.delivery_date_min
+                    endif
+                  
+                    if data_min contains ';'
+                      assign estimate_mins = data_min | split: ";"
+                      for estimate_min in estimate_mins
+                        assign code_market_min = estimate_min | split: ":" | first | remove: " "
+                        assign min_value_market = estimate_min | split: ":" | last
+                  
+                        if code_market_min == market
+                          assign delivery_date_min = min_value_market | plus: 0
+                        endif 
+                      endfor
+                    elsif data_min contains ':'
+                      assign code_market_min = data_min | split: ":" | first | remove: " "
+                      assign min_value_market = data_min | split: ":" | last
+                
+                      if code_market_min == market
+                        assign delivery_date_min = min_value_market | plus: 0
+                      endif 
+                    else
+                      assign delivery_date_min = data_min | plus: 0
+                    endif
+                
+                    assign data_max = settings.estimate_delivery_max
+                    if item.variant.metafields.custom.delivery_date_max != blank
+                      assign data_max = item.variant.metafields.custom.delivery_date_max
+                    elsif item.product.metafields.custom.delivery_date_max != blank
+                      assign data_max = item.product.metafields.custom.delivery_date_max
+                    endif 
+                  
+                    if data_max contains ';'
+                      assign estimate_maxs = data_max | split: ";"
+                      for estimate_max in estimate_maxs
+                        assign code_market_max = estimate_max | split: ":" | first | remove: " "
+                        assign max_value_market = estimate_max | split: ":" | last
+                  
+                        if code_market_max == market
+                          assign delivery_date_max = max_value_market | plus: 0
+                        endif 
+                      endfor
+                    elsif data_max contains ':'
+                      assign code_market_max = data_max | split: ":" | first | remove: " "
+                      assign max_value_market = data_max | split: ":" | last
+                
+                      if code_market_max == market
+                        assign delivery_date_max = max_value_market | plus: 0
+                      endif 
+                    else
+                      assign delivery_date_max = data_max | plus: 0
+                    endif
+                  
+                    assign variant_mtf_msg = item.variant.metafields.custom.delivery_date_message | metafield_text | strip
+                    if variant_mtf_msg != ''
+                      assign mtf_message = item.variant.metafields.custom.delivery_date_message | metafield_text | strip
+                      if mtf_message != ''
+                        assign message = item.variant.metafields.custom.delivery_date_message | metafield_tag
+                      endif
+                    else
+                      assign mtf_message = item.product.metafields.custom.delivery_date_message | metafield_text | strip
+                      if mtf_message != ''
+                        assign message = item.product.metafields.custom.delivery_date_message | metafield_tag
+                      endif
+                    endif
+                    
+                    assign current_minute = "now" | date: "%M"
+                    assign current_time_of_day = "now" | date: "%H" | append: current_minute | plus: 0
+                    assign cutoff_time = settings.estimate_delivery_cutoff_hour | append: settings.estimate_delivery_cutoff_minute | plus: 0
+                          
+                    if current_time_of_day > cutoff_time
+                      assign delivery_date_min = delivery_date_min | plus: 1
+                    endif
+                    if current_time_of_day > cutoff_time
+                      assign delivery_date_max = delivery_date_max | plus: 1
+                    endif
+                          
+                    assign now_date = "now" | date: "%w" | plus: 0
+                    assign now_second = 'now' | date: "%s" | plus: 0
+                    if settings.weekend_delivery_exclusions != 'none'
+                      if delivery_date_min == delivery_date_max
+                        assign same_min_max = true
+                      endif
+                      assign number_sunday_before_min = 0
+                      assign delivery_date_max_before = delivery_date_max
+                      for i in (1..delivery_date_max)
+                        assign data_week = now_date | plus: i
+                        if data_week > 6 
+                          assign number_reduced = data_week | modulo: 7
+                          assign data_week = number_reduced
+                        endif
+                        if data_week == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+                          if i <= delivery_date_min 
+                            assign delivery_date_min = delivery_date_min | plus: 1
+                          endif
+                          assign delivery_date_max = delivery_date_max | plus: 1
+                        endif
+                        if data_week == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+                          assign delivery_date_max = delivery_date_max | plus: 1
+                            if i <= delivery_date_min 
+                              assign delivery_date_min = delivery_date_min | plus: 1
+                            endif
+                        endif 
+                      endfor
+                      assign delivery_date_max_after = delivery_date_max
+                      if delivery_date_max_before < delivery_date_max
+                        assign number_sunday_before_min = 0
+                        assign delivery_date_max_before_new = delivery_date_max_before | plus: 1
+                        for i in (delivery_date_max_before_new..delivery_date_max)
+                          assign data_week = now_date | plus: i
+                          if data_week > 6 
+                            assign number_reduced = data_week | modulo: 7
+                            assign data_week = number_reduced
+                          endif    
+                          if data_week == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+                            if i <= delivery_date_min 
+                              assign delivery_date_min = delivery_date_min | plus: 1
+                            endif
+                            assign delivery_date_max = delivery_date_max | plus: 1
+                            if settings.weekend_delivery_exclusions contains 'sunday'
+                              if i <= delivery_date_min 
+                                assign delivery_date_min = delivery_date_min | plus: 1
+                                assign number_sunday_before_min = number_sunday_before_min | plus: 1
+                              endif
+                            endif
+                          endif
+                          if data_week == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+                            assign delivery_date_max = delivery_date_max | plus: 1
+                            if number_sunday_before_min == 0
+                              if i <= delivery_date_min 
+                                assign delivery_date_min = delivery_date_min | plus: 1
+                              endif
+                            else
+                              assign number_sunday_before_min = number_sunday_before_min | minus: 1
+                            endif
+                          endif 
+                        endfor
+                      endif
+                      assign delivery_date_max_before_check = delivery_date_max
+                      if delivery_date_max_after < delivery_date_max
+                        for n in (1..100)
+                          assign number_sunday_before_min = 0
+                          assign delivery_date_max_before_new = delivery_date_max_after | plus: 1
+                          assign delivery_date_max_before_check = delivery_date_max
+                          for i in (delivery_date_max_before_new..delivery_date_max)
+                            assign data_week = now_date | plus: i
+                            if data_week > 6 
+                              assign number_reduced = data_week | modulo: 7
+                              assign data_week = number_reduced
+                            endif    
+                            if data_week == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+                              if i <= delivery_date_min 
+                                assign delivery_date_min = delivery_date_min | plus: 1
+                              endif
+                              assign delivery_date_max = delivery_date_max | plus: 1
+                              if settings.weekend_delivery_exclusions contains 'sunday'
+                                if i <= delivery_date_min 
+                                  assign delivery_date_min = delivery_date_min | plus: 1
+                                  assign number_sunday_before_min = number_sunday_before_min | plus: 1
+                                endif
+                              endif
+                            endif
+                            if data_week == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+                              assign delivery_date_max = delivery_date_max | plus: 1
+                              if number_sunday_before_min == 0
+                                if i <= delivery_date_min 
+                                  assign delivery_date_min = delivery_date_min | plus: 1
+                                endif
+                              else
+                                assign number_sunday_before_min = number_sunday_before_min | minus: 1
+                              endif
+                            endif 
+                          endfor
+                          assign delivery_date_max_after = delivery_date_max
+                          if delivery_date_max_before_check >= delivery_date_max
+                            break
+                          endif
+                        endfor
+                      endif
+                      if same_min_max
+                        assign delivery_date_max = delivery_date_min 
+                      endif
+                      assign to_min_date_seconds = delivery_date_min | times: 24 | times: 60 | times: 60
+                      assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60
+                    endif
+                    if settings.holidays_delivery_exclusions
+                      assign holidays_delivery_exclusions = settings.holidays_delivery_exclusions | newline_to_br | strip_newlines | split: '<br />'
+                      for holiday in holidays_delivery_exclusions
+                        assign before_holidays = delivery_date_max
+                        assign to_min_date_seconds = delivery_date_min | times: 24 | times: 60 | times: 60
+                        assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60
+                        assign min_date_time = 'now' | date: "%s" | plus: to_min_date_seconds | date: "%B %d"
+                        assign max_date_time = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%B %d"
+                        assign min_date_s = min_date_time | date: "%s" | plus: 0
+                        assign max_date_s = max_date_time | date: "%s" | plus: 0
+                        assign holiday_s = holiday | date: "%s" | plus: 0
+                        assign holiday_format = holiday_s | date: "%B %d"
+                        if holiday_format == min_date_time
+                          assign delivery_date_min = delivery_date_min | plus: 1
+                          assign delivery_date_max = delivery_date_max | plus: 1
+                        elsif holiday_format == max_date_time
+                          assign delivery_date_max = delivery_date_max | plus: 1
+                        elsif holiday_s > min_date_s and holiday_s < max_date_s
+                          assign delivery_date_max = delivery_date_max | plus: 1
+                        elsif holiday_s < min_date_s and holiday_s > now_second
+                          assign delivery_date_min = delivery_date_min | plus: 1
+                          assign delivery_date_max = delivery_date_max | plus: 1
+                        endif
+                          
+                        if settings.weekend_delivery_exclusions != 'none' and before_holidays < delivery_date_max
+                          assign delivery_date_min_now = now_date | plus: delivery_date_min
+                          assign delivery_date_max_now = now_date | plus: delivery_date_max   
+                          if delivery_date_min_now > 6
+                            assign delivery_date_min_now = delivery_date_min_now | modulo: 7
+                          endif
+                          if delivery_date_max_now > 6
+                            assign delivery_date_max_now = delivery_date_max_now | modulo: 7
+                          endif
+                          if delivery_date_min_now == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+                            assign delivery_date_min = delivery_date_min | plus: 1
+                            if settings.weekend_delivery_exclusions contains 'sunday'
+                              assign delivery_date_min = delivery_date_min | plus: 1
+                            endif
+                          endif
+                          if delivery_date_min_now == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+                           assign delivery_date_min = delivery_date_min | plus: 1
+                          endif 
+                          if delivery_date_max_now == 6 and settings.weekend_delivery_exclusions contains 'saturday'
+                           assign delivery_date_max = delivery_date_max | plus: 1
+                           if settings.weekend_delivery_exclusions contains 'sunday'
+                             assign delivery_date_max = delivery_date_max | plus: 1
+                           endif
+                          endif
+                          if delivery_date_max_now == 0 and settings.weekend_delivery_exclusions contains 'sunday'
+                           assign delivery_date_max = delivery_date_max | plus: 1
+                          endif
+                        endif
+                      endfor
+                      assign to_min_date_seconds = delivery_date_min | times: 24 | times: 60 | times: 60
+                      assign to_max_date_seconds = delivery_date_max | times: 24 | times: 60 | times: 60 
+                    endif
+                          
+                    assign min_date_month = 'now' | date: "%s" | plus: to_min_date_seconds | date: "%B"
+                    assign min_date_day = 'now' | date: "%s" | plus: to_min_date_seconds | date: "%d"
+                    assign min_date_string = 'date_time.month.' | append: min_date_month | t | append: ' ' | append: min_date_day
+                    assign min_date_month_format =  'date_time.month.' | append: min_date_month | t
+                    assign min_date_string = min_date_month_format | append: ' ' | append: min_date_day
+                    if settings.date_format_estimate_cart == 'dd-mm'
+                      assign min_date_string = min_date_day | append: ' ' | append: min_date_month_format
+                    endif
+                    assign max_date_month = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%B"
+                    assign max_date_day = 'now' | date: "%s" | plus: to_max_date_seconds | date: "%d"
+                          
+                    assign max_date_month_format =  'date_time.month.' | append: max_date_month | t
+                          
+                    assign max_date_string = max_date_month_format | append: ' ' | append: max_date_day
+                    if settings.date_format_estimate_cart == 'dd-mm'
+                      assign max_date_string = max_date_day | append: ' ' | append: max_date_month_format
+                    endif
+                              
+                    if delivery_date_min == 0
+                      assign min_date_string = ''
+                    endif
+                    if delivery_date_max == 0
+                      assign max_date_string = ''
+                    endif
+
+                    assign message_update = message | replace: 'earliest_delivery_date', min_date_string | replace: 'latest_delivery_date', max_date_string | replace: 'delivery_tooltip', '' | replace: 'Delivery_tooltip', '' | strip_html 
+                  %}
+                  {% comment %}theme-check-enable TranslationKeyExists{% endcomment %}
+                {% endif %}
+                {% if is_update_date %}
+                  {%- capture cut_off_time -%} 
+                    <span x-html='$store.xEstimateDelivery.noti'></span>
+                  {%- endcapture -%}
+                  {%- capture properties -%}
+                    {
+                      {%- for property in item.properties -%}
+                        {%- assign property_first_char = property.first | slice: 0 -%}
+                        {%- if property.last != blank -%}
+                          {%- if property.first == name_edt -%}
+                            {% if item.requires_shipping %}
+                              "{{ name_edt }}": "{{ message_update }}"{% unless forloop.last %},{% endunless %}
+                            {% endif %}
+                          {%- else -%}
+                          "{{ property.first }}": "{{ property.last }}"{%- unless forloop.last -%},{%- endunless -%}
+                          {%- endif -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                    }
+                  {%- endcapture -%}
+                {% endif %}
+                <tr class="cart-item{% if parent_key_list contains item.key or item.item_components != blank %} parent-cart-item z-10{% endif %}{% unless forloop.first %} border-t{% endunless %} lg:gap-4 grid grid-cols-4 md:table-row auto-rows-auto relative" id="CartItem-{{ item.index | plus: 1 }}"
+                  {% if is_update_date %} 
+                    {% if item.product.selected_or_first_available_variant.id != settings.gift_wrapping_product.selected_or_first_available_variant.id %}
+                      x-intersect.once="updateEstimateShipping($el, `{{ item.index | plus: 1 }}`, `{{ item.quantity }}`, `{{ item.key }}`,`{{ settings.estimate_delivery_cutoff_hour }}`, `{{ settings.estimate_delivery_cutoff_minute }}`, `{{ 'sections.popup.hours' | t | downcase }}`, `{{ 'sections.popup.mins' | t | downcase }}`, '{{ settings.cutoff_calculation_type }}', '{{ 'sections.popup.days' | t }}', '{{ 'sections.popup.day' | t }}', '{{ 'sections.popup.hour' | t | downcase }}', '{{ 'sections.popup.min' | t | downcase }}', '{{ settings.weekend_delivery_exclusions }}', '{{ holiday_list }}', '{{ request.locale.iso_code }}', '', {{ cart.items.size }});" 
+                      x-data-update-estimate-key="{{ name_edt }}"
+                      x-data-update-estimate-property="{{ message_update }}"
+                      x-data-properties='{{ properties | escape }}'
+                    {% endif %}
+                  {% endif %}
+                >
+                  <td class="{% if parent_key_list contains item.key or item.item_components != blank %}parent-item-img {% endif %}md:w-1/12 pt-7 pb-0 md:pt-5 md:pb-5 col-start-1 col-end-1 align-top">
+                    <div class="relative w-full md:w-32 float-left before:h-0 before:block{% unless settings.product_image_ratio == "natural" %} before:pb-[{{ ratio }}%]{% endunless %}" {% if settings.product_image_ratio == "natural" and item.image %}style="padding-bottom: {{ 1 | divided_by: item.image.aspect_ratio | times: 100 }}%;"{% endif %}>
+                      <a href="{{ item.url }}" class="absolute top-0 left-0 disable-effect w-full h-full overflow-hidden{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" aria-label="{{ 'general.cart.item_added' | t }}">
+                        {%- if item.image -%}
+                          {% # theme-check-disable ImgLazyLoading %}
+                          <img 
+                            src="{{ item.image | image_url: width: 300 }}"
+                            class="object-cover h-full w-full top-0 left-0 absolute duration-300 image-hover z-0"
+                            alt="{{ item.image.alt | escape }}"
+                            {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                            width="150"
+                            height="{{ 150 | divided_by: item.image.aspect_ratio | ceil }}"
+                          >
+                          {% # theme-check-enable ImgLazyLoading %}
+                        {%- else -%}
+                          <div class='bg-[#c9c9c9] flex{% unless settings.product_image_ratio == "natural" %} absolute{% endunless %} top-0 left-0 w-full h-full items-center'>
+                            {% render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}
+                          </div>
+                        {%- endif -%}
+                      </a>
+                    </div>
+                  </td>
+                  <td class="md:w-5/12 pt-7 pb-0 px-5 md:pt-5 md:pb-5{% if is_rtl %} lg:pr-9 lg:pl-14{% else %} lg:pl-9 lg:pr-14{% endif %} col-start-2 col-end-4 align-top">
+                    {%- if settings.cart_show_vendor -%}
+                      <p class="mb-2 text-normal uppercase p-break-words">{{ item.product.vendor }}</p>
+                    {%- endif -%}
+                    <div>
+                      <a href="{{ item.url }}" class="text-[rgba(var(--colors-heading))] table mb-3 disable-effect hover-text-link p-break-words">
+                        {{ item.product.title | escape }}
+                      </a>
+
+                      <div class="price mb-2 md:hidden">
+                        {%- assign item_original_price = item.variant.compare_at_price | default: item.original_price -%}
+                        {%- if item_original_price > item.final_price -%}
+                          <s class="cap mr-1 rtl:ml-1 rtl:mr-0 inline-block opacity-50">{%- if settings.currency_code_enable %}{{- item_original_price | money_with_currency -}}{%- else -%}{{ item_original_price | money }}{%- endif -%}</s> 
+                          <span class="selection:bg-text-[rgb(var(--colors-price-sale),0.2)] price-sale">
+                            {% if settings.currency_code_enable %}
+                              {{- item.final_price | money_with_currency -}}
+                            {% else %}
+                              {{ item.final_price | money }}
+                            {% endif %}
+                          </span>
+                        {%- else -%}
+                          <span class="price">
+                            {% if settings.currency_code_enable %}
+                              {{- item.final_price | money_with_currency -}}
+                            {% else %}
+                              {{ item.final_price | money }}
+                            {% endif %}
+                          </span>
+                        {%- endif -%}
+                        {%- if item.variant.available and item.unit_price_measurement -%}
+                          <br />
+                          <small>
+                            {{ item.variant.unit_price | money }}
+                            <span aria-hidden="true">/</span>
+                            {%- if item.variant.unit_price_measurement.reference_value != 1 -%}
+                              {{- item.variant.unit_price_measurement.reference_value -}}
+                            {%- endif -%}
+                            {{ item.variant.unit_price_measurement.reference_unit }}
+                          </small>
+                        {%- endif -%}
+                      </div>
+                    </div>
+                    {%- if item.product.has_only_default_variant == false or item.properties.size != 0 or item.selling_plan_allocation != nil -%}
+                      <dl class="text-normal">
+                        {%- if item.product.has_only_default_variant == false -%}
+                          {%- for option in item.options_with_values -%}
+                            <div class="mt-1 p-break-words">
+                              <dt class="inline-block">{{ option.name }}:
+                              </dt>
+                              <dd class="inline-block">{{ option.value }}</dd>
+                            </div>
+                          {%- endfor -%}
+                        {%- endif -%}
+                        {% liquid
+                          assign requires_shipping = false
+                          assign requires_shipping = item.requires_shipping
+                        %}
+                        {%- for property in item.properties -%}
+                          {%- assign property_first_char = property.first | slice: 0 -%}
+                          {% if property_first_char != name_edt %}
+                              {%- if property.last != blank and property_first_char != '_' -%}
+                                <div class="product-option mt-1 text-normal opacity-70 p-break-words">
+                                  <dt class="p-break-words inline">
+                                    {% if property.first == name_edt and is_update_date %}
+                                      {% if requires_shipping %}
+                                        {{ property.first }}:
+                                      {% endif %}
+                                    {% else %}
+                                      {{ property.first }}:
+                                    {% endif %}
+                                  </dt>
+                                  <dd class="p-break-words inline" data-max="{{ data_max }}" delivery_date_max="{{ delivery_date_max }}">
+                                    {%- if property.last contains '/uploads/' -%}
+                                      <a href="{{ property.last }}" class="inline hover-text-link">
+                                        {{ 'products.product.file' | t }}
+                                      </a>
+                                    {%- else -%}
+                                      {% if property.first == name_edt and is_update_date %}
+                                        {% if requires_shipping %}
+                                          {{ message_update | replace: "time_to_cut_off", cut_off_time }}
+                                        {% endif %}
+                                      {% else %}
+                                        {{ property.last }}
+                                      {% endif %}
+                                    {%- endif -%}
+                                  </dd>
+                                </div>
+                              {%- endif -%}
+                          {%- endif -%}                                  
+                        {%- endfor -%}
+                      </dl>
+                      <p class="text-normal mt-1">{{ item.selling_plan_allocation.selling_plan.name }}</p>
+                    {%- endif -%}
+                    {%- if item.line_level_discount_allocations.size > 0 -%}
+                      <ul class="w-fit pl-2 pr-2 pt-2 pb-2 bg-[rgba(var(--colors-text),0.1)] mt-4 lg:mb-0{% if settings.edges_type == 'rounded_corners' %} rounded-full{% endif %}">
+                        {%- for discount in item.line_level_discount_allocations -%}
+                          <li class="flex relative x-discount items-center gap-2">
+                            <span class="w-4 h-4 min-w-4 min-h-4 {% if discount.discount_application.type == "discount_code" %}ml-1{% endif %}">{%- render 'icon-alls', icon: 'icon-discount' -%}</span>
+                            <span class="leading-none text-normal discount-title">{{ discount.discount_application.title }}</span>
+                            {% if discount.discount_application.type == "discount_code" %}
+                              <button class="w-6 h-3 min-w-6 min-h-3 pr-1.5 pl-1.5 text-[rgba(var(--colors-text))]" @click="$store.xCouponCodeDetail.removeDiscountCode($el, true)" :disabled="$store.xCouponCodeDetail.loading">
+                                <div x-cloak x-show="!$store.xCouponCodeDetail.loading">{% render 'icon-alls', icon: 'icon-close' %}</div>
+                                <div x-cloak class="animate-spin" x-show="$store.xCouponCodeDetail.loading">{% render 'icon-alls', icon: 'icon-loading' %}</div>
+                              </button>
+                            {% endif %}
+                          </li>
+                        {%- endfor -%}
+                      </ul>
+                    {%- endif -%}
+                    <div
+                      id="LineItemError-{{ item.key }}"
+                      class="hidden bg-[rgba(var(--color-error),0.2)] cart-item__error mt-2 pt-3 pb-3 pr-3.5 pl-3.5{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"
+                      role="alert">
+                      <p class="flex relative w-full">
+                        <span class="absolute left-0 rtl:left-auto rtl:right-0 top-1/2 -translate-y-1/2 w-3">{% render 'icon-alls', icon: 'icon-error' %}</span>
+                        <span class="cart-item__error-text text-normal pl-6 rtl:pl-0 rtl:pr-6"></span>
+                      </p>
+                    </div>
+                  </td>
+                  <td class="pt-7 pb-0 md:pt-5 md:pb-5 hidden md:table-cell md:align-top md:w-2/12{% if is_rtl %} pl-5{% else %} pr-5{% endif %}">
+                    <div class="price">
+                      <span>
+                        {%- assign item_original_price = item.variant.compare_at_price | default: item.original_price -%}
+                        {%- if item_original_price > item.final_price -%}
+                          <s class="cap mr-1 rtl:ml-1 rtl:mr-0 inline-block opacity-50">{%- if settings.currency_code_enable -%}{{- item_original_price | money_with_currency -}}{%- else -%}{{ item_original_price | money }}{%- endif -%}</s> 
+                          <span class="selection:bg-text-[rgb(var(--colors-price-sale),0.2)] price-sale">
+                            {% if settings.currency_code_enable %}
+                              {{- item.final_price | money_with_currency -}}
+                            {% else %}
+                              {{ item.final_price | money }}
+                            {% endif %}
+                          </span>
+                        {%- else -%}
+                          <span class="price">
+                            {% if settings.currency_code_enable %}
+                              {{- item.final_price | money_with_currency -}}
+                            {% else %}
+                              {{ item.final_price | money }}
+                            {% endif %}
+                          </span>
+                        {%- endif -%}
+                      </span>
+                      {%- if item.variant.available and item.unit_price_measurement -%}
+                        <br />
+                        <small>
+                          {% if settings.currency_code_enable %}
+                            {{ item.variant.unit_price | money_with_currency }}
+                          {% else %}
+                            {{ item.variant.unit_price | money }}
+                          {% endif %}
+                          <span aria-hidden="true">/</span>
+                          {%- if item.variant.unit_price_measurement.reference_value != 1 -%}
+                            {{- item.variant.unit_price_measurement.reference_value -}}
+                          {%- endif -%}
+                          {{ item.variant.unit_price_measurement.reference_unit }}
+                        </small>
+                      {%- endif -%}
+                    </div>
+                  </td>
+                  <td class="lg:pl-2 pt-7 pb-0 md:pt-5 md:pb-5 md:hidden text-right md:text-left">
+                    <div class="price">
+                      <span class="flex flex-wrap justify-end gap-1">
+                        {%- assign item_original_price = item.variant.compare_at_price | default: item.original_price -%}
+                        {% assign compare_at_price = item.quantity | times: item_original_price %}
+                        {%- if compare_at_price > item.final_line_price -%}
+                          <s class="cap opacity-50">
+                            {% if settings.currency_code_enable %}
+                              {{- compare_at_price | money_with_currency -}}
+                            {% else %}
+                              {{- compare_at_price | money -}}
+                            {% endif %}
+                          </s> 
+                          <span class="selection:bg-text-[rgb(var(--colors-price-sale),0.2)] price-sale">
+                            {% if settings.currency_code_enable %}
+                              {{ item.final_line_price | money_with_currency }}
+                            {% else %}
+                              {{ item.final_line_price | money }}
+                            {% endif %}
+                          </span>
+                        {%- else -%}
+                          <span>
+                            {% if settings.currency_code_enable %}
+                              {{ item.final_line_price | money_with_currency }}
+                            {% else %}
+                              {{ item.final_line_price | money }}
+                            {% endif %}
+                          </span>
+                        {%- endif -%}
+                      </span>
+                      {%- if item.variant.available and item.unit_price_measurement -%}
+                        <small>
+                          {% if settings.currency_code_enable %}
+                            {{ item.variant.unit_price | money_with_currency }}
+                          {% else %}
+                            {{ item.variant.unit_price | money }}
+                          {% endif %}
+                          <span aria-hidden="true">/</span>
+                          {%- if item.variant.unit_price_measurement.reference_value != 1 -%}
+                            {{- item.variant.unit_price_measurement.reference_value -}}
+                          {%- endif -%}
+                          {{ item.variant.unit_price_measurement.reference_unit }}
+                        </small>
+                      {%- endif -%}
+                    </div>
+                  </td>
+                  {% liquid
+                    assign will_remove_shipping_insurance = false
+                    if cart.items.size == 2
+                      for item in cart.items
+                        if item.product.selected_or_first_available_variant.id == settings.product_shipping_insurance.selected_or_first_available_variant.id
+                          assign will_remove_shipping_insurance = true
+                          break
+                        endif
+                      endfor
+                    endif
+                  %}
+                  <td class="lg:pl-2 pt-0 pb-5 pl-5 mt-2 md:pr-5 lg:pr-0 md:mt-3.5 md:pl-0 md:pt-5 rtl:pr-5 rtl:md:pr-0 rtl:md:pl-5 rtl:lg:pl-0 col-start-2 col-end-4 flex items-center md:table-cell md:align-top">
+                    <div class="x-cart-item-quantity {% if item.product.selected_or_first_available_variant.id == settings.gift_wrapping_product.selected_or_first_available_variant.id or item.product.selected_or_first_available_variant.id == settings.product_shipping_insurance.selected_or_first_available_variant.id and settings.enable_shipping_insurance %}hidden{% else %}flex{% endif %}">
+                      <div class="relative flex w-28 h-10 border border-solid justify-between{% if settings.buttons_type == 'rounded_corners' or settings.buttons_type == 'mixed' %} rounded-md{% elsif settings.buttons_type == 'rounded' %} rounded-full {% else %} rounded-none{% endif %}">
+                        <button class="items-center w-1/3 justify-center flex opacity-70 cursor-pointer" @click.prevent="minusItemQty('{{ item.key }}', {{ item.index | plus: 1 }}, '{{ item.variant.inventory_policy }}', '{{ item.variant.inventory_management }}', {{ item.variant.inventory_quantity }}, {% if will_remove_shipping_insurance %}true{% else %}false{% endif %})" aria-label="button-minus">
+                          {% render 'icon-alls', icon: 'icon-minus', class: "w-3" %}
+                        </button>
+                        <input
+                          id="cart-qty-{{ item.key }}"
+                          class="cart-item-qty-{{ item.index | plus: 1 }} outer-spin-button bg-transparent w-1/3 text-center pt-2 pb-2 placeholder:opacity-60 focus-within:outline-none"
+                          aria-label="{{ 'products.product.quantity.input_label' | t: product: item.product.title | escape }}"
+                          type="number"
+                          value="{{ item.quantity }}"
+                          min="0"
+                          x-on:change="updateItemQty('{{ item.key }}', {{ item.index | plus: 1 }}, '{{ item.variant.inventory_policy }}', '{{ item.variant.inventory_management }}', {{ item.variant.inventory_quantity }}, {% if will_remove_shipping_insurance %}true{% else %}false{% endif %})"
+                          @keydown="handleKeydown($event, $el)"
+                        >
+                        <button class="items-center w-1/3 justify-center flex opacity-70 cursor-pointer" @click.prevent="plusItemQty('{{ item.key }}', {{ item.index | plus: 1 }}, '{{ item.variant.inventory_policy }}', '{{ item.variant.inventory_management }}', {{ item.variant.inventory_quantity }})" aria-label="button-plus">
+                          {% render 'icon-alls', icon: 'icon-plus', class: "w-3" %}
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pb-5 md:pt-5 md:table-cell md:align-top lg:w-2/12 lg:pl-2">
+                    <div class="flex justify-end md:justify-between">
+                      <div class="price cart-item-price-{{ item.index | plus: 1 }} hidden md:flex md:flex-wrap">
+                        {%- assign item_original_price = item.variant.compare_at_price | default: item.original_price -%}
+                        {% assign compare_at_price = item.quantity | times: item_original_price %}
+                        {%- if compare_at_price > item.final_line_price -%}
+                          <s class="cap mr-1 rtl:ml-1 rtl:mr-0 inline-block opacity-50">{%- if settings.currency_code_enable -%}{{- compare_at_price | money_with_currency -}}{%- else -%}{{- compare_at_price | money -}}{%- endif -%}</s> 
+                          <span class="selection:bg-text-[rgb(var(--colors-price-sale),0.2)] price-sale">
+                            {%- if settings.currency_code_enable -%}
+                              {{ item.final_line_price | money_with_currency }}
+                            {%- else -%}
+                              {{ item.final_line_price | money }}
+                            {% endif %}
+                          </span>
+                        {%- else -%}
+                          <span>
+                            {% if settings.currency_code_enable %}
+                              {{ item.final_line_price | money_with_currency }}
+                            {% else %}
+                              {{ item.final_line_price | money }}
+                            {% endif %}
+                          </span>
+                        {%- endif -%}
+                      </div>
+                      {% if item.product.selected_or_first_available_variant.id != settings.gift_wrapping_product.selected_or_first_available_variant.id %}
+                        <button
+                          id="remove-{{ item.key }}"
+                          class="opacity-50 md:-mt-3.5 w-12 pt-3 pb-3 pl-3.5 pr-3.5 justify-center items-center cursor-pointer min-w-[3rem]{% if item.product.selected_or_first_available_variant.id == settings.product_shipping_insurance.selected_or_first_available_variant.id and settings.enable_shipping_insurance %} hidden{% else %} flex{% endif %}"
+                          {% if will_remove_shipping_insurance %}
+                            @click.prevent="clearCart('{{ item.key }}')"
+                          {% else %}
+                            @click.prevent="removeItem('{{ item.key }}', {{ forloop.index }})"
+                          {% endif %}
+                          aria-label="button-remove">
+                          <span class="inline-block w-[18px] h-[18px]">{%- render 'icon-alls', icon: 'icon-remove' -%}</span>
+                        </button>
+                      {% endif %}
+                      <div id="loading-{{ item.key }}" class="md:-mt-3.5 w-12 hidden pt-3 pb-3 pl-3.5 pr-3.5 flex justify-center items-center cursor-pointer z-20">
+                        <div class="animate-spin w-[18px] h-[18px] inline-block">
+                          {% render 'icon-alls', icon: 'icon-loading' %}
+                        </div>
+                      </div>
+                    </div>
+                  </td> 
+                </tr>
+                {% if parent_key_list contains item.key %}
+                  {% assign child_count = 0 %}
+                  {%- for child_item in cart.items -%}
+                    {% if child_item.parent_relationship.parent != blank and child_item.parent_relationship.parent.key == item.key %}
+                      {% assign child_count = child_count | plus: 1 %}
+                    {% endif %}
+                  {%- endfor -%}
+                  {% assign index = 0 %}
+                  {% assign is_last = false %}
+                  {% for child_item in cart.items %}
+                    {% if child_item.parent_relationship.parent and child_item.parent_relationship.parent.key == item.key %}
+                      {% assign index = index | plus: 1 %}
+                      {% if index == child_count %}
+                        {% assign is_last = true %}
+                      {% endif %}
+
+                      {% render 'cart-child-item',
+                        item: child_item,
+                        ratio: ratio,
+                        is_rtl: is_rtl,
+                        is_component: false,
+                        is_last: is_last
+                      %}
+                    {% endif %}
+                  {%- endfor -%}
+                {% endif %}
+                {% if item.item_components != blank %}
+                  {% for component in item.item_components %}
+                    {% render 'cart-child-item', 
+                      item: component, 
+                      ratio: ratio,
+                      is_rtl: is_rtl,
+                      is_component: true,
+                      is_last: forloop.last
+                    %}
+                  {% endfor %}
+                {% endif %}
+              {%- endfor -%}
+            </tbody>
+          </table>
+          <div class="absolute top-0 bottom-0 left-0 h-full w-full z-20" x-cloak x-show="loading">
+          </div>
+        </form>
+        {%- if settings.cart_page_layout == 'side' -%}
+          <div>
+            {% if settings.enable_estimate_shipping %}
+              {% if settings.enable_estimate_shipping %}
+                <div class="hidden md:block mt-4 md:mt-7">
+                  {% render 'estimate-shipping-rate', cartPage: true %}
+                </div>
+                <div class="md:hidden border-y border-solid">
+                  <div class="pt-3 pb-3 relative" @click="$store.xPopupShipping.open = !$store.xPopupShipping.open" class="h4 text-medium">
+                    <p class="h4 text-medium">{{ 'shipping.estimate' | t }}</p>
+                    <span class="w-3 duration-200 block absolute rtl:left-1 rtl:right-auto right-1 opacity-70 top-1/2 -translate-y-1/2"
+                      :class="$store.xPopupShipping.open && 'rotate-180'"
+                    > 
+                    {% render 'icon-alls', icon: 'icon-caret' %}
+                    </span>
+                  </div>
+                  <div x-show="$store.xPopupShipping.open" x-cloak x-collapse>
+                    {% render 'estimate-shipping-rate', main_cart_mobile: true %}
+                  </div>
+                </div>
+              {%- endif -%}
+            {% endif %}
+          </div>
+        {%- endif -%}
+      </div>
+
+      {%- if show_side_bar -%}
+        <div class="form-checkout bg-theme-secondary mt-10 md:mt-7 lg:mt-0 w-full lg:w-1/4 pt-5 pb-5 pl-5 pr-5 lg:pl-7 lg:pr-7 lg:pt-7 lg:pb-7{% if settings.edges_type == 'rounded_corners' %} rounded-xl{% endif %}">
+          {%- if settings.show_cart_note -%}
+            <div class="mb-5">
+              <p for="x-cart-note" class="block h4 text-medium md:mb-1">{{ 'sections.cart.note' | t }}</p>
+              <textarea
+                id="x-cart-note"
+                aria-label="Cart note"
+                class="w-full bg-transparent border pl-4 pr-4 pt-4 pb-4 mt-2 outline-none focus:outline-none focus:border-current{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"
+                name="note"
+                form="cart"
+                rows="2"
+                cols="60"
+                aria-label="{{ 'sections.cart.note' | t }}"
+                @change="$store.xCartHelper.updateCart({ note: $el.value})"
+              >{{ cart.note }}</textarea>
+            </div>
+          {%- endif -%}
+          {%- if settings.show_cart_custom_field and settings.cart_custom_field_label != blank -%}
+            {%- capture cart_fields_data -%}
+              {
+                "custom_field_label": "{{ settings.cart_custom_field_label | escape }}",
+                "custom_field_required": {{ settings.cart_custom_field_required | default: false }},
+                "custom_field_pattern": "{{ settings.cart_custom_field_pattern | escape }}"
+              }
+            {%- endcapture %}
+            <div
+              class="mb-5"
+              {% if settings.show_cart_custom_field and settings.cart_custom_field_label != blank %}x-data="xCartFields"{% endif %}
+              x-intersect="loadData"
+              x-cart-fields-data='{{ cart_fields_data | escape }}'
+            >
+              <p for="cart-custom-field" class="block h4 text-medium mb-2 md:mb-3{% if settings.show_cart_note %} mt-4 md:mt-5{% endif %}">{{ settings.cart_custom_field_label }}{% if settings.cart_custom_field_required %}<span class="pl-1" aria-hidden="true">*</span>{% endif %}</p>
+              <input
+                id="x-cart-custom-field"
+                aria-label="cart custom field"
+                type="text"
+                {% if settings.cart_custom_field_required %}
+                  :class="customFieldError && 'border-[rgba(var(--color-error))] shadow-[0_0_0_1px_rgba(var(--color-error))]'"
+                {% endif %}
+                class="w-full pr-4 pl-4 pt-3.5 pb-3.5 border border-solid bg-transparent focus-within:outline-none placeholder:text-current placeholder:opacity-60{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"
+                placeholder="{{ settings.cart_custom_field_label }}"
+                value=""
+                x-model="customField"
+              />
+              {% if settings.cart_custom_field_required %}
+                <p x-cloak x-show="customFieldError" class="text-[rgba(var(--color-error))] mt-2">{{ 'sections.cart.required_cart_note' | t }} {{ settings.cart_custom_field_label }}</p>
+              {% endif %}
+            </div>
+          {%- endif -%}
+          {% liquid
+            assign has_cart_fields = false
+            if settings.cart_enable_delivery_date_picker
+              assign has_cart_fields = true
+            endif
+          %}
+          {%- if has_cart_fields -%}
+            {% assign holiday_list = settings.holidays_delivery_exclusions | newline_to_br | strip_newlines | replace: '<br />', "," %}
+            <div class="mb-5" x-data="xCartFields(false, '{{ request.locale.iso_code }}', '{{ settings.weekend_delivery_exclusions }}', '{{ holiday_list }}', '{{ settings.date_format_estimate_cart }}')" x-intersect="loadDeliveryFieldData({{ settings.delivery_date_required }})">      
+              {% render 'cart-delivery-date-picker', items: cart.items, isMainCartItems: true %}
+            </div>
+          {%- endif -%}
+          {% for block in section.blocks %}
+            {%- case block.type -%}
+              {%- when '@app' -%}
+                {% render block %}
+              {%- when 'subtotal' -%}
+                <div class="{% if forloop.last %} mt-3{% endif %}" {{ block.shopify_attributes }}>
+                  {%- if settings.enable_featured_discount -%}
+                    <div class="flex justify-end w-full">
+                      <div
+                        x-data="xCouponCode([{% for code in free_shipping_codes %}'{{ code }}'{% unless forloop.last %},{% endunless %}{% endfor %}])"
+                        x-init="$store.xCouponCodeDetail.getDiscountCode();"
+                        class="pb-5{% unless settings.enable_save_share_cart %} lg:pb-8{% endunless %} w-full z-[19] pl-[1px] pr-[1px]{% unless forloop.first %} mt-5{% endunless %}"
+                        @keydown.escape.stop="$store.xCartHelper.openField = false"
+                      >
+                        {%- if settings.cart_page_layout == 'side' -%}
+                          <template x-teleport=".x-undo-remove-discount-container-cart">
+                            <div x-cloak x-data="{timer: 5, countdown: ''}" x-show="$store.xCouponCodeDetail.removedDiscountCode" class="w-fit flex gap-3 rounded-[var(--border-radius)]" x-intersect=
+                              "
+                                $el.querySelector('.button-text.text-timer').innerText = `{{ 'general.cart.undo' | t }} (${timer})`;
+                                clearInterval(countdown);
+                                countdown = setInterval(() => {
+                                  timer--;
+                                  $el.querySelector('.button-text.text-timer').innerText = `{{ 'general.cart.undo' | t }} (${timer})`;
+                          
+                                  if (timer === 0) {
+                                    $store.xCouponCodeDetail.removedDiscountCode = '';
+                                    timer = 5;
+                                    clearInterval(countdown);
+                                  }
+                                }, 1000);
+                              " 
+                            >
+                              <div class="text-[rgba(var(--background-color))] bg-[rgba(var(--colors-heading))] w-full pt-1 pb-1 {% if is_rtl %}pr-3 pl-2{% else %}pl-3 pr-2{% endif %} flex justify-between gap-3 rounded-[var(--border-radius)] z-50">
+                                <div class="grow self-center text-removed-discount">
+                                  {{ 'general.cart.discount_removed' | t }}
+                                </div>
+                                <div class="flex gap-0.5">
+                                  <button aria-label="Undo discount" @click="undoRemoveDiscount(); clearInterval(countdown);"
+                                    class="whitespace-nowrap grow bg-transparent min-w-[100px] inline-block empty:hidden pl-4 pr-4 pt-2.5 pb-2.5 leading-normal cursor-pointer pointer-events-auto"
+                                  >
+                                    <span :class="{ 'lg:block opacity-0 is-focus-button invisible' : loading }">
+                                      <span class="flex items-center justify-center">
+                                        <span class="button-text text-[rgba(var(--background-color))] underline text-timer"></span>
+                                      </span>
+                                    </span>
+                                  </button>
+                                  <div class="animate-spin h-8 w-8 min-h-8 min-w-8 p-2 cursor-pointer self-center" x-show="loading" x-cloak>
+                                    {% render 'icon-alls', icon: 'icon-loading' %}
+                                  </div>
+                                  <div class="h-8 w-8 min-h-8 min-w-8 p-2 cursor-pointer self-center" x-show="!loading" x-cloak @click="$store.xCouponCodeDetail.clearRemovedDiscount()">
+                                    {% render 'icon-alls', icon: 'icon-close' %}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </template>
+                        {% endif %}
+                        <label class="block h4 text-medium mb-2 md:mb-3" for="x-cart-discount-field">{{ 'general.cart.discount_code' | t }}</label>
+                        <div class="flex pt-1 pb-1 pl-1 pr-1 border border-solid{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">
+                          <div class="grow">
+                            <input
+                              id="x-cart-discount-field"
+                              type="text"
+                              class="w-full pl-3.5 pr-3.5 pt-2.5 pb-2.5 focus:outline-none focus-within:outline-none focus:border-0 bg-transparent placeholder:text-current placeholder:opacity-60"
+                              placeholder="{{ 'general.cart.placeholder_discount' | t }}"
+                              x-on:change="onChange()"
+                              @keyup.enter="applyDiscountToCart()"
+                            />
+                          </div>
+                          <button @click="applyDiscountToCart()"
+                            class="button button-solid min-w-[90px] whitespace-nowrap p-break-words border inline-block empty:hidden pl-4 pr-4 lg:pl-6 lg:pr-6 pt-2 pb-2 leading-normal cursor-pointer pointer-events-auto"
+                          >
+                            <span :class="{ 'lg:block opacity-0 is-focus-button' : loading }">
+                              <span class="flex items-center justify-center">
+                                {% assign button_label = 'general.cart.apply' | t %}
+                                {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+                              </span>
+                            </span>
+          
+                            <div class="lg:inline-block animate-spin w-4 h-4 md:w-5 md:h-5 absolute top-[calc(50%-8px)] left-[calc(50%-8px)] md:top-[calc(50%-10px)] md:left-[calc(50%-10px)]" x-show="loading" x-cloak>
+                              {% render 'icon-alls', icon: 'icon-loading' %}
+                            </div>
+                          </button>
+                        </div>
+                        <p x-show="$store.xCouponCodeDetail.discountFaild" x-cloak class="text-[rgba(var(--color-error))] mt-2">{{ 'general.cart.discount_wrong' | t }}</p>
+                        <p x-show="$store.xCouponCodeDetail.freeShippingApplied" x-cloak class="text-[rgba(var(--color-error))] mt-2">{{ 'general.cart.freeshipping_applied' | t }}</p>
+                        <p x-show="$store.xCouponCodeDetail.discountApplied" x-cloak class="text-[rgba(var(--color-success))] mt-2">{{ 'general.cart.discount_applied' | t }}</p>
+                        <p x-show="$store.xCouponCodeDetail.discountCorrect" x-cloak class="text-[rgba(var(--color-success))] mt-2">{{ 'general.cart.discount_correct' | t }}</p>
+                      </div>
+                    </div>
+                    <script src="{{ 'coupon-code.js' | asset_url }}" defer></script>
+                  {%- endif -%}
+                  {% if settings.enable_save_share_cart %}
+                    <div class="flex justify-end w-full">
+                      <div
+                        class="pb-5 lg:pb-8 w-full z-[19] pl-[1px] pr-[1px]{% unless forloop.first %} mt-5{% endunless %}"
+                        x-intersect.once.margin.200px="$store.xCartShare.generateUrl()"
+                      >
+                        <label for="x-share-cart-field" class="block w-full h4 text-medium mb-2 md:mb-3 text-left rtl:text-right">{{ 'general.cart.share_link' | t }}</label>
+                        <div class="flex pt-1 pb-1 pl-1 pr-1 border border-solid{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">
+                          <div class="grow">
+                            <input
+                              id="x-share-cart-field"
+                              type="text"
+                              class="w-full pl-5 pr-5 pt-2.5 pb-2.5 focus:outline-none focus-within:outline-none focus:border-0 bg-transparent placeholder:text-current placeholder:opacity-60"
+                              :value="$store.xCartShare.cartShareUrl"
+                            />
+                          </div>
+                          <button @click="$store.xCartShare.copyURL()"
+                            class="button button-solid min-w-[90px] whitespace-nowrap p-break-words border inline-block empty:hidden pl-4 pr-4 pt-2 pb-2 leading-normal cursor-pointer pointer-events-auto"
+                          >
+                            <span
+                              class="whitespace-nowrap ease-in-out duration-300"
+                              x-show="!$store.xCartShare.copySuccess"
+                            >
+                              <span class="flex items-center justify-center">
+                                {% assign button_label = 'general.cart.copy_link' | t %}
+                                {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+                              </span>
+                            </span>
+
+                            <span class="whitespace-nowrap ease-in-out duration-300" 
+                              x-show="$store.xCartShare.copySuccess" 
+                              x-cloak>
+                              <span class="flex items-center justify-center">
+                                {% assign button_label = 'general.global.copied' | t %}
+                                {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+                              </span>
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  {% endif %}
+                  <div id="js-contents" class="{% if settings.enable_featured_discount %}lg:mt-0{% endif %}{% if is_rtl %} md:text-left{% else %} md:text-right{% endif %}" {{ block.shopify_attributes }}>
+                    {% if cart.items_subtotal_price > cart.total_price %}
+                      <div class="flex">
+                        <p>{{ 'sections.cart.subtotal' | t }}</p>
+                        <p class="ml-auto mb-2">{{ cart.items_subtotal_price | money_with_currency }}</p>
+                      </div>
+                    {% endif %}
+                    {%- if cart.cart_level_discount_applications.size > 0 -%}
+                      {%- liquid
+                        assign total_discount = 0
+                        for discount in cart.cart_level_discount_applications
+                          assign total_discount =  total_discount | plus: discount.total_allocated_amount
+                        endfor 
+                      -%}
+                      <div x-show="{%- if cart.cart_level_discount_applications.size > 0 -%}true{% else %}false{% endif %} || document.cookie.match(/(?:^|;\s*)eurus_freeshipping_code=([^;]*)/)[1].trim() !== ''" class="border-t border-b pt-3 pb-3 mb-3" role="status" x-data="{ open: false }">
+                        <div class="flex justify-between items-end cursor-pointer relative" @click="open = !open" >
+                          <p>{{ 'customer.order.discount' | t }}</p>
+                          <p class="price-sale{% if is_rtl %} mr-8 ml-[34px]{% else %} ml-8 mr-[34px]{% endif %}" id="total-price">- {{ total_discount | money_with_currency }}</p>
+                          <span class="w-3 opacity-70 inline-block absolute right-0 rtl:left-0 rtl:right-auto top-1/2 -translate-y-1/2 duration-500" :class="open ? 'rotate-0' : 'rotate-180'">
+                            {% render 'icon-alls', icon: 'icon-caret' %}
+                          </span>
+                        </div>
+                         <ul class="mt-2" role="list" aria-label="{{ 'customer.order.discount' | t }}" x-show="open" >
+                          {%- for discount in cart.cart_level_discount_applications -%}
+                            <li class="list-item x-discount">
+                              <div class="flex flex-row gap-3 items-center mb-1 md:mb-0">
+                                <p class="flex pb-1 relative justify-between items-center w-full shrink min-w-0 gap-3">
+                                  <span class="flex gap-1 shrink min-w-0"><span class="block discount-title max-w-full whitespace-nowrap overflow-hidden text-ellipsis">{{ discount.title }}</span><span class="block min-w-fit">{% unless discount.value_type == 'fixed_amount' %}(-{{ discount.value | floor }}%){% endunless %}</span></span>
+                                  <span class="block min-w-fit" id="total-price">- {{ discount.total_allocated_amount | money_with_currency }}</span>
+                                </p>
+                                <button class="{% unless discount.type == "discount_code" %}invisible{% endunless %} w-6 h-7 min-w-6 min-h-7 {% if is_rtl %}pr-2.5 pl-0{% else %}pl-2.5 pr-0{% endif %} pt-2 pb-2 mb-1 text-[rgba(var(--colors-text))]" @click="$store.xCouponCodeDetail.removeDiscountCode($el, true)" :disabled="$store.xCouponCodeDetail.loading">
+                                  <div x-cloak x-show="!$store.xCouponCodeDetail.loading">{% render 'icon-alls', icon: 'icon-close' %}</div>
+                                  <div x-cloak class="animate-spin" x-show="$store.xCouponCodeDetail.loading">{% render 'icon-alls', icon: 'icon-loading' %}</div>
+                                </button>
+                              </div>
+                            </li>
+                          {%- endfor -%}
+                        </ul>
+                      </div> 
+                    {%- endif -%}
+                    {% if settings.enable_shipping_insurance and settings.product_shipping_insurance != blank and settings.product_shipping_insurance.selected_or_first_available_variant.available %}
+                      {% liquid
+                        for item in cart.items
+                          if item.product.selected_or_first_available_variant.id == settings.product_shipping_insurance.selected_or_first_available_variant.id
+                            assign shipping_insurance = item
+                          endif
+                        endfor
+                      %}
+                      <div x-data="xCart" class="flex justify-between border-b border-solid gap-4 mb-4 w-full pb-2.5 bg-[rgb(var(--colors-background-secondary))]">
+                        <div class="flex gap-2.5 w-full text-left">
+                          {% if settings.show_image_shipping_insurance %}
+                            {% # theme-check-disable ImgLazyLoading %}
+                            {% if settings.custom_image_shipping_insurance != blank %}
+                              <img
+                                src="{{ settings.custom_image_shipping_insurance | image_url: width: 100 }}"
+                                alt="{{ settings.custom_image_shipping_insurance.alt | split: "#" | first | escape }}"
+                                width="{{ settings.custom_image_shipping_insurance.width }}"
+                                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                height="{{ settings.custom_image_shipping_insurance.height }}"
+                                class="w-14 min-w-[56px] h-14"
+                              >
+                            {% elsif settings.product_shipping_insurance.featured_media != blank %}
+                              <img
+                                src="{{ settings.product_shipping_insurance.featured_media | image_url: width: 100 }}"
+                                alt="{{ settings.product_shipping_insurance.featured_media.alt | split: "#" | first | escape }}"
+                                width="{{ settings.product_shipping_insurance.featured_media.width }}"
+                                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                height="{{ settings.product_shipping_insurance.featured_media.height }}"
+                                class="w-14 min-w-[56px] h-14"
+                              >
+                            {% endif %}
+                            {% # theme-check-enable ImgLazyLoading %}
+                          {% endif %}
+                          <div class="w-full p-break-words">
+                            {% if settings.title_shipping_insurance != blank %}
+                              <p>{{ settings.title_shipping_insurance }}</p>
+                            {% endif %}
+                            {% if settings.description_shipping_insurance != blank %}
+                              <div class="rte text-[90%]{% if settings.title_shipping_insurance == blank %} shipping-insurance-text{% endif %}">{{ settings.description_shipping_insurance }}</div>
+                            {% endif %}
+                          </div>
+                          <div class="mt-0.5">{%- render 'price', product: settings.product_shipping_insurance -%}</div>
+                        </div>
+                        <div>
+                          <input class="hidden checkbox_shipping_insurance" id="checkbox_shipping_insurance" type="checkbox"{% if shipping_insurance %} checked x-on:change="removeItem('{{ shipping_insurance.key }}', {{ shipping_insurance.index | plus: 1 }})" {% else %}x-on:change="addShippingInsurance('{{ settings.product_shipping_insurance.selected_or_first_available_variant.id }}')"{% endif %}>
+                          <label class="cursor-pointer inline-block md:w-6 md:h-6 w-5 h-5 border border-solid bg-[rgba(var(--colors-background))] border-[rgb(var(--colors-line-and-border))] relative after:hidden after:absolute after:w-3 after:h-1.5 after:top-[40%] after:left-1/2 after:border-l-2 after:border-b-2 after:border-[rgba(var(--colors-button-text))] after:border-solid after:-rotate-45 after:-translate-x-1/2 after:-translate-y-1/2" for="checkbox_shipping_insurance"></label>
+                        </div>
+                      </div>
+                    {% endif %}
+                    <div class="flex">
+                      <p class="h4">{{ 'sections.cart.headings.total' | t }}</p>
+                      <p class="h4 ml-auto mb-2">{{ cart.total_price | money_with_currency }}</p>
+                    </div>
+                    {%- if settings.cart_enable_savings_amount -%}
+                      {% liquid
+                        assign total_original_price = 0
+                        for item in cart.items
+                          if item.variant.compare_at_price > item.original_price
+                            assign variant_original_price = item.variant.compare_at_price
+                          else
+                            assign variant_original_price = item.original_price
+                          endif
+                          assign line_item_price = variant_original_price | times: item.quantity
+                          assign total_original_price = total_original_price | plus: line_item_price
+                        endfor
+                        assign total_discount = total_original_price | minus: cart.total_price | money_with_currency
+                        assign total_discount_num = total_original_price | minus: cart.total_price
+                      %}
+                      {% if total_discount_num > 0 %}
+                        <div class="flex justify-between items-end" role="status">
+                          <p class="text-left">{{ 'sections.cart.total_savings_html' | t: total_discount: total_discount }}</p>
+                          <s class="{% if is_rtl %} mr-8{% else %} ml-8{% endif %} text-right" id="total-price">{{ total_original_price | money_with_currency }}</s>
+                        </div> 
+                      {% endif %}
+                    {%- endif -%}
+                    {% if settings.auto_calculate_shipping and settings.enable_estimate_shipping %}
+                      {% render 'auto-caculate-shipping' , cart_page: true %}
+                    {% else %}
+                      <small>
+                        {%- if cart.taxes_included and shop.shipping_policy.body != blank -%}
+                          {{ 'sections.cart.taxes_included_and_shipping_policy_html' | t: link: shop.shipping_policy.url }}
+                        {%- elsif cart.taxes_included -%}
+                          {{ 'sections.cart.taxes_included_but_shipping_at_checkout' | t }}
+                        {%- elsif shop.shipping_policy.body != blank -%}
+                          {{ 'sections.cart.taxes_and_shipping_policy_at_checkout_html' | t: link: shop.shipping_policy.url }}
+                        {%- else -%}
+                          {{ 'sections.cart.taxes_and_shipping_at_checkout' | t }}
+                        {%- endif -%}
+                      </small>
+                    {% endif %}
+                  </div>
+                {% comment %} {%- else -%} {% endcomment %}
+                  {%- if settings.cart_enable_terms_and_conditions -%}
+                    <div x-data="xCartTerm" class="flex flex-col md:items-end mb-1 mt-4 eurus{% if is_rtl %} md:text-left{% else %} md:text-right{% endif %}">
+                      <div class="flex items-center">
+                        <input
+                          id="x-cart-agree" 
+                          class="checkbox checkbox-checked mr-2 rtl:mr-0 rtl:ml-2 h-4 w-4 min-w-[1rem] border checked:border-[rgba(var(--colors-text-link))] checked:bg-[rgba(var(--colors-text-link))] relative cursor-pointer{% if settings.edges_type == 'rounded_corners' %} rounded{% else %} rounded-none{% endif %}" 
+                          type="checkbox"
+                          x-model="checked"
+                        />
+                        <label for="x-cart-agree" class="cursor-pointer">
+                          {% if settings.cart_terms_and_conditions_page != blank %}
+                            {{ 'sections.cart.cart_enable_terms_and_conditions_html' | t: url: settings.cart_terms_and_conditions_page.url }}
+                          {% else %}
+                            {{ 'sections.cart.cart_enable_terms_and_conditions' | t }}
+                          {% endif %}
+                        </label>
+                      </div>
+                      <p class="clear-left text-[rgba(var(--color-error))] mt-2 text-normal" x-show="!checked" x-cloak>{{ 'general.cart.terms_confirm' | t }}</p>
+                    </div>
+                  {%- else -%}
+                    <input id="x-cart-agree" aria-label="Cart agree" class="hidden" type="checkbox" checked="checked" />
+                  {%- endif -%}
+                </div>
+              {%- when 'buttons' -%}
+                <div {{ block.shopify_attributes }}>
+                  <button
+                    id="checkout-submit" 
+                    class="button button-solid w-full justify-center pl-6 pr-6 pt-3.5 pb-3.5 mb-1.5{% if forloop.last %} mt-4{% endif %} cursor-pointer leading-normal" 
+                    type="submit" 
+                    name="checkout"
+                    form="cart"
+                    @click="$store.xCartHelper.goToCheckout($event)"
+                    {% if cart == empty %}disabled{% endif %}
+                  >
+                    {% assign button_label = 'sections.cart.checkout' | t %}
+                    <span class="flex items-center justify-center">
+                      {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+                    </span>
+                  </button>
+                  {%- if additional_checkout_buttons and block.settings.show_dynamic_checkout -%}
+                    <div class="left{% if settings.enable_estimate_shipping %} button-full{% endif %}">
+                      {{ content_for_additional_checkout_buttons }}
+                    </div>
+                  {%- endif -%}
+                  {%- if settings.show_cart_payment_methods -%}
+                    <div class="flex flex-col pt-3 pb-3 gap-3 md:gap-2.5">
+                      <p class="text-center">{{ 'general.cart.payment_methods' | t }}</p>
+                      {% if settings.custom_payment != blank %}
+                        {% assign enabled_payment_types = settings.custom_payment | remove: ' ' | split: ',' %}
+                        <ul class="icon-payment flex justify-center gap-2 flex-wrap" role="list">
+                        {%- for type in enabled_payment_types -%}
+                          <li class="pl-1 pr-1">
+                            {{ type | payment_type_svg_tag }}
+                          </li>
+                        {%- endfor -%}
+                        </ul>
+                      {% else %}
+                        <ul class="icon-payment flex justify-center gap-2 flex-wrap" role="list">
+                          {%- for type in shop.enabled_payment_types -%}
+                            <li class="pl-1 pr-1">
+                              {{ type | payment_type_svg_tag }}
+                            </li>
+                          {%- endfor -%}
+                      </ul>
+                      {% endif %}
+                    </div>
+                  {%- endif -%}
+                </div>
+            {%- endcase -%}
+          {% endfor %}
+          <div id="cart-errors"></div>
+        </div>
+        
+      {%- endif -%}
+    </div>
+  {%- else -%}
+    <div class="block items-center justify-center text-center pb-9">
+      <div class="mt-6 mb-6">
+        {% unless settings.disable_heading_animation %}<div class="overflow-hidden" x-intersect.once="$el.querySelector('.anm-move-up')?.classList.add('active-anm-heading')">{% endunless %}
+          <{{ section.settings.heading_tag }} class="h2 block{% unless settings.disable_heading_animation %} anm-move-up{% endunless %}">{{ 'sections.cart.empty' | t }}</{{ section.settings.heading_tag }}>
+        {% unless settings.disable_heading_animation %}</div>{% endunless %}
+      </div>
+      <div class="rte mb-6">{{ settings.empty_cart_recommendation_text }}</div>
+      {% if settings.collection_list_recommendation == blank %}
+        <div class="pt-6 pb-6 pl-12 pr-12 text-center">
+          {% assign continue_shopping_button_label = 'general.continue_shopping' | t %}
+          <a
+            href="{{ settings.continue_shopping }}"
+            class="button pt-2.5 pb-2.5 pl-7 pr-7 md:pl-9 md:pr-9 md:pt-3 md:pb-3{% if settings.empty_cart_recommendation_button_style == 'secondary' %} button-outline{% elsif settings.empty_cart_recommendation_button_style == 'text-link' %} button-text-link {% else %} button-solid{% endif %} text-center inline-block border leading-normal"
+          >
+            {% render 'button-label', button_label: continue_shopping_button_label, show_button_style: settings.empty_cart_recommendation_button_style %}
+          </a>
+        </div>
+      {% else %}
+        <ul class="flex flex-col gap-y-3 list-none">
+          {% for recommend_collection in settings.collection_list_recommendation %}
+            <li>
+              <a
+                href="{{ recommend_collection.url }}"
+                class="button pt-2.5 pb-2.5 pl-7 pr-7 md:pl-9 md:pr-9 md:pt-3 md:pb-3{% if settings.empty_cart_recommendation_button_style == 'secondary' %} button-outline{% elsif settings.empty_cart_recommendation_button_style == 'text-link' %} button-text-link {% else %} button-solid{% endif %} text-center inline-block border empty:hidden leading-normal"
+              >
+                {% render 'button-label', button_label: recommend_collection.title, show_button_style: settings.empty_cart_recommendation_button_style %}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      {%- if shop.customer_accounts_enabled and customer == nil -%}
+        <div class="mt-10">
+          <p class="block mb-4 text-medium">{{ 'sections.cart.login.title' | t }}</p>
+          <p class="my-2 leading-tight">
+            {{ 'sections.cart.login.paragraph_html' | t: link: routes.account_login_url }}
+          </p>
+        </div>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  {%- if show_side_bar -%}
+    {%- if settings.show_cart_custom_field and settings.cart_custom_field_label != blank -%}
+      <script src="{{ 'cart-fields.js' | asset_url }}" defer></script>
+    {%- endif -%}
+    {%- if settings.cart_enable_terms_and_conditions -%}
+      <script src="{{ 'cart-term.js' | asset_url }}" defer></script>
+    {%- endif -%}
+    {%- if settings.enable_estimate_shipping -%}
+      <script src="{{ 'estimate-shipping-rate.js' | asset_url }}" defer></script>
+    {%- endif -%}
+  {%- endif -%}
+</div>
+{% schema %}
+{
+  "name": "t:sections.main-cart-items.name",
+  "class": "x-section-main-cart-items",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.pages_and_templates.cart_page"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.main-cart-items.settings.info"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "default": "h1",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "p",
+          "label": "p"
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 44,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 0,
+      "label": "t:sections.all.padding.padding_bottom"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 36,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 0,
+      "label": "t:sections.all.padding.padding_bottom"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "subtotal",
+      "name": "t:sections.main-cart-footer.blocks.subtotal.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.main-cart-footer.blocks.info_side"
+        }
+      ]
+    },
+    {
+      "type": "buttons",
+      "name": "t:sections.main-cart-footer.blocks.buttons.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.main-cart-footer.blocks.info_side"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_dynamic_checkout",
+          "default": true,
+          "label": "t:sections.featured-product.blocks.buy_buttons.settings.show_dynamic_checkout.label",
+          "info": "t:sections.featured-product.blocks.buy_buttons.settings.show_dynamic_checkout.info"
+        }
+      ]
+    },
+    {
+      "type": "@app"
+    }
+  ]
+}
+{% endschema %}

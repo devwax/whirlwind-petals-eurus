@@ -1,0 +1,46 @@
+{% liquid 
+  assign single_rate = 'shipping.singleRate' | t
+  assign multi_rate = 'shipping.multipleRates' | t
+  assign no_rate = 'shipping.noRates' | t
+  assign default_country = localization.country.name
+  if customer.default_address 
+   assign default_country = customer.default_address.country
+  endif 
+  if customer.default_address.province 
+   assign default_province = customer.default_address.province
+  endif 
+  if customer.default_address.zip 
+   assign default_zip = customer.default_address.zip
+  endif 
+%}
+<div 
+  class="list-style-none" x-data="xEstimateShipping($el,`{{ single_rate }}`,`{{ multi_rate }}`, `{{ no_rate }}`)" 
+  {% if mini_cart %}
+    x-init="load(); submit()"
+  {% else %}
+    x-intersect.once="load(); submit()"
+  {% endif %}
+>
+  <div class="hidden">
+    <div class="w-full pb-3{% if cartPage %} md:pb-0{% endif %}">
+      <div class="relative">
+        <select aria-label="Province select" data-default="{{ default_country }}" class="country-select shipping-rate w-full pl-5 pr-10 rtl:pr-5 rtl:pl-10 pt-3 pb-3 appearance-none border bg-transparent focus:border-current border-solid{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" name="country">
+          {{ country_option_tags }}
+        </select>
+      </div>
+    </div>
+    <div class="w-full province-container pb-4{% if cartPage %} md:pb-0{% endif %}">
+      <select aria-label="Province select" {% if default_province %} data-default="{{ default_province }}"{% endif %} class="province-select shipping-rate w-full pl-5 pr-10 rtl:pr-5 rtl:pl-10 pt-3 pb-3 bg-transparent focus:border-current appearance-none border border-solid{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" name="province">
+      </select>
+    </div>
+    <input aria-label="Zip input" class="zip-input w-full pl-5 pr-5 pt-3 pb-3 border bg-transparent focus:border-current border-solid{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" type="text"{% if default_zip %} value="{{ default_zip }}"{% endif %}>
+  </div>
+  <div class="rates hidden w-full pt-3">
+    <div class="rates-heading">{{ 'shipping.autoCalculate' | t }}</div>
+    <div x-html="rates_text" class="rates-text"></div>
+  </div>
+  <div class="errors hidden pt-3 w-full pb-3">
+    <p>{{ 'shipping.emptyAutoCal' | t }}</p>
+  </div>
+</div>
+<script src="{{ 'estimate-shipping-rate.js' | asset_url }}" defer></script>

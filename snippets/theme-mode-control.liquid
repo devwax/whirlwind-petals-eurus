@@ -1,0 +1,16 @@
+{%- if settings.theme_mode_enabled -%}
+  <script>
+    const themeMode = '{{ settings.theme_mode_mode | default: 'auto' }}';
+    if ((localStorage.eurus_theme == 1 && themeMode == 'switch')
+      || (themeMode == 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      requestAnimationFrame(() => {
+        document.documentElement.classList.add('dark');
+      });
+    } else if ((localStorage.eurus_theme == 0 && themeMode == 'switch')
+      || (themeMode == 'auto' && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+      requestAnimationFrame(() => {
+        document.documentElement.classList.remove('dark');
+      });
+    }
+  </script>
+{%- endif -%}

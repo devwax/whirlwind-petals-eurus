@@ -1,0 +1,238 @@
+{% comment %}
+    Renders an article card for a given blog with settings to either show the image or not.
+
+    Accepts:
+    - blog: {Object} Blog object
+    - article: {Object} Article object
+    - add_divider: {Boolean} The setting either add the divider blog post or not.
+    - loading: {Boolean} Image should be lazy loaded. Default: lazy (optional)
+    - columns_desktop: {Number} Number blog of columns on desktop,
+    - blog_page: {Boolean} Is it a blog page or not?
+    Usage:
+    {% render 'article-card', blog: blog, article: article %}
+{% endcomment %}
+
+{%- liquid
+  assign heading_size =  heading_size | times: settings.heading_base_size | times: 0.000225
+  assign text_size =  text_size | times: settings.text_base_size | times: 0.0000875
+  assign loading = 'loading="lazy"'   
+  if section.index != 1 or section.location != 'template' or settings.enable_lazy_loading_image == false
+    assign loading = 'loading="eager" fetchpriority="high" decoding="sync"'
+  endif
+-%}
+{%- style -%}
+  {%- unless color_text.alpha == 0.0 -%}
+    .text-color-{{ blockID }} {
+      color: {{ color_text }};
+      --colors-text: {{ color_text.red }}, {{ color_text.green }}, {{ color_text.blue }};
+      --colors-heading: {{ color_text.red }}, {{ color_text.green }}, {{ color_text.blue }};
+    }
+  {%- endunless -%}
+  {%- unless title_color.alpha == 0.0 -%}
+    .title-color-{{ blockID }} {
+      color: {{ title_color }};
+      --colors-heading: {{ title_color.red }}, {{ title_color.green }}, {{ title_color.blue }};
+    }
+  {%- endunless -%}
+  .text-{{ blockID }} {
+    font-size: {{ text_size | times: 0.9 }}rem;
+  }
+  .sub-heading-{{ blockID }} {
+    font-size: {{ heading_size | times: 0.5 }}rem;
+  }
+  .heading-{{ blockID }} {
+    font-size: {{ heading_size | times: 0.7 }}rem;
+  }
+  @media (min-width: 768px) {
+    .sub-heading-{{ blockID }} {
+      font-size: {{ heading_size | times: 0.58 }}rem;
+    }
+    .heading-{{ blockID }} {
+      font-size: {{ heading_size }}rem; 
+    }
+    .text-{{ blockID }} {
+      font-size: {{ text_size }}rem;
+    }
+  }
+  {%- unless background_color.alpha == 0.0 -%}
+    .background-color-{{ blockID }} {
+      background: {{ background_color }};
+    }
+  {%- endunless -%}
+  {%- if show_button_style == 'primary' -%}
+    .button--{{ blockID }}.button-solid,
+    .button--{{ blockID }}.button-solid:before { 
+      {%- unless color_button.alpha == 0.0 -%}
+        --colors-line-and-border: {{ color_button.red }}, {{ color_button.green }}, {{ color_button.blue }};
+        --colors-button: {{ color_button.red }}, {{ color_button.green }}, {{ color_button.blue }};
+      {%- else -%}
+        --colors-line-and-border: var(--colors-button);
+      {%- endunless -%}
+      {%- unless color_button_hover.alpha == 0.0 -%}
+        --colors-button-hover: rgb({{ color_button_hover.red }}, {{ color_button_hover.green }}, {{ color_button_hover.blue }});
+      {%- endunless -%}
+      {%- unless color_text_button.alpha == 0.0 -%}
+        --colors-button-text: {{ color_text_button.red }}, {{ color_text_button.green }}, {{ color_text_button.blue }};
+      {%- endunless -%}
+      {%- unless color_text_button_hover.alpha == 0.0 -%}
+        --colors-button-text-hover: {{ color_text_button_hover.red }}, {{ color_text_button_hover.green }}, {{ color_text_button_hover.blue }};
+      {%- endunless -%}
+    }
+  {%- endif -%}
+  .button--{{ blockID }}.button-outline {
+    {%- if secondary_button_text.alpha != 0.0 -%} 
+      --colors-secondary-button: {{ secondary_button_text.red }}, {{ secondary_button_text.green }}, {{ secondary_button_text.blue }}; 
+      --colors-line-secondary-button: {{ secondary_button_text.red }}, {{ secondary_button_text.green }}, {{ secondary_button_text.blue }};
+      --background-secondary-button: transparent;
+    {%- endif -%}
+    {%- if color_button_secondary.alpha != 0.0 -%} 
+      --background-secondary-button: {{ color_button_secondary.red }}, {{ color_button_secondary.green }}, {{ color_button_secondary.blue }}; 
+      --colors-line-secondary-button: {{ color_button_secondary.red }}, {{ color_button_secondary.green }}, {{ color_button_secondary.blue }}; 
+    {%- endif -%}
+  }
+  {% if colors_text_link != blank and colors_text_link.alpha != 0.0 %}
+    .button--{{ blockID }}.button-text-link, .button--{{ blockID }}.button-text-link::after, .button--{{ blockID }}.button-text-link::before {
+      --colors-text-link: {{ colors_text_link.red }}, {{ colors_text_link.green }}, {{ colors_text_link.blue }};
+    }
+  {% endif %}
+{%- endstyle -%}
+{%- unless enable_text_overlay -%}
+  <div 
+    {% if animation_loading %}
+      x-intersect.once.margin.-20px.0px.-20px.0px="$el.querySelector('.animate_transition_card__image')?.classList.add('active')"
+    {% endif %}
+    class="w-full {% if is_banner_menu %}h-[{{ desktop_img_height }}]{% endif %} relative z-0 before:h-0 before:block{% if show_in_header %} promotion-header{% endif %}{% unless image_ratio %} image-{{ blockID }}{% endunless %}{% unless image_ratio == "auto" %} pb-[{{ image_ratio }}%]{% endunless %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %} overflow-hidden"
+    {% if image and image_ratio == "auto" %} style="height:0; padding-bottom: {{ 100 | divided_by: image.aspect_ratio }}%;"{% endif %}
+  >
+{%- else -%}
+  <div 
+    {% if animation_loading %}
+      x-intersect.once.margin.-20px.0px.-20px.0px="$el.querySelector('.animate_transition_card__image')?.classList.add('active')"
+    {% endif %}
+    class="group w-full relative overflow-hidden text-{{ content_alignment }} rtl:text-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif -%}
+      {%- unless image_ratio %} image-{{ blockID }} overflow-hidden{% endunless -%}
+      {%- if show_in_header %} promotion-header overflow-hidden{% else %} h-full{% endif -%}
+      {%- if image != blank and show_in_header == false %} md:static{% endif -%}
+      {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+  >
+{%- endunless -%}
+  {% if image != blank %}
+    {% if sizes == blank %}
+      {%- capture sizes -%}
+        {%- if show_in_header -%}
+          (min-width: {{ settings.page_width }}px){% if full_width %} calc(100vw / {{ columns_desktop }}){% else %} {{ settings.page_width | divided_by: columns_desktop }}px{% endif %}, (min-width: 768px) calc(100vw/{{ columns_desktop }}), 100vw
+        {%- else -%}
+          (min-width: {{ settings.page_width }}px){% if full_width %} calc(100vw / {{ columns_desktop }}){% else %} {{ settings.page_width | divided_by: columns_desktop }}px{% endif %},{% unless show_in_header %} (min-width: 768px) calc((100vw - 5rem) / 2){% endunless %}, 100vw
+        {%- endif -%}
+      {%- endcapture -%}
+    {% endif %}
+    {% if image_link %}
+      <a 
+        aria-label="{{ 'accessibility.image_link' | t }}"
+        href="{{ image_link }}" 
+        {% if open_new_window %} target="_blank"{% endif %}
+        class="animate_transition_card__image animate-Xpulse skeleton-image w-full h-full top-0 left-0 overflow-hidden{% unless enable_text_overlay %} absolute{% endunless %}{% unless collage %} md:absolute{% endunless %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+      >
+    {% else %}
+      <div 
+        class="animate_transition_card__image animate-Xpulse skeleton-image w-full h-full top-0 left-0 overflow-hidden{% unless enable_text_overlay %} absolute{% endunless %}{% unless collage %} md:absolute{% endunless %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+      >
+    {% endif %}
+      <img
+        srcset="{{ image | image_url: width: 225 }} 225w,
+        {{ image | image_url: width: 375 }} 375w,
+        {{ image | image_url: width: 450 }} 450w,
+        {{ image | image_url: width: 750 }} 750w,
+        {{ image | image_url: width: 900 }} 900w,
+        {{ image | image_url: width: 1100 }} 1100w,
+        {{ image | image_url: width: 1500 }} 1500w,
+        {{ image | image_url: width: 1780 }} 1780w"
+        src="{{ image | image_url: width: 1780 }}"
+        {% unless show_in_header %}
+          {{ loading }}
+        {% else %}
+          {% if settings.enable_lazy_loading_image %}
+            loading="lazy"
+          {% else %}
+            loading="eager"
+          {% endif %}
+        {% endunless %} 
+        sizes="{{ sizes }}"
+        alt="{{ image.alt | escape }}"
+        width="{{ image.width }}"
+        height="{{ image.width | divided_by: image.aspect_ratio }}"
+        style="object-position: {{ image.presentation.focal_point }};"
+        class="w-full h-full {% if use_original_ratio %}object-scale-down{% else %}object-cover{% endif %} z-10 image-hover{% if animation_loading %} animate_transition_image{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+        onload="this?.classList.add('active'); 
+          this.closest('.animate_transition_card__image')?.classList.remove('animate-Xpulse', 'skeleton-image');
+          setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);
+        "
+      />
+    </{% if image_link %}a{% else %}div{% endif %}>
+  {% else %}
+    {% liquid
+      assign class = "bg-[#C9C9C9] text-[#acacac] h-full w-full"
+      unless image_ratio == "auto" or enable_text_overlay
+        assign class= "bg-[#C9C9C9] text-[#acacac] absolute top-0 left-0 w-full h-full"
+      endunless
+    %}
+    {{ 'image' | placeholder_svg_tag: class }}
+  {% endif %}
+  <span class="absolute top-0 left-0 bottom-0 right-0 pointer-events-none image-treatment-overlay opacity-{{ overlay_opacity }}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"></span>
+{%- unless enable_text_overlay -%}
+  </div>
+{%- endunless -%}
+{%- if heading != blank or content != blank or button_label != blank -%}
+  {% if image_link %}
+    <a 
+      aria-label="{{ 'accessibility.image_link' | t }}"
+      href="{{ image_link }}" 
+      {% if open_new_window %} target="_blank"{% endif %}
+    >
+  {% endif %}
+  <div class="promotion-content background-color-{{ blockID }} text-{{ content_alignment }} rtl:text-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif -%}
+    {%- if show_in_header %} pt-3 pb-3 pr-4 pl-4{% else %} pt-5 pb-5 pr-7 pl-7{% endif -%}
+    {%- if collage %} lg:pt-7 lg:pb-7{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+    {%- if enable_text_overlay %} mt-2 absolute right-0 promotion-content-{{ content_alignment }} rtl:promotion-content-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif -%} mb-2 pointer-events-none text-overlay ml-2 mr-2
+      {%- if columns_desktop < 2 and content_alignment == 'center' %} left-1/2 -translate-x-1/2{% else %} left-0{% endif -%}
+      {%- if content_position == 'top' %} top-0{% elsif content_position == 'center' %} top-1/2 -translate-y-1/2{% else %} bottom-0{% endif -%}
+    {%- else %} left-0 right-0 grow{% endif -%}
+    {%- if background_color.alpha != 0.0 %} text-overlay{% endif %}"
+  >
+    {%- if subheading != blank -%}
+      <div class="sub-heading-{{ blockID }} text-color-{{ blockID }} promotion-header:mb-0 mb-2 leading-tight rte p-break-words pointer-events-auto">{{ subheading }}</div>
+    {%- endif -%}
+    {%- if heading != blank -%}
+      {% if show_in_header %}
+        {% assign heading_tag = 'p' %}
+      {% else %}
+        {% assign heading_tag = 'h3' %}
+      {% endif %}
+      <div class="{% if title_color == blank or title_color.alpha == 0.0 %} text-color-{{ blockID }}{% else %} title-color-{{ blockID }}{% endif %}">
+        {% render 'heading-highlight',
+          headingId: blockID,
+          heading: heading,
+          highlight_type: highlight_type,
+          color_heading_highlight_dark: color_heading_highlight_dark,
+          color_heading_highlight_light: color_heading_highlight_light,
+          class: 'h3 promotion-header:mb-0 mb-2 leading-tight h2 p-break-words pointer-events-auto',
+          heading_tag: heading_tag
+        %}
+      </div>
+    {%- endif -%}
+    {%- if content != blank -%}
+      <div class="mb-1 leading-tight rte text-color-{{ blockID }} text-{{ blockID }} p-break-words pointer-events-auto">{{ content }}</div>
+    {%- endif -%}
+    {%- if button_label != blank -%}
+      <a{% if button_link != blank %} href="{{ button_link }}"{% if open_new_window %} target="_blank"{% endif %}{% else %} role="link" aria-disabled="true"{% endif %} class="button{% if show_button_style == 'secondary' %} button-outline mt-2 lg:mt-2.5{% elsif show_button_style == 'text-link' %} button-text-link {% else %} button-solid mt-2 lg:mt-2.5{% endif %} button--{{ blockID }} pointer-events-auto inline-block empty:hidden pl-4 pr-4 lg:pl-6 lg:pr-6 pt-2.5 pb-2.5 leading-normal md:pt-3 md:pb-3 cursor-pointer p-break-words{% if button_link == blank %} hover:cursor-not-allowed disable-btn-animation opacity-70{%- endif -%}">
+        {% render 'button-label', button_label: button_label, show_button_style: show_button_style %}
+      </a>
+    {% endif %}
+  </div>
+  {% if image_link %}
+    </a> 
+  {% endif  %}
+{% endif %}
+{%- if enable_text_overlay -%}
+  </div>
+{%- endif -%}

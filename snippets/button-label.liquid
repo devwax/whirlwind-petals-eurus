@@ -1,0 +1,64 @@
+
+<div class="flex {% if settings.lang_direction contains request.locale.iso_code %}rtl{% endif %}">
+  {% if x_text_quickview %}
+    <span class="button-text {{ button_text_class }}" x-text="$store.xQuickView && $store.xQuickView.buttonLabel"></span>
+  {% elsif button_select_fbt %}
+    <span class="button-text w-fit {{ button_text_class }}">{{ 'products.product.select' | t }} <span x-text="JSON.parse(JSON.stringify(productsListDraft)).length"></span> {{ 'products.product.item' | t }}</span>
+  {% else %}
+    {% if show_button_style == 'text-link' %}
+      {% if is_social_feeds %}
+        <div class="relative block-text-button overflow-hidden {{ rtl_class }}">
+          <span class="button-text {{ button_text_class }} btn-text-link-effect-1 relative top-0 is-focus-button:opacity-0">
+            <span>{{ button_label | escape }}{{ price }}</span>
+            {% if section.settings.integrated_social_media != 'none' %}
+              {% assign social_icon = 'icon-' | append: section.settings.integrated_social_media %}
+              <div class="w-4 h-4 self-center">
+                {%- render 'icon-media', icon: social_icon -%}
+              </div>
+            {% endif %}
+          </span>
+          <span class="button-text {{ button_text_class }} btn-text-link-effect-2 absolute top-full left-0 is-focus-button:opacity-0">
+            <span>{{ button_label | escape }}{{ price }}</span>
+            {% if section.settings.integrated_social_media != 'none' %}
+              {% assign social_icon = 'icon-' | append: section.settings.integrated_social_media %}
+              <div class="w-4 h-4 self-center">
+                {%- render 'icon-media', icon: social_icon -%}
+              </div>
+            {% endif %}
+          </span>
+        </div>
+      {% else %}
+        <div class="relative block-text-button overflow-hidden {{ rtl_class }}">
+          <span class="button-text {{ button_text_class }} btn-text-link-effect-1 relative top-0 is-focus-button:opacity-0">{{ button_label | escape }}{{ price }}</span>
+          <span class="button-text {{ button_text_class }} btn-text-link-effect-2 absolute top-full left-0 is-focus-button:opacity-0">{{ button_label | escape }}{{ price }}</span>
+        </div>
+      {% endif %}    
+    {% else %}
+      {% if is_social_feeds %}
+        <span class="button-text {{ button_text_class }} is-focus-button:opacity-0">
+          <span>{{ button_label | escape }}{{ price }}</span>
+          {% if section.settings.integrated_social_media != 'none' %}
+            {% assign social_icon = 'icon-' | append: section.settings.integrated_social_media %}
+            <div class="w-4 h-4 self-center">
+              {%- render 'icon-media', icon: social_icon -%}
+            </div>
+          {% endif %}
+        </span>
+      {% else %}
+        <span class="button-text {{ button_text_class }} is-focus-button:opacity-0">{{ button_label | escape }}{{ price }}</span>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+  {% if settings.buttons_animation == 'sliced' and show_button_style == 'primary' %}
+    <span class="button-icon opacity-0 w-5 -translate-x-[4px] self-center">
+      {% if settings.custom_icon_button != blank %}
+      {{ settings.custom_icon_button }}
+      {% else %}
+      <svg xmlns="http://www.w3.org/2000/svg" class="rtl:rotate-180" width="19" height="19" viewbox="0 0 19 19" fill="none" style="fill:none">
+        <path d="M4.25 9.49927H14.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M9.5 4.24927L14.75 9.49927L9.5 14.7493" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      {% endif %}
+    </span>
+  {% endif %}
+</div>

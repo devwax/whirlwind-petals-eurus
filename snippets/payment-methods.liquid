@@ -1,0 +1,105 @@
+{% style %}
+  .block--{{ blockId }} {
+    {% if show_secondary_background %}
+      {% if background_color_light.alpha != 0.0 %}
+        background-color: rgb({{ background_color_light.red }}, {{ background_color_light.green }}, {{ background_color_light.blue }});
+      {% elsif featured_background_light != blank %}  
+        {% if featured_background_light.alpha != 0.0 %}
+          background-color: rgb({{ featured_background_light.red }}, {{ featured_background_light.green }}, {{ featured_background_light.blue }});
+        {% else %}
+          background: rgb(var(--colors-background-secondary));
+        {% endif %}
+      {% else %}
+        background-color: rgb({{ settings.colors_background.red }}, {{ settings.colors_background.green }}, {{ settings.colors_background.blue }});
+      {% endif %}
+    {% elsif show_border %}
+      {% if border_color_light.alpha != 0.0 %}
+        border: 1px solid rgb({{ border_color_light.red }}, {{ border_color_light.green }}, {{ border_color_light.blue }});
+      {% else %}
+        border: 1px solid rgb({{ settings.colors_line_and_borders.red }}, {{ settings.colors_line_and_borders.green }}, {{ settings.colors_line_and_borders.blue }});
+      {% endif %}
+    {% endif %}
+  }
+  .dark .block--{{ blockId }} {
+    {% if show_secondary_background %}
+      {% if background_color_dark.alpha != 0.0 %}
+        background-color: rgb({{ background_color_dark.red }}, {{ background_color_dark.green }}, {{ background_color_dark.blue }});
+      {% elsif featured_background_dark %}  
+        {% if featured_background_dark.alpha != 0.0 %}
+          background-color: rgb({{ featured_background_dark.red }}, {{ featured_background_dark.green }}, {{ featured_background_dark.blue }});
+        {% else %}
+          background: rgb(var(--colors-background-secondary));
+        {% endif %}
+      {% else %}  
+        background-color: rgb({{ settings.colors_dark_background.red }}, {{ settings.colors_dark_background.green }}, {{ settings.colors_dark_background.blue }});
+      {% endif %}
+    {% elsif show_border %}
+      {% if border_color_dark.alpha != 0.0 %}
+        border: 1px dotted rgb({{ border_color_dark.red }}, {{ border_color_dark.green }}, {{ border_color_dark.blue }});
+      {% else %}
+        border: 1px dotted rgb({{ settings.colors_dark_line_and_borders.red }}, {{ settings.colors_dark_line_and_borders.green }}, {{ settings.colors_dark_line_and_borders.blue }});
+      {% endif %}
+    {% endif %}
+  }
+  .title--{{ blockId }} {
+    {% if heading_color_light.alpha != 0.0 %}
+      color: rgb({{ heading_color_light.red }}, {{ heading_color_light.green }}, {{ heading_color_light.blue }});
+    {% else %}  
+      color: rgb({{ settings.colors_heading.red }}, {{ settings.colors_heading.green }}, {{ settings.colors_heading.blue }});
+    {% endif %}
+  }
+  .dark .title--{{ blockId }} {
+    {% if heading_color_dark.alpha != 0.0 %}
+      color: rgb({{ heading_color_dark.red }}, {{ heading_color_dark.green }}, {{ heading_color_dark.blue }});
+    {% else %}  
+      color: rgb({{ settings.colors_dark_heading.red }}, {{ settings.colors_dark_heading.green }}, {{ settings.colors_dark_heading.blue }});
+    {% endif %}
+  }
+  .text--{{ blockId }} {
+    {% if text_color_light.alpha != 0.0 %}
+      color: rgb({{ text_color_light.red }}, {{ text_color_light.green }}, {{ text_color_light.blue }});
+    {% else %}  
+      color: rgb({{ settings.colors_text.red }}, {{ settings.colors_text.green }}, {{ settings.colors_text.blue }});
+    {% endif %}
+  }
+  .dark .text--{{ blockId }} {
+    {% if text_color_dark.alpha != 0.0 %}
+      color: rgb({{ text_color_dark.red }}, {{ text_color_dark.green }}, {{ text_color_dark.blue }});
+    {% else %}  
+      color: rgb({{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }});
+    {% endif %}
+  }
+{% endstyle %}
+{%- liquid
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif 
+-%}
+<div class="x-block-payment-methods w-full {% if is_rtl %}rtl {% endif %}{% if show_content_center %}justify-center items-center text-center {% endif %}mb-4 md:mb-6 flex flex-col{% if show_secondary_background or show_border %} pt-4 pb-4 pl-4 pr-4 block--{{ blockId }}{% endif %} gap-3 md:gap-4{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" {{ block.shopify_attributes }}>
+  {% if heading != blank %}
+    <p class="title--{{ blockId }} h4">{{ heading }}</p>
+  {% endif %}
+  {% if custom_payment != blank %}
+    {% assign enabled_payment_types = custom_payment | remove: ' ' | split: ',' %}
+      <ul class="icon-payment flex gap-y-2 flex-wrap" role="list">
+        {%- for type in enabled_payment_types -%}
+          <li class="{% if forloop.index != shop.enabled_payment_types.size %}{% if is_rtl %}pl-2{% else %}pr-2{% endif %}{% endif %}">
+            {{ type | payment_type_svg_tag }}
+          </li>
+        {%- endfor -%}
+      </ul>
+  {% else %}
+      <ul class="icon-payment flex gap-y-2 flex-wrap" role="list">
+         {%- for type in shop.enabled_payment_types -%}
+          <li class="{% if forloop.index != shop.enabled_payment_types.size %}{% if is_rtl %}pl-2{% else %}pr-2{% endif %}{% endif %}">
+            {{ type | payment_type_svg_tag }}
+          </li>
+         {%- endfor -%}
+      </ul>
+  {% endif %} 
+  {% if text != blank %}
+    <p class="text--{{ blockId }}">{{ text }}</p>
+  {% endif %}
+</div>

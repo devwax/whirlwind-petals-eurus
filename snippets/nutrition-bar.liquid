@@ -1,0 +1,135 @@
+<div class="pt-3 pb-3" x-data="{open: {{ block.settings.open_by_default }}}">
+  <div class="x-block-nutrition-bar-header flex items-center relative pl-2 pr-2{% if block.settings.show_in_tab %} cursor-pointer{% endif %}{% if show_content_center %} justify-center{% endif %}"{% if block.settings.show_in_tab %} @click="open = !open"{% endif %}>
+    {% if block.settings.icon != 'none' %}
+      {% unless block.settings.custom_image == blank and block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+        <span class="inline-block relative w-[30px] h-[30px] min-w-[30px] text-[rgb(var(--colors-text))] mr-2.5 rtl:ml-2.5 rtl:mr-0">
+          {% if block.settings.custom_image != blank %}
+            {% # theme-check-disable ImgLazyLoading %}
+            <img 
+              src="{{ block.settings.custom_image | image_url: width: 30 }}"
+              alt="{{ block.settings.custom_image.alt | escape }}"
+              {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+              width="{{ block.settings.custom_image.width }}"
+              height="{{ block.settings.custom_image.height }}"
+              style="object-position: {{ block.settings.custom_image.presentation.focal_point }}"
+              class="object-cover absolute top-0 left-0 w-full h-full"
+            >
+            {% # theme-check-enable ImgLazyLoading %}
+          {% else %}
+            {% if block.settings.custom_icon == blank %}
+              {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                {% render 'icon-new-alls', icon: block.settings.another_icon %}
+              {% else %}
+                {% render 'icon-labels-bags', icon: block.settings.icon %}
+              {% endif %}
+            {% else %}
+              {{ block.settings.custom_icon }}
+            {% endif %}
+          {% endif %}
+        </span>
+      {% endunless %}
+    {% endif %}
+    {% if block.settings.heading != blank %}
+      <p class="pr-6 rtl:pr-0 rtl:pl-6 font-medium">{{ block.settings.heading | escape }}</p>
+    {% endif %}
+    {% if block.settings.show_in_tab %}
+      <span class="w-2.5 inline-block absolute right-2 rtl:left-2 rtl:right-auto top-1/2 -translate-y-1/2 duration-500{% if block.settings.open_by_default %} rotate-180{% endif %}" :class="open ? 'rotate-180' : 'rotate-0'">
+        {% render 'icon-alls', icon: 'icon-caret' %}
+      </span>
+    {% endif %}
+  </div>
+  {% if block.settings.enable_background %}
+    {% style %}
+      .bg--{{ block.id }} {
+        {% if block.settings.content_background_color.alpha != 0.0 %}
+          background: {{ block.settings.content_background_color }};
+        {% else %}
+          background: rgb(var(--colors-background-secondary));
+        {% endif %}
+      }
+      .dark .bg--{{ block.id }} {
+        {% if block.settings.content_background_color_dark.alpha != 0.0 %}
+          background: {{ block.settings.content_background_color_dark }};
+        {% else %}
+          background: rgb(var(--colors-background-secondary));
+        {% endif %}
+      }
+    {% endstyle %}
+  {% endif %}
+  {% liquid
+    if block.settings.nutrition_details != blank
+      assign text = block.settings.nutrition_details
+      if block.settings.metafield_key_list != blank
+        assign metafield_labels = block.settings.metafield_key_list | newline_to_br | strip_newlines | split: '<br />'
+        for metafield_label in metafield_labels
+          assign mtf_key = metafield_label | split: '.'
+          assign mtf_text = metafield_label | append: ']' | prepend: '['
+          assign option_value_metafield = product.selected_or_first_available_variant.metafields[mtf_key.first][mtf_key.last]
+          assign option_value_metafield_product = product.metafields[mtf_key.first][mtf_key.last]
+          if option_value_metafield != blank and option_value_metafield.type == 'single_line_text_field'
+            assign text = text | replace: mtf_text, option_value_metafield
+          elsif option_value_metafield_product != blank and option_value_metafield_product.type == 'single_line_text_field'
+            assign text = text | replace: mtf_text, option_value_metafield_product
+          else
+            assign text = text | replace: mtf_text, ''
+          endif
+          assign mtf_data = true
+        endfor
+      endif
+      assign details = text | remove: '<div class="metafield-rich_text_field">' | remove: '</div>' | remove: '<p>' | split: '</p>'
+    endif
+  %}
+  <div class="x-block-nutrition-bar-content" {% if block.settings.show_in_tab %}x-show="open"{% unless block.settings.open_by_default %} x-cloak {% endunless %} x-collapse{% endif %}>
+    <div class="{% if mtf_data %}nutrition-bar-content-{{ section.id }} {% endif %}bg--{{ block.id }}{% if block.settings.heading != blank or block.settings.icon != 'none' %} mt-5{% endif %}{% if block.settings.enable_background %} pb-4 pt-1 pr-5 pl-5{% else %} {% if block.settings.show_in_tab %} pl-2 pr-2{% endif %}{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+      {% style %}
+      {% if block.settings.loading_bar_color.alpha != 0.0 %}
+        .color-bar-{{ block.id }}, .dark .color-bar-{{ block.id }} {
+          background: {{ block.settings.loading_bar_color }};
+        }
+        .bg-bar-{{ block.id }}, .dark .bg-bar-{{ block.id }}  {
+          background-color: rgb({{ block.settings.loading_bar_color.red }} {{ block.settings.loading_bar_color.green }} {{ block.settings.loading_bar_color.blue }} / 0.1);
+        }
+      {% else %}
+        .color-bar-{{ block.id }} {
+          background: rgb(var(--colors-text));
+        }
+        .bg-bar-{{ block.id }} {
+          background-color: rgba(var(--colors-text), 0.1);
+        }
+      {% endif %}
+      {% endstyle %}
+      {% for table in details %}
+        <div class="x-block-nutrition-bar-list" x-data="{active: false}" x-intersect.once="active = true">
+          {% liquid 
+            assign rows = table | newline_to_br | strip_newlines | replace: '<br />', '<br/>' | replace: '<br/ >', '<br/>' | split: '<br/>'
+          %}
+          {% for row in rows %}
+            {% if row != blank %}
+              {% liquid 
+                assign first_charactor = row | split: ':' | first | slice: 0, 1
+                assign row_length = row | split: ':' | size  
+                assign row_percentage_value = row | split: ':' | last | remove: '%'
+              %}
+              {% if row_percentage_value != blank %}
+                <div class="mt-3">
+                  <div class="flex justify-between mb-1 gap-2">
+                    <p class="rte{% if first_charactor == '-' %} pl-4 rtl:pl-0 rtl:pr-4{% endif %}">{{ row | split: ':' | first | remove_first: '-' }}</p>
+                    {% if row_length > 1 %}
+                      <p class="rte">{{ row | split: ':' | last }}</p>
+                    {% endif %}
+                  </div>
+                  <div class="h-1.5 w-full relative overflow-hidden bg-bar-{{ block.id }}{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" style="--width--loading-bar: {{ row | split: ':' | last | remove: ' ' | remove: '<strong>' | remove: '</strong>' | remove: '<em>' | remove: '</em>' | remove: '</span>' }}">
+                    <div :class="active && 'active'" class="absolute left-0 rtl:left-auto rtl:right-0 top-0 h-full width-nutrition-bar color-bar-{{ block.id }}{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"></div>
+                  </div>
+                </div>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endfor %}
+      {% if block.settings.extra_detail != blank %}
+        <p class="x-block-nutrition-bar-detail mt-5">{{ block.settings.extra_detail }}</p>
+      {% endif %}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,1180 @@
+{% liquid
+  assign heading_size =  section.settings.heading_size | times: settings.heading_base_size | times: 0.000225
+  assign form_id = 'ContactForm-' | append: section.id
+  assign count = 0
+  for block in section.blocks
+    if block.type == "name" or block.type == "email" 
+      assign count = count | plus: 1
+    endif
+  endfor
+  assign class_form = "w-full"
+  assign check_content = false
+  if section.settings.show_content == 'info'
+    assign class_infomation = "w-full lg:w-[48%]"
+    assign class_form = "w-full lg:w-[48%]"
+    assign check_content = 'info'
+  elsif section.settings.show_content == 'image' and section.settings.image != blank
+    assign class_infomation = "w-full lg:w-1/2"
+    assign class_form = "w-full lg:w-1/2"
+    assign check_content = 'image'
+  elsif section.settings.show_content == 'both'
+    if section.settings.image != blank
+      assign check_content = 'image'
+      assign class_infomation = "w-full"
+      assign class_form = "w-full lg:w-1/2"
+    else 
+      assign check_content = 'info'
+      assign class_form = "w-full lg:w-[48%]"
+      assign class_infomation = "w-full lg:w-[48%]"
+    endif
+  endif
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+  if section.settings.form_alignment == 'left'
+    if is_rtl
+      assign class_infomation = class_infomation | append: " order-1 align-left"
+      assign class_form = class_form | append: " order-2 form-align-right"
+    else
+      assign class_infomation = class_infomation | append: " align-right"
+      assign class_form = class_form | append: " form-align-left"
+    endif
+  else
+    if is_rtl
+      assign class_infomation = class_infomation | append: " align-right"
+      assign class_form = class_form | append: " form-align-left"
+    else
+      assign class_infomation = class_infomation | append: " order-1 align-left"
+      assign class_form = class_form | append: " order-2 form-align-right"
+    endif
+  endif
+  if section.settings.show_content == 'both'
+    assign form_page_width = settings.page_width | divided_by: 2 
+    assign class_infomation = class_infomation | remove: ' order-1'
+    assign class_form_both = 'contact-form'
+    if section.settings.image != blank
+      assign class_form_both = class_form_both | append: ' max-w-[' | append: form_page_width | append: 'px]'
+    endif
+  endif
+  #set padding left and right when set up background color light or dark
+  if section.settings.full_width_mobile
+    assign padding_bg = 'pr-5 pl-5'
+  else 
+    if section.settings.background_color_light.alpha != 0.0
+      if section.settings.background_color_dark.alpha != 0.0
+        assign padding_bg = 'pr-5 pl-5'
+      else
+        assign padding_bg = 'pr-5 pl-5 dark:pr-0 dark:pl-0'
+      endif
+    else 
+      if section.settings.background_color_dark.alpha != 0.0
+        assign padding_bg = 'dark:pr-5 pl-5'
+      endif
+    endif
+  endif
+%}
+{%- style -%}
+  {% if section.settings.image != blank %}
+    .contact-form-{{ section.id }} {
+       {% if section.settings.background_color_light.alpha == 0.0 %}
+        background: transparent; 
+      {% else %}
+        background: {{ section.settings.background_color_light }};
+      {% endif %}
+    }
+    .dark .contact-form-{{ section.id }}{
+      {% if section.settings.background_color_dark.alpha == 0.0 %}
+        background: transparent; 
+      {% else %}
+        background: {{ section.settings.background_color_dark }};
+      {% endif %}
+    }
+  {% else %}
+    #shopify-section-{{ section.id }}{
+      {% if section.settings.background_color_light.alpha == 0.0 %}
+        background: transparent; 
+        --background-color: {{ settings.colors_background.red }}, {{ settings.colors_background.green }}, {{ settings.colors_background.blue }};
+      {% else %}
+        background: {{ section.settings.background_color_light }};
+        --background-color: {{ section.settings.background_color_light.red }}, {{ section.settings.background_color_light.green }}, {{ section.settings.background_color_light.blue }};
+      {% endif %}
+    }
+    .dark #shopify-section-{{ section.id }}{
+      {% if section.settings.background_color_dark.alpha == 0.0 %}
+        background: transparent; 
+        --background-color: {{ settings.colors_dark_background.red }}, {{ settings.colors_dark_background.green }}, {{ settings.colors_dark_background.blue }};
+      {% else %}
+        background: {{ section.settings.background_color_dark }};
+        --background-color: {{ section.settings.background_color_dark.red }}, {{ section.settings.background_color_dark.green }}, {{ section.settings.background_color_dark.blue }};
+      {% endif %}
+    }
+  {% endif %} 
+{%- endstyle -%}
+{% if section.settings.show_content == 'image' %}
+  {% if section.settings.image != blank %}
+    {% assign class_divider_1 = " block md:hidden" %}
+    {% assign class_divider_2 = " hidden md:block absolute left-0 w-full" %}
+  {% endif %}
+{% else %}
+  {% assign class_divider_2 = " hidden" %}
+{% endif %}
+<div class="{{ class_divider_1 }}">
+  {% render 'section-divider', class: class_divider_1 %}
+</div>
+{%- if section.settings.heading != blank and section.settings.show_contact_infomation or section.settings.heading != blank -%}
+  {%- style -%}
+    .heading-{{ section.id }} { font-size: {{ heading_size | times: 0.6 }}rem; }
+    @media screen and (min-width: 1025px) {
+      .heading-{{ section.id }}{
+        font-size: {{ heading_size }}rem;
+      }  
+    }
+  {%- endstyle -%}
+{%- endif -%}
+  <div class="x-container-contact-form-{{ section.id }}">
+    <div class="x-container-contact-form {% if check_content %} contact-has-{{ check_content }}{% if section.settings.full_width %} contact-full-width md:pl-0 md:pr-0{% else %} x-pgw page-width{% endif %}{% else %} max-w-xl{% endif %}{% if section.settings.full_width_mobile %} full-width-mobile{% else %} pr-5 pl-5{% endif %}{% if section.settings.show_content == 'image' and section.settings.image %} md:pt-0 md:pb-0{% else %} md:pt-[{{ section.settings.padding_top }}px] md:pb-[{{ section.settings.padding_bottom }}px]{% endif %} mx-auto pt-[{{ section.settings.padding_top_mobile }}px] pb-[{{ section.settings.padding_bottom_mobile }}px] md:pt-[{{ section.settings.padding_top }}px] md:pb-[{{ section.settings.padding_bottom }}px]">
+      <div class="contact-form-{{ section.id }} flex flex-col md:gap-y-0 md:flex-row w-full gap-y-7{% if is_rtl %} ltr{% endif -%}
+        {%- unless check_content %}{% if section.settings.form_alignment == "left" %} pb-7 lg:pb-0 rtl:pt-7 rtl:lg:pt-0 rtl:pb-0{% else %} pt-7 lg:pt-0 rtl:pb-7 rtl:lg:pb-0 rtl:pt-0{% endif %}{% endunless -%}
+        {%- if section.settings.show_content == 'info' or section.settings.show_content == 'both' and section.settings.image == blank %} md:gap-x-[4%]{% endif -%}
+        {%- unless section.settings.full_width_mobile %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% endunless -%}
+        {%- if section.settings.full_width %} md:rounded-none{% else %}{% if settings.edges_type == 'rounded_corners' %} md:rounded-[10px]{% endif %}{% endif %}"
+      >
+        <div class="{{ class_divider_2 }}">
+          {% render 'section-divider', class: class_divider_2 %}
+        </div>
+        <div class="contact-form-container flex justify-center md:pl-5 md:pr-5 {{ class_form }} {{ padding_bg }}{% if is_rtl %} rtl{% endif -%}
+          {%- if section.settings.show_content == 'both' and section.settings.image %} flex-col gap-y-7 md:gap-y-0
+            {%- if section.settings.form_alignment == "left" %} md:items-end rtl:md:items-start{% else %} md:items-start rtl:md:items-end{% endif -%}
+          {%- endif -%}
+          {%- if section.settings.form_alignment == "left" %} pt-7 rtl:pb-7 md:justify-end rtl:md:justify-start{% else %} pb-7 rtl:pt-7 md:justify-start rtl:md:justify-end{% endif -%}
+          {%- if section.settings.show_content == 'image' and section.settings.image %}{% else %} md:pb-7 md:pt-7{% endif %}"
+        >
+          {% if section.settings.show_content == 'info' or section.settings.show_content == 'both' %}
+            {% capture info_content %} 
+              <div class="contact-information {{ class_infomation }} {{ class_form_both }} flex justify-center md:pb-7 md:pt-7 lg:pl-0 lg:pr-0{% if is_rtl %} rtl{% endif -%}
+                {%- if section.settings.form_alignment == "left" %} pb-7 rtl:pt-7 md:justify-start rtl:md:justify-end{% else %} pt-7 rtl:pb-7 md:justify-end rtl:md:justify-start{% endif -%}
+                {%- if section.settings.show_content == 'info' or section.settings.show_content == 'both' and section.settings.image == blank %} {{ padding_bg }}{% endif %}"
+              >
+                <div class="w-full max-w-[{{ settings.page_width | divided_by: 2 }}px]">
+                  <div class="form-heading">
+                    {%- if section.settings.heading != blank -%}
+                      {% render 'heading-highlight',
+                        headingId: section.id,
+                        heading: section.settings.contact_heading,
+                        highlight_type: section.settings.highlight_type_1,
+                        class: 'h2 block mt-2 leading-tight',
+                        heading_tag: section.settings.heading_tag_2,
+                      %}
+                    {%- endif -%}
+                    {% if section.settings.infomation != blank %}
+                      <div class="rte mt-2 lg:mt-4">
+                        {{ section.settings.infomation }}
+                      </div>
+                    {% endif %}
+                  </div>
+                  <ul class="flex gap-y-4 flex-col mt-8 pb-9">
+                    {% if section.settings.address != blank %}
+                      <li class="rte flex items-center gap-4">
+                        <span class="w-5">{%- render 'icon-alls', icon: 'icon-location' -%}</span>
+                        <span>{{ section.settings.address }}</span>
+                      </li>
+                    {% endif %}
+                    {% if section.settings.phone_nummber != blank %}
+                      <li class="rte flex items-center gap-4">
+                        <span class="w-5">{%- render 'icon-alls', icon: 'icon-phone' -%}</span>
+                        <span>{{ section.settings.phone_nummber }}</span>
+                      </li>
+                    {% endif %}
+                    {% if section.settings.email_address != blank %}
+                      <li class="flex items-center gap-4">
+                        <span class="w-5">{%- render 'icon-alls', icon: 'icon-email' -%}</span>
+                        <a class="nav-link hover-text-link relative" aria-label="{{ 'newsletter.label' | t }}" href="mailto:{{ section.settings.email_address }}">{{ section.settings.email_address }}</a>
+                      </li>
+                    {% endif %}
+                  </ul>
+                  {% if section.settings.contact_text != blank %}
+                    <div class="pt-6 border-t rte">
+                      {{ section.settings.contact_text }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endcapture %}
+          {% endif %}
+          {% if section.settings.show_content == 'both' and section.settings.image != blank %}
+            {{ info_content }}
+          {% endif %}
+          <div class="contact-form w-full max-w-[{{ settings.page_width | divided_by: 2 }}px]">
+            <div class="heading-form empty:hidden text-{{ section.settings.heading_alignment }} rtl:text-{% if section.settings.heading_alignment == 'center' %}center{% elsif section.settings.heading_alignment == 'left' %}right{% else %}left{% endif %}{% if section.settings.heading != blank or section.settings.text != blank %} mb-6 md:mb-8{% endif %}">
+              {%- if section.settings.heading != blank -%}
+                {% render 'heading-highlight',
+                  headingId: section.id,
+                  heading: section.settings.heading,
+                  highlight_type: section.settings.highlight_type,
+                  class: 'h2 block leading-tight',
+                  heading_tag: section.settings.heading_tag,
+                  animation_heading: true
+                %}
+              {%- endif -%}
+              {% if section.settings.text != blank %}
+                <div class="rte mt-2 lg:mt-4">
+                  {{ section.settings.text }}
+                </div>
+              {% endif %}
+            </div> 
+            {%- form 'contact', id: form_id, class: 'eurus' -%}
+              {%- if form.posted_successfully? -%}
+                <div class="flex items-center pl-4 pr-4 pt-3.5 pb-3.5 mb-3 bg-[rgba(var(--color-success),0.2)] selection:bg-[rgba(var(--color-success),0.4)] focus:outline-none" tabindex="-1" autofocus>
+                  <span class="text-[rgba(var(--color-success))] w-5 mr-2">
+                    {%- render 'icon-alls', icon: 'icon-success' %}
+                  </span>
+                  {%- if section.settings.success_message -%}
+                    <p class="leading-tight flex-1">{{ section.settings.success_message }}</p>
+                  {%- else -%}
+                  {{ 'templates.contact.form.post_success' | t }}
+                  {%- endif -%}
+                </div>
+              {%- elsif form.errors -%}
+                <p class="flex items-center pl-4 pr-4 pt-3 pb-3 mb-3 bg-[rgba(var(--color-error),0.2)] selection:bg-[rgba(var(--color-error),0.4)]" tabindex="-1" autofocus>
+                  <span class="text-[rgba(var(--color-error))] inline-block w-5 mr-2">{% render 'icon-alls', icon: 'icon-error' %} </span>
+                  {{ form.errors.translated_fields.email | capitalize }}
+                  {{ form.errors.messages.email }}
+                </p>
+              {%- endif -%}
+              {%- unless form.posted_successfully? -%}
+                <div class="contact__fields">
+                  {%- for block in section.blocks -%}
+                    {%- case block.type -%}
+                      {%- when 'name' -%} 
+                        <div class="mb-3 lg:mb-4 flex-1 relative" {{ block.shopify_attributes }}>
+                          <input
+                            type="text"
+                            id="ContactFormName-{{ section.id }}"
+                            class="w-full px-5 lg:pl-6 lg:pr-6 pt-5 pb-1 md:pt-5 md:pb-2 border focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                            name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}name{% endif %}]"
+                            value="{% if form.name %}{{ form.name }}{% elsif customer %}{{ customer.name }}{% endif %}"
+                            autocapitalize="words" 
+                            placeholder="{{ 'customer.name' | t }}"
+                            {% if block.settings.mark_as_required %}
+                              required
+                            {% endif %}>
+                          <label class="duration-150 leading-tight absolute top-1/2{% if is_rtl %} right-5 lg:right-6{% else %} left-5 lg:left-6{% endif %} -translate-y-1/2 input_focus:text-xs input_focus:top-3 input_not_empty:top-3 input_not_empty:text-xs" for="ContactFormName-{{ section.id }}">
+                            {{- block.settings.heading }}
+                            {% if block.settings.mark_as_required %}
+                              <span aria-hidden="true">*</span>
+                            {%- endif %}
+                          </label>
+                        </div>
+                      {%- when 'email' -%}
+                        <div class="mb-3 lg:mb-4 flex-1 relative" {{ block.shopify_attributes }}> 
+                          <input
+                            type="email"
+                            id="ContactFormEmail-{{ section.id }}"
+                            class="w-full border px-5 lg:pl-6 lg:pr-6 pt-5 pb-1 md:pt-5 md:pb-2 focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                            name="contact[email]"
+                            autocomplete="email"
+                            autocapitalize="off"
+                            autocorrect="off"
+                            value="{% if form.email %}{{ form.email }}{% elsif customer %}{{ customer.email }}{% endif %}" 
+                            placeholder="{{ 'customer.email' | t }}"
+                            required>
+                            <label 
+                              class="duration-150 leading-tight absolute top-1/2{% if is_rtl %} right-5 lg:right-6{% else %} left-5 lg:left-6{% endif %} -translate-y-1/2 input_focus:text-xs input_focus:top-3 input_not_empty:top-3 input_not_empty:text-xs" 
+                              for="ContactFormEmail-{{ section.id }}"
+                            >
+                              {{- block.settings.heading }} 
+                              <span aria-hidden="true">*</span>
+                            </label>
+                        </div>
+                      {%- when 'phone' -%}
+                        <div class="mb-3 lg:mb-4 relative" {{ block.shopify_attributes }}>
+                          <input
+                            type="tel"
+                            id="ContactFormPhone-{{ section.id }}"
+                            class="{% if is_rtl %}rtl {% endif %}border w-full px-5 lg:pl-6 lg:pr-6 pt-5 pb-1 md:pt-5 md:pb-2 focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                            name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}phone{% endif %}]"
+                            pattern="[0-9\-]*"
+                            value="{% if form.phone %}{{ form.phone }}{% elsif customer %}{{ customer.phone }}{% endif %}" 
+                            placeholder="{{ 'customer.email' | t }}"
+                            {% if block.settings.mark_as_required -%}
+                              required
+                            {%- endif -%}>
+                            <label 
+                              class="duration-150 absolute top-1/2{% if is_rtl %} right-5 lg:right-6{% else %} left-5 lg:left-6{% endif %} -translate-y-1/2 input_focus:text-xs input_focus:top-3 input_not_empty:top-3 input_not_empty:text-xs" 
+                              for="ContactFormPhone-{{ section.id }}"
+                            >
+                              {{- block.settings.heading }}
+                              {% if block.settings.mark_as_required %}
+                                <span aria-hidden="true">*</span>
+                              {%- endif -%}
+                            </label>
+                        </div>
+                      {%- when 'message' -%}
+                        <div class="mb-2 md:mb-3 relative" {{ block.shopify_attributes }}> 
+                          <textarea
+                            id="ContactFormMessage-{{ section.id }}"
+                            class="w-full px-5 lg:pl-6 lg:pr-6 pt-5 pb-1 md:pt-5 md:pb-2 border focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                            rows="4"
+                            name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}message{% endif %}]" 
+                            placeholder="{{ 'customer.email' | t }}"
+                            {% if block.settings.mark_as_required %}
+                              required
+                            {% endif %}>
+                            {{- form.message -}}
+                          </textarea>
+                          <label 
+                            class="duration-150 absolute top-3 md:top-4{% if is_rtl %} right-5 lg:right-6{% else %} left-5 lg:left-6{% endif %} input_focus:text-xs input_focus:top-1 input_not_empty:top-1 input_not_empty:text-xs" 
+                            for="ContactFormMessage-{{ section.id }}"
+                          >
+                            {{- block.settings.heading }}
+                            {% if block.settings.mark_as_required %}
+                              <span aria-hidden="true">*</span>
+                            {%- endif -%}
+                          </label>
+                        </div>
+                      {%- when 'form' -%}
+                        {% liquid
+                          assign options = null
+                          unless block.settings.type_field == 'text'
+                            assign options = block.settings.options | append: '' | split: ';'
+                          endunless
+                          assign form_item = 'FormItem-' | append : forloop.index
+                          assign contact_form = 'ContactForm-' | append: section.id | append: '-' | append: forloop.index
+                        %}
+                        <div class="mb-3 lg:mb-4 relative" {{ block.shopify_attributes }}>
+                          {%- if block.settings.heading != blank or block.settings.mark_as_required -%}
+                            <label 
+                              class="pb-2 pt-3 block{% if block.settings.type_field == 'dropdown' or block.settings.type_field == 'text' or block.settings.type_field == 'date' or block.settings.type_field == 'time' %} hidden{% endif %}" 
+                              for="{{ contact_form }}">
+                              {{- block.settings.heading }}
+                              {% if block.settings.mark_as_required %}
+                                <span aria-hidden="true">*</span>
+                              {%- endif %}
+                            </label>
+                          {%- endif -%}
+                          {%- if block.settings.type_field == 'text' -%}
+                            <input
+                              type="text"
+                              id="{{ contact_form }}"
+                              class="w-full px-5 lg:pl-6 lg:pr-6 pt-5 pb-1 md:pt-5 md:pb-2 border focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                              name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}{{ form_item }}{% endif %}]"
+                              value="" 
+                              placeholder="{{ 'customer.email' | t }}"
+                              {% if block.settings.mark_as_required %}
+                                required
+                              {% endif %}
+                            >
+                            <label 
+                              class="duration-150 absolute top-1/2{% if is_rtl %} right-5 lg:right-6{% else %} left-5 lg:left-6{% endif %} -translate-y-1/2 input_focus:text-xs input_focus:top-3 input_not_empty:top-3 input_not_empty:text-xs" 
+                              for="{{ contact_form }}"
+                            >
+                              {{- block.settings.heading }}
+                              {% if block.settings.mark_as_required %}
+                                <span aria-hidden="true">*</span>
+                              {%- endif %}
+                            </label>
+                          {%- elsif block.settings.type_field == 'date' -%}
+                            <input 
+                              type="date" 
+                              id="{{ contact_form }}"
+                              class="w-full pl-5 pr-5 min-h-[49px] input-date-time cursor-pointer contact-date-time lg:pl-6 lg:pr-6 pb-3.5 pt-3.5 border focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                              name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}{{ form_item }}{% endif %}]"
+                              value="" 
+                              {% if block.settings.mark_as_required %}
+                                required
+                              {% endif %}
+                              @focus="$el.classList.add('focus-input')"
+                              aria-label="{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}{{ form_item }}{% endif %}"
+                            />
+                            <label 
+                              class="label-date duration-150 absolute top-1/2{% if is_rtl %} right-5 lg:right-6{% else %} left-5 lg:left-6{% endif %} -translate-y-1/2" 
+                              for="{{ contact_form }}"
+                            >
+                              {{- block.settings.heading }}
+                              {% if block.settings.mark_as_required %}
+                                <span aria-hidden="true">*</span>
+                              {%- endif %}
+                            </label>
+                          {%- elsif block.settings.type_field == 'time' -%}
+                            <input 
+                              type="time" 
+                              id="{{ contact_form }}"
+                              class="w-full pl-5 pr-5 min-h-[49px] input-date-time cursor-pointer contact-date-time lg:pl-6 lg:pr-6 pb-3.5 pt-3.5 border focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                              name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}{{ form_item }}{% endif %}]"
+                              value="" 
+                              {% if block.settings.mark_as_required %}
+                                required
+                              {% endif %}
+                              @focus="$el.classList.add('focus-input')"
+                              aria-label="{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}{{ form_item }}{% endif %}"
+                            />
+                            <label 
+                              class="label-date duration-150 absolute top-1/2{% if is_rtl %} right-5 lg:right-6{% else %} left-5 lg:left-6{% endif %} -translate-y-1/2" 
+                              for="{{ contact_form }}"
+                            >
+                              {{- block.settings.heading }}
+                              {% if block.settings.mark_as_required %}
+                                <span aria-hidden="true">*</span>
+                              {%- endif %}
+                            </label>
+                          {%- elsif options.size > 0 -%}
+                            {%- if block.settings.type_field == 'dropdown' -%}
+                              <div class="relative">
+                                <select
+                                  id="{{ contact_form }}"
+                                  class="w-full pt-3 pb-3 pl-5 md:pt-4 md:pb-3.5 lg:pl-6 pr-8 rtl:pl-8 rtl:lg:pr-6 border focus:outline-none focus:border-current relative cursor-pointer bg-transparent{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                                  name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}{{ form_item }}{% endif %}]"
+                                  {% if block.settings.mark_as_required %}
+                                    required
+                                  {% endif %}> 
+                                  <option class="pt-2.5 pb-2.5 pl-2 pr-2 bg-[rgba(var(--background-color))]" value="">
+                                    {{- block.settings.heading }}
+                                    {% if block.settings.mark_as_required %}
+                                      <span aria-hidden="true">*</span>
+                                    {%- endif %}
+                                  </option>
+                                  {%- for option in options -%}
+                                    <option class="pt-2.5 pb-2.5 pl-2 pr-10 whitespace-normal cursor-pointer bg-[rgba(var(--background-color))]" value="{{ option }}">
+                                      {{- option -}}
+                                    </option>
+                                  {%- endfor -%}
+                                </select> 
+                                <span class="absolute top-1/2 -translate-y-1/2 w-2.5 right-4 rtl:left-4 rtl:right-auto cursor-pointer pointer-events-none">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+                              </div>
+                            {%- elsif block.settings.type_field == 'radio' -%}
+                              <div class="grid md:grid-cols-2 gap-x-7">
+                                {%- for option in options -%}
+                                  <div class="flex items-center mt-1.5 mb-1.5 cursor-pointer">
+                                    <input
+                                      type="radio"
+                                      id="{{ contact_form }}-{{ forloop.index }}"
+                                      name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}{{ form_item }}{% endif %}]"
+                                      value="{{ option }}"
+                                      class="radio-checked relative h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2 border focus:outline-none rounded-full cursor-pointer"
+                                      {% if block.settings.mark_as_required -%}
+                                        required
+                                      {%- endif %}
+                                      {% if forloop.index == 1 %}
+                                        checked
+                                      {% endif -%}
+                                    >
+                                    <label for="{{ contact_form }}-{{ forloop.index }}" class="flex-1 cursor-pointer bg-transparent">
+                                      {{ option }}
+                                    </label>
+                                    <br>
+                                  </div>
+                                {%- endfor -%}
+                              </div>
+                            {%- elsif block.settings.type_field == 'checkbox' -%}
+                              <div
+                                x-data="{ 
+                                  data: [], 
+                                  checkEmpty() {
+                                    const element = this.$el.closest('.multi-select').querySelector('.content').value;
+                                    const checkboxes = this.$el.closest('.multi-select').querySelectorAll('.checkbox');
+                                    if (!element) {
+                                      for (let i = 0; i < checkboxes.length; i++) {
+                                        checkboxes[i].setAttribute('required', '');
+                                      }
+                                    } else {
+                                      for (let i = 0; i < checkboxes.length; i++) {
+                                        checkboxes[i].removeAttribute('required');
+                                      }
+                                    }
+                                  }
+                                }"
+                                class="multi-select grid md:grid-cols-2 gap-x-7">
+                                {%- for option in options -%}
+                                  <div class="flex items-center mt-1.5 mb-1.5">
+                                    <input
+                                      type="checkbox"
+                                      id="{{ contact_form }}-{{ forloop.index }}"
+                                      class="checkbox checkbox-checked mr-2 rtl:mr-0 rtl:ml-2 h-4 w-4 border checked:border-[rgba(var(--colors-text-link))] checked:bg-[rgba(var(--colors-text-link))] relative cursor-pointer{% if settings.edges_type == 'rounded_corners' %} rounded{% else %} rounded-none{% endif %}"
+                                      value="{{ option }}"
+                                      x-model="data"
+                                      {% if block.settings.mark_as_required %}
+                                        x-on:change="checkEmpty()" required
+                                      {% endif %}
+                                    >
+                                    <label for="{{ contact_form }}-{{ forloop.index }}" class="flex-1 cursor-pointer">{{ option }}</label><br>
+                                  </div>
+                                {%- endfor -%} 
+                                <input
+                                  type="text"
+                                  class="content hidden"
+                                  value=""
+                                  name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}{{ form_item }}{% endif %}]"
+                                  x-model="data.join('; ')"
+                                >
+                              </div>
+                            {%- endif -%}
+                          {%- endif -%}
+                        </div>
+                    {%- endcase -%}
+                  {%- endfor -%}
+                </div>
+                <div class="mt-3.5 md:mt-5{% if section.settings.button_alignment == 'center' %} text-center{% elsif section.settings.button_alignment == 'left' %} text-left rtl:text-right{% else %} text-right rtl:text-left{% endif %}">
+                  <button type="submit" class="button button-solid leading-normal pl-8 pr-8 lg:pl-11 lg:pr-11 pt-2.5 pb-2.5 lg:pt-3 lg:pb-3 cursor-pointer empty:hidden pointer-events-auto">
+                    {%- if section.settings.button_label != blank -%}
+                      {% assign button_label = section.settings.button_label %}
+                    {%- else -%}
+                      {% assign button_label = 'templates.contact.form.send' | t %}
+                    {%- endif -%}
+                    {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+                  </button>
+                </div>
+              {%- endunless -%}
+            {%- endform -%}
+          </div>
+        </div>
+        {% if section.settings.show_content == 'info' or section.settings.show_content == 'both' and section.settings.image == blank %}
+          {{ info_content }}
+        {% endif %}
+        {% if section.settings.show_content == 'image' or section.settings.show_content == 'both' %}
+          {% if section.settings.image != blank %}
+            {%- style -%}
+              .mobile-{{ section.id }}-natural {
+                padding-bottom: {{ 1 | divided_by: section.settings.image.aspect_ratio | times: 100 }}%; 
+              }
+              @media screen and (min-width: 768) {
+                .desktop-{{ section.id }}-natural {
+                  padding-bottom: {{ 1 | divided_by: section.settings.image.aspect_ratio | times: 100 }}%; 
+                  height: 100%;
+                }
+              }
+            {%- endstyle -%}
+            <div class="w-full lg:w-1/2 contact-image{% if section.settings.form_alignment == 'left' %}{% if is_rtl %} order-1 align-left{% else %} align-right{% endif %}{% else %}{% if is_rtl %} align-right{% else %} order-1 align-left{% endif %}{% endif %}">
+              <div class="relative md:h-full overflow-hidden{% if section.settings.image %} promotion relative{% if section.settings.mobile_height != 'natural' %} h-[{{ section.settings.mobile_height }}] md:h-auto{% else %} mobile-{{ section.id }}-natural{% endif %}{% if section.settings.desktop_height != 'natural' %} md:promotion:h-[{{ section.settings.desktop_height }}] md:promotion:pb-0{% else %} desktop-{{ section.id }}-natural{% endif %}{% endif %}{% if section.settings.full_width %} md:rounded-none{% else %}{% if settings.edges_type == 'rounded_corners' %} md:rounded-[10px]{% endif %}{% endif %}{% unless section.settings.full_width_mobile %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% endunless %}">
+                <div class="overflow-hidden h-full w-full absolute top-0 left-0">
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <parallax-image class="h-full w-full">
+                    <parallax-movement x-data="xParallax" x-intersect.once.margin.200px="load({{ settings.disable_parallax_effect }})">
+                      <img
+                        class="md:h-full h-full w-full lg:absolute top-0 left-0 object-cover animate-Xpulse skeleton-image"
+                        srcset="{{ section.settings.image | image_url: width: 450 }} 450w,
+                        {{ section.settings.image | image_url: width: 750 }} 750w,
+                        {{ section.settings.image | image_url: width: 900 }} 900w,
+                        {{ section.settings.image | image_url: width: 1100 }} 1100w,
+                        {{ section.settings.image | image_url: width: 1500 }} 1500w,
+                        {{ section.settings.image | image_url }} {{ section.settings.image.width }}w"
+                        src="{{ section.settings.image | image_url: width: 1500 }}"
+                        alt="{{ section.settings.image.alt | escape }}"
+                        {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                        onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                        sizes="(min-width: 1024px){% if section.settings.full_width %} 35vw{% else %} {{ settings.page_width | divided_by: 3 }}px{% endif %}, (min-width: 768px) 50vw, 100vw"
+                        width="{{ section.settings.image.width }}"
+                        height="{{ section.settings.image.height }}"
+                        style="object-position: {{ section.settings.image.presentation.focal_point }}"
+                      >
+                    </parallax-movement>
+                  </parallax-image>
+                  {% # theme-check-enable ImgLazyLoading %}
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% schema %}
+{
+  "name": "t:sections.contact-form.name",
+  "tag": "section",
+  "class": "section section-contact-form x-section",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer",
+      "aside"
+    ]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.section_and_blocks.contact_form"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "default": "Get in touch",
+      "label": "t:sections.all.text.heading",
+      "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+    },
+    {
+      "type": "select",
+      "id": "highlight_type",
+      "default": "underline",
+      "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+      "options": [
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        },
+        {
+          "value": "font_highlight",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 50,
+      "max": 200,
+      "unit": "%",
+      "step": 10,
+      "default": 100,
+      "label": "t:sections.all.text.heading_size"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "default": "h2",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "p",
+          "label": "p"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "default": "center",
+      "label": "t:sections.all.text.heading_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ]
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "t:sections.all.text.text"
+    },
+    {
+      "type": "color",
+      "id": "background_color_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_light"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_dark"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "default": "Send",
+      "label": "t:sections.all.button.label"
+    },
+    {
+      "type": "select",
+      "id": "button_alignment",
+      "default": "center",
+      "label": "t:sections.all.button.button_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "success_message",
+      "default": "Thanks for contacting us. We'll get back to you as soon as possible.",
+      "label": "t:sections.featured-product.blocks.back_in_stock_alert.settings.text_success.label"
+    },
+    {
+      "type": "select",
+      "id": "show_content",
+      "default": "none",
+      "label": "t:sections.contact-form.settings.show_content.label",
+      "options": [
+        {
+          "value": "info",
+          "label": "t:sections.contact-form.settings.header.content"
+        },
+        {
+          "value": "image",
+          "label": "t:sections.all.image.label"
+        },
+        {
+          "value": "both",
+          "label": "t:settings_schema.products.swatches_type.both"
+        },
+        {
+          "value": "none",
+          "label": "t:sections.all.icon.options.none"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "form_alignment",
+      "default": "left",
+      "label": "t:sections.contact-form.settings.form_alignment.label",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ],
+      "visible_if": "{{ section.settings.show_content != 'none' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.image.label",
+      "visible_if": "{{ section.settings.show_content == 'image' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:sections.all.image.label",
+      "info": "t:sections.all.image.note_image_size",
+      "visible_if": "{{ section.settings.show_content == 'image' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "select",
+      "id": "desktop_height",
+      "options": [
+        {
+          "value": "450px",
+          "label": "t:sections.image-with-text.settings.height.options__1.label"
+        },
+        {
+          "value": "550px",
+          "label": "t:sections.image-with-text.settings.height.options__2.label"
+        },
+        {
+          "value": "650px",
+          "label": "t:sections.image-with-text.settings.height.options__3.label"
+        },
+        {
+          "value": "750px",
+          "label": "t:sections.image-with-text.settings.height.options__4.label"
+        },
+        {
+          "value": "natural",
+          "label": "t:sections.question_and_answer.settings.height.options__5.label"
+        },
+        {
+          "value": "100vh",
+          "label": "t:settings_schema.cart.settings.cart_drawer_size_mobile.fullscreen.label"
+        }
+      ],
+      "default": "550px",
+      "label": "t:sections.image-with-text.settings.height.label",
+      "visible_if": "{{ section.settings.show_content == 'image' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "select",
+      "id": "mobile_height",
+      "options": [
+        {
+          "value": "250px",
+          "label": "t:sections.image-with-text.settings.mobile_height.options__1.label"
+        },
+        {
+          "value": "300px",
+          "label": "t:sections.image-with-text.settings.mobile_height.options__2.label"
+        },
+        {
+          "value": "400px",
+          "label": "t:sections.image-with-text.settings.mobile_height.options__3.label"
+        },
+        {
+          "value": "500px",
+          "label": "t:sections.image-with-text.settings.mobile_height.options__4.label"
+        },
+        {
+          "value": "natural",
+          "label": "t:sections.all.image_ratio.options__1.label"
+        },
+        {
+          "value": "100vh",
+          "label": "t:settings_schema.cart.settings.cart_drawer_size_mobile.fullscreen.label"
+        }
+      ],
+      "default": "400px",
+      "label": "t:sections.image-with-text.settings.mobile_height.label",
+      "visible_if": "{{ section.settings.show_content == 'image' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.contact-form.settings.header.content",
+      "visible_if": "{{ section.settings.show_content == 'info' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "text",
+      "id": "contact_heading",
+      "default": "Contact infomation",
+      "label": "t:sections.contact-form.settings.contact_heading.label",
+      "info": "t:settings_schema.typography.settings.heading_highlight_type.info",
+      "visible_if": "{{ section.settings.show_content == 'info' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "select",
+      "id": "highlight_type_1",
+      "default": "underline",
+      "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+      "options": [
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        },
+        {
+          "value": "font_highlight",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+        }
+      ],
+      "visible_if": "{{ section.settings.show_content == 'info' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag_2",
+      "default": "h2",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "p",
+          "label": "p"
+        }
+      ],
+      "visible_if": "{{ section.settings.show_content == 'info' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "richtext",
+      "id": "infomation",
+      "label": "t:sections.contact-form.settings.infomation.label",
+      "visible_if": "{{ section.settings.show_content == 'info' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "text",
+      "id": "address",
+      "default": "75 9th Ave, New York, NY 10011-7006",
+      "label": "t:settings_schema.seo.business_address.label_1",
+      "visible_if": "{{ section.settings.show_content == 'info' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "text",
+      "id": "phone_nummber",
+      "default": "+1234567890",
+      "label": "t:sections.contact-form.settings.phone_nummber.label",
+      "visible_if": "{{ section.settings.show_content == 'info' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "text",
+      "id": "email_address",
+      "default": "info@yourstore.com",
+      "label": "t:sections.contact-form.settings.email_address.label",
+      "visible_if": "{{ section.settings.show_content == 'info' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "richtext",
+      "id": "contact_text",
+      "default": "<p>Opening hours</p></br><p>Mon - Fri, 8:30am - 10:30pm,</br>Saturday, 8:30am - 10:30pm,</br>Sunday, 8:30am - 10:30pm</p>",
+      "label": "t:sections.all.text.text",
+      "visible_if": "{{ section.settings.show_content == 'info' or section.settings.show_content == 'both' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "default": false,
+      "label": "t:sections.all.full_width.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_bottom"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width_mobile",
+      "default": false,
+      "label": "t:sections.all.full_width.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider_mobile",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_bottom"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "name",
+      "name": "t:sections.contact-form.blocks.name.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Name",
+          "label": "t:sections.contact-form.blocks.name.settings.field_label.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "mark_as_required",
+          "default": false,
+          "label": "t:sections.contact-form.blocks.name.settings.mark_as_required.label"
+        }
+      ]
+    },
+    {
+      "type": "email",
+      "name": "t:sections.contact-form.blocks.email.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Email",
+          "label": "t:sections.contact-form.blocks.name.settings.field_label.label",
+          "info": "t:sections.contact-form.blocks.email.info"
+        }
+      ]
+    },
+    {
+      "type": "phone",
+      "name": "t:sections.contact-form.settings.phone_nummber.label",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Phone number",
+          "label": "t:sections.contact-form.blocks.name.settings.field_label.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "mark_as_required",
+          "default": false,
+          "label": "t:sections.contact-form.blocks.name.settings.mark_as_required.label"
+        }
+      ]
+    },
+    {
+      "type": "message",
+      "name": "t:sections.contact-form.blocks.message.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Message",
+          "label": "t:sections.contact-form.blocks.name.settings.field_label.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "mark_as_required",
+          "default": false,
+          "label": "t:sections.contact-form.blocks.name.settings.mark_as_required.label"
+        }
+      ]
+    },
+    {
+      "type": "form",
+      "name": "t:sections.contact-form.blocks.form_item.name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Form item",
+          "label": "t:sections.contact-form.blocks.name.settings.field_label.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "mark_as_required",
+          "default": false,
+          "label": "t:sections.contact-form.blocks.name.settings.mark_as_required.label"
+        },
+        {
+          "type": "select",
+          "id": "type_field",
+          "default": "text",
+          "label": "t:sections.contact-form.blocks.form_item.settings.form_input_type.label",
+          "options": [
+            {
+              "value": "text",
+              "label": "t:sections.all.text.text"
+            },
+            {
+              "value": "dropdown",
+              "label": "t:sections.featured-product.blocks.customize_picker.settings.option_type.dropdown.label"
+            },
+            {
+              "value": "radio",
+              "label": "t:sections.featured-product.blocks.customize_picker.settings.option_type.radio_button.label"
+            },
+            {
+              "value": "checkbox",
+              "label": "t:sections.featured-product.blocks.customize_picker.settings.option_type.checkbox.label"
+            },
+            {
+              "value": "date",
+              "label": "t:sections.featured-product.blocks.customize_picker.settings.option_type.date.label"
+            },
+            {
+              "value": "time",
+              "label": "t:sections.featured-product.blocks.customize_picker.settings.option_type.time.label"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "options",
+          "label": "t:sections.contact-form.blocks.form_item.settings.options.label",
+          "info": "t:sections.contact-form.blocks.form_item.settings.options.info"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.contact-form.name",
+      "category": "t:categories.forms",
+      "blocks": [
+        {
+          "type": "name"
+        },
+        {
+          "type": "email"
+        },
+        {
+          "type": "phone"
+        },
+        {
+          "type": "message"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

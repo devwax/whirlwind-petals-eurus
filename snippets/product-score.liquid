@@ -1,0 +1,142 @@
+{% comment %}
+  Renders product score
+
+  Accepts:
+  - block: {Object} Block Liquid object
+  - show_content_center: {Boolean} Show content center. Default: false
+  Usage:
+  {% render 'product-score', block: block, show_content_center: show_content_center %}
+{% endcomment %}
+{% liquid 
+  assign show_label = false
+  if block.settings.display_type == 'bar' and block.settings.show_label
+    assign show_label = true
+  endif
+
+  if block.settings.cur_score != blank
+    if block.settings.cur_score contains 'custom.'
+      assign cur_score = block.settings.cur_score | strip | split: '.'
+      if settings.default_select_available_variant
+        assign score_mtf = product.selected_or_first_available_variant.metafields[cur_score.first][cur_score.last]
+      else
+        assign score_mtf = product.selected_variant.metafields[cur_score.first][cur_score.last]
+      endif
+      if score_mtf == blank or score_mtf.type != 'number_integer'
+        assign score_mtf = product.metafields[cur_score.first][cur_score.last]
+        if score_mtf == blank or score_mtf.type != 'number_integer'
+          assign cur_score = blank
+        else
+          assign cur_score = score_mtf.value
+        endif
+      else
+        assign cur_score = score_mtf.value
+      endif
+    else 
+      assign cur_score = block.settings.cur_score | plus: 0
+    endif
+  endif
+%} 
+<div id="x-block-product-score-{{ section.id }}" class="empty:hidden x-block-product-score mb-5 w-full flex flex-col gap-4{% if show_content_center %} items-center{% endif %}" {{ block.shopify_attributes }}>
+  {%- if cur_score != blank -%}
+    {% style %}
+      .score-heading-font-{{ block.id }} {
+        font-size: {{ settings.text_base_size | times: 0.00875 }}rem;
+      }
+      @media (min-width: 768px) {
+        .score-heading-font-{{ block.id }} {
+          font-size: {{ settings.text_base_size | times: 0.01 }}rem;
+        }
+      }
+
+      .color-product-score-item-{{ block.id }}.active {
+        opacity: 100%;
+      }
+
+      .color-product-score-item-{{ block.id }} {
+        {% if block.settings.color_score_light.alpha != 0.0 %}
+          {% if block.settings.display_type == 'icon' %}
+            color: rgba({{ block.settings.color_score_light.red }}, {{ block.settings.color_score_light.green }}, {{ block.settings.color_score_light.blue }});
+          {% else %}
+            background-color: rgba({{ block.settings.color_score_light.red }}, {{ block.settings.color_score_light.green }}, {{ block.settings.color_score_light.blue }});
+          {% endif %}
+        {% else %}
+          {% if block.settings.display_type == 'icon' %}
+            color: rgba({{ settings.colors_text.red }}, {{ settings.colors_text.green }}, {{ settings.colors_text.blue }});
+          {% else %}
+            background-color: rgba({{ settings.colors_text.red }}, {{ settings.colors_text.green }}, {{ settings.colors_text.blue }});
+          {% endif %}
+        {% endif %}
+      }
+
+      .dark .color-product-score-item-{{ block.id }} {
+        {% if block.settings.color_score_dark.alpha != 0.0 %}
+          {% if block.settings.display_type == 'icon' %}
+            color: rgba({{ block.settings.color_score_dark.red }}, {{ block.settings.color_score_dark.green }}, {{ block.settings.color_score_dark.blue }});
+          {% else %}
+            background-color: rgba({{ block.settings.color_score_dark.red }}, {{ block.settings.color_score_dark.green }}, {{ block.settings.color_score_dark.blue }});
+          {% endif %}
+        {% else %}
+          {% if block.settings.display_type == 'icon' %}
+            color: rgba({{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }});
+          {% else %}
+            background-color: rgba({{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }});
+          {% endif %}
+        {% endif %}
+      }
+
+      .product-score-icon-size-{{ block.id }} {
+        width: {{ block.settings.icon_size }}px;
+        min-width: {{ block.settings.icon_size }}px;
+        {% if block.settings.display_type == 'icon' and block.settings.custom_image != blank %}
+          padding-bottom: {{ block.settings.icon_size }}px;
+        {% endif %}
+      }
+    {% endstyle %}
+
+    <div class="x-product-score-heading font-medium score-heading-font-{{ block.id }} leading-snug">{{ block.settings.heading }}</div>
+    <div class="x-product-score-container flex flex-col{% if show_label %} gap-2{% endif %}{% if show_content_center and block.settings.display_type != 'icon' %} w-full{% endif %}">
+      <div class="x-product-score-icon flex{% if block.settings.display_type == 'icon' %} flex-wrap{% if show_content_center %} justify-center{% endif %}{% endif %} w-full gap-1">
+        {% for i in (1..block.settings.max_score) %}
+          <div class="color-product-score-item-{{ block.id }}{% if block.settings.display_type == 'icon' %} opacity-30 flex justify-center{% else %} w-full pt-1 opacity-20{% endif %}{% if block.settings.fill_to_score %}{% if i <= cur_score %} active{% endif %}{% else %}{% if i == cur_score %} active{% endif %}{% endif %}">
+            {% if block.settings.display_type == 'icon' %}
+              {% unless block.settings.custom_image == blank and block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+                <span class="inline-block relative product-score-icon-size-{{ block.id }} h-auto">
+                  {% if block.settings.custom_image != blank %}
+                    {% # theme-check-disable ImgLazyLoading %}
+                    <img 
+                      src="{{ block.settings.custom_image | image_url: width: block.settings.icon_size }}"
+                      alt="{{ block.settings.custom_image.alt | escape }}"
+                      {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                      width="{{ block.settings.custom_image.width }}"
+                      height="{{ block.settings.custom_image.height }}"
+                      style="object-position: {{ block.settings.custom_image.presentation.focal_point }};"
+                      class="object-cover absolute top-0 left-0 w-full h-full"
+                    >
+                    {% # theme-check-enable ImgLazyLoading %}
+                  {% else %}
+                    {% if block.settings.custom_icon == blank %}
+                      {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                        {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                      {% else %}
+                        {% render 'icon-labels-bags', icon: block.settings.icon %}
+                      {% endif %}
+                    {% else %}
+                      {{ block.settings.custom_icon }}
+                    {% endif %}
+                  {% endif %}
+                </span>
+              {% endunless %}
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      {% if show_label %}
+        <div class="x-product-score-label-container grid grid-cols-3 gap-3">
+          <p class="text-left rtl:text-right w-full p-break-words">{{ block.settings.left_label }}</p>
+          <p class="text-center w-full p-break-words">{{ block.settings.middle_label }}</p>
+          <p class="text-right rtl:text-left w-full p-break-words">{{ block.settings.right_label }}</p>
+        </div>
+      {% endif %}
+    </div>
+  {%- endif -%}
+</div>

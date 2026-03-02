@@ -1,0 +1,85 @@
+{% style %}
+  @property --percentage {
+    initial-value: 0%;
+    inherits: false;
+    syntax: "<percentage>";
+  }
+  .cart-noti.active {
+    background: conic-gradient(rgb(var(--colors-line-and-border)) var(--percentage), rgb(var(--color-success)) 0);
+    animation: timer 5s infinite linear;
+  }
+  @keyframes timer {
+    to {
+      --percentage: 100%;
+    }
+  }
+{% endstyle %}
+{% liquid 
+  if settings.lang_direction contains request.locale.iso_code
+    assign anima_init = " -translate-x-1/2"
+  else 
+    assign anima_init = " translate-x-1/2"
+  endif
+%}
+<div
+  x-init="$store.xCartNoti.enable = true"
+  x-show="$store.xCartNoti.show" class="fixed bottom-0 md:bottom-auto {% if sticky_header == "none" %} md:fixed md:z-50 md:top-[var(--top-cart-noti,0)] {% else %} md:absolute md:top-full{% endif %} mt-1 mr-1 mb-1 ml-1 left-0 right-0 md:left-auto rtl:left-0 rtl:md:right-auto"
+  x-transition:enter="transition-all ease-in-out duration-500"
+  x-transition:enter-start="opacity-0 transform {{ anima_init }}"
+  x-transition:enter-end="opacity-100 transform translate-x-0"
+  x-transition:leave="transition ease-in-out duration-500"
+  x-transition:leave-end="opacity-0 transform {{ anima_init }}"
+  x-cloak
+  >
+  <div class="relative md:w-[400px] text-[rgb(var(--colors-text))] pt-5 pb-5 pl-5 pr-5 md:pt-[30px] md:pb-[30px] md:pl-[30px] md:pr-[30px] bg-[rgba(var(--colors-background))] shadow-[4px_8px_16px_0px_rgba(0,0,0,0.2)]{% if settings.edges_type == 'rounded_corners' %} rounded-xl{% endif %}">
+    <button @click="$store.xCartNoti.show = false" class="cursor-pointer rounded-full group-close-btn top-2 right-2 rtl:right-auto rtl:left-2 absolute w-fit z-10 icon-close-container">
+      {%- render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' -%}
+    </button>
+    <div class="x-cart-noti-container flex gap-2 items-center mb-1 md:mb-3">
+      <div :class="$store.xCartNoti.show  && 'active'" class="w-9 h-9 min-w-[36px] rounded-full cart-noti flex justify-center items-center bg-[rgba(var(--colors-line-and-border))]">
+        <div class="w-[34px] h-[34px] flex justify-center items-center rounded-full bg-[rgba(var(--colors-background))]">
+          <span class="icon-tick w-5 h-5 text-[rgba(var(--color-success))]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M17.178 4.70733C17.5279 5.01351 17.5597 5.54692 17.2484 5.89236L8.48684 15.6172C8.17397 15.9644 7.63679 15.9865 7.29648 15.6662L2.22645 10.8932C1.91027 10.5955 1.88 10.0995 2.15128 9.76044C2.45061 9.38627 3.00804 9.33477 3.36428 9.65519L7.29794 13.1934C7.63979 13.5009 8.1661 13.4734 8.47409 13.132L16.0103 4.77627C16.3153 4.43813 16.8353 4.40748 17.178 4.70733Z"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+      <p>{{ 'general.cart.item_added_to_cart' | t }}</p>
+    </div>
+    <template x-for="(item,index) in Object.values(Alpine.store('xCartNoti').listItem)" :key="index">
+      <div 
+        class="w-full flex bundler-product relative gap-4 pt-5"
+        x-data="{ 
+          item: JSON.parse(JSON.stringify(item))
+        }"
+      >
+        <div class="bundler-product-image min-w-[72px] w-[72px] h-[72px] relative">
+          <a x-bind:href="item.productUrl" class="block disable-effect w-full">
+            <div class="relative w-full overflow-hidden float-left before:h-0 before:block before:pb-[100.0%]{% if settings.edges_type == 'rounded_corners' %} rounded-lg{% endif %}">
+              {% # theme-check-disable ImgLazyLoading %}
+              <img
+                x-show="item.featured_image.url"
+                class="absolute top-0 right-0 left-0 bottom-0 object-cover h-full w-full image-hover" 
+                x-bind:src="`${ item.featured_image.url }`"
+                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                width="150"
+                alt=""
+                height="150"
+              >
+              {% # theme-check-enable ImgLazyLoading %}
+              <div class="bg-[#c9c9c9] absolute top-0 left-0 w-full h-full" x-show="!item.featured_image.url">{%- render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}</div>
+            </div>
+          </a>
+        </div>
+        <div>
+          <a x-bind:href="item.url" class="mr-0 duration-200 transition disable-effect hover-text-link p-break-words" x-text="item.title">
+          </a>
+          <p class="text-[rgba(var(--colors-price))] text-normal font-semibold mt-1"
+            x-text="new Intl.NumberFormat('{{ shop.locale }}', { style: 'currency', currency: '{{ cart.currency.iso_code }}' }).format(item.price / 100)"
+          ></p>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>

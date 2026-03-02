@@ -1,0 +1,332 @@
+{% comment %}
+  Renders child item in cart page
+  Accepts:
+  - item: {Object} Line item object
+  - ratio: {Number} Product image ratio
+  - is_rtl: {Boolean} Is rlt
+  - is_component: {Boolean} Whether the item is a component of another item (app Shopify Bundles)
+  Usage:
+  {% render 'cart-child-item', item: line_item, ratio: ratio, is_rtl: false, is_component: false %}
+{% endcomment %} 
+
+<tr class="{% if item.product.selected_or_first_available_variant.id == settings.gift_wrapping_product.selected_or_first_available_variant.id or item.product.selected_or_first_available_variant.id == settings.engraving_product.selected_or_first_available_variant.id %}pointer-events-none {% endif %}cart-item child-cart-item{% if is_last %} last-child{% endif %} rtl:pl-0 rtl:pr-4 lg:gap-3 grid grid-cols-4 md:table-row auto-rows-auto relative" id="CartItem-{{ item.index | plus: 1 }}">
+  <td class="child-item-img-container md:w-1/12 pl-[50%] pr-0 rtl:pl-0 rtl:pr-[50%] md:pl-16 rtl:md:pl-0 rtl:md:pr-16 pt-6 pb-0 md:pt-4 md:pb-4 col-start-1 col-end-1 align-top">
+    <div class="child-item-img relative flex">
+      <div class="relative w-full md:w-16 float-left before:h-0 before:block{% unless settings.product_image_ratio == "natural" %} before:pb-[{{ ratio }}%]{% endunless %}" {% if settings.product_image_ratio == "natural" and item.image %}style="padding-bottom: {{ 1 | divided_by: item.image.aspect_ratio | times: 100 }}%;"{% endif %}>
+        <a href="{{ item.url }}" class="absolute top-0 left-0 disable-effect w-full h-full overflow-hidden{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" aria-label="{{ 'general.cart.item_added' | t }}">
+          {%- if item.image -%}
+            {% # theme-check-disable ImgLazyLoading %}
+            <img 
+              src="{{ item.image | image_url: width: 300 }}"
+              class="object-cover h-full w-full top-0 left-0 absolute duration-300 image-hover z-0"
+              alt="{{ item.image.alt | escape }}"
+              {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+              width="150"
+              height="{{ 150 | divided_by: item.image.aspect_ratio | ceil }}"
+            >
+            {% # theme-check-enable ImgLazyLoading %}
+          {%- else -%}
+            <div class='bg-[#c9c9c9] flex{% unless settings.product_image_ratio == "natural" %} absolute{% endunless %} top-0 left-0 w-full h-full items-center'>
+              {% render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}
+            </div>
+          {%- endif -%}
+        </a>
+      </div>
+    </div>
+  </td>
+  <td class="md:w-5/12 pt-6 pb-0 px-5 md:pt-4 md:pb-4{% if is_rtl %} lg:pr-9 lg:pl-14{% else %} lg:pl-9 lg:pr-14{% endif %} col-start-2 col-end-4 align-top">
+    {%- if settings.cart_show_vendor -%}
+      <p class="mb-2 text-normal uppercase p-break-words">{{ item.product.vendor }}</p>
+    {%- endif -%}
+    <div>
+      <a href="{{ item.url }}" class="text-[rgba(var(--colors-heading))] table mb-3 disable-effect hover-text-link p-break-words">
+        {{ item.product.title | escape }}
+      </a>
+
+      <div class="price mb-2 md:hidden">
+        {%- assign item_original_price = item.variant.compare_at_price | default: item.original_price -%}
+        {%- if item_original_price > item.final_price -%}
+          <s class="cap mr-1 rtl:ml-1 rtl:mr-0 inline-block opacity-50">{%- if settings.currency_code_enable %}{{- item_original_price | money_with_currency -}}{%- else -%}{{ item_original_price | money }}{%- endif -%}</s> 
+          <span class="selection:bg-text-[rgb(var(--colors-price-sale),0.2)] price-sale">
+            {% if settings.currency_code_enable %}
+              {{- item.final_price | money_with_currency -}}
+            {% else %}
+              {{ item.final_price | money }}
+            {% endif %}
+          </span>
+        {%- else -%}
+          <span class="price">
+            {% if settings.currency_code_enable %}
+              {{- item.final_price | money_with_currency -}}
+            {% else %}
+              {{ item.final_price | money }}
+            {% endif %}
+          </span>
+        {%- endif -%}
+        {%- if item.variant.available and item.unit_price_measurement -%}
+          <br />
+          <small>
+            {{ item.variant.unit_price | money }}
+            <span aria-hidden="true">/</span>
+            {%- if item.variant.unit_price_measurement.reference_value != 1 -%}
+              {{- item.variant.unit_price_measurement.reference_value -}}
+            {%- endif -%}
+            {{ item.variant.unit_price_measurement.reference_unit }}
+          </small>
+        {%- endif -%}
+      </div>
+    </div>
+    {%- if item.product.has_only_default_variant == false or item.properties.size != 0 or item.selling_plan_allocation != nil -%}
+      <dl class="text-normal">
+        {%- if item.product.has_only_default_variant == false -%}
+          {%- for option in item.options_with_values -%}
+            <div class="mt-1 p-break-words">
+              <dt class="inline-block">{{ option.name }}:
+              </dt>
+              <dd class="inline-block">{{ option.value }}</dd>
+            </div>
+          {%- endfor -%}
+        {%- endif -%}
+        {% liquid
+          assign requires_shipping = false
+          assign requires_shipping = item.requires_shipping
+        %}
+        {%- for property in item.properties -%}
+          {%- assign property_first_char = property.first | slice: 0 -%}
+          {% if property_first_char != name_edt %}
+              {%- if property.last != blank and property_first_char != '_' -%}
+                <div class="product-option mt-1 text-normal opacity-70 p-break-words">
+                  <dt class="p-break-words inline">
+                    {% if property.first == name_edt and is_update_date %}
+                      {% if requires_shipping %}
+                        {{ property.first }}:
+                      {% endif %}
+                    {% else %}
+                      {{ property.first }}:
+                    {% endif %}
+                  </dt>
+                  <dd class="p-break-words inline" data-max="{{ data_max }}" delivery_date_max="{{ delivery_date_max }}">
+                    {%- if property.last contains '/uploads/' -%}
+                      <a href="{{ property.last }}" class="inline hover-text-link">
+                        {{ 'products.product.file' | t }}
+                      </a>
+                    {%- else -%}
+                      {% if property.first == name_edt and is_update_date %}
+                        {% if requires_shipping %}
+                          {{ message_update | replace: "time_to_cut_off", cut_off_time }}
+                        {% endif %}
+                      {% else %}
+                        {{ property.last }}
+                      {% endif %}
+                    {%- endif -%}
+                  </dd>
+                </div>
+              {%- endif -%}
+          {%- endif -%}                                  
+        {%- endfor -%}
+      </dl>
+      <p class="text-normal mt-1">{{ item.selling_plan_allocation.selling_plan.name }}</p>
+    {%- endif -%}
+    {%- if item.line_level_discount_allocations.size > 0 -%}
+      <ul class="w-fit pl-2 pr-2 pt-2 pb-2 bg-[rgba(var(--colors-text),0.1)] mt-4 lg:mb-0{% if settings.edges_type == 'rounded_corners' %} rounded-full{% endif %}">
+        {%- for discount in item.line_level_discount_allocations -%}
+          <li class="flex relative x-discount items-center gap-2">
+            <span class="w-4 h-4 min-w-4 min-h-4 {% if discount.discount_application.type == "discount_code" %}ml-1{% endif %}">{%- render 'icon-alls', icon: 'icon-discount' -%}</span>
+            <span class="leading-none text-normal discount-title">{{ discount.discount_application.title }}</span>
+            {% if discount.discount_application.type == "discount_code" %}
+              <button class="w-6 h-3 min-w-6 min-h-3 pr-1.5 pl-1.5 text-[rgba(var(--colors-text))]" @click="$store.xCouponCodeDetail.removeDiscountCode($el, true)" :disabled="$store.xCouponCodeDetail.loading">
+                <div x-cloak x-show="!$store.xCouponCodeDetail.loading">{% render 'icon-alls', icon: 'icon-close' %}</div>
+                <div x-cloak class="animate-spin" x-show="$store.xCouponCodeDetail.loading">{% render 'icon-alls', icon: 'icon-loading' %}</div>
+              </button>
+            {% endif %}
+          </li>
+        {%- endfor -%}
+      </ul>
+    {%- endif -%}
+    <div
+      id="LineItemError-{{ item.key }}"
+      class="hidden bg-[rgba(var(--color-error),0.2)] cart-item__error mt-2 pt-3 pb-3 pr-3.5 pl-3.5{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"
+      role="alert">
+      <p class="flex relative w-full">
+        <span class="absolute left-0 rtl:left-auto rtl:right-0 top-1/2 -translate-y-1/2 w-3">{% render 'icon-alls', icon: 'icon-error' %}</span>
+        <span class="cart-item__error-text text-normal pl-6 rtl:pl-0 rtl:pr-6"></span>
+      </p>
+    </div>
+  </td>
+  <td class="pt-6 pb-0 md:pt-4 md:pb-4 hidden md:table-cell md:align-top md:w-2/12{% if is_rtl %} pl-5{% else %} pr-5{% endif %}">
+    <div class="price">
+      <span>
+        {%- assign item_original_price = item.variant.compare_at_price | default: item.original_price -%}
+        {%- if item_original_price > item.final_price -%}
+          <s class="cap mr-1 rtl:ml-1 rtl:mr-0 inline-block opacity-50">{%- if settings.currency_code_enable -%}{{- item_original_price | money_with_currency -}}{%- else -%}{{ item_original_price | money }}{%- endif -%}</s> 
+          <span class="selection:bg-text-[rgb(var(--colors-price-sale),0.2)] price-sale">
+            {% if settings.currency_code_enable %}
+              {{- item.final_price | money_with_currency -}}
+            {% else %}
+              {{ item.final_price | money }}
+            {% endif %}
+          </span>
+        {%- else -%}
+          <span class="price">
+            {% if settings.currency_code_enable %}
+              {{- item.final_price | money_with_currency -}}
+            {% else %}
+              {{ item.final_price | money }}
+            {% endif %}
+          </span>
+        {%- endif -%}
+      </span>
+      {%- if item.variant.available and item.unit_price_measurement -%}
+        <br />
+        <small>
+          {% if settings.currency_code_enable %}
+            {{ item.variant.unit_price | money_with_currency }}
+          {% else %}
+            {{ item.variant.unit_price | money }}
+          {% endif %}
+          <span aria-hidden="true">/</span>
+          {%- if item.variant.unit_price_measurement.reference_value != 1 -%}
+            {{- item.variant.unit_price_measurement.reference_value -}}
+          {%- endif -%}
+          {{ item.variant.unit_price_measurement.reference_unit }}
+        </small>
+      {%- endif -%}
+    </div>
+  </td>
+  <td class="lg:pl-2 pt-6 pb-0 md:pt-4 md:pb-4 md:hidden text-right md:text-left">
+    <div class="price">
+      <span class="flex flex-wrap justify-end gap-1">
+        {%- assign item_original_price = item.variant.compare_at_price | default: item.original_price -%}
+        {% assign compare_at_price = item.quantity | times: item_original_price %}
+        {%- if compare_at_price > item.final_line_price -%}
+          <s class="cap opacity-50">
+            {% if settings.currency_code_enable %}
+              {{- compare_at_price | money_with_currency -}}
+            {% else %}
+              {{- compare_at_price | money -}}
+            {% endif %}
+          </s> 
+          <span class="selection:bg-text-[rgb(var(--colors-price-sale),0.2)] price-sale">
+            {% if settings.currency_code_enable %}
+              {{ item.final_line_price | money_with_currency }}
+            {% else %}
+              {{ item.final_line_price | money }}
+            {% endif %}
+          </span>
+        {%- else -%}
+          <span>
+            {% if settings.currency_code_enable %}
+              {{ item.final_line_price | money_with_currency }}
+            {% else %}
+              {{ item.final_line_price | money }}
+            {% endif %}
+          </span>
+        {%- endif -%}
+      </span>
+      {%- if item.variant.available and item.unit_price_measurement -%}
+        <small>
+          {% if settings.currency_code_enable %}
+            {{ item.variant.unit_price | money_with_currency }}
+          {% else %}
+            {{ item.variant.unit_price | money }}
+          {% endif %}
+          <span aria-hidden="true">/</span>
+          {%- if item.variant.unit_price_measurement.reference_value != 1 -%}
+            {{- item.variant.unit_price_measurement.reference_value -}}
+          {%- endif -%}
+          {{ item.variant.unit_price_measurement.reference_unit }}
+        </small>
+      {%- endif -%}
+    </div>
+  </td>
+  {% liquid
+    assign will_remove_shipping_insurance = false
+    if cart.items.size == 2
+      for item in cart.items
+        if item.product.selected_or_first_available_variant.id == settings.product_shipping_insurance.selected_or_first_available_variant.id
+          assign will_remove_shipping_insurance = true
+          break
+        endif
+      endfor
+    endif
+  %}
+  {% liquid 
+    assign item_first_variant_id = item.product.selected_or_first_available_variant.id
+    assign is_addon_product = true
+    if item_first_variant_id != settings.product_shipping_insurance.selected_or_first_available_variant.id or settings.enable_shipping_insurance == false
+      if item_first_variant_id != settings.gift_wrapping_product.selected_or_first_available_variant.id
+        if item_first_variant_id != settings.engraving_product.selected_or_first_available_variant.id
+          assign is_addon_product = false
+        endif
+      endif
+    endif
+  %}
+  <td {% unless is_addon_product or is_component %}class="lg:pl-2 pt-0 pb-4 pl-5 mt-2 md:pr-5 lg:pr-0 md:mt-3.5 md:pl-0 md:pt-4 rtl:pr-5 rtl:md:pr-0 rtl:md:pl-5 rtl:lg:pl-0 col-start-2 col-end-4 flex items-center md:table-cell md:align-top"{% endunless %}>
+    {% unless is_addon_product or is_component %}
+      <div class="x-cart-item-quantity flex">
+        <div class="relative flex w-24 h-8 border border-solid justify-between{% if settings.buttons_type == 'rounded_corners' or settings.buttons_type == 'mixed' %} rounded-md{% elsif settings.buttons_type == 'rounded' %} rounded-full {% else %} rounded-none{% endif %}">
+          <button class="items-center w-1/3 justify-center flex opacity-70 cursor-pointer" @click.prevent="minusItemQty('{{ item.key }}', {{ item.index | plus: 1 }}, '{{ item.variant.inventory_policy }}', '{{ item.variant.inventory_management }}', {{ item.variant.inventory_quantity }})" aria-label="button-minus">
+            {% render 'icon-alls', icon: 'icon-minus', class: "w-2.5" %}
+          </button>
+          <input
+            id="cart-qty-{{ item.key }}"
+            class="cart-item-qty-{{ item.index | plus: 1 }} outer-spin-button bg-transparent w-1/3 text-center pt-2 pb-2 placeholder:opacity-60 focus-within:outline-none"
+            aria-label="{{ 'products.product.quantity.input_label' | t: product: item.product.title | escape }}"
+            type="number"
+            value="{{ item.quantity }}"
+            min="0"
+            x-on:change="updateItemQty('{{ item.key }}', {{ item.index | plus: 1 }}, '{{ item.variant.inventory_policy }}', '{{ item.variant.inventory_management }}', {{ item.variant.inventory_quantity }})"
+            @keydown="handleKeydown($event, $el)"
+          >
+          <button class="items-center w-1/3 justify-center flex opacity-70 cursor-pointer" @click.prevent="plusItemQty('{{ item.key }}', {{ item.index | plus: 1 }}, '{{ item.variant.inventory_policy }}', '{{ item.variant.inventory_management }}', {{ item.variant.inventory_quantity }})" aria-label="button-plus">
+            {% render 'icon-alls', icon: 'icon-plus', class: "w-2.5" %}
+          </button>
+        </div>
+      </div>
+    {% endunless %}
+  </td>
+  <td class="{% if is_addon_product %}pb-0{% else %}pb-4{% endif %} md:pt-4 md:table-cell md:align-top lg:w-2/12 lg:pl-2">
+    <div class="flex justify-end md:justify-between">
+      <div class="price cart-item-price-{{ item.index | plus: 1 }} hidden md:flex md:flex-wrap">
+        {%- assign item_original_price = item.variant.compare_at_price | default: item.original_price -%}
+        {% assign compare_at_price = item.quantity | times: item_original_price %}
+        {%- if compare_at_price > item.final_line_price -%}
+          <s class="cap mr-1 rtl:ml-1 rtl:mr-0 inline-block opacity-50">{%- if settings.currency_code_enable -%}{{- compare_at_price | money_with_currency -}}{%- else -%}{{- compare_at_price | money -}}{%- endif -%}</s> 
+          <span class="selection:bg-text-[rgb(var(--colors-price-sale),0.2)] price-sale">
+            {%- if settings.currency_code_enable -%}
+              {{ item.final_line_price | money_with_currency }}
+            {%- else -%}
+              {{ item.final_line_price | money }}
+            {% endif %}
+          </span>
+        {%- else -%}
+          <span>
+            {% if settings.currency_code_enable %}
+              {{ item.final_line_price | money_with_currency }}
+            {% else %}
+              {{ item.final_line_price | money }}
+            {% endif %}
+          </span>
+        {%- endif -%}
+      </div>
+      {% unless is_addon_product or is_component %}
+        <button
+          id="remove-{{ item.key }}"
+          class="opacity-50 md:-mt-3.5 w-12 pt-3 pb-3 pl-3.5 pr-3.5 justify-center items-center cursor-pointer min-w-[3rem]{% if item.product.selected_or_first_available_variant.id == settings.product_shipping_insurance.selected_or_first_available_variant.id and settings.enable_shipping_insurance %} hidden{% else %} flex{% endif %}"
+          {% if will_remove_shipping_insurance %}
+            @click.prevent="clearCart('{{ item.key }}')"
+          {% else %}
+            @click.prevent="removeItem('{{ item.key }}', {{ forloop.index }})"
+          {% endif %}
+          aria-label="button-remove">
+          <span class="inline-block w-[18px] h-[18px]">{%- render 'icon-alls', icon: 'icon-remove' -%}</span>
+        </button>
+      {% endunless %}
+      <div id="loading-{{ item.key }}" class="md:-mt-3.5 w-12 hidden pt-3 pb-3 pl-3.5 pr-3.5 flex justify-center items-center cursor-pointer z-20">
+        <div class="animate-spin w-[18px] h-[18px] inline-block">
+          {% render 'icon-alls', icon: 'icon-loading' %}
+        </div>
+      </div>
+    </div>
+  </td> 
+</tr>

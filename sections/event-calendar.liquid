@@ -1,0 +1,1719 @@
+{% liquid 
+  assign heading_base_size =  settings.heading_base_size | times: 0.0225
+  assign heading_size =  section.settings.heading_size | times: 0.01 | times: heading_base_size
+  assign has_map = false
+%} 
+{%- style -%}
+  .heading-{{ section.id }} {
+    font-size: {{ heading_size | times: 0.6 }}rem;
+  }
+  @media (min-width: 767px) {
+    .heading-{{ section.id }} {
+      font-size: {{ heading_size }}rem;
+    }
+  }
+  .button--{{ section.id }},
+  .button--{{ section.id }}:before { 
+    {%- unless section.settings.color_button.alpha == 0.0 -%}
+      --colors-button: {{ section.settings.color_button.red }}, {{ section.settings.color_button.green }}, {{ section.settings.color_button.blue }};
+    {%- endunless -%}
+    {%- unless section.settings.color_button_hover.alpha == 0.0 -%}
+      --colors-button-hover: rgb({{ section.settings.color_button_hover.red }}, {{ section.settings.color_button_hover.green }}, {{ section.settings.color_button_hover.blue }});
+    {%- endunless -%}
+    {%- unless section.settings.color_text_button.alpha == 0.0 -%}
+      --colors-button-text: {{ section.settings.color_text_button.red }}, {{ section.settings.color_text_button.green }}, {{ section.settings.color_text_button.blue }};
+    {%- endunless -%}
+    {%- unless section.settings.color_text_button_hover.alpha == 0.0 -%}
+      --colors-button-text-hover: {{ section.settings.color_text_button_hover.red }}, {{ section.settings.color_text_button_hover.green }}, {{ section.settings.color_text_button_hover.blue }};
+    {%- endunless -%}
+    {% if section.settings.secondary_button_text_light.alpha != 0.0 %}
+      --colors-secondary-button: {{ section.settings.secondary_button_text_light.red }}, {{ section.settings.secondary_button_text_light.green }}, {{ section.settings.secondary_button_text_light.blue }};
+      --colors-line-secondary-button: {{ section.settings.secondary_button_text_light.red }}, {{ section.settings.secondary_button_text_light.green }}, {{ section.settings.secondary_button_text_light.blue }};
+      --background-secondary-button: transparent;
+    {% endif %}
+    {% if section.settings.secondary_button_light.alpha != 0.0 %}
+      --background-secondary-button: {{ section.settings.secondary_button_light.red }}, {{ section.settings.secondary_button_light.green }}, {{ section.settings.secondary_button_light.blue }};
+      --colors-line-secondary-button: {{ section.settings.secondary_button_light.red }}, {{ section.settings.secondary_button_light.green }}, {{ section.settings.secondary_button_light.blue }};
+    {% endif %}
+    {% if section.settings.colors_text_link.alpha != 0.0 %}
+      --colors-text-link: {{ section.settings.colors_text_link.red }}, {{ section.settings.colors_text_link.green }}, {{ section.settings.colors_text_link.blue }};
+    {% endif %}
+  }
+  .dark .button--{{ section.id }},
+  .dark .button--{{ section.id }}:before { 
+    {% if section.settings.button_dark.alpha != 0.0 %}
+      --colors-button: {{ section.settings.button_dark.red }}, {{ section.settings.button_dark.green }}, {{ section.settings.button_dark.blue }};
+    {% else %}  
+      --colors-button: {{ settings.colors_dark_button.red }}, {{ settings.colors_dark_button.green }}, {{ settings.colors_dark_button.blue }};
+    {% endif %}
+    {% if section.settings.button_text_dark.alpha != 0.0 %}
+      --colors-button-text: {{ section.settings.button_text_dark.red }}, {{ section.settings.button_text_dark.green }}, {{ section.settings.button_text_dark.blue }};
+    {% else %} 
+      --colors-button-text: {{ settings.colors_dark_button_text.red }}, {{ settings.colors_dark_button_text.green }}, {{ settings.colors_dark_button_text.blue }}; 
+    {% endif %}
+    {% if section.settings.button_hover_dark.alpha != 0.0 %}
+      --colors-button-hover: rgb({{ section.settings.button_hover_dark.red }}, {{ section.settings.button_hover_dark.green }}, {{ section.settings.button_hover_dark.blue }});
+    {% else %}  
+      --colors-button-hover: rgb({{ settings.colors_dark_button_hover.red }}, {{ settings.colors_dark_button_hover.green }}, {{ settings.colors_dark_button_hover.blue }});
+    {% endif %}
+    {% if section.settings.button_text_hover_dark.alpha != 0.0 %}
+      --colors-button-text-hover: {{ section.settings.button_text_hover_dark.red }}, {{ section.settings.button_text_hover_dark.green }}, {{ section.settings.button_text_hover_dark.blue }};
+    {% else %}  
+      --colors-button-text-hover: {{ settings.colors_dark_button_text_hover.red }}, {{ settings.colors_dark_button_text_hover.green }}, {{ settings.colors_dark_button_text_hover.blue }};
+    {% endif %}
+    {% if section.settings.secondary_button_text_dark.alpha != 0.0 %}
+      --colors-secondary-button: {{ section.settings.secondary_button_text_dark.red }}, {{ section.settings.secondary_button_text_dark.green }}, {{ section.settings.secondary_button_text_dark.blue }};
+      --colors-line-secondary-button: {{ section.settings.secondary_button_text_dark.red }}, {{ section.settings.secondary_button_text_dark.green }}, {{ section.settings.secondary_button_text_dark.blue }};
+      --background-secondary-button: transparent;
+    {% else %}  
+      --colors-secondary-button: {{ settings.colors_dark_button_secondary.red }}, {{ settings.colors_dark_button_secondary.green }}, {{ settings.colors_dark_button_secondary.blue }};
+      --colors-line-secondary-button: {{ settings.colors_dark_button_secondary.red }}, {{ settings.colors_dark_button_secondary.green }}, {{ settings.colors_dark_button_secondary.blue }};
+    {% endif %}
+    {% if section.settings.secondary_button_dark.alpha != 0.0 %}
+      --background-secondary-button: {{ section.settings.secondary_button_dark.red }}, {{ section.settings.secondary_button_dark.green }}, {{ section.settings.secondary_button_dark.blue }};
+      --colors-line-secondary-button: {{ section.settings.secondary_button_dark.red }}, {{ section.settings.secondary_button_dark.green }}, {{ section.settings.secondary_button_dark.blue }};
+    {% elsif settings.background_dark_button_secondary.alpha != 0.0 %}  
+      --background-secondary-button: {{ settings.background_dark_button_secondary.red }}, {{ settings.background_dark_button_secondary.green }}, {{ settings.background_dark_button_secondary.blue }};
+      --colors-line-secondary-button: {{ settings.background_dark_button_secondary.red }}, {{ settings.background_dark_button_secondary.green }}, {{ settings.background_dark_button_secondary.blue }};
+    {% else %}
+      --background-secondary-button: transparent;
+    {% endif %}
+    {% if section.settings.colors_text_link_dark.alpha != 0.0 %}
+      --colors-text-link: {{ section.settings.colors_text_link_dark.red }}, {{ section.settings.colors_text_link_dark.green }}, {{ section.settings.colors_text_link_dark.blue }};
+    {% else %}
+      --colors-text-link: {{ settings.colors_dark_text_link.red }}, {{ settings.colors_dark_text_link.green }}, {{ settings.colors_dark_text_link.blue }};
+    {% endif %}
+  }
+  .event-day-{{ section.id }} { 
+    {% if section.settings.date_background_color.alpha != 0 %}
+      background-color: {{ section.settings.date_background_color }};
+    {% endif %}
+    {% if section.settings.date_color.alpha != 0 %}
+      color: {{ section.settings.date_color }};
+      --colors-text: {{ section.settings.date_color.red }}, {{ section.settings.date_color.green }}, {{ section.settings.date_color.blue }};
+      --colors-heading: {{ section.settings.date_color.red }}, {{ section.settings.date_color.green }}, {{ section.settings.date_color.blue }};
+    {% endif %}
+  }
+  .dark .event-day-{{ section.id }} { 
+    {% if section.settings.date_background_color_dark.alpha != 0 %}
+      background-color: {{ section.settings.date_background_color_dark }};
+    {% else %}
+      background-color: transparent;
+    {% endif %}
+    {% if section.settings.date_color_dark.alpha != 0 %}
+      color: {{ section.settings.date_color_dark }};
+      --colors-text: {{ section.settings.date_color_dark.red }}, {{ section.settings.date_color_dark.green }}, {{ section.settings.date_color_dark.blue }};
+      --colors-heading: {{ section.settings.date_color_dark.red }}, {{ section.settings.date_color_dark.green }}, {{ section.settings.date_color_dark.blue }};
+    {% else %}
+      color: {{ settings.colors_dark_text }};
+      --colors-text: {{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }};
+      --colors-heading: {{ settings.colors_dark_heading.red }}, {{ settings.colors_dark_heading.green }}, {{ settings.colors_dark_heading.blue }};
+    {% endif %}
+  }
+{%- endstyle -%}
+
+{% render 'section-divider' %}
+<div class="event-container ml-auto mr-auto relative x-pgw page-width mx-auto pb-[{{ section.settings.padding_bottom_mobile }}px] pt-[{{ section.settings.padding_top_mobile }}px] md:pb-[{{ section.settings.padding_bottom }}px] md:pt-[{{ section.settings.padding_top }}px]">
+  <div class="x-block-event-header mb-8 lg:mb-10 empty:hidden text-{{ section.settings.heading_alignment }} rtl:text-{% if section.settings.heading_alignment == 'center' %}center{% elsif section.settings.heading_alignment == 'left' %}right{% else %}left{% endif %}">
+    {%- if section.settings.heading != blank -%}
+      {% render 'heading-highlight',
+        headingId: section.id,
+        heading: section.settings.heading,
+        highlight_type: section.settings.highlight_type,
+        class: 'h2 block leading-tight flex-auto p-break-words',
+        heading_tag: section.settings.heading_tag,
+        animation_heading: true
+      %}
+    {%- endif -%}
+    {%- if section.settings.description != blank -%}
+      <div class="event-description mb-6 md:mb-10 rte">
+        {{ section.settings.description }}
+      </div>
+    {%- endif -%}
+  </div>
+  
+  <div class="x-block-event-list grid{% if section.settings.desktop_layout == "2" %} md:grid-cols-2 gap-x-7{% endif %}{% unless section.settings.border_column == "line" %} gap-y-7{% endunless %}">
+    {%- for block in section.blocks -%}
+      {% liquid
+        if block.settings.button_label_add_calendar != blank
+          assign add_to_calendar = block.settings.button_label_add_calendar 
+        else
+          assign add_to_calendar = 'sections.event-calendar.add_to_calendar' | t
+        endif
+
+        if block.settings.ticket_button_label != blank
+          assign ticket_button_label = block.settings.ticket_button_label 
+        else
+          assign ticket_button_label = 'sections.event-calendar.buy_tickets' | t
+        endif
+
+        assign date = block.settings.month | append: block.settings.day | date: "%b %d" | append: ", " | append: block.settings.start_year
+        assign compare_date = date | date: "%s" | times: 1
+        assign show_end_date = false
+        assign show_end_time = false
+        assign start_hour = block.settings.start_hour | times: 1
+        assign start_minute = block.settings.start_minute | times: 1
+        assign end_hour = block.settings.end_hour | times: 1
+        assign end_minute = block.settings.end_minute | times: 1
+
+        if section.settings.timeformat == "12"
+          if start_hour == 12
+            assign time_start = 12 | append: ":" | append: block.settings.start_minute | append: " PM"
+          elsif start_hour == 0
+            assign time_start = 12 | append: ":" | append: block.settings.start_minute | append: " AM"
+          elsif start_hour > 12
+            assign time_start = block.settings.start_hour | minus: 12
+            if time_start < 10
+              assign time_start = "0" | append: time_start | append: ":" | append: block.settings.start_minute | append: " PM"
+            else
+              assign time_start = time_start | append: ":" | append: block.settings.start_minute | append: " PM"
+            endif
+          else
+            assign time_start = block.settings.start_hour | append: ":" | append: block.settings.start_minute | append: " AM"
+          endif
+          if end_hour == 12
+            assign time_end = 12 | append: ":" | append: block.settings.end_minute | append: " PM"
+          elsif end_hour == 0
+            assign time_end = 12 | append: ":" | append: block.settings.end_minute | append: " AM"
+          elsif end_hour > 12
+            assign time_end = block.settings.end_hour | minus: 12
+            if time_end < 10
+              assign time_end = "0" | append: time_end | append: ":" | append: block.settings.end_minute | append: " PM"
+            else
+              assign time_end = time_end | append: ":" | append: block.settings.end_minute | append: " PM"
+            endif
+          else
+            assign time_end = block.settings.end_hour | append: ":" | append: block.settings.end_minute | append: " AM"
+          endif
+        else
+          assign time_start = block.settings.start_hour | append: ":" | append: block.settings.start_minute
+          assign time_end = block.settings.end_hour | append: ":" | append: block.settings.end_minute
+        endif
+
+        assign end_date = block.settings.end_month | append: block.settings.end_day | date: "%b %d" | append: ", " | append: block.settings.end_year
+        assign compare_end_date = end_date | date: "%s" | times: 1
+        if block.settings.show_end_date and compare_end_date > compare_date
+          assign show_end_date = true
+        elsif block.settings.show_end_date and compare_end_date == compare_date and end_hour > start_hour
+          assign show_end_time = true
+        elsif block.settings.show_end_date and end_hour == start_hour and end_minute > start_minute
+          assign show_end_time = true
+        endif
+      %}
+      {%- capture data_event_item -%}
+        { 
+          "sectionID": "{{ section.id }}",
+          "blockID": "{{ block.id }}",
+          "title": {{ block.settings.heading | json }}, 
+          "location": {{ block.settings.location | json | default: '' }}, 
+          "details": "{{ block.settings.content | strip_html | escape | default: '' }}", 
+          "description": "{{ block.settings.content | default: '' | escape }}", 
+          "start_year": "{{ block.settings.start_year }}", 
+          "month": "{{ block.settings.month }}", 
+          "day": "{{ block.settings.day }}",
+          "end_year": "{{ block.settings.end_year }}", 
+          "end_month": "{{ block.settings.end_month }}", 
+          "end_day": "{{ block.settings.end_day }}", 
+          "date": "{{ date | date: format: 'abbreviated_month_day_year' }}",
+          "end_date": "{{ end_date | date: format: 'abbreviated_month_day_year' }}",
+          "timeStart": "{{ time_start }}",
+          "timeEnd": "{{ time_end }}",
+          "start_hour" : "{{ block.settings.start_hour }}",
+          "end_hour" : "{{ block.settings.end_hour }}",
+          "start_minute" : "{{ block.settings.start_minute }}",
+          "end_minute" : "{{ block.settings.end_minute }}",
+          "show_end_date": {{ show_end_date }},
+          "show_end_time": {{ show_end_time }},
+          "timezone": "{{ section.settings.timezone }}",
+          "image": {% if block.settings.image != blank %}"{{ block.settings.image | image_url }}"{% else %}false{% endif %},
+          "button_label_add_calendar": {{ add_to_calendar | json }},
+          "show_button_style": "{{ block.settings.show_button_style }}",
+          "ticket_button_label": {{ ticket_button_label | json }},
+          "offer_tickets": {{ block.settings.offer_tickets }},
+          "ticket_link": "{{ block.settings.ticket_link }}",
+          "ticket_button_label_style": "{{ block.settings.ticket_button_label_style }}"
+        }
+      {%- endcapture %}
+      <div 
+        x-intersect.once.margin.-20px.0px.-20px.0px="$el.querySelector('.animate_transition_card__image')?.classList.add('active')"
+        id="x-data-event-{{ block.id }}" 
+        class="event-block flex gap-x-5 lg:gap-x-7 event-{{ block.id }}{% if block.settings.image != blank %} flex flex-col lg:flex-row lg:items-start{% endif %}
+        {% if section.settings.border_column == "border" %} border border-dashed pt-5 pb-5 pl-5 pr-5{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% endif %}
+        {% if section.settings.border_column == "line" %} border-b pb-7 pt-7{% unless forloop.index > 1 %} border-t{% endunless %}{% if forloop.index == 2 and section.settings.desktop_layout == "2" %} md:border-t{% endif %}{% endif %}" 
+        x-event-data="{{ data_event_item | escape }}"
+        {{ block.shopify_attributes }}
+      >
+        <div class="{% if block.settings.image != blank %} w-full lg:max-w-[300px] overflow-hidden{% endif %}{% if settings.edges_type == 'rounded_corners' %} overflow-hidden rounded-[10px]{% endif %} relative">
+          {% if block.settings.image != blank %}
+            <div 
+              class="animate_transition_card__image relative block{% if section.settings.image_ratio != "auto" %} h-0 pb-[{{ section.settings.image_ratio }}]{% endif %} animate-Xpulse skeleton-image"
+              {% if section.settings.image_ratio == 'auto' and block.settings.image != blank %} style='padding-bottom: {{ 1 | divided_by: block.settings.image.aspect_ratio | times: 100 }}%;'{% endif %}
+            >
+              {% # theme-check-disable ImgLazyLoading %}
+              <img
+                class="block max-w-full image-hover absolute top-0 left-0 h-full w-full object-cover object-center animate_transition_image"
+                srcset="{{ block.settings.image | image_url: width: 375 }} 375w,
+                  {{ block.settings.image | image_url: width: 450 }} 450w,
+                  {{ block.settings.image | image_url: width: 750 }} 750w,
+                  {{ block.settings.image | image_url: width: 900 }} 900w,
+                  {{ block.settings.image | image_url: width: 1100 }} 1100w,
+                  {{ block.settings.image | image_url: width: 1500 }} 1500w,
+                  {{ block.settings.image | image_url: width: 1780 }} 1780w,
+                  {{ block.settings.image | image_url: width: 2000 }} 2000w,
+                  {{ block.settings.image | image_url: width: 3000 }} 3000w,
+                  {{ block.settings.image | image_url: width: 3840 }} 3840w"
+                sizes="(min-width: 768px) calc((100vw - {{ section.settings.desktop_layout | minus: 1 | times: 28 }}px) / {{ section.settings.desktop_layout }}), 100vw"
+                src="{{ block.settings.image | image_url: width: 3840 }}"
+                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                alt="{{ block.settings.image.alt | escape }}"
+                width="{{ block.settings.image.width }}"
+                height="{{ block.settings.image.width | divided_by: block.settings.image.aspect_ratio }}"
+                style="object-position: {{ block.settings.image.presentation.focal_point }};"
+                onload="this?.classList.add('active'); 
+                  this.closest('.animate_transition_card__image')?.classList.remove('animate-Xpulse', 'skeleton-image');
+                  setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);
+                "
+              />
+              {% # theme-check-enable ImgLazyLoading %}
+            </div>
+          {% endif %}
+
+          <div class="event-day event-day-{{ section.id }} aspect-square{% if block.settings.image != blank %} absolute top-0 left-0 rtl:left-auto rtl:right-0 rtl:ml-0 rtl:mr-2 mt-2 mb-2 ml-2 pb-2 pt-2 pr-4 pl-4 lg:pb-1.5 lg:pt-1.5 lg:pl-4 lg:pr-4{% else %} pb-2.5 pt-2.5 pr-5 pl-5 lg:pb-2 lg:pt-2 lg:pl-5 lg:pr-5 border border-dashed border-[rgba(var(--colors-text-link))]{% endif %} flex flex-col justify-center bg-[rgba(var(--background-color))] text-center{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+            
+            <p class="text-large whitespace-nowrap h3">{{ block.settings.day }}</p>
+            <p>{{ block.settings.month | append: block.settings.day | date: format: 'short_month' }}</p>
+          </div>
+        </div>
+        <div class="w-3/4 grow flex flex-col lg:justify-start{% if block.settings.image != blank %} pt-5 lg:pt-0 lg:pb-0{% endif %}">
+          {% if block.settings.heading != blank %}
+            {% assign heading_size =  block.settings.heading_size | times: settings.heading_base_size | times: 0.0001575 %}
+            {% style %}
+              .heading-{{ block.id }} { font-size: {{ heading_size | times: 0.7 }}rem; }
+              @media screen and (min-width: 1025px) {
+                .heading-{{ block.id }} {
+                  font-size: {{ heading_size }}rem;
+                }  
+              }
+            {% endstyle %}
+            <div
+              class="heading-{{ block.id }} hover-text-link h3 cursor-pointer p-break-words"
+              @click="$store.xEventCalendarDetail.load($el, '{{ block.id }}')"
+            >
+              {{ block.settings.heading }}
+            </div>
+          {% endif %}
+          <div class="flex flex-wrap gap-1.5 mt-2 lg:mt-1{% if show_end_date %} flex-col{% endif %}">
+            <div class="inline-flex items-start pl-5 rtl:pl-0 rtl:pr-5 flex-col relative">
+              <span class="w-4 h-5 absolute left-0 rtl:left-auto rtl:right-0">{% render 'icon-alls', icon: 'icon-clock' %}</span>
+              {% if show_end_date %}
+                  <div class="event-day">
+                    <p>{{ date | date: format: 'abbreviated_month_day_year' }} @ {{ time_start }} - </p>
+                    <p> {{ end_date | date: format: 'abbreviated_month_day_year' }} @ {{ time_end }}</p>
+                  </div>
+              {% elsif show_end_time %}
+                <span class="event-day">{{ time_start }} - {{ time_end }}</span>
+              {% else %}
+                <span class="event-day">{{ time_start }}</span>
+              {% endif %}
+            </div>
+            {% if block.settings.show_end_date and compare_end_date < compare_date and request.design_mode %}
+              <p class="relative event-error pl-5 rtl:pl-0 rtl:pr-5 text-[rgba(var(--color-error))]">
+                <span class="absolute left-0 rtl:left-auto rtl:right-0 top-1/2 -translate-y-1/2 w-3">{% render 'icon-alls', icon: 'icon-error' %}</span>
+                <span class="cart-item__error-text text-sm p-break-words">{{ 'sections.event-calendar.message_error' | t }}</span>
+              </p>
+            {% endif %}
+            {% if block.settings.location != blank %}
+              {% assign has_map = true %}
+              <div class="flex items-start pl-5 rtl:pl-0 rtl:pr-5 relative">
+                <span class="w-4 h-4 inline-block absolute left-0 rtl:left-auto rtl:right-0">{%- render 'icon-alls', icon: 'icon-location-1' -%}</span>
+                <span>{{ block.settings.location }}</span>
+              </div>
+            {% endif %}
+          </div>
+          <div class="mt-2 rte line-clamp-4">{{ block.settings.description }}</div>
+
+          <div class="flex gap-3 flex-wrap grow items-end lg:items-start lg:grow-0 mt-6 mb-0.5">
+            {% if block.settings.offer_tickets %}
+              <a
+                {% if block.settings.ticket_link == blank %}
+                  role="link" aria-disabled="true"
+                {% else %}
+                  href="{{ block.settings.ticket_link }}"
+                {% endif %}
+                class="button{% if block.settings.ticket_button_label_style == 'primary' %} button-solid{% elsif block.settings.ticket_button_label_style == 'secondary' %} button-outline{% else %} button-text-link{% endif %}{% if block.settings.ticket_link == blank %} opacity-60 cursor-not-allowed{% endif %} border button--{{ section.id }} flex flex-row rtl:flex-row-reverse empty:hidden !pl-5 !pr-5 md:pl-6 md:pr-6 pt-2.5 pb-2.5 md:pt-3 md:pb-3 leading-normal"
+                @click="open = !open"
+              >
+                {% render 'button-label', button_label: ticket_button_label, show_button_style: block.settings.ticket_button_label_style %}
+              </a>
+            {% endif %}
+            <div 
+              class="relative" 
+              x-data="xEventCalendar({{ data_event_item | escape }})"
+              @click.away="open = false"
+            >
+              <div
+                class="button{% if block.settings.show_button_style == 'primary' %} button-solid{% elsif block.settings.show_button_style == 'secondary' %} button-outline{% else %} button-text-link{% endif %} border button--{{ section.id }} hover:cursor-pointer flex flex-row rtl:flex-row-reverse empty:hidden !pl-5 !pr-5 md:pl-6 md:pr-6 pt-2.5 pb-2.5 md:pt-3 md:pb-3 leading-normal"
+                @click="open = !open"
+              >
+                {% render 'button-label', button_label: add_to_calendar, show_button_style: block.settings.show_button_style %}
+                <span class="w-2.5 relative transition-none duration-200 inline-block ml-1.5 rtl:ml-0 rtl:mr-1.5 self-center" :class="open ? 'rotate-180' : 'top-[1px]'">
+                  {% render 'icon-alls', icon: 'icon-caret' %}
+                </span>
+              </div>
+              <div 
+                class="atcb-list left-0 w-full flex flex-col gap-y-4 md:max-w-[15rem] absolute top-full z-40 bg-[rgba(var(--background-color))] shadow-[0_0_6px_-4px_rgba(var(--colors-text))] pt-5 pb-5 pl-5 pr-5" 
+                x-cloak 
+                x-show="open"
+                role="list"
+              >
+                <button 
+                  class="atcb-list-item text-left rtl:text-right relative cursor-pointer" 
+                  role="link" 
+                  data-option-number="1" 
+                  id="atcb-btn-1-apple" 
+                  aria-label="{{ 'sections.event-calendar.apple' | t }}"
+                  @click="addToCal('apple'); open = false"
+                >
+                  <span class="atcb-text inline-block button-link hover-text-link">{{ 'sections.event-calendar.apple' | t }}</span>
+                </button>
+                <button 
+                  class="atcb-list-item text-left rtl:text-right relative cursor-pointer" 
+                  role="link" 
+                  data-option-number="2" 
+                  id="atcb-btn-1-google" 
+                  aria-label="{{ 'sections.event-calendar.google' | t }}"
+                  @click="addToCal('google'); open = false"
+                >
+                  <span class="atcb-text inline-block button-link hover-text-link">{{ 'sections.event-calendar.google' | t }}</span>
+                </button>
+                <button 
+                  class="atcb-list-item text-left rtl:text-right relative cursor-pointer" 
+                  role="link" 
+                  data-option-number="3" 
+                  id="atcb-btn-1-outlookcom" 
+                  aria-label="{{ 'sections.event-calendar.outlook' | t }}"
+                  @click="addToCal('outlook'); open = false"
+                >
+                  <span class="atcb-text inline-block button-link hover-text-link">{{ 'sections.event-calendar.outlook' | t }}</span>
+                </button>
+                <button 
+                  class="atcb-list-item text-left rtl:text-right relative cursor-pointer" 
+                  role="link" 
+                  data-option-number="4" 
+                  id="atcb-btn-1-yahoo" 
+                  aria-label="{{ 'sections.event-calendar.yahoo' | t }}"
+                  @click="addToCal('yahoo'); open = false"
+                >
+                  <span class="atcb-text inline-block button-link hover-text-link">{{ 'sections.event-calendar.yahoo' | t }}</span>
+                </button>
+                <button 
+                  class="atcb-list-item text-left rtl:text-right relative cursor-pointer" 
+                  role="link" 
+                  data-option-number="4" 
+                  id="atcb-btn-1-ical" 
+                  aria-label="{{ 'sections.event-calendar.ical' | t }}"
+                  @click="addToCal('ical'); open = false"
+                >
+                  <span class="atcb-text inline-block button-link hover-text-link">{{ 'sections.event-calendar.ical' | t }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {%- endfor -%}
+  </div>
+</div>
+{% if has_map %}
+  <script src="{{ 'map.js' | asset_url }}" defer></script>
+{% endif %}
+{% render 'event-calendar-detail' %}
+<script src="{{ 'event-calendar.js' | asset_url }}" defer></script>
+{% schema %}
+{
+  "name": "t:sections.event-calendar.name",
+  "tag": "section",
+  "class": "section section-event-calendar x-section",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer",
+      "aside"
+    ]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.section_and_blocks.event_calendar"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:sections.all.text.heading",
+      "default": "Events",
+      "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+    },
+    {
+      "type": "select",
+      "id": "highlight_type",
+      "default": "underline",
+      "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+      "options": [
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        },
+        {
+          "value": "font_highlight",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 50,
+      "max": 200,
+      "unit": "%",
+      "step": 10,
+      "default": 100,
+      "label": "t:sections.all.text.heading_size"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "default": "h2",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "p",
+          "label": "p"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "default": "center",
+      "label": "t:sections.all.text.heading_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ]
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "t:settings_schema.seo.business_description.label"
+    },
+    {
+      "type": "select",
+      "id": "border_column",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.all.icon.options.none"
+        },
+        {
+          "value": "border",
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.border.label"
+        },
+        {
+          "value": "line",
+          "label": "t:sections.event-calendar.settings.block_divider.options.option_3.label"
+        }
+      ],
+      "default": "none",
+      "label": "t:sections.multicolumn.settings.line_border.label"
+    },
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "options": [
+        {
+          "value": "auto",
+          "label": "t:sections.all.image_ratio.options__1.label"
+        },
+        {
+          "value": "100%",
+          "label": "t:sections.all.image_ratio.options__2.label"
+        },
+        {
+          "value": "75%",
+          "label": "t:sections.all.image_ratio.options__3.label"
+        },
+        {
+          "value": "150%",
+          "label": "t:sections.all.image_ratio.options__4.label"
+        },
+        {
+          "value": "56%",
+          "label": "t:sections.all.image_ratio.options__5.label"
+        },
+        {
+          "value": "133%",
+          "label": "t:settings_schema.products.product_image_ratio.option__6.label"
+        }
+      ],
+      "default": "75%",
+      "label": "t:sections.all.image_ratio.label_2"
+    },
+    {
+      "type": "select",
+      "id": "timezone",
+      "options": [
+        {
+          "value": "-12",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-12.label"
+        },
+        {
+          "value": "-11",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-11.label"
+        },
+        {
+          "value": "-10",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-10.label"
+        },
+        {
+          "value": "-9",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-9.label"
+        },
+        {
+          "value": "-8",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-8.label"
+        },
+        {
+          "value": "-7",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-7.label"
+        },
+        {
+          "value": "-6",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-6.label"
+        },
+        {
+          "value": "-5",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-5.label"
+        },
+        {
+          "value": "-4",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-4.label"
+        },
+        {
+          "value": "-3",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-3.label"
+        },
+        {
+          "value": "-2",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-2.label"
+        },
+        {
+          "value": "-1",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-1.label"
+        },
+        {
+          "value": "0",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__0.label"
+        },
+        {
+          "value": "1",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__1.label"
+        },
+        {
+          "value": "2",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__2.label"
+        },
+        {
+          "value": "3",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__3.label"
+        },
+        {
+          "value": "4",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__4.label"
+        },
+        {
+          "value": "5",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__5.label"
+        },
+        {
+          "value": "5.5",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__15.label"
+        },
+        {
+          "value": "6",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__6.label"
+        },
+        {
+          "value": "7",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__7.label"
+        },
+        {
+          "value": "8",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__8.label"
+        },
+        {
+          "value": "9",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__9.label"
+        },
+        {
+          "value": "10",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__10.label"
+        },
+        {
+          "value": "11",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__11.label"
+        },
+        {
+          "value": "12",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__12.label"
+        },
+        {
+          "value": "13",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__13.label"
+        },
+        {
+          "value": "14",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__14.label"
+        }
+      ],
+      "default": "-4",
+      "label": "t:sections.announcement-bar.blocks.timezone.label"
+    },
+    {
+      "type": "select",
+      "id": "timeformat",
+      "options": [
+        {
+          "value": "12",
+          "label": "t:sections.event-calendar.settings.time_format.option__1.label"
+        },
+        {
+          "value": "24",
+          "label": "t:sections.event-calendar.settings.time_format.option__2.label"
+        }
+      ],
+      "default": "24",
+      "label": "t:sections.event-calendar.settings.time_format.label"
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.colors.name"
+    },
+    {
+      "type": "color",
+      "id": "color_button",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.button.primary_button_light"
+    },
+    {
+      "type": "color",
+      "id": "color_text_button",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.button.primary_button_text_light"
+    },
+    {
+      "type": "color",
+      "id": "color_button_hover",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.button.primary_button_hover_light"
+    },
+    {
+      "type": "color",
+      "id": "color_text_button_hover",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.button.primary_button_hover_text_light"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_light",
+      "label": "t:sections.all.button.secondary_button_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_text_light",
+      "label": "t:sections.all.button.secondary_button_text_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "colors_text_link",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:settings_schema.colors.colors_text_link_light"
+    },
+    {
+      "type": "color",
+      "id": "date_background_color",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.event-calendar.settings.date_background_color.label"
+    },
+    {
+      "type": "color",
+      "id": "date_color",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.event-calendar.settings.date_color.label"
+    },
+    {
+      "type": "color",
+      "id": "button_dark",
+      "label": "t:sections.all.button.primary_button_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_text_dark",
+      "label": "t:sections.all.button.primary_button_text_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_dark",
+      "label": "t:sections.all.button.primary_button_hover_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_text_hover_dark",
+      "label": "t:sections.all.button.primary_button_hover_text_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_dark",
+      "label": "t:sections.all.button.secondary_button_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_text_dark",
+      "label": "t:sections.all.button.secondary_button_text_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "colors_text_link_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:settings_schema.colors.colors_text_link_dark"
+    },
+    {
+      "type": "color",
+      "id": "date_background_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.event-calendar.settings.date_background_color.label_dark"
+    },
+    {
+      "type": "color",
+      "id": "date_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.event-calendar.settings.date_color.label_dark"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "select",
+      "id": "desktop_layout",
+      "label": "t:sections.all.padding.section_padding_heading",
+      "options": [
+        {
+          "value": "1",
+          "label": "t:sections.collection-list.settings.columns_desktop.options__1.label"
+        },
+        {
+          "value": "2",
+          "label": "t:settings_schema.search_navigation.settings.search_style.options__2"
+        }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 28
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider_mobile",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 28
+    }
+  ],
+  "blocks": [
+    {
+      "type": "event",
+      "name": "t:sections.event-calendar.blocks.event.name",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.email-signup-banner.settings.image.label",
+          "info": "t:sections.all.image.note_image_size"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Event",
+          "label": "t:sections.event-calendar.blocks.event.settings.event_name.label"
+        },
+        {
+          "type": "range",
+          "id": "heading_size",
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "unit": "%",
+          "label": "t:sections.event-calendar.blocks.event.settings.event_name_size.label",
+          "default": 100
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "default": "Share information and details about this event.",
+          "label": "t:sections.event-calendar.blocks.event.settings.summary.label"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "default": "<p>Share information and details about this event.</p>",
+          "label": "t:sections.event-calendar.blocks.event.settings.view_more_content.label"
+        },
+        {
+          "type": "text",
+          "id": "location",
+          "default": "75 9th Ave, New York, NY 10011-7006",
+          "label": "t:sections.event-calendar.blocks.event.settings.location.label"
+        },
+        {
+          "type": "text",
+          "id": "button_label_add_calendar",
+          "label": "t:sections.event-calendar.blocks.event.settings.button_add_calendar.label",
+          "default": "Add to calendar"
+        },
+        {
+          "type": "select",
+          "id": "show_button_style",
+          "options": [
+            {
+              "value": "primary",
+              "label": "t:sections.all.button.button_style.primary"
+            },
+            {
+              "value": "secondary",
+              "label": "t:sections.all.button.button_style.secondary"
+            },
+            {
+              "value": "text-link",
+              "label": "t:settings_schema.colors.colors_text_link"
+            }
+          ],
+          "label": "t:sections.all.button.button_style.label",
+          "default": "primary"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.event-calendar.settings.event_tickets.content"
+        },
+        {
+          "type": "checkbox",
+          "id": "offer_tickets",
+          "default": false,
+          "label": "t:sections.event-calendar.settings.offer_tickets.label"
+        },
+        {
+          "type": "url",
+          "id": "ticket_link",
+          "label": "t:sections.event-calendar.settings.ticket_link.label",
+          "info": "t:sections.event-calendar.settings.ticket_link.info",
+          "visible_if": "{{ block.settings.offer_tickets }}"
+        },
+        {
+          "type": "text",
+          "id": "ticket_button_label",
+          "label": "t:sections.event-calendar.settings.ticket_button_label.label",
+          "visible_if": "{{ block.settings.offer_tickets }}"
+        },
+        {
+          "type": "select",
+          "id": "ticket_button_label_style",
+          "options": [
+            {
+              "value": "primary",
+              "label": "t:sections.all.button.button_style.primary"
+            },
+            {
+              "value": "secondary",
+              "label": "t:sections.all.button.button_style.secondary"
+            },
+            {
+              "value": "text-link",
+              "label": "t:settings_schema.colors.colors_text_link"
+            }
+          ],
+          "label": "t:sections.all.button.button_style.label",
+          "default": "primary",
+          "visible_if": "{{ block.settings.offer_tickets }}"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.event-calendar.blocks.event.settings.start_date.content"
+        },
+        {
+          "type": "number",
+          "id": "start_year",
+          "default": 2024,
+          "label": "t:sections.product-labels-and-badges.blocks.start_year.label"
+        },
+        {
+          "type": "select",
+          "id": "month",
+          "options": [
+            {
+              "value": "January",
+              "label": "t:sections.announcement-bar.blocks.month.options__1.label"
+            },
+            {
+              "value": "February",
+              "label": "t:sections.announcement-bar.blocks.month.options__2.label"
+            },
+            {
+              "value": "March",
+              "label": "t:sections.announcement-bar.blocks.month.options__3.label"
+            },
+            {
+              "value": "April",
+              "label": "t:sections.announcement-bar.blocks.month.options__4.label"
+            },
+            {
+              "value": "May",
+              "label": "t:sections.announcement-bar.blocks.month.options__5.label"
+            },
+            {
+              "value": "June",
+              "label": "t:sections.announcement-bar.blocks.month.options__6.label"
+            },
+            {
+              "value": "July",
+              "label": "t:sections.announcement-bar.blocks.month.options__7.label"
+            },
+            {
+              "value": "August",
+              "label": "t:sections.announcement-bar.blocks.month.options__8.label"
+            },
+            {
+              "value": "September",
+              "label": "t:sections.announcement-bar.blocks.month.options__9.label"
+            },
+            {
+              "value": "October",
+              "label": "t:sections.announcement-bar.blocks.month.options__10.label"
+            },
+            {
+              "value": "November",
+              "label": "t:sections.announcement-bar.blocks.month.options__11.label"
+            },
+            {
+              "value": "December",
+              "label": "t:sections.announcement-bar.blocks.month.options__12.label"
+            }
+          ],
+          "default": "January",
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.end_month.label"
+        },
+        {
+          "type": "select",
+          "id": "day",
+          "options": [
+            {
+              "value": "01",
+              "label": "01"
+            },
+            {
+              "value": "02",
+              "label": "02"
+            },
+            {
+              "value": "03",
+              "label": "03"
+            },
+            {
+              "value": "04",
+              "label": "04"
+            },
+            {
+              "value": "05",
+              "label": "05"
+            },
+            {
+              "value": "06",
+              "label": "06"
+            },
+            {
+              "value": "07",
+              "label": "07"
+            },
+            {
+              "value": "08",
+              "label": "08"
+            },
+            {
+              "value": "09",
+              "label": "09"
+            },
+            {
+              "value": "10",
+              "label": "10"
+            },
+            {
+              "value": "11",
+              "label": "11"
+            },
+            {
+              "value": "12",
+              "label": "12"
+            },
+            {
+              "value": "13",
+              "label": "13"
+            },
+            {
+              "value": "14",
+              "label": "14"
+            },
+            {
+              "value": "15",
+              "label": "15"
+            },
+            {
+              "value": "16",
+              "label": "16"
+            },
+            {
+              "value": "17",
+              "label": "17"
+            },
+            {
+              "value": "18",
+              "label": "18"
+            },
+            {
+              "value": "19",
+              "label": "19"
+            },
+            {
+              "value": "20",
+              "label": "20"
+            },
+            {
+              "value": "21",
+              "label": "21"
+            },
+            {
+              "value": "22",
+              "label": "22"
+            },
+            {
+              "value": "23",
+              "label": "23"
+            },
+            {
+              "value": "24",
+              "label": "24"
+            },
+            {
+              "value": "25",
+              "label": "25"
+            },
+            {
+              "value": "26",
+              "label": "26"
+            },
+            {
+              "value": "27",
+              "label": "27"
+            },
+            {
+              "value": "28",
+              "label": "28"
+            },
+            {
+              "value": "29",
+              "label": "29"
+            },
+            {
+              "value": "30",
+              "label": "30"
+            },
+            {
+              "value": "31",
+              "label": "31"
+            }
+          ],
+          "default": "01",
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.end_day.label"
+        },
+        {
+          "type": "select",
+          "id": "start_hour",
+          "options": [
+            {
+              "value": "00",
+              "label": "12 AM"
+            },
+            {
+              "value": "01",
+              "label": "01 AM"
+            },
+            {
+              "value": "02",
+              "label": "02 AM"
+            },
+            {
+              "value": "03",
+              "label": "03 AM"
+            },
+            {
+              "value": "04",
+              "label": "04 AM"
+            },
+            {
+              "value": "05",
+              "label": "05 AM"
+            },
+            {
+              "value": "06",
+              "label": "06 AM"
+            },
+            {
+              "value": "07",
+              "label": "07 AM"
+            },
+            {
+              "value": "08",
+              "label": "08 AM"
+            },
+            {
+              "value": "09",
+              "label": "09 AM"
+            },
+            {
+              "value": "10",
+              "label": "10 AM"
+            },
+            {
+              "value": "11",
+              "label": "11 AM"
+            },
+            {
+              "value": "12",
+              "label": "12 PM"
+            },
+            {
+              "value": "13",
+              "label": "01 PM"
+            },
+            {
+              "value": "14",
+              "label": "02 PM"
+            },
+            {
+              "value": "15",
+              "label": "03 PM"
+            },
+            {
+              "value": "16",
+              "label": "04 PM"
+            },
+            {
+              "value": "17",
+              "label": "05 PM"
+            },
+            {
+              "value": "18",
+              "label": "06 PM"
+            },
+            {
+              "value": "19",
+              "label": "07 PM"
+            },
+            {
+              "value": "20",
+              "label": "08 PM"
+            },
+            {
+              "value": "21",
+              "label": "09 PM"
+            },
+            {
+              "value": "22",
+              "label": "10 PM"
+            },
+            {
+              "value": "23",
+              "label": "11 PM"
+            }
+          ],
+          "default": "00",
+          "label": "t:sections.product-labels-and-badges.blocks.start_hour.label"
+        },
+        {
+          "type": "select",
+          "id": "start_minute",
+          "options": [
+            {
+              "value": "00",
+              "label": "00"
+            },
+            {
+              "value": "15",
+              "label": "15"
+            },
+            {
+              "value": "30",
+              "label": "30"
+            },
+            {
+              "value": "45",
+              "label": "45"
+            }
+          ],
+          "default": "00",
+          "label": "t:sections.product-labels-and-badges.blocks.start_minute.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.event-calendar.blocks.event.settings.end_date.content"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_end_date",
+          "default": false,
+          "label": "t:sections.event-calendar.blocks.event.settings.show_end_date.label"
+        },
+        {
+          "type": "number",
+          "id": "end_year",
+          "default": 2024,
+          "label": "t:sections.product-labels-and-badges.blocks.end_year.label",
+          "visible_if": "{{ block.settings.show_end_date }}"
+        },
+        {
+          "type": "select",
+          "id": "end_month",
+          "options": [
+            {
+              "value": "January",
+              "label": "t:sections.announcement-bar.blocks.month.options__1.label"
+            },
+            {
+              "value": "February",
+              "label": "t:sections.announcement-bar.blocks.month.options__2.label"
+            },
+            {
+              "value": "March",
+              "label": "t:sections.announcement-bar.blocks.month.options__3.label"
+            },
+            {
+              "value": "April",
+              "label": "t:sections.announcement-bar.blocks.month.options__4.label"
+            },
+            {
+              "value": "May",
+              "label": "t:sections.announcement-bar.blocks.month.options__5.label"
+            },
+            {
+              "value": "June",
+              "label": "t:sections.announcement-bar.blocks.month.options__6.label"
+            },
+            {
+              "value": "July",
+              "label": "t:sections.announcement-bar.blocks.month.options__7.label"
+            },
+            {
+              "value": "August",
+              "label": "t:sections.announcement-bar.blocks.month.options__8.label"
+            },
+            {
+              "value": "September",
+              "label": "t:sections.announcement-bar.blocks.month.options__9.label"
+            },
+            {
+              "value": "October",
+              "label": "t:sections.announcement-bar.blocks.month.options__10.label"
+            },
+            {
+              "value": "November",
+              "label": "t:sections.announcement-bar.blocks.month.options__11.label"
+            },
+            {
+              "value": "December",
+              "label": "t:sections.announcement-bar.blocks.month.options__12.label"
+            }
+          ],
+          "default": "January",
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.end_month.label",
+          "visible_if": "{{ block.settings.show_end_date }}"
+        },
+        {
+          "type": "select",
+          "id": "end_day",
+          "options": [
+            {
+              "value": "01",
+              "label": "01"
+            },
+            {
+              "value": "02",
+              "label": "02"
+            },
+            {
+              "value": "03",
+              "label": "03"
+            },
+            {
+              "value": "04",
+              "label": "04"
+            },
+            {
+              "value": "05",
+              "label": "05"
+            },
+            {
+              "value": "06",
+              "label": "06"
+            },
+            {
+              "value": "07",
+              "label": "07"
+            },
+            {
+              "value": "08",
+              "label": "08"
+            },
+            {
+              "value": "09",
+              "label": "09"
+            },
+            {
+              "value": "10",
+              "label": "10"
+            },
+            {
+              "value": "11",
+              "label": "11"
+            },
+            {
+              "value": "12",
+              "label": "12"
+            },
+            {
+              "value": "13",
+              "label": "13"
+            },
+            {
+              "value": "14",
+              "label": "14"
+            },
+            {
+              "value": "15",
+              "label": "15"
+            },
+            {
+              "value": "16",
+              "label": "16"
+            },
+            {
+              "value": "17",
+              "label": "17"
+            },
+            {
+              "value": "18",
+              "label": "18"
+            },
+            {
+              "value": "19",
+              "label": "19"
+            },
+            {
+              "value": "20",
+              "label": "20"
+            },
+            {
+              "value": "21",
+              "label": "21"
+            },
+            {
+              "value": "22",
+              "label": "22"
+            },
+            {
+              "value": "23",
+              "label": "23"
+            },
+            {
+              "value": "24",
+              "label": "24"
+            },
+            {
+              "value": "25",
+              "label": "25"
+            },
+            {
+              "value": "26",
+              "label": "26"
+            },
+            {
+              "value": "27",
+              "label": "27"
+            },
+            {
+              "value": "28",
+              "label": "28"
+            },
+            {
+              "value": "29",
+              "label": "29"
+            },
+            {
+              "value": "30",
+              "label": "30"
+            },
+            {
+              "value": "31",
+              "label": "31"
+            }
+          ],
+          "default": "01",
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.end_day.label",
+          "visible_if": "{{ block.settings.show_end_date }}"
+        },
+        {
+          "type": "select",
+          "id": "end_hour",
+          "options": [
+            {
+              "value": "00",
+              "label": "12 AM"
+            },
+            {
+              "value": "01",
+              "label": "01 AM"
+            },
+            {
+              "value": "02",
+              "label": "02 AM"
+            },
+            {
+              "value": "03",
+              "label": "03 AM"
+            },
+            {
+              "value": "04",
+              "label": "04 AM"
+            },
+            {
+              "value": "05",
+              "label": "05 AM"
+            },
+            {
+              "value": "06",
+              "label": "06 AM"
+            },
+            {
+              "value": "07",
+              "label": "07 AM"
+            },
+            {
+              "value": "08",
+              "label": "08 AM"
+            },
+            {
+              "value": "09",
+              "label": "09 AM"
+            },
+            {
+              "value": "10",
+              "label": "10 AM"
+            },
+            {
+              "value": "11",
+              "label": "11 AM"
+            },
+            {
+              "value": "12",
+              "label": "12 PM"
+            },
+            {
+              "value": "13",
+              "label": "01 PM"
+            },
+            {
+              "value": "14",
+              "label": "02 PM"
+            },
+            {
+              "value": "15",
+              "label": "03 PM"
+            },
+            {
+              "value": "16",
+              "label": "04 PM"
+            },
+            {
+              "value": "17",
+              "label": "05 PM"
+            },
+            {
+              "value": "18",
+              "label": "06 PM"
+            },
+            {
+              "value": "19",
+              "label": "07 PM"
+            },
+            {
+              "value": "20",
+              "label": "08 PM"
+            },
+            {
+              "value": "21",
+              "label": "09 PM"
+            },
+            {
+              "value": "22",
+              "label": "10 PM"
+            },
+            {
+              "value": "23",
+              "label": "11 PM"
+            }
+          ],
+          "default": "00",
+          "label": "t:sections.product-labels-and-badges.blocks.end_hour.label",
+          "visible_if": "{{ block.settings.show_end_date }}"
+        },
+        {
+          "type": "select",
+          "id": "end_minute",
+          "options": [
+            {
+              "value": "00",
+              "label": "00"
+            },
+            {
+              "value": "15",
+              "label": "15"
+            },
+            {
+              "value": "30",
+              "label": "30"
+            },
+            {
+              "value": "45",
+              "label": "45"
+            }
+          ],
+          "default": "00",
+          "label": "t:sections.product-labels-and-badges.blocks.end_minute.label",
+          "visible_if": "{{ block.settings.show_end_date }}"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.event-calendar.name",
+      "category": "t:categories.brand_trust",
+      "blocks": [
+        {
+          "type": "event"
+        },
+        {
+          "type": "event"
+        },
+        {
+          "type": "event"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %} 

@@ -1,0 +1,39 @@
+{% if settings.engraving_product.selected_or_first_available_variant.available and product.selected_or_first_available_variant.available %}
+  {% if engraving_option_label %}
+    <p class="mb-3 font-medium">{%- if engraving_option_label != blank -%}{{ engraving_option_label }}{%- else -%}{{ 'engraving.default_text' | t }}{%- endif -%}{% if required %} *{% endif %}</p>
+  {% endif %}
+  <div class="relative">
+    <p class="empty:hidden mb-2 mt-2 pl-4 pr-4 pt-3 pb-3 bg-[rgba(var(--color-error),0.2)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" x-ref="engraving_error"></p>
+    <textarea
+      id="{{ block_id }}"
+      class="customization-picker w-full pl-5 pr-5 pt-4 pb-4 border focus:outline-none focus:border-current bg-transparent{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+      form="{{ product_form_id }}"
+      aria-label="engraving"
+      x-ref="engraving_text"
+      rows="4"
+      {% if required %} 
+        required
+        x-on:input.change="
+          $el.classList.remove('required-picker');
+          var productInfo = $el.closest('.product-info');
+          var paymentBtn = productInfo.querySelector('.payment-button--clone');
+          var propertiesInput = productInfo.querySelectorAll('.customization-picker.required-picker');
+          if (propertiesInput.length) {
+            paymentBtn?.classList.remove('hidden');
+          }
+          else {
+            paymentBtn?.classList.add('hidden');
+          }
+        "
+      {% endif %}
+      {% if max_text_length > 0 %}
+        maxlength="{{ max_text_length }}"
+      {% endif %}
+    ></textarea>
+    <p class="text-required hidden text-[rgba(var(--color-error))] mt-1">{{ 'products.product.customize_option_required' | t }}</p>
+    {% if engrave_option_note != blank %}
+      <p class="mt-2">{{ engrave_option_note | escape }}</p>
+    {% endif %}
+    <input type="hidden" aria-hidden="true" x-ref="text_area_name" value="properties[{%- if engraving_option_label != blank -%}{{ engraving_option_label }}{%- else -%}{{ 'engraving.default_text' | t }}{%- endif -%}]">
+  </div>
+{% endif %}

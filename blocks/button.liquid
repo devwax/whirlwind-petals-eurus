@@ -1,0 +1,445 @@
+{% if block.settings.button_label != blank %}
+  {% liquid
+    assign desktop_width = block.settings.desktop_width
+    assign mobile_width = block.settings.mobile_width
+    if desktop_width != 'fit'
+      assign desktop_width = desktop_width | times: 1
+    endif
+    if mobile_width != 'fit'
+      assign mobile_width = mobile_width | times: 1
+    endif
+  %}
+  {% style %}
+    .splide__list > .flexible-area-button:has(.width-{{ block.id }}) {
+      max-width: unset;
+      width: 100%;
+    }
+    .flexible-area-button:has(.width-{{ block.id }}) {
+      {% if mobile_width == 'fit' %}
+        width: fit-content;
+        max-width: unset;
+      {% elsif mobile_width < 100 %}
+        width: calc({{ mobile_width }}% - 100px);
+        flex-grow: 1;
+        max-width: {{ mobile_width }}%;
+      {% else %}
+        width: 100%;
+        max-width: 100%;
+      {% endif %}
+    }   
+    .button-{{ block.id }}, .button-{{ block.id }} *:before {
+      {% if block.settings.button_light.alpha != 0.0 %}
+        --colors-button: {{ block.settings.button_light.red }}, {{ block.settings.button_light.green }}, {{ block.settings.button_light.blue }};
+      {% endif %}
+      {% if block.settings.button_text_light.alpha != 0.0 %}
+        --colors-button-text: {{ block.settings.button_text_light.red }}, {{ block.settings.button_text_light.green }}, {{ block.settings.button_text_light.blue }};
+      {% endif %}
+      {% if block.settings.button_hover_light.alpha != 0.0 %}
+        --colors-button-hover: rgb({{ block.settings.button_hover_light.red }}, {{ block.settings.button_hover_light.green }}, {{ block.settings.button_hover_light.blue }});
+      {% endif %}
+      {% if block.settings.button_text_hover_light.alpha != 0.0 %}
+        --colors-button-text-hover: {{ block.settings.button_text_hover_light.red }}, {{ block.settings.button_text_hover_light.green }}, {{ block.settings.button_text_hover_light.blue }};
+      {% endif %}
+      {% if block.settings.secondary_button_text_light.alpha != 0.0 %}
+        --colors-secondary-button: {{ block.settings.secondary_button_text_light.red }}, {{ block.settings.secondary_button_text_light.green }}, {{ block.settings.secondary_button_text_light.blue }};
+        --colors-line-secondary-button: {{ block.settings.secondary_button_text_light.red }}, {{ block.settings.secondary_button_text_light.green }}, {{ block.settings.secondary_button_text_light.blue }};
+        --background-secondary-button: transparent;
+      {% endif %}
+      {% if block.settings.secondary_button_light.alpha != 0.0 %}
+        --background-secondary-button: {{ block.settings.secondary_button_light.red }}, {{ block.settings.secondary_button_light.green }}, {{ block.settings.secondary_button_light.blue }};
+        --colors-line-secondary-button: {{ block.settings.secondary_button_light.red }}, {{ block.settings.secondary_button_light.green }}, {{ block.settings.secondary_button_light.blue }};
+      {% endif %}
+      {% if block.settings.colors_text_link.alpha != 0.0 %}
+        --colors-text-link: {{ block.settings.colors_text_link.red }}, {{ block.settings.colors_text_link.green }}, {{ block.settings.colors_text_link.blue }};
+      {% endif %}
+    }
+    .dark .button-{{ block.id }}, .dark .button-{{ block.id }} *:before {
+      {% if block.settings.button_dark.alpha != 0.0 %}
+        --colors-button: {{ block.settings.button_dark.red }}, {{ block.settings.button_dark.green }}, {{ block.settings.button_dark.blue }};
+      {% else %}  
+        --colors-button: {{ settings.colors_dark_button.red }}, {{ settings.colors_dark_button.green }}, {{ settings.colors_dark_button.blue }};
+      {% endif %}
+      {% if block.settings.button_text_dark.alpha != 0.0 %}
+        --colors-button-text: {{ block.settings.button_text_dark.red }}, {{ block.settings.button_text_dark.green }}, {{ block.settings.button_text_dark.blue }};
+      {% else %} 
+        --colors-button-text: {{ settings.colors_dark_button_text.red }}, {{ settings.colors_dark_button_text.green }}, {{ settings.colors_dark_button_text.blue }}; 
+      {% endif %}
+      {% if block.settings.button_hover_dark.alpha != 0.0 %}
+        --colors-button-hover: rgb({{ block.settings.button_hover_dark.red }}, {{ block.settings.button_hover_dark.green }}, {{ block.settings.button_hover_dark.blue }});
+      {% else %}  
+        --colors-button-hover: rgb({{ settings.colors_dark_button_hover.red }}, {{ settings.colors_dark_button_hover.green }}, {{ settings.colors_dark_button_hover.blue }});
+      {% endif %}
+      {% if block.settings.button_text_hover_dark.alpha != 0.0 %}
+        --colors-button-text-hover: {{ block.settings.button_text_hover_dark.red }}, {{ block.settings.button_text_hover_dark.green }}, {{ block.settings.button_text_hover_dark.blue }};
+      {% else %}  
+        --colors-button-text-hover: {{ settings.colors_dark_button_text_hover.red }}, {{ settings.colors_dark_button_text_hover.green }}, {{ settings.colors_dark_button_text_hover.blue }};
+      {% endif %}
+      {% if block.settings.secondary_button_text_dark.alpha != 0.0 %}
+        --colors-secondary-button: {{ block.settings.secondary_button_text_dark.red }}, {{ block.settings.secondary_button_text_dark.green }}, {{ block.settings.secondary_button_text_dark.blue }};
+        --colors-line-secondary-button: {{ block.settings.secondary_button_text_dark.red }}, {{ block.settings.secondary_button_text_dark.green }}, {{ block.settings.secondary_button_text_dark.blue }};
+        --background-secondary-button: transparent;
+      {% else %}  
+        --colors-secondary-button: {{ settings.colors_dark_button_secondary.red }}, {{ settings.colors_dark_button_secondary.green }}, {{ settings.colors_dark_button_secondary.blue }};
+        --colors-line-secondary-button: {{ settings.colors_dark_button_secondary.red }}, {{ settings.colors_dark_button_secondary.green }}, {{ settings.colors_dark_button_secondary.blue }};
+      {% endif %}
+      {% if block.settings.secondary_button_dark.alpha != 0.0 %}
+        --background-secondary-button: {{ block.settings.secondary_button_dark.red }}, {{ block.settings.secondary_button_dark.green }}, {{ block.settings.secondary_button_dark.blue }};
+        --colors-line-secondary-button: {{ block.settings.secondary_button_dark.red }}, {{ block.settings.secondary_button_dark.green }}, {{ block.settings.secondary_button_dark.blue }};
+      {% elsif settings.background_dark_button_secondary.alpha != 0.0 %}  
+        --background-secondary-button: {{ settings.background_dark_button_secondary.red }}, {{ settings.background_dark_button_secondary.green }}, {{ settings.background_dark_button_secondary.blue }};
+        --colors-line-secondary-button: {{ settings.background_dark_button_secondary.red }}, {{ settings.background_dark_button_secondary.green }}, {{ settings.background_dark_button_secondary.blue }};
+      {% else %}
+        --background-secondary-button: transparent;
+      {% endif %}
+      {% if block.settings.colors_text_link_dark.alpha != 0.0 %}
+        --colors-text-link: {{ block.settings.colors_text_link_dark.red }}, {{ block.settings.colors_text_link_dark.green }}, {{ block.settings.colors_text_link_dark.blue }};
+      {% else %}
+        --colors-text-link: {{ settings.colors_dark_text_link.red }}, {{ settings.colors_dark_text_link.green }}, {{ settings.colors_dark_text_link.blue }};
+      {% endif %}
+    }
+    .flexible-area-group .flexible-area-block:has(.content-alignment-{{ block.id }}) {
+      {% if block.settings.mobile_content_alignment == 'center' %}
+        margin-left: auto;
+        margin-right: auto;
+      {% elsif block.settings.mobile_content_alignment == 'left' or block.settings.mobile_content_alignment == 'adapt'  %}
+      {% else %}
+        margin-left: auto;
+        margin-right: unset
+      {% endif %}
+    }    
+    .button-{{ block.id }} .button-text {
+      {% if mobile_width != 'fit' %}
+        word-break: break-word;
+      {% else %}
+        word-break: normal;
+        white-space: nowrap
+      {% endif %}
+    }  
+    @media screen and (min-width: 768px) {     
+      .button-{{ block.id }} .button-text {
+        {% if desktop_width != 'fit' %}
+          word-break: break-word;
+        {% else %}
+          word-break: normal;
+          white-space: nowrap
+        {% endif %}
+      }     
+     .flexible-area-button:has(.width-{{ block.id }}) {
+        {% if desktop_width == 'fit' %}
+          width: fit-content;
+          max-width: unset;
+        {% elsif desktop_width < 100 %}
+          width: calc({{ desktop_width }}% - 100px);
+          flex-grow: 1;
+          max-width: {{ desktop_width }}%;
+        {% else %}
+          width: 100%;
+          max-width: 100%;
+        {% endif %}
+      }
+      .flexible-area-group .flexible-area-block:has(.content-alignment-{{ block.id }}) {
+        {% if block.settings.content_alignment == 'center' %}
+          margin-left: auto;
+          margin-right: auto;
+        {% elsif block.settings.content_alignment == 'left' or block.settings.content_alignment == 'adapt' %}
+        {% else %}
+          margin-left: auto;
+          margin-right: unset
+        {% endif %}
+      }
+    }
+  {% endstyle %}
+  <div data-width="{{ desktop_width }}" data-width-mobile="{{ mobile_width }}" class="button-{{ block.id }} w-full {% if block.settings.mobile_content_alignment == 'adapt' %}item-group-content-alignment-mobile{% endif %} {% if block.settings.content_alignment == 'adapt' %}item-group-content-alignment{% endif %} content-alignment-{{ block.id }} item-block width-{{ block.id }}"{{ block.shopify_attributes }}>
+    {% if block.settings.button_link == blank %}
+      <div class="grow min-w-fit button{% if block.settings.show_button_style == 'secondary' %} button-outline{% elsif block.settings.show_button_style == 'text-link' %} w-full button-text-link justify-center{% else %} button-solid{% endif %} leading-normal empty:hidden text-center pl-7 pr-7 pt-2.5 pb-2.5 md:pl-8 md:pr-8 md:pt-3 md:pb-3 opacity-70 hover:cursor-not-allowed">
+        {% render 'button-label', button_label: block.settings.button_label, show_button_style: block.settings.show_button_style %}
+      </div>
+    {% else %}
+      <a class="grow flex justify-center min-w-fit button{% if block.settings.show_button_style == 'secondary' %} button-outline{% elsif block.settings.show_button_style == 'text-link' %} w-full button-text-link justify-center{% else %} button-solid{% endif %} leading-normal empty:hidden text-center pl-7 pr-7 pt-2.5 pb-2.5 md:pl-8 md:pr-8 md:pt-3 md:pb-3" href="{{ block.settings.button_link }}"{% if block.settings.open_new_window %} target="_blank"{% endif %}>
+        {% render 'button-label', button_label: block.settings.button_label, show_button_style: block.settings.show_button_style %}
+      </a>
+    {% endif %}
+  </div>
+{% endif %}
+{% schema %}
+{
+  "name": "t:settings_schema.colors.colors_button",
+  "class": "flexible-area-button flexible-area-block splide__slide x-splide-slide",
+  "settings": [
+    {
+      "type": "select",
+      "id": "desktop_width",
+      "label": "t:sections.flexible-area.blocks.item-group.settings.desktop_width",
+      "options": [
+        {
+          "label": "t:sections.highlight-text-with-image.settings.section_height.options__1.label",
+          "value": "fit"
+        },
+        {
+          "label": "16%",
+          "value": "16"
+        },
+        {
+          "label": "20%",
+          "value": "20"
+        },
+        {
+          "label": "25%",
+          "value": "25"
+        },
+        {
+          "label": "30%",
+          "value": "30"
+        },
+        {
+          "label": "50%",
+          "value": "50"
+        },
+        {
+          "label": "66%",
+          "value": "66"
+        },
+        {
+          "label": "70%",
+          "value": "70"
+        },
+        {
+          "label": "75%",
+          "value": "75"
+        },
+        {
+          "label": "80%",
+          "value": "80"
+        },
+        {
+          "label": "83%",
+          "value": "83"
+        },
+        {
+          "label": "100%",
+          "value": "100"
+        }
+      ],
+      "default": "fit"
+    },
+    {
+      "type": "select",
+      "id": "mobile_width",
+      "label": "t:sections.flexible-area.blocks.item-group.settings.mobile_width",
+      "options": [
+        {
+          "label": "t:sections.highlight-text-with-image.settings.section_height.options__1.label",
+          "value": "fit"
+        },
+        {
+          "label": "50%",
+          "value": "50"
+        },
+        {
+          "label": "100%",
+          "value": "100"
+        }
+      ],
+      "default": "100"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "default": "Button label",
+      "label": "t:sections.all.button.label"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:sections.all.button.link"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_new_window",
+      "default": false,
+      "label": "t:sections.all.open_new_window.label"
+    },
+    {
+      "type": "select",
+      "id": "show_button_style",
+      "options": [
+        {
+          "value": "primary",
+          "label": "t:sections.all.button.button_style.primary"
+        },
+        {
+          "value": "secondary",
+          "label": "t:sections.all.button.button_style.secondary"
+        },
+        {
+          "value": "text-link",
+          "label": "t:settings_schema.colors.colors_text_link"
+        }
+      ],
+      "label": "t:sections.all.button.button_style.label",
+      "default": "primary"
+    },
+    {
+      "type": "header",
+      "info": "t:sections.flexible-area.blocks.item-group.settings.adapt_item_group_alignment_info_1",
+      "content": "t:sections.flexible-area.blocks.item-group.settings.alignment_item_group"
+    },
+    {
+      "type": "select",
+      "id": "content_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        },
+        {
+          "value": "adapt",
+          "label": "t:sections.flexible-area.blocks.item-group.settings.adapt_item_group_alignment"
+        }
+      ],
+      "default": "adapt",
+      "label": "t:sections.quick-links.settings.alignment.label"
+    },
+    {
+      "type": "select",
+      "id": "mobile_content_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        },
+        {
+          "value": "adapt",
+          "label": "t:sections.flexible-area.blocks.item-group.settings.adapt_item_group_alignment"
+        }
+      ],
+      "default": "adapt",
+      "label": "t:sections.quick-links.settings.mobile_alignment.label"
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.colors.name"
+    },
+    {
+      "type": "color",
+      "id": "button_light",
+      "label": "t:sections.all.button.primary_button_light",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'primary' }}"
+    },
+    {
+      "type": "color",
+      "id": "button_text_light",
+      "label": "t:sections.all.button.primary_button_text_light",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'primary' }}"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_light",
+      "label": "t:sections.all.button.primary_button_hover_light",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'primary' }}"
+    },
+    {
+      "type": "color",
+      "id": "button_text_hover_light",
+      "label": "t:sections.all.button.primary_button_hover_text_light",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'primary' }}"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_light",
+      "label": "t:sections.all.button.secondary_button_light",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'secondary' }}"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_text_light",
+      "label": "t:sections.all.button.secondary_button_text_light",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'secondary' }}"
+    },
+    {
+      "type": "color",
+      "id": "colors_text_link",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:settings_schema.colors.colors_text_link_light",
+      "visible_if": "{{ block.settings.show_button_style == 'text-link' }}"
+    },
+    {
+      "type": "color",
+      "id": "button_dark",
+      "label": "t:sections.all.button.primary_button_dark",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'primary' }}"
+    },
+    {
+      "type": "color",
+      "id": "button_text_dark",
+      "label": "t:sections.all.button.primary_button_text_dark",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'primary' }}"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_dark",
+      "label": "t:sections.all.button.primary_button_hover_dark",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'primary' }}"
+    },
+    {
+      "type": "color",
+      "id": "button_text_hover_dark",
+      "label": "t:sections.all.button.primary_button_hover_text_dark",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'primary' }}"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_dark",
+      "label": "t:sections.all.button.secondary_button_dark",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'secondary' }}"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_text_dark",
+      "label": "t:sections.all.button.secondary_button_text_dark",
+      "default": "rgba(0,0,0,0)",
+      "visible_if": "{{ block.settings.show_button_style == 'secondary' }}"
+    },
+    {
+      "type": "color",
+      "id": "colors_text_link_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:settings_schema.colors.colors_text_link_dark",
+      "visible_if": "{{ block.settings.show_button_style == 'text-link' }}"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:settings_schema.colors.colors_button",
+      "category": "t:categories.basics"
+    }
+  ]
+}
+{% endschema %}

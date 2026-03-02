@@ -1,0 +1,18 @@
+<div 
+	x-data="{setPosition(el) {
+		parentEl = el.closest('.hover-option-value').getBoundingClientRect();
+		el.style.setProperty('--maxwidth-tooltip', parentEl.width - 20 + 'px');
+		elRect = el.getBoundingClientRect();
+		let spacingLeft = elRect.left - parentEl.left;
+		if (spacingLeft < 0) {
+			el.style.setProperty('--left-tooltip', Math.abs(spacingLeft) + 'px');
+		}
+		let spacingRight = parentEl.right - elRect.right;
+		if (spacingRight < 0) {
+			el.style.setProperty('--left-tooltip', spacingRight + 'px');
+		} 
+	}}"
+	x-intersect.once="setPosition($el)" 
+	class="absolute p-break-words mb-4 left-[calc(50%+var(--left-tooltip))] option-value-tooltip opacity-0 -z-10 bottom-full pl-2 pr-2 pb-1 pt-1 w-max max-w-[var(--maxwidth-tooltip)] bg-theme-secondary -translate-x-1/2 before:w-2 before:h-2 before:rotate-45 before:absolute before:-bottom-1 before:left-[calc(50%-var(--left-tooltip))] before:-translate-x-1 before:bg-[rgb(var(--colors-background-secondary))]{% if settings.edges_type == 'rounded_corners' %} rounded-full{% endif %}" style="--left-tooltip: 0px; --maxwidth-tooltip: 200px">
+	{{ value }}
+</div>

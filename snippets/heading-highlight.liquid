@@ -1,0 +1,108 @@
+{% comment %}
+    Renders a heading highlight
+    Accepts:
+    - headingId: {String} The ID of the section that contains this highlight heading.
+    - heading: {String} Content of the heading want to highlight
+    - highlight_type: {String} type of highlight heading ( 2 types are 'font_highlight' and 'underline')
+    - disable_liquid_escape: {Boolean} disable liquid escape filter (optional)
+    - is_intersect: {Boolean} add animation amn-fade-element
+    - animation_heading: {Boolean} add animation amn-move-up
+    - class: {String} class of heading element except padding and margin
+    Usage:
+    {% render 'heading-highlight',
+      headingId: section.id,
+      heading: section.settings.heading,
+      highlight_type: section.settings.highlight_type,
+      disable_liquid_escape: true,
+      is_intersect: false,
+      animation_heading: false
+    %}
+{% endcomment %}
+{% capture icon_highlight %}
+  {% if highlight_type == "underline" %}
+    <svg class="svg-highlight svg-underline absolute left-0 top-auto w-full h-[30%] -bottom-[20%]" xmlns="http://www.w3.org/2000/svg" width="216" height="13" viewBox="0 0 216 13" fill="none" style="fill: none;" preserveAspectRatio="none">
+      <path d="M0.406646 9.68922C49.5975 4.73865 161.298 -2.39378 214.572 8.68106" vector-effect="non-scaling-stroke" stroke="var(--color-highlight);" stroke-width="4px" style="stroke: var(--color-highlight);"/>
+    </svg>
+  {% endif %}
+{% endcapture %}
+
+{% style %}
+  .heading-{{ headingId }} {
+    {% if color_heading_highlight_light != blank and color_heading_highlight_light.alpha != 0.0 %}
+      --color-highlight: {{ color_heading_highlight_light }};
+    {% endif %}
+  }
+  .dark .heading-{{ headingId }} {
+    {% if color_heading_highlight_dark != blank and color_heading_highlight_dark.alpha != 0.0 %}
+      --color-highlight: {{ color_heading_highlight_dark }};
+    {% else %}
+      --color-highlight: {{ settings.colors_dark_heading_highlight }};
+    {% endif %}
+  }
+{% endstyle %}
+
+{% liquid 
+  assign intersect_leave = ''
+  case highlight_type
+    when 'underline'
+      if intersectLeaveSlide
+        assign heading_highlight = '<span class="highlight relative inline-block hl-underline mb-2.5" x-data="{ isIntersecting: false }" x-intersect.once.margin.-25%.0px.-25%.0px="isIntersecting = true" :class="isIntersecting && effect && `highlight-anm-start`" ' | append: intersect_leave | append: '>'
+      elsif is_scrolling_banner
+        assign heading_highlight = '<span class="highlight relative inline-block hl-underline mb-2.5" x-data="{ isIntersecting: false }" x-intersect.once="isIntersecting = true" :class="isIntersecting && `highlight-anm-start`" ' | append: intersect_leave | append: '>'
+      else
+        assign heading_highlight = '<span class="highlight relative inline-block hl-underline mb-2.5" x-data="{ isIntersecting: false }" x-intersect.once.margin.-25%.0px.-25%.0px="isIntersecting = true" :class="isIntersecting && `highlight-anm-start`" ' | append: intersect_leave | append: '>'
+      endif
+    when 'font_highlight'
+      assign heading_highlight = '<span class="highlight relative inline-block hl-font">'
+  endcase
+
+  assign icon_highlight = icon_highlight | append: "</span>"
+%}
+{% if heading contains '[' and heading contains ']' %}
+  {% if highlight_type == 'font_highlight' and animation_heading and settings.disable_heading_animation == false %}
+    <div class="overflow-hidden" x-intersect.once="$el.querySelector('.anm-move-up')?.classList.add('active-anm-heading')">
+  {% endif %}
+{% else %}
+  {% if animation_heading and settings.disable_heading_animation == false %}
+    <div class="overflow-hidden" x-intersect.once="$el.querySelector('.anm-move-up')?.classList.add('active-anm-heading')">
+  {% endif %}
+{% endif %}
+  {% if heading_tag %} 
+    <{{ heading_tag }}
+      class='heading-{{ headingId }} {{ class -}}
+        {%- if is_intersect %} anm-fade-element{% endif -%}
+        {%- if heading contains '[' and heading contains ']' -%}
+          {%- if highlight_type == 'font_highlight' and animation_heading and settings.disable_heading_animation == false %} anm-move-up{% endif -%}
+        {%- else -%}
+          {%- if animation_heading and settings.disable_heading_animation == false %} anm-move-up{% endif -%}
+        {%- endif -%}
+        {%- if heading_size %} heading-size--{{ headingId }}{% endif -%}
+        {%- if heading_alignment and is_flexible_area != true %} text-{{ heading_alignment }} rtl:text-{% if heading_alignment == 'center' %}center{% elsif heading_alignment == 'left' %}right{% else %}left{% endif -%}{% endif -%}
+      '
+      {%- if is_intersect %} x-intersect.once="$el.classList.add('is-visible')"{% endif -%}
+      {%- if tab_intersect %} x-intersect.once="if (!$el.classList.contains('is-visible')) { $el.classList.add('is-visible'); setTimeout(() => { $el.classList.remove('anm-fade-element') }, 600) }" {% endif -%}
+    > 
+  {% endif %}
+    {% if heading contains '[' and heading contains ']' %}
+      {% if disable_liquid_escape %}
+        {{ heading | replace: '[', heading_highlight | replace: ']', icon_highlight }}
+      {% else %}
+        {{ heading | escape | replace: '[', heading_highlight | replace: ']', icon_highlight }}
+      {% endif %}
+    {% else %}
+      {% if disable_liquid_escape %}
+        {{ heading }}
+      {% else %}
+        {{ heading | escape }}
+      {% endif %}
+    {% endif %}
+  {% if heading_tag %}</{{ heading_tag }}>{% endif %}
+{% if heading contains '[' and heading contains ']' %}
+  {% if highlight_type == 'font_highlight' and animation_heading and settings.disable_heading_animation == false %}
+    </div>
+  {% endif %}
+{% else %}
+  {% if animation_heading and settings.disable_heading_animation == false %}
+    </div>
+  {% endif %}
+{% endif %}

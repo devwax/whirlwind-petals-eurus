@@ -1,0 +1,70 @@
+{% liquid 
+  if media_aspect_ratio == blank
+    assign media_aspect_ratio = settings.product_image_ratio
+  endif 
+  assign ratio = 1 
+  case media_aspect_ratio
+    when "portrait"
+      assign ratio = 1.5
+    when "landscape"
+      assign ratio = 0.75
+    when "wide"
+      assign ratio = 0.5625
+    when "3/4"
+      assign ratio = 1.33
+  endcase
+  assign content_alignment = settings.info_alignment_card_product
+  if settings.lang_direction contains request.locale.iso_code
+    if content_alignment == 'left'
+      assign content_alignment = 'right'
+    elsif content_alignment == 'right'
+      assign content_alignment = 'left'
+    endif
+  endif
+  assign show_rounded_image = false
+  if settings.edges_type == 'rounded_corners'
+    assign show_rounded_image = true
+  endif
+  assign count_card = columns_desktop
+  
+  if enable_desktop_slider == false or enable_desktop_slider and slider_style == 'vertical'
+    assign count_card = count_card | times: rows_desktop
+    if products_count < count_card
+      assign count_card = products_count
+    endif
+  endif
+%}
+{% style %}
+  .gap-skeleton-{{ section_id }} {
+    gap: {{ spacing_mobile }}px;
+  }
+  @media (min-width: 768px) {
+    .gap-skeleton-{{ section_id }} {
+      gap: {{ spacing }}px;
+    }
+  }
+{% endstyle %}
+{% if show_promotion %}
+  <div class="flex flex-wrap ltr{% if postion_promotion == 'right' %} md:flex-row-reverse flex-col-reverse{% endif %}">
+    <div class="animate-Xpulse mb-5 w-full md:w-1/3 lg:w-1/4{% if postion_promotion == 'left' %} md:pr-7 mb-5 md:mt-0{% else %} md:pl-7 mt-5 md:mt-0{% endif %}">
+      <div class="bg-[#c9c9c9] min-h-[200px] {% if enable_text_overlay %} h-full{% else %}{% unless image_ratio == "auto" %} pb-[{{ image_ratio }}%]{% else %} pb-[100%]{% endunless %} {% endif %}{% if show_rounded_image %} rounded-[10px]{% endif %}"></div>
+      {% unless enable_text_overlay %}
+        <div class="h-5 w-3/4 bg-[#c9c9c9] mt-5"></div>
+        <div class="h-3 w-1/2 bg-[#c9c9c9] mt-2"></div>
+      {% endunless %}
+    </div>
+{% endif %}
+    <div class="w-full {% if show_promotion %}md:w-2/3 lg:w-3/4 {% endif %}grid grid-cols-{{ columns_mobile }} md:grid-cols-4 lg:grid-cols-{{ columns_desktop }} gap-skeleton-{{ section_id }}">
+      {% for i in (1..count_card) %}
+        <div class="animate-Xpulse{% if swiper_on_mobile and forloop.index > columns_mobile %} hidden md:block{% endif %}">
+          <div class="bg-[#c9c9c9] relative z-20 overflow-hidden{% if show_rounded_image %} rounded-[10px]{% endif %} before:h-0 before:block z-0{% unless media_aspect_ratio == "natural" %} pb-[{{ ratio | times: 100.0 }}%]{% else %} pb-[100%]{% endunless %}"></div>
+          <div class="flex flex-col items-{{ content_alignment }}{% if content_alignment == 'right' %} items-end{% endif %}">
+            <div class="h-3 w-3/4 bg-[#c9c9c9] mt-4"></div>
+            <div class="h-3 w-1/2 bg-[#c9c9c9] mt-2.5 mb-2.5"></div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+{% if show_promotion %}
+  </div>
+{% endif %}

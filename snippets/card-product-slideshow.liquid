@@ -1,0 +1,66 @@
+{% comment %}
+    Renders a product card slideshow
+    Accepts:
+    product: {Object} Product Liquid object (optional)
+{% endcomment %}
+{% style %}
+  {%- if block.settings.color_product_card_background.alpha != 0.0 -%}
+    .bg-card-product-slideshow-{{ block.id }} {
+      background: rgb({{ block.settings.color_product_card_background.red }}, {{ block.settings.color_product_card_background.green }}, {{ block.settings.color_product_card_background.blue }});
+    }
+  {%- endif -%}
+  {%- if block.settings.color_product_card_text.alpha != 0.0 -%}
+    .text-card-product-slideshow-{{ block.id }} {
+      color: rgb({{ block.settings.color_product_card_text.red }}, {{ block.settings.color_product_card_text.green }}, {{ block.settings.color_product_card_text.blue }});
+    }
+  {%- endif -%}
+{% endstyle %}
+<a 
+  href="{{ product.url | within: collection }}" 
+  {% if open_new_window %} target="_blank"{% endif %}
+  class="card-product-slideshow bg-card-product-slideshow-{{ block.id }} z-10 flex rtl:flex-row-reverse gap-x-4 md:gap-x-4 pl-3 pr-3 pb-3 pt-3{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+  {%- unless sideBar %} max-w-[330px]{% if product_count == 1 %} w-full{% else %} w-1/2{% if index == 1 %} mr-2.5{% endif %}{% endif %}{% if max_width %} min-w-[250px] lg:min-w-[300px]{% else %} min-w-[250px]{% endif %}{% endunless %}"
+>
+  <div class="min-w-fit">
+    <div class="h-[80px] w-[80px] relative overflow-hidden{% if settings.edges_type == 'rounded_corners' %} rounded-[6px]{% endif %}">
+      {%- if product.featured_media -%}
+        {% # theme-check-disable ImgLazyLoading %}
+        <img 
+          class="absolute top-0 left-0 w-full h-full object-cover animate-Xpulse skeleton-image"
+          src="{{ product.featured_media | image_url: width: 80 }}"
+          width="{{ product.featured_media.width }}"
+          height="{{ product.featured_media.height }}"
+          alt="{{ product.featured_media.alt | escape }}"
+          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+          onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+        />
+        {% # theme-check-enable ImgLazyLoading %}
+      {%- else -%} 
+        <div class='bg-[#c9c9c9] flex justify-center absolute top-0 left-0 w-full h-full items-center'>
+          {%- render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+  <div>
+    <p class="text-card-product-slideshow-{{ block.id }} h2 text-[100%] text-left rtl:text-right p-break-words line-clamp-2">{{ product.title | escape }}</p>
+    {%- if show_rating -%}
+      {% liquid
+        if settings.lang_direction contains request.locale.iso_code
+          assign align = 'right'
+        else
+          assign align = 'left'
+        endif
+      %}
+      <div class="mt-2">
+        {% render 'review-product', product: product, content_alignment: align, card_product: true, slideshow: true %}
+      </div>
+    {%- endif -%}
+    <div class="mt-2 text-left rtl:text-right">
+      {% render 'price', product: product, align_left: true %}
+    </div>
+    <div id="x-availability-notice-{{ section.id }}" class="mt-2 flex items-center text-left rtl:text-right flex-wrap gap-1 justify-left rtl:flex-row-reverse md:rtl:list-layout:flex-row md:list-layout:justify-start" x-show="$store.xStoreSelector?.canShow('{{ card_product.id }}', [{{ card_product.collections | map: 'id' | join: ', ' }}])">
+      {%- render 'availability-notice', product: product -%}
+    </div>
+  </div>
+</a>

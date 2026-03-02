@@ -1,0 +1,339 @@
+{% comment %}
+  Renders product media gallery
+
+  Accepts:
+  - video: {Object} Video object (optional)
+  - enable_video_autoplay: {Boolean} Enable autoplay video. Default: false (optional)
+  - video_id: {String} Video ID
+  - video_alt: {Boolean} Video alt text.
+  - columns_desktop: {Integer} Number of columns on desktop.
+
+  Usage:
+  {% render 'media-video', lazy_load: false %}
+{% endcomment %}
+
+{%- if enable_video_autoplay -%}
+  {%- capture button_play -%}
+    <div class="button-play absolute top-1/2 left-1/2 hidden">
+      <div class="cursor-pointer absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] md:w-[60px] md:h-[60px] rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 disabled:cursor-not-allowed">
+        <span class="pointer-events-none duration-200 bg-button-play absolute w-4 h-5 md:w-4 md:h-5 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+          {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+        </span>
+      </div>
+    </div>
+  {%- endcapture -%}
+  {% if video_type == 'video_select' %}
+    {% liquid
+      if is_social_feeds_popup_video and media_ratio == 'natural'
+        assign class_video = "w-full h-full absolute top-0 left-0 video object-contain z-0 animate-Xpulse skeleton-image"
+      else
+        assign class_video = "w-full h-full absolute top-0 left-0 video object-cover z-0 animate-Xpulse skeleton-image"
+      endif
+      if settings.edges_type == 'rounded_corners'
+        if is_social_feeds_popup_video
+          if media_ratio != 'aspect-[9/16]'
+            assign class_video = class_video | append: " rounded-[10px] lg:rounded-tr-none lg:rounded-br-none lg:rounded-tl-[10px] lg:rounded-bl-[10px]"
+          else
+            assign class_video = class_video | append: " rounded-[10px] lg:rounded-none"
+          endif
+        elsif is_product_highlight
+        else
+          assign class_video = class_video | append: " rounded-[10px]"
+        endif
+      endif
+      if settings.enable_lazy_loading_image
+        assign loading = 'lazy'
+      else
+        assign loading = 'eager'
+      endif
+    %}
+    {% capture onload %}this.closest(".skeleton-image")?.classList.remove("animate-Xpulse", "skeleton-image");{% endcapture %}
+    {% capture replace_tag_img_loading %}
+      {% if settings.enable_lazy_loading_image %}
+        {{ '<img loading="lazy" hidden alt=""' }}
+      {% else %}
+        {{ '<img loading="eager" hidden alt=""' }}
+      {% endif %}
+    {% endcapture %}
+    <div class="min-h-[1px]">
+      {% if video_looping %}
+        {{ video | video_tag: muted: true, playsinline: true, preload: 'none', loading: loading, class: class_video, poster: '', controls: false, onloadeddata: onload | replace: '<img ', replace_tag_img_loading }}
+      {% elsif is_social_feeds_popup_video or is_social_feeds %}
+        <template x-if="intersect">
+          {% if is_social_feeds %}
+            {{ video | video_tag: autoplay: enable_video_autoplay, loop: true, loading: loading, class: class_video, poster: '', controls: false, onloadeddata: onload | replace: '<img ', replace_tag_img_loading }}
+          {% else %}
+            {{ video | video_tag: autoplay: enable_video_autoplay, loop: true, loading: loading, class: class_video, poster: '', controls: true, onloadeddata: onload | replace: '<img ', replace_tag_img_loading }}
+          {% endif %}
+        </template>
+      {% else %}
+        {{ video | video_tag: autoplay: enable_video_autoplay, loop: true, loading: loading, class: class_video, poster: '', controls: false, onloadeddata: onload | replace: '<img ', replace_tag_img_loading }}
+      {% endif %}
+      {% if show_sound_control %}
+        {% if is_social_feeds %}
+          <button x-data="{ muted: true }" class="button-sound-control max-w-[48px] max-h-[48px] {% if columns_mobile == 1 %}w-[48px] h-[48px] p-5{% else %}w-[30px] h-[30px] p-2{% endif %} lg:p-0 lg:w-1/5 lg:h-auto lg:aspect-square bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 {% if settings.edges_type == 'rounded_corners' %}rounded-[10px] {% endif %}flex items-center justify-center absolute right-3 rtl:left-3 rtl:right-auto cursor-pointer bottom-3" @click.stop="$store.xVideo.toggleMute($el); muted=!muted" aria-label="button sound control">
+            <span class="{% if columns_mobile == 1 %}w-4 h-5{% else %}w-auto h-auto{% endif %} lg:w-1/3 lg:h-1/3 text-[rgba(var(--image-treatment-text))]" x-show="muted">
+              {% render 'icon-media', icon: 'icon-unmute' %}
+            </span>
+            <span class="{% if columns_mobile == 1 %}w-4 h-5{% else %}w-auto h-auto{% endif %} lg:w-1/3 lg:h-1/3 text-[rgba(var(--image-treatment-text))]" x-show="!muted" x-cloak>
+              {% render 'icon-media', icon: 'icon-mute' %}
+            </span>
+          </button>
+        {% else %}
+          <button x-data="{ muted: true }" class="button-sound-control {% if video_looping %} lg:opacity-0 group-hover:lg:opacity-100 transition-opacity duration-300{% endif %} bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 {% if settings.edges_type == 'rounded_corners' %}rounded-[10px] {% endif %}flex items-center justify-center absolute right-2 rtl:left-2 rtl:right-auto cursor-pointer w-[35px] h-[35px] md:w-[34px] md:h-[34px]{% if section.settings.product_card_position == 'on' and section.settings.video_layout == 'aspect-[9/16]' %} top-2 {% else %} {% if video_looping %}top-2{% else %}bottom-2{% endif %}{% endif %}" @click.stop="$store.xVideo.toggleMute($el); muted=!muted" aria-label="button sound control">
+            <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="muted">
+              {% render 'icon-media', icon: 'icon-unmute' %}
+            </span>
+            <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="!muted" x-cloak>
+              {% render 'icon-media', icon: 'icon-mute' %}
+            </span>
+          </button>
+        {% endif %}      
+      {% endif %}
+      {{ button_play }}
+      </div>
+  {% endif %}
+{%- else -%}
+  {% unless is_social_feeds %}
+    {%- capture button_play -%}
+      <div class="button-play absolute top-1/2 left-1/2">
+        <div class="cursor-pointer absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] md:w-[60px] md:h-[60px] rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 disabled:cursor-not-allowed">
+          <span class="pointer-events-none duration-200 bg-button-play absolute w-4 h-5 md:w-4 md:h-5 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+            {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+          </span>
+        </div>
+      </div>
+    {%- endcapture -%}
+  {% endunless %}
+  {%- liquid
+    if video_type == 'video_select' and cover_image == blank
+      assign cover_image = video.preview_image
+    endif
+    if video_type == 'video_select' and image_mobile == blank
+      if cover_image == blank
+        assign image_mobile = video.preview_image
+      else 
+        assign image_mobile = cover_image
+      endif
+    endif
+    if video_type != 'video_select' and cover_image != blank and image_mobile == blank
+      assign image_mobile = cover_image
+    endif
+  -%}
+  {% if cover_image != blank or image_mobile != blank %}
+    {% if cover_image != blank %}
+      {% if show_hero %}
+        <div class="hidden">
+          {{ cover_image | image_url: width: 1500 | image_tag: widths: '375, 450, 750, 900, 1100, 1500', preload: true, loading: 'lazy' }}
+        </div>
+      {% endif %}
+      <picture>
+        <source 
+          srcset="{{ cover_image | image_url: width: 375 }} 375w,
+          {{ cover_image | image_url: width: 450 }} 450w,
+          {{ cover_image | image_url: width: 750 }} 750w,
+          {{ cover_image | image_url: width: 900 }} 900w,
+          {{ cover_image | image_url: width: 1100 }} 1100w,
+          {{ cover_image | image_url: width: 1500 }} 1500w" 
+          media="(max-width: 767px)" 
+          width="{{ cover_image.width }}" 
+          height="{{ cover_image.height }}"
+        />
+        <img
+          srcset="{{ cover_image | image_url: width: 375 }} 375w,
+          {{ cover_image | image_url: width: 450 }} 450w,
+          {{ cover_image | image_url: width: 750 }} 750w,
+          {{ cover_image | image_url: width: 900 }} 900w,
+          {{ cover_image | image_url: width: 1100 }} 1100w,
+          {{ cover_image | image_url: width: 1500 }} 1500w,
+          {{ cover_image | image_url: width: 1780 }} 1780w,
+          {{ cover_image | image_url: width: 2000 }} 2000w,
+          {{ cover_image | image_url: width: 3000 }} 3000w,
+          {{ cover_image | image_url: width: 3840 }} 3840w"
+          sizes="100vw"
+          src="{{ cover_image | image_url: width: 3840 }}"
+          alt="{{ cover_image.alt | escape }}"
+          class="object-cover z-10 absolute top-0 left-0 h-full w-full img-thumbnail image-hover hidden md:flex animate-Xpulse skeleton-image{% if section.settings.product_card_edges == 'rounded_corners' or section.settings.product_card_edges == 'adapt' and settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+          {% if show_hero %}
+            loading="eager"
+            fetchpriority="high"
+            decoding="sync"
+          {% else %}
+            {% if settings.enable_lazy_loading_image %}
+              loading="lazy"
+            {% else %}
+              loading="eager"
+            {% endif %}
+          {% endif %}
+          onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+          width="{{ cover_image.width }}"
+          height="{{ cover_image.height }}"
+          style="object-position:{{ cover_image.presentation.focal_point }};"
+        >
+      </picture>
+    {% elsif video_type == 'youtube' %}
+      <div
+        class="absolute h-full w-full video"
+        aria-label="image-video">
+        {% # theme-check-disable RemoteAsset %}
+        <picture>
+          <source type="image/webp" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+          <source type="image/jpeg" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi/' | append: '/maxresdefault.jpg' }}">
+          <img 
+            src="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}"
+            {% if show_hero %}
+              loading="eager"
+              fetchpriority="high"
+              decoding="sync"
+            {% else %}
+              {% if settings.enable_lazy_loading_image %}
+                loading="lazy"
+              {% else %}
+                loading="eager"
+              {% endif %}
+            {% endif %}
+            class="w-full h-full object-cover animate-Xpulse skeleton-image{% if section.settings.product_card_edges == 'rounded_corners' or section.settings.product_card_edges == 'adapt' and settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+            onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+            alt="{{ video_alt }}" 
+            width="1280" 
+            height="890"
+          />
+        </picture>
+        {% # theme-check-enable RemoteAsset %}
+      </div>
+    {% elsif video_type == 'vimeo'%}
+      {%- capture options -%}
+        {
+          'alt': '{{ video_alt }}',
+          'width': 1280
+        }
+      {%- endcapture -%}
+      <div class="absolute external-video w-full h-full bg-black">
+        <div class="h-full w-full" x-init="$store.xVideo.renderVimeoFacade($el, '{{ video_id }}', {{ options }})"></div>
+      </div>
+    {% endif %}
+    
+    {%- if image_mobile != blank -%}
+      {% if show_hero %}
+        <div class="hidden">
+          {{ image_mobile | image_url: width: 1500 | image_tag: widths: '375, 450, 750, 900, 1100, 1500', preload: true, loading: 'lazy' }}
+        </div>
+      {% endif %}
+      <img
+        srcset="{{ image_mobile | image_url: width: 375 }} 375w,
+        {{ image_mobile | image_url: width: 450 }} 450w,
+        {{ image_mobile | image_url: width: 750 }} 750w,
+        {{ image_mobile | image_url: width: 900 }} 900w,
+        {{ image_mobile | image_url: width: 1100 }} 1100w,
+        {{ image_mobile | image_url: width: 1500 }} 1500w"
+        sizes="100vw"
+        src="{{ image_mobile | image_url: width: 750 }}"
+        alt="{{ image_mobile.alt | escape }}"
+        class="object-cover z-10 absolute top-0 left-0 h-full w-full md:hidden animate_transition_slide__image img-thumbnail animate-Xpulse skeleton-image{% if section.settings.product_card_edges == 'rounded_corners' or section.settings.product_card_edges == 'adapt' and settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+        {% if show_hero %}
+          loading="eager"
+          fetchpriority="high"
+          decoding="sync"
+        {% else %}
+          {% if settings.enable_lazy_loading_image %}
+            loading="lazy"
+          {% else %}
+            loading="eager"
+          {% endif %}
+        {% endif %}
+        onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image'); this.closest('.animate_transition_slide__image')?.classList.add('active');"
+        width="{{ image_mobile.width }}"
+        height="{{ image_mobile.height }}"
+        style="object-position: {{ image_mobile.presentation.focal_point }}"
+      />  
+    {%- endif %}
+    {{ button_play }}
+    {%- assign video_class = 'w-full h-full absolute top-0 left-0 video object-cover' -%}
+    {%- if section.settings.product_card_edges == 'rounded_corners' or section.settings.product_card_edges == 'adapt' and settings.edges_type == 'rounded_corners' -%}
+      {%- assign video_class = 'w-full h-full absolute top-0 left-0 video object-cover rounded-[10px]' -%}
+    {%- endif -%}
+    {% if video_type == 'video_select' %}
+      <div x-data="{isHovered: false}" class="min-h-[1px]">
+        {{ video
+          | video_tag:
+            image_size: "1100x",
+            loop: false,
+            controls: true,
+            muted: false,
+            class: video_class,
+            alt: video_alt,
+            poster: '',
+            preload: false
+            | replace: '<video ', '<video x-on:mouseover="isHovered = true" x-on:mouseleave="isHovered = false" :controls="isHovered" '
+            | replace: '<img ', '<img loading="lazy" alt="" '
+        }}
+      </div>
+    {% endif %}
+  {% else %}
+    {% if video_type == 'youtube' %}
+      {% # theme-check-disable RemoteAsset %}
+      <div
+        class="absolute h-full w-full video"
+        aria-label="image-video">
+        <picture>
+          <source type="image/webp" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+          <source type="image/jpeg" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi/' | append: '/maxresdefault.jpg' }}">
+          <img 
+            src="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}" 
+            {% if show_hero %}
+              loading="eager"
+              fetchpriority="high"
+              decoding="sync"
+            {% else %}
+              {% if settings.enable_lazy_loading_image %}
+                loading="lazy"
+              {% else %}
+                loading="eager"
+              {% endif %}
+            {% endif %}
+            class="w-full h-full object-cover animate-Xpulse skeleton-image{% if section.settings.product_card_edges == 'rounded_corners' or section.settings.product_card_edges == 'adapt' and settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+            onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+            alt="{{ video_alt }}"
+            width="1280"
+            height="890"
+          />
+        </picture>
+      </div>
+      {% # theme-check-enable RemoteAsset %}
+      {{ button_play }}
+    {% elsif video_type == 'vimeo' %}
+      {%- capture options -%}
+        {
+          'alt': '{{ video_alt }}',
+          'width': 1280
+        }
+      {%- endcapture -%}
+      <div class="absolute external-video w-full h-full bg-black">
+        <div class="h-full w-full" x-init="$store.xVideo.renderVimeoFacade($el, '{{ video_id }}', {{ options }})"></div>
+        {{ button_play }}
+      </div>
+    {% elsif video_type == 'video_select' %}
+      {%- assign video_class = 'w-full h-full absolute video object-cover' -%}
+    {%- if section.settings.product_card_edges == 'rounded_corners' or section.settings.product_card_edges == 'adapt' and settings.edges_type == 'rounded_corners' -%}
+      {%- assign video_class = 'w-full h-full absolute video object-cover rounded-[10px]' -%}
+    {%- endif -%}
+    <div x-data="{isHovered: false}">
+      {{ video
+        | video_tag:
+          image_size: "1100x",
+          loop: false,
+          controls: true,
+          muted: false,
+          class: "w-full h-full absolute video object-cover",
+          alt: video_alt,
+          preload: false
+          | replace: '<video ', '<video x-on:mouseover="isHovered = true" x-on:mouseleave="isHovered = false" :controls="isHovered" '
+          | replace: '<img ', '<img loading="lazy" alt="" '
+      }}
+      {{ button_play }}
+    </div>
+    {% endif %}
+  {% endif %}
+{%- endif -%}
+
+<script src="{{ 'video.js' | asset_url }}" defer></script>

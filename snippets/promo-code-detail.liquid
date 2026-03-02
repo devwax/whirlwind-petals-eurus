@@ -1,0 +1,80 @@
+<div
+  id="Promocode-detail-{{ section.id }}"
+  x-show="!$store.xCouponCodeDetail.loading && $store.xCouponCodeDetail.show && $store.xCouponCodeDetail.sectionID == '{{ section.id }}'"
+  x-cloak 
+  class="event-calendar-popup flex items-end md:items-center fixed top-0 left-0 right-0 bottom-0 z-50 bg-[#acacac] bg-opacity-30"
+  {% if request.design_mode %}x-init="$store.xCouponCodeDetail.handleCouponSelect('{{ shop.url }}')"{% endif %}
+>
+  <div
+    x-show="!$store.xCouponCodeDetail.loading && $store.xCouponCodeDetail.show" 
+    class="w-full duration-400 mx-auto md:w-3/4 lg:w-3/5 max-w-[650px] pb-5 pt-10 md:pt-14 md:pb-14 relative md:pl-2.5 md:pr-2.5 lg:ml-auto lg:mr-auto bg-[rgba(var(--background-color),1)]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+    x-transition:enter="transition-all ease-in-out duration-500"
+    x-transition:enter-start="opacity-0 transform translate-y-1/3"
+    x-transition:enter-end="opacity-100 transform translate-y-0"
+    x-transition:leave="transition-all ease-in-out duration-500"
+    x-transition:leave-end="opacity-0 transform translate-y-1/3"
+    x-intersect.full="$store.xModal.focus('Promocode-detail-{{ section.id }}', 'ClosePromocodeDetail-{{ section.id }}');"
+    @keydown.escape="$store.xModal.removeFocus(); $store.xCouponCodeDetail.close();"
+    @click.away="$store.xCouponCodeDetail.close();"
+  >
+    <button
+      id="ClosePromocodeDetail-{{ section.id }}"
+      class="absolute icon-close-container group-close-btn rounded-full cursor-pointer z-10 top-1 right-2 rtl:right-auto rtl:left-2 lg:top-3 md:right-8 rtl:md:left-8 pb-3 pt-3 pl-4 pr-4 h-10 w-10" 
+      aria-label="button-close"
+      @click="$store.xModal.removeFocus(); $store.xCouponCodeDetail.close(); $store.xPopup.close();"
+    >
+      {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+    </button>
+    <div class="pl-5 pr-5 relative bg-[rgba(var(--background-color),1)] overflow-y-auto overflow-x-hidden scrollbar-body max-h-[calc(85vh-96px)] md:max-h-[80vh]">
+      <div 
+        x-data='{ 
+          item: JSON.parse(JSON.stringify(Alpine.store("xCouponCodeDetail").promoCodeDetail)),
+          setItem() {
+            this.item = JSON.parse(JSON.stringify(Alpine.store("xCouponCodeDetail").promoCodeDetail))
+          }
+        }'
+        x-effect="setItem()"
+      >
+        <div class="relative">
+          <h2 class="text-[rgba(var(--colors-heading))] text-center p-break-words pl-5 pr-5" x-text="item.title">
+          </h2>
+          <div class="flex flex-col gap-y-2 border-t pt-7 mt-7 mb-7 ml-5 mr-5" :class="item.show_end_date ? 'lg:flex-col' : 'lg:flex-row'" x-show="item.show_start_date || item.show_end_date">
+            <div x-cloak class="flex flex-wrap pl-6 rtl:pr-6 rtl:pl-0 relative">
+              <span class="w-4 inline-block absolute left-0 rtl:right-0">{% render 'icon-alls', icon: 'icon-clock' %}</span>
+              <template x-if="item.show_start_date && item.show_end_date">
+                <span class="flex gap-1.5">
+                  <span x-text="`${item.date}`"></span>
+                  <span x-text="`@ ${item.time_start}`"></span>
+                  <span x-text="`-`"></span>
+                  <span x-text="`${item.end_date}`"></span>
+                  <span x-text="`@ ${item.time_end}`"></span>
+                </span>
+              </template>
+              <template x-if="item.show_start_date && !item.show_end_date">
+                <span class="flex gap-1.5">
+                  <span x-text="`{{ 'sections.promo-code-list.valid' | t }}`"></span>
+                  <span x-text="`{{ 'sections.promo-code-list.from' | t }}`"></span>
+                  <span x-text="`${item.date}`"></span>
+                  <span x-text="`@ ${item.time_start}`"></span>
+                </span>
+              </template>
+              <template x-if="!item.show_start_date && item.show_end_date">
+                <span class="flex gap-1.5">
+                  <span x-text="`{{ 'sections.promo-code-list.valid' | t }}`"></span>
+                  <span x-text="`{{ 'sections.promo-code-list.until' | t }}`"></span>
+                  <span x-text="`${item.end_date}`"></span>
+                  <span x-text="`@ ${item.time_end}`"></span>
+                </span>
+              </template>
+            </div>
+          </div>
+          <div class="page__container" x-cloak>
+            {{ 'page.css' | asset_url | stylesheet_tag: preload: true }}
+            <div id="PromoCodeContent-{{ section.id }}" class="rte page__body-container page__body pl-0 pr-0">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

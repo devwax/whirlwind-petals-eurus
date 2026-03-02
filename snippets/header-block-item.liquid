@@ -1,0 +1,2694 @@
+{% liquid 
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+    assign class_image_ratio = "w-8 h-8 ml-4"
+  else
+    assign is_rtl = false
+    assign class_image_ratio = "w-8 h-8 mr-4"
+  endif
+  assign text_base_size =  settings.text_base_size | times: 0.01
+  assign menu_font_weight = settings.type_menu_font.weight | plus: 0
+  if section.settings.enable_highlight
+    assign menus = section.settings.menus | newline_to_br | strip_newlines | split: '<br />'
+  endif
+  assign sub_menus = block.settings.applied_sub_menus | newline_to_br | strip_newlines | split: '<br />'
+  assign list_sub_menu = sub_menus | join: '||' | prepend: '||' | append: '||' | escape
+%}
+{% capture sub_label %}
+  {%- if block.settings.sub_label != blank -%}
+    <div class="color-sub-label-{{ block.id }} z-10 min-w-[40px] flex items-center -right-1.5 bottom-[85%] {% if settings.edges_type == "rounded_corners" %}rounded-[4px]{% endif %} shadow-md pl-2 pr-2 pt-0.5 pb-0.5 text-[10px]">
+      {% if block.settings.sub_icon != 'none' %}
+        {% unless block.settings.sub_custom_icon == blank and block.settings.sub_another_icon == blank and block.settings.sub_icon == 'another_icon' %}
+          <span class="w-3 h-3{% if is_rtl %} ml-1{% else %} mr-1{% endif %}">
+            {% if block.settings.sub_custom_icon == blank %}
+              {% if block.settings.sub_another_icon != blank and block.settings.sub_icon == 'another_icon' %}
+                {% render 'icon-new-alls', icon: block.settings.sub_another_icon %}
+              {% else %}
+                {% render 'icon-labels-bags', icon: block.settings.sub_icon %}
+              {% endif %}
+            {% else %}
+              {{ block.settings.sub_custom_icon }}
+            {% endif %}
+          </span>
+        {% endunless %}
+      {%- endif -%}                
+      <span>{{ block.settings.sub_label }}</span>
+    </div>
+  {%- endif -%}
+{% endcapture %}
+{%- case type_menu -%}
+  {%- when 'tabbed_menu' -%}
+    {%- liquid
+      assign image_count = 0
+      if block.settings.image_1 != blank
+        assign image_count = image_count | plus: 1
+      endif
+      if block.settings.image_2 != blank
+        assign image_count = image_count | plus: 1
+      endif
+      if block.settings.image_3 != blank
+        assign image_count = image_count | plus: 1
+      endif
+      assign quick_access_count = 0
+      if block.settings.enable_quick_access_blocks
+        if block.settings.block_title != blank
+          assign quick_access_count = 1
+        endif
+        if block.settings.block_title_2 != blank
+          assign quick_access_count = 1
+        endif
+        if block.settings.block_title_3 != blank
+          assign quick_access_count = 1
+        endif
+        if block.settings.block_title_4 != blank
+          assign quick_access_count = 1
+        endif
+      endif 
+      assign image_count = image_count | plus: quick_access_count
+      assign total_block = image_count | minus: quick_access_count
+      assign class_menu_horizontal = 'grid-cols-4'
+      if image_count > 0
+        assign class_image_width = 'w-1/5'
+        if total_block > 0 and quick_access_count > 0
+          assign class_menu = 'md:w-3/5 grid-cols-3'
+        else 
+          assign class_menu = 'w-3/4 grid-cols-3'
+        endif
+        if block.settings.promotion_layout == 'horizontal'
+          assign class_image_width = 'w-1/5'
+          if total_block > 0 and quick_access_count > 0
+            assign class_menu = 'w-3/5 grid-cols-3'
+          endif
+          if total_block == 2
+            assign class_image_width = 'w-1/2'
+            assign class_menu = 'w-1/2 2xl:w-5/12 grid-cols-2'
+            assign class_menu_horizontal = 'grid-cols-3'
+          endif
+          if total_block >= 3
+            assign class_image_width = 'w-7/12'
+            unless block.settings.tab_style == "vertical" and block.settings.enable_quick_access_blocks == true
+              assign class_menu_horizontal = 'grid-cols-2'
+              assign class_menu = 'w-5/12 2xl:w-[38.75%] grid-cols-2'
+            else
+              assign class_menu_horizontal = 'grid-cols-1'
+              assign class_menu = 'w-5/12 2xl:w-[38.75%] grid-cols-1'
+            endunless
+          endif
+        endif
+      else
+        assign class_menu = 'grid-cols-4'
+      endif
+      assign promotion_position = block.settings.promotion_position
+      if is_rtl
+        if promotion_position == 'left'
+          assign promotion_position = 'right'
+        elsif promotion_position == 'right'
+          assign promotion_position = 'left'
+        endif
+      endif
+    -%}
+    {%- if block.settings.menu.links or image_count > 0 -%}
+      <template x-if="!runDispatch">
+        <div class="toggle-menu toggle-menu-hidden top-full background-header is-focus:text-[rgba(var(--colors-text))] text-[rgba(var(--colors-text))] absolute w-full background-header left-0 z-50 shadow-md ltr
+          {%- if quick_access_count == 0 or total_block == 0 %} mega-menu-{{ block.settings.tab_style }}{% endif -%}
+          {%- if image_count > 0 and quick_access_count <= 0 %} main-nav-child-{{ promotion_position }}{% endif %}"
+        >
+          <div class="mega-menu-container x-pgw page-width mx-auto promotion-{{ block.settings.promotion_layout }} image-count-{{ image_count }}{% if block.settings.tab_style == 'vertical' %} md:max-h-[80vh]{% endif %}{% if quick_access_count > 0 %} flex gap-5 xl:gap-8{% endif %}">
+            <div class="mega-nav pt-8 relative{% if block.settings.tab_style == 'vertical' %}{% if is_rtl %} rtl{% endif %}{% else %} pb-8{% endif %} {{ class_menu }} relative{% if quick_access_count > 0 %} order-2{% endif %} mega-menu-{{ block.settings.tab_style }}">
+              {%- style -%}
+                {%- if block.settings.sub_label != blank -%}
+                  .color-sub-label-{{ block.id }} {
+                    background: {{ block.settings.sub_label_color }};
+                    color: {{ block.settings.sub_label_text_color_light }};
+                  }
+                  .color-sub-label-{{ block.id }}:before{
+                    border-top-color: {{ block.settings.sub_label_color }}; 
+                  }
+                  .dark .color-sub-label-{{ block.id }} {
+                    background: {{ block.settings.sub_label_color_dark }};
+                    color: {{ block.settings.sub_label_text_color_dark }}
+                  }
+                  .dark .color-sub-label-{{ block.id }}:before {
+                    border-top-color: {{ block.settings.sub_label_color_dark }};
+                  }
+                {% endif %}
+              {%- endstyle -%}
+              {% if block.settings.tab_style == 'vertical' %}
+                <ul class="mega-list-nav flex-wrap items-end{% if block.settings.tab_style == 'vertical' %} w-72 md:max-h-[calc(80vh-3rem)] md:overflow-y-scroll scrollbar-body scrollbar-visible{% endif %}{% if is_rtl %} rtl justify-start{% endif %}" x-refs="mega_nav"> 
+                  {%- for link in block.settings.menu.links -%}
+                    <li
+                      class="sub-menu-item table{% if link.links != blank %} has-dropdown{% endif %}{% if block.settings.tab_style == 'vertical' %} tabbed-animation-change{% if forloop.first %} is-active{% endif %}{% endif %}"
+                      x-on:mouseover="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');{% if block.settings.tab_style == 'vertical' %} $store.xHeaderMenu.setHeightScroll($el){% endif %}"
+                      @mouseleave="$el.classList.remove('is-focus-child');{% if block.settings.tab_style == 'horizontal' %} $store.xHeaderMenu.hideMenu($el, true);{% endif %}"
+                      @focusin="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');"
+                      @focusout="$el.classList.remove('is-focus-child');"
+                      {% if block.settings.tab_style == 'vertical' %}
+                        x-intersect.once.margin.200px="$store.xHeaderMenu.setHeightScroll($el, {{ forloop.index }})"
+                      {% endif %}
+                      {%- if link.current or link.child_active %}@init-run.window="active = true;"{% endif %}
+                    >
+                      <div class="sub-menu {% if forloop.first %} border-t{% endif %} flex items-center z-10 relative pl-2.5 pr-2.5{% if block.settings.tab_style == 'vertical' %} w-[15.6rem]{% else %} w-[13rem]{% endif %}{% if is_rtl %} rtl{% endif %}">
+                        {%- render 'menu-item-image', link: link, show_image_product: block.settings.show_image_product, show_image_collection: block.settings.show_image_collection, show_first_image_product: block.settings.show_first_image_product, class_ratio: class_image_ratio, image_left: true, collection_metafield: block.settings.collection_metafield -%}
+                        <span class="flex-1">
+                          <a
+                            href="{{ link.url }}"
+                            class="nav-link p-break-words z-10 pt-3 pb-3 flex flex-wrap gap-2 items-center{% if link.links != blank %} pr-5 rtl:pr-0 rtl:pl-5{% endif %} hover-text-link is-focus-child:effect-inline{%- if link.current or link.child_active %} flex effect-inline{% endif %}"
+                            {% if link.links != blank %}@init-run.window="$store.xHeaderMenu.isTouch && $store.xHeaderMenu.touchItem($el, true)"{% endif %}
+                          >
+                            {% liquid
+                              assign is_labeled = false
+                              assign menu_item = '||' | append: link.title | append: '||' | escape
+                              if list_sub_menu contains menu_item
+                                assign is_labeled = true
+                              endif
+                            %}
+                            {% assign title = link.title %}
+                            {% if section.settings.enable_highlight %}
+                              {% liquid
+                                assign is_highlight = false
+                                assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                assign menu_item = '||' | append: title | append: '||' | escape
+                                if list_menu contains menu_item
+                                  assign is_highlight = true
+                                endif
+                              %}
+                              {% if is_highlight %}
+                                {% render 'menu-highlight',
+                                  highlight_type: section.settings.highlight_style,
+                                  menu_title: title,
+                                  section_id: section.id,
+                                %}
+                              {% else %}
+                                <span class="p-break-words">{{ title | escape }}</span>
+                              {% endif %}
+                            {% else %}
+                              <span class="p-break-words">{{ title | escape }}</span>
+                            {% endif %}
+                            {% if is_labeled %}
+                              {{ sub_label }}
+                            {% endif %}
+                            {%- if link.links != blank -%}
+                              <span class="z-10 w-5 h-4 p-1 rounded-full block absolute{% if block.settings.tab_style != 'horizontal' %} -rotate-90 rtl:rotate-90 right-1.5 rtl:right-auto rtl:left-1.5{% else %} right-0 rtl:right-auto rtl:left-0{% endif %}">
+                                {% render 'icon-alls', icon: 'icon-caret' %}
+                              </span>
+                            {%- endif -%}
+                          </a>
+                        </span>
+                      </div>
+                      {% liquid
+                        assign column = 4
+                        if block.settings.promotion_layout == 'vertical'
+                          if link.links.size < 4 and block.settings.tab_style == 'vertical'
+                            if link.links.size > 1
+                              assign column = link.links.size
+                            else
+                              assign column = 2
+                            endif
+                          endif
+                          assign class_menu = 'w-full grid-cols-' | append: column
+                        endif
+                        if block.settings.tab_style == 'vertical'
+                          assign class_menu = class_menu | remove: 'w-3/4 ' | remove: '2xl:w-3/5 ' | remove: 'w-1/2 2xl:w-5/12 ' | remove: 'w-5/12 2xl:w-[38.75%] ' | remove: '2xl:w-[62%] ' | remove: 'w-4/5 ' | append: ' w-full'
+                        endif
+                        assign class_menu_postion = ' left-72 rtl:right-72'
+
+                        assign multiple_menu = false
+                        for childlink in link.links
+                          if childlink.links != blank
+                            assign multiple_menu = true
+                          endif
+                        endfor
+                      %}
+                      <div  class="toggle-menu-sub overflow-hidden absolute right-0 rtl:left-0{% if block.settings.tab_style == 'horizontal' %} left-0 z-20 background-header{% if link.links != blank %} pt-5 pb-8{% endif %}{% else %}{{ class_menu_postion }} pt-8 z-0 top-0 pb-7 h-auto{% if forloop.first %} open{% endif %}{% endif %} toggle-menu-sub-hidden ltr">   
+                        <div class="relative x-pgw page-width mx-auto h-full max-h-[calc(80vh-3rem)] overflow-y-auto scrollbar-body scrollbar-visible overflow-hidden">
+                          {%- if link.links != blank -%}
+                            <ul class="sub-menu-container order-2 flex flex-wrap justify-{{ block.settings.menu_content_alignment }} gap-y-7 gap-x-7 h-full{% if block.settings.tab_style == 'horizontal' %} pr-5 rtl:pr-0 rtl:pl-5 pb-8 overflow-y-auto scrollbar-body scrollbar-visible{% endif %}{% if is_rtl %} rtl{% endif %}">
+                              {%- for childlink in link.links -%}
+                                <li class="relative w-24 lg:w-48">
+                                  <div class="{% if menu_font_weight < 600 and multiple_menu == true %}font-semibold{% endif %}">
+                                    <a href="{{ childlink.url }}" class="flex flex-wrap gap-2 nav-link relative transition duration-200 mb-2 p-break-words hover-text-link{% if childlink.current %} flex border-b effect-inline{% else %} inline-block{%- endif -%}">
+                                      {% liquid
+                                        assign is_labeled = false
+                                        assign menu_item = '||' | append: childlink.title | append: '||' | escape
+                                        if list_sub_menu contains menu_item
+                                          assign is_labeled = true
+                                        endif
+                                      %}
+                                      {% assign title = childlink.title %}
+                                      {% if section.settings.enable_highlight %}
+                                        {% liquid
+                                          assign is_highlight = false
+                                          assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                          assign menu_item = '||' | append: title | append: '||' | escape
+                                          if list_menu contains menu_item
+                                            assign is_highlight = true
+                                          endif
+                                        %}
+                                        {% if is_highlight %}
+                                          {% render 'menu-highlight',
+                                            highlight_type: section.settings.highlight_style,
+                                            menu_title: title,
+                                            section_id: section.id,
+                                          %}
+                                        {% else %}
+                                          <span class="p-break-words">{{ title | escape }}</span>
+                                        {% endif %}
+                                      {% else %}
+                                        <span class="p-break-words">{{ title | escape }}</span>
+                                      {% endif %}
+                                      {% if is_labeled %}
+                                        {{ sub_label }}
+                                      {% endif %}
+                                    </a>
+                                    {%- render 'menu-item-image', link: childlink, show_image_product: block.settings.show_sub_image_product, show_image_collection: block.settings.show_sub_image_collection, show_first_image_product: block.settings.show_sub_first_image_product, image_ratio: block.settings.image_ratio, column: column, collection_metafield: block.settings.collection_metafield -%}
+                                  </div>
+                                  {%- if childlink.links != blank -%}
+                                    <ul class="list-unstyled" role="list">
+                                      {%- for grandchildlink in childlink.links -%}
+                                        <li class="flex items-center pt-1.5 pb-1.5 relative font-normal">
+                                          <span class="flex-1">
+                                            <a href="{{ grandchildlink.url }}" class="flex flex-wrap gap-2 nav-link relative transition duration-200 p-break-words hover-text-link{% if grandchildlink.current %} flex effect-inline border-b{% else %} inline-block{% endif %}">
+                                              {% liquid
+                                                assign is_labeled = false
+                                                assign menu_item = '||' | append: grandchildlink.title | append: '||' | escape
+                                                if list_sub_menu contains menu_item
+                                                  assign is_labeled = true
+                                                endif
+                                              %}
+                                              {% assign title = grandchildlink.title %}
+                                              {% if section.settings.enable_highlight %}
+                                                {% liquid
+                                                  assign is_highlight = false
+                                                  assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                                  assign menu_item = '||' | append: title | append: '||' | escape
+                                                  if list_menu contains menu_item
+                                                    assign is_highlight = true
+                                                  endif
+                                                %}
+                                                {% if is_highlight %}
+                                                  {% render 'menu-highlight',
+                                                    highlight_type: section.settings.highlight_style,
+                                                    menu_title: title,
+                                                    section_id: section.id,
+                                                  %}
+                                                {% else %}
+                                                  <span class="p-break-words">{{ title | escape }}</span>
+                                                {% endif %}
+                                              {% else %}
+                                                <span class="p-break-words">{{ title | escape }}</span>
+                                              {% endif %}
+                                              {% if is_labeled %}
+                                                {{ sub_label }}
+                                              {% endif %}
+                                            </a>
+                                          </span>
+                                        </li>
+                                      {%- endfor -%}
+                                    </ul>
+                                  {%- endif -%}
+                                </li>
+                              {%- endfor -%}
+                            </ul>
+                          {%- endif -%}
+                        </div>
+                        {% if block.settings.see_more_link != blank and block.settings.see_more_title != blank %}
+                          <div class="mega-sub-container relative x-pgw page-width mx-auto clear-both"
+                            style="padding-top: 0{% if block.settings.tab_style == 'vertical' %}{% if is_rtl %}; padding-left: 5rem{% endif %}{% endif %}"
+                          >
+                            <div class="mega-sub-nav pr-5 pb-8 {{ class_menu }}">
+                              <div class="see-more border-t py-4 hidden ltr md:flex justify-{{ block.settings.see_more_alignment }} rtl:justify-{% if block.settings.see_more_alignment == 'center' %}center{% elsif block.settings.see_more_alignment == 'start' %}right{% else %}left{% endif %}">
+                                <a href="{{ block.settings.see_more_link }}" 
+                                  class="hover-text-link nav-link relative w-fit flex gap-1{% if is_rtl %} rtl{% endif %}"
+                                  {% if block.settings.see_more_open_new_window %} target="_blank" {% endif %}
+                                >
+                                  {{ block.settings.see_more_title }}
+                                  <span class="block w-5 h-5 rtl:rotate-180">{% render 'icon-alls', icon: 'icon-arrow' %}</span>
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        {% endif %}
+                      </div>
+                    </li>
+                  {%- endfor -%}
+                </ul>
+              {% else %}
+                <div class="x-splide splide flex gap-x-8 disable-effect-hover visible"
+                  id="horizontal-menu-{{ block.id }}"
+                  x-intersect.once.margin.200px='$store.xSplide.load($el, {
+                    "speed": 1000,
+                    "pagination": false, 
+                    "updateOnMove": "true",
+                    "autoWidth": "true",
+                    "gap": "2rem",
+                    {%- if is_rtl %} 
+                    "direction": "rtl",
+                    {%- endif %}
+                    "focus": "right",
+                    "perPage": 1,
+                    "perMove": 2,
+                    "events": [
+                      {
+                        "event": "ready",
+                        "callback": () => {
+                          let slide = document.getElementById("horizontal-menu-{{ block.id }}");
+                          let slideList = slide.querySelector(".splide__list");
+                          let btnArrow = slide.querySelector(".splide__arrows"); 
+                          if (slide.offsetWidth <= slideList.offsetWidth) {
+                            btnArrow.classList.remove("md:hidden");
+                          } else {
+                            btnArrow.classList.add("md:hidden");
+                          }
+                        }
+                      }
+                    ]
+                  })'
+                >
+                  <div class="absolute top-1/2 splide__arrows md:hidden flex justify-center w-full items-center">
+                    <button class="splide__arrow splide__arrow--prev button-arrow lg:absolute top-1/2 -translate-y-1/2 left-0 rtl:left-auto rtl:right-0 rtl:rotate-180 pl-2 pr-2 pt-2 pb-2 rounded-full z-10 w-7 h-7 after:text-[20px] duration-200 hover:opacity-100 disabled:cursor-not-allowed disabled:hidden transition-all ease-in-out disabled:opacity-30" aria-label="previous slide">
+                      {% render 'icon-labels-bags', icon: 'chevron-left' %}
+                    </button>
+                    <button class="splide__arrow splide__arrow--next button-arrow lg:absolute top-1/2 -translate-y-1/2 right-0 rtl:right-auto rtl:left-0 rtl:rotate-180 pl-2 pr-2 pt-2 pb-2 rounded-full z-10 w-7 h-7 after:text-[20px] duration-200 hover:opacity-100 disabled:cursor-not-allowed disabled:hidden transition-all ease-in-out disabled:opacity-30" aria-label="next slide">
+                      {% render 'icon-labels-bags', icon: 'chevron-right' %}
+                    </button>
+                  </div>
+                  <div class="splide__track">
+                    <div class="splide__list flex items-end pb-0.5">
+                    {% assign block_id_downcase = block.id | replace: "_", "" | downcase %}
+                    {%- for link in block.settings.menu.links -%}
+                      <div 
+                        class="h-full sub-menu-horizontal splide__slide x-splide-slide table{% if link.links != blank %} has-dropdown{% if forloop.first %} active{% endif %}{% endif %}"
+                        x-on:mouseover="$dispatch('mouseover-{{ block_id_downcase }}-{{ forloop.index }}');$el.classList.add('is-focus-child');$el.closest('.splide__list').querySelector('.sub-menu-horizontal.active')?.classList.remove('active'); $el.classList.add('active'); $dispatch('setheight-{{ block_id_downcase }}-{{ forloop.index }}');"
+                        @mouseleave="$el.classList.remove('is-focus-child');"
+                        @focusin="$dispatch('focusin-{{ block_id_downcase }}-{{ forloop.index }}'); $el.classList.add('is-focus-child');$el.closest('.splide__list').querySelector('.sub-menu-horizontal.active')?.classList.remove('active'); $el.classList.add('active'); $dispatch('setheight-{{ block_id_downcase }}-{{ forloop.index }}');"
+                        @focusout="$el.classList.remove('is-focus-child');"
+                      >
+                        <div class="h-full sub-menu flex items-center z-10 relative pl-2.5 pr-2.5 w-[15.6rem]">
+                          {%- render 'menu-item-image', link: link, show_image_product: block.settings.show_image_product, show_image_collection: block.settings.show_image_collection, show_first_image_product: block.settings.show_first_image_product, class_ratio: class_image_ratio, image_left: true, collection_metafield: block.settings.collection_metafield -%}
+                          <span class="flex-1">
+                            <a href="{{ link.url }}"
+                              class="nav-link w-full text-left p-break-words z-10 pb-3 pt-3 flex flex-wrap gap-2 items-center{% if link.links != blank %} pr-5 rtl:pr-0 rtl:pl-5{% endif %} hover-text-link is-focus-child:effect-inline{%- if link.current or link.child_active %} flex effect-inline{% endif %}"
+                              {% if link.links != blank %}@init-run.window="$store.xHeaderMenu.isTouch && $store.xHeaderMenu.touchItem($el, true)"{% endif %}
+                            >
+                              {% liquid
+                                assign is_labeled = false
+                                assign menu_item = '||' | append: link.title | append: '||' | escape
+                                if list_sub_menu contains menu_item
+                                  assign is_labeled = true
+                                endif
+                              %}
+                              {% assign title = link.title %}
+                              {% if section.settings.enable_highlight %}
+                                {% liquid
+                                  assign is_highlight = false
+                                  assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                  assign menu_item = '||' | append: title | append: '||' | escape
+                                  if list_menu contains menu_item
+                                    assign is_highlight = true
+                                  endif
+                                %}
+                                {% if is_highlight %}
+                                  {% render 'menu-highlight',
+                                    highlight_type: section.settings.highlight_style,
+                                    menu_title: title,
+                                    section_id: section.id,
+                                  %}
+                                {% else %}
+                                  <span class="p-break-words">{{ title | escape }}</span>
+                                {% endif %}
+                              {% else %}
+                                <span class="p-break-words">{{ title | escape }}</span>
+                              {% endif %}
+                              {% if is_labeled %}
+                                {{ sub_label }}
+                              {% endif %}
+                              {%- if link.links != blank -%}
+                                <span class="z-10 w-5 h-4 p-1 rounded-full block absolute{% if block.settings.tab_style != 'horizontal' %} -rotate-90 rtl:rotate-90 right-1.5 rtl:right-auto rtl:left-1.5{% else %} right-0 rtl:right-auto rtl:left-0{% endif %}">
+                                  {% render 'icon-alls', icon: 'icon-caret' %}
+                                </span>
+                              {%- endif -%}
+                            </a>
+                          </span>
+                        </div>
+                      </div>
+                    {% endfor %}
+                    </div>
+                  </div>
+                </div>
+                <ul class="mega-list-nav items-end{% if is_rtl %} rtl justify-start{% endif %} h-0 pt-0 pb-0 overflow-hidden" x-refs="mega_nav"> 
+                  {%- for link in block.settings.menu.links -%}
+                    <li
+                      class="sub-menu-item table{% if link.links != blank %} has-dropdown{% endif %}{% if block.settings.tab_style == 'vertical' %} tabbed-animation-change{% if forloop.first %} is-active{% endif %}{% endif %}"
+                      {% if link.links != blank and forloop.first %}
+                        x-intersect.once.margin.200px="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');$store.xHeaderMenu.tongleHorizontalHeight($el);"
+                      {% endif %}
+                        @setheight-{{ block_id_downcase }}-{{ forloop.index }}.window="$store.xHeaderMenu.tongleHorizontalHeight($el);"
+                        @mouseover-{{ block_id_downcase }}-{{ forloop.index }}.window="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');"
+                        @mouseleave="$el.classList.remove('is-focus-child');"
+                        @focusin-{{ block_id_downcase }}-{{ forloop.index }}.window="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');"
+                        @focusout="$el.classList.remove('is-focus-child');"
+                      {% if block.settings.tab_style == 'vertical' %}
+                        x-intersect.once.margin.200px="$store.xHeaderMenu.setHeightScroll($el, {{ forloop.index }})"
+                      {% endif %}
+                      {%- if link.current or link.child_active %}@init-run.window="active = true;"{% endif %}
+                    >
+                      <div class="h-0 sub-menu {% if forloop.first %} border-t{% endif %} flex items-center z-10 relative pl-2.5 pr-2.5{% if block.settings.tab_style == 'vertical' %} w-[15.6rem]{% else %} w-[13rem]{% endif %}{% if is_rtl %} rtl{% endif %}">
+                        {%- render 'menu-item-image', link: link, show_image_product: block.settings.show_image_product, show_image_collection: block.settings.show_image_collection, show_first_image_product: block.settings.show_first_image_product, class_ratio: class_image_ratio, image_left: true, collection_metafield: block.settings.collection_metafield -%}
+                        <span class="flex-1">
+                          <a
+                            href="{{ link.url }}"
+                            class="nav-link p-break-words z-10 pt-3 pb-3 flex flex-wrap gap-2 items-center{% if link.links != blank %} pr-5 rtl:pr-0 rtl:pl-5{% endif %} hover-text-link is-focus-child:effect-inline{%- if link.current or link.child_active %} flex effect-inline{% endif %}"
+                            {% if link.links != blank %}@init-run.window="$store.xHeaderMenu.isTouch && $store.xHeaderMenu.touchItem($el, true)"{% endif %}
+                          >
+                            {% liquid
+                              assign is_labeled = false
+                              assign menu_item = '||' | append: link.title | append: '||' | escape
+                              if list_sub_menu contains menu_item
+                                assign is_labeled = true
+                              endif
+                            %}
+                            {% assign title = link.title %}
+                            {% if section.settings.enable_highlight %}
+                              {% liquid
+                                assign is_highlight = false
+                                assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                assign menu_item = '||' | append: title | append: '||' | escape
+                                if list_menu contains menu_item
+                                  assign is_highlight = true
+                                endif
+                              %}
+                              {% if is_highlight %}
+                                {% render 'menu-highlight',
+                                  highlight_type: section.settings.highlight_style,
+                                  menu_title: title,
+                                  section_id: section.id,
+                                %}
+                              {% else %}
+                                <span class="p-break-words">{{ title | escape }}</span>
+                              {% endif %}
+                            {% else %}
+                              <span class="p-break-words">{{ title | escape }}</span>
+                            {% endif %}
+                            {% if is_labeled %}
+                              {{ sub_label }}
+                            {% endif %}
+                            {%- if link.links != blank -%}
+                              <span class="z-10 w-5 h-4 p-1 rounded-full block absolute{% if block.settings.tab_style != 'horizontal' %} -rotate-90 rtl:rotate-90 right-1.5 rtl:right-auto rtl:left-1.5{% else %} right-0 rtl:right-auto rtl:left-0{% endif %}">
+                                {% render 'icon-alls', icon: 'icon-caret' %}
+                              </span>
+                            {%- endif -%}
+                          </a>
+                        </span>
+                      </div>
+                      {% liquid
+                        assign column = 4
+                        if block.settings.promotion_layout == 'vertical'
+                          if link.links.size < 4 and block.settings.tab_style == 'vertical'
+                            if link.links.size > 1
+                              assign column = link.links.size
+                            else
+                              assign column = 2
+                            endif
+                          endif
+                          assign class_menu = 'w-full grid-cols-' | append: column
+                        endif
+                        if block.settings.tab_style == 'vertical'
+                          assign class_menu = class_menu | remove: 'w-3/4 ' | remove: '2xl:w-3/5 ' | remove: 'w-1/2 2xl:w-5/12 ' | remove: 'w-5/12 2xl:w-[38.75%] ' | remove: '2xl:w-[62%] ' | remove: 'w-4/5 ' | append: ' w-full'
+                        endif
+                        assign class_menu_postion = ' left-72 rtl:right-72'
+
+                        assign multiple_menu = false
+                        for childlink in link.links
+                          if childlink.links != blank
+                            assign multiple_menu = true
+                          endif
+                        endfor
+                      %}
+                      <div class="toggle-menu-sub overflow-hidden absolute right-0 rtl:left-0 overflow-y-auto scrollbar-body scrollbar-visible{% if block.settings.tab_style == 'horizontal' %} left-0 z-20 background-header{% if link.links != blank %} pt-10 pb-8{% endif %}{% else %}{{ class_menu_postion }} pt-12 z-0 top-0 pb-7 h-auto max-h-[calc(80vh-3rem)]{% endif %} toggle-menu-sub-hidden ltr">   
+                        <div class="relative x-pgw page-width mx-auto h-full">
+                          {%- if link.links != blank -%}
+                            <ul class="sub-menu-container order-2 flex flex-wrap justify-{{ block.settings.menu_content_alignment }} gap-y-7 gap-x-7 w-full h-full{% if is_rtl %} rtl{% endif -%}
+                              {%- if block.settings.tab_style == 'horizontal' %} pb-8 overflow-y-auto scrollbar-body scrollbar-visible
+                                {%- if block.settings.promotion_position == 'left' %} float-right{% else %} rtl:float-right{% endif -%}
+                              {% endif %}"
+                            >
+                              {%- for childlink in link.links -%}
+                                <li class="relative w-24 lg:w-48">
+                                  <div class="{% if menu_font_weight < 600 and multiple_menu == true %}font-semibold{% endif %}">
+                                    <a href="{{ childlink.url }}" class="flex flex-wrap gap-2 nav-link relative transition duration-200 mb-2 p-break-words hover-text-link{% if childlink.current %} flex border-b effect-inline{% else %} inline-block{%- endif -%}">
+                                      {% liquid
+                                        assign is_labeled = false
+                                        assign menu_item = '||' | append: childlink.title | append: '||' | escape
+                                        if list_sub_menu contains menu_item
+                                          assign is_labeled = true
+                                        endif
+                                      %}
+                                      {% assign title = childlink.title %}
+                                      {% if section.settings.enable_highlight %}
+                                        {% liquid
+                                          assign is_highlight = false
+                                          assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                          assign menu_item = '||' | append: title | append: '||' | escape
+                                          if list_menu contains menu_item
+                                            assign is_highlight = true
+                                          endif
+                                        %}
+                                        {% if is_highlight %}
+                                          {% render 'menu-highlight',
+                                            highlight_type: section.settings.highlight_style,
+                                            menu_title: title,
+                                            section_id: section.id,
+                                          %}
+                                        {% else %}
+                                          <span class="p-break-words">{{ title | escape }}</span>
+                                        {% endif %}
+                                      {% else %}
+                                        <span class="p-break-words">{{ title | escape }}</span>
+                                      {% endif %}
+                                      {% if is_labeled %}
+                                        {{ sub_label }}
+                                      {% endif %}
+                                    </a>
+                                    {%- render 'menu-item-image', link: childlink, show_image_product: block.settings.show_sub_image_product, show_image_collection: block.settings.show_sub_image_collection, show_first_image_product: block.settings.show_sub_first_image_product, image_ratio: block.settings.image_ratio, column: column, collection_metafield: block.settings.collection_metafield -%}
+                                  </div>
+                                  {%- if childlink.links != blank -%}
+                                    <ul class="list-unstyled" role="list">
+                                      {%- for grandchildlink in childlink.links -%}
+                                        <li class="flex items-center pt-1.5 pb-1.5 relative font-normal">
+                                          <span class="flex-1">
+                                            <a href="{{ grandchildlink.url }}" class="flex flex-wrap gap-2 nav-link relative transition duration-200 p-break-words hover-text-link{% if grandchildlink.current %} flex effect-inline border-b{% else %} inline-block{% endif %}">
+                                              {% liquid
+                                                assign is_labeled = false
+                                                assign menu_item = '||' | append: grandchildlink.title | append: '||' | escape
+                                                if list_sub_menu contains menu_item
+                                                  assign is_labeled = true
+                                                endif
+                                              %}
+                                              {% assign title = grandchildlink.title %}
+                                              {% if section.settings.enable_highlight %}
+                                                {% liquid
+                                                  assign is_highlight = false
+                                                  assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                                  assign menu_item = '||' | append: title | append: '||' | escape
+                                                  if list_menu contains menu_item
+                                                    assign is_highlight = true
+                                                  endif
+                                                %}
+                                                {% if is_highlight %}
+                                                  {% render 'menu-highlight',
+                                                    highlight_type: section.settings.highlight_style,
+                                                    menu_title: title,
+                                                    section_id: section.id,
+                                                  %}
+                                                {% else %}
+                                                  <span class="p-break-words">{{ title | escape }}</span>
+                                                {% endif %}
+                                              {% else %}
+                                                <span class="p-break-words">{{ title | escape }}</span>
+                                              {% endif %}
+                                              {% if is_labeled %}
+                                                {{ sub_label }}
+                                              {% endif %}
+                                            </a>
+                                          </span>
+                                        </li>
+                                      {%- endfor -%}
+                                    </ul>
+                                  {%- endif -%}
+                                </li>
+                              {%- endfor -%}
+                            </ul>
+                          {%- endif -%}
+                        </div>
+                        {% if block.settings.see_more_link != blank and block.settings.see_more_title != blank %}
+                          <div class="mega-sub-container relative x-pgw page-width mx-auto clear-both{% if block.settings.tab_style == 'vertical' %} pl-[20rem] rtl:pl-0 rtl:pr-[20rem]{% endif %}"
+                            style="padding-top: 0{% if block.settings.tab_style == 'vertical' %}{% if is_rtl %}; padding-left: 5rem{% endif %}{% endif %}"
+                          >
+                            <div class="mega-sub-nav pr-5 pb-8 {{ class_menu }}">
+                              <div class="see-more border-t py-4 hidden ltr md:flex justify-{{ block.settings.see_more_alignment }} rtl:justify-{% if block.settings.see_more_alignment == 'center' %}center{% elsif block.settings.see_more_alignment == 'start' %}right{% else %}left{% endif %}">
+                                <a href="{{ block.settings.see_more_link }}" 
+                                  class="hover-text-link nav-link relative w-fit flex gap-1{% if is_rtl %} rtl{% endif %}"
+                                  {% if block.settings.see_more_open_new_window %} target="_blank" {% endif %}
+                                >
+                                  {{ block.settings.see_more_title }}
+                                  <span class="block w-5 h-5 rtl:rotate-180">{% render 'icon-alls', icon: 'icon-arrow' %}</span>
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        {% endif %}
+                      </div>
+                    </li>
+                  {%- endfor -%}
+                </ul>
+              {% endif %}
+            </div>
+            {%- if block.settings.enable_quick_access_blocks -%}
+              {% assign block_id = block.id | append: "-quick-access" %}
+              {%- style -%}
+                .button-{{ block_id }} .icon-access  {
+                  width: {{ block.settings.quick_access_icon_size }}px;
+                  height: {{ block.settings.quick_access_icon_size }}px;
+                  min-width: {{ block.settings.quick_access_icon_size }}px;
+                }
+                {%- unless block.settings.color_bg_quick_access.alpha == 0.0 -%}
+                  .button-{{ block_id }} {
+                    background: rgba({{ block.settings.color_bg_quick_access.red }}, {{ block.settings.color_bg_quick_access.green }}, {{ block.settings.color_bg_quick_access.blue }});
+                  }
+                {%- endunless -%} 
+                {%- unless block.settings.color_bg_dark_quick_access.alpha == 0.0 -%}
+                  .dark .button-{{ block_id }} {
+                    background: rgba({{ block.settings.color_bg_dark_quick_access.red }}, {{ block.settings.color_bg_dark_quick_access.green }}, {{ block.settings.color_bg_dark_quick_access.blue }});
+                  }
+                {%- endunless -%} 
+                .button-{{ block_id }} .button-solid,
+                .button-{{ block_id }} .button-solid:before { 
+                  font-size: {{ block.settings.quick_access_font_size | times: 0.01 | times: text_base_size }}rem;
+                  border-radius: {{ block.settings.quick_access_corner_radius }}px;
+                  {%- unless block.settings.color_button_quick_access.alpha == 0.0 -%}
+                    --colors-line-and-border: {{ block.settings.color_button_quick_access.red }}, {{ block.settings.color_button_quick_access.green }}, {{ block.settings.color_button_quick_access.blue }};
+                    --colors-button: {{ block.settings.color_button_quick_access.red }}, {{ block.settings.color_button_quick_access.green }}, {{ block.settings.color_button_quick_access.blue }};
+                  {%- else -%}
+                    --colors-line-and-border: var(--colors-button);
+                  {%- endunless -%}
+                  {%- unless block.settings.color_text_button_quick_access.alpha == 0.0 -%}
+                    --colors-button-text: {{ block.settings.color_text_button_quick_access.red }}, {{ block.settings.color_text_button_quick_access.green }}, {{ block.settings.color_text_button_quick_access.blue }};
+                  {%- endunless -%}
+                  {%- unless block.settings.color_button_hover_quick_access.alpha == 0.0 -%}
+                    --colors-button-hover: rgb({{ block.settings.color_button_hover_quick_access.red }}, {{ block.settings.color_button_hover_quick_access.green }}, {{ block.settings.color_button_hover_quick_access.blue }});
+                  {%- endunless -%}
+                  {%- unless block.settings.color_text_button_hover_quick_access.alpha == 0.0 -%}
+                    --colors-button-text-hover: {{ block.settings.color_text_button_hover_quick_access.red }}, {{ block.settings.color_text_button_hover_quick_access.green }}, {{ block.settings.color_text_button_hover_quick_access.blue }};
+                  {%- endunless -%}
+                }
+                .dark .button-{{ block_id }} .button-solid,
+                .dark .button-{{ block_id }} .button-solid:before { 
+                  {%- unless block.settings.color_button_dark_quick_access.alpha == 0.0 -%}
+                    --colors-line-and-border: {{ block.settings.color_button_dark_quick_access.red }}, {{ block.settings.color_button_dark_quick_access.green }}, {{ block.settings.color_button_dark_quick_access.blue }};
+                    --colors-button: {{ block.settings.color_button_dark_quick_access.red }}, {{ block.settings.color_button_dark_quick_access.green }}, {{ block.settings.color_button_dark_quick_access.blue }};
+                  {%- else -%}
+                    --colors-button: {{ settings.colors_dark_button.red }}, {{ settings.colors_dark_button.green }}, {{ settings.colors_dark_button.blue }};
+                    --colors-line-and-border: var(--colors-button);
+                  {%- endunless -%}
+                  {%- unless block.settings.color_text_button_dark_quick_access.alpha == 0.0 -%}
+                    --colors-button-text: {{ block.settings.color_text_button_dark_quick_access.red }}, {{ block.settings.color_text_button_dark_quick_access.green }}, {{ block.settings.color_text_button_dark_quick_access.blue }};
+                  {%- else -%}
+                    --colors-button-text: {{ settings.colors_dark_button_text.red }}, {{ settings.colors_dark_button_text.green }}, {{ settings.colors_dark_button_text.blue }};
+                  {%- endunless -%}
+                  {%- unless block.settings.color_button_hover_dark_quick_access.alpha == 0.0 -%}
+                    --colors-button-hover: rgb({{ block.settings.color_button_hover_dark_quick_access.red }}, {{ block.settings.color_button_hover_dark_quick_access.green }}, {{ block.settings.color_button_hover_dark_quick_access.blue }});
+                  {%- else -%}
+                    --colors-button-hover: rgb({{ settings.colors_dark_button_hover.red }}, {{ settings.colors_dark_button_hover.green }}, {{ settings.colors_dark_button_hover.blue }});
+                  {%- endunless -%}
+                  {%- unless block.settings.color_text_button_hover_dark_quick_access.alpha == 0.0 -%}
+                    --colors-button-text-hover: {{ block.settings.color_text_button_hover_dark_quick_access.red }}, {{ block.settings.color_text_button_hover_dark_quick_access.green }}, {{ block.settings.color_text_button_hover_dark_quick_access.blue }};
+                  {% else %}  
+                    --colors-button-text-hover: {{ settings.colors_dark_button_text_hover.red }}, {{ settings.colors_dark_button_text_hover.green }}, {{ settings.colors_dark_button_text_hover.blue }};
+                  {%- endunless -%}
+                }
+              {%- endstyle -%}
+              <div class="grid-quick-access-{{ block_id }} mega-menu-card relative pt-8 pb-3 z-10 w-1/5{% if block.settings.desktop_position == 'right' %} ml-auto rtl:ml-0 order-3 rtl:order-1{% else %} order-1 rtl:order-3 rtl:ml-auto{% endif %}">
+                <div class="{%- unless block.settings.color_bg_quick_access.alpha == 0.0 -%} p-3{% endunless %} button-{{ block_id }} {% if is_rtl %} rtl{% endif %}">
+                  {%- assign number = 0 -%}
+                  {%- if block.settings.block_title != blank -%}
+                    {%- assign number = number | plus: 1 -%}
+                    {% render 'quick-access',
+                      block_title: block.settings.block_title,
+                      block_link: block.settings.block_link,
+                      quick_access_icon: block.settings.quick_access_icon,
+                      quick_access_custom_icon: block.settings.quick_access_custom_icon
+                    %}
+                  {%- endif -%}
+                  {%- if block.settings.block_title_2 != blank -%}
+                    {%- assign number = number | plus: 1 -%}
+                    {% render 'quick-access',
+                      block_title: block.settings.block_title_2,
+                      block_link: block.settings.block_link_2,
+                      quick_access_icon: block.settings.quick_access_icon_2,
+                      quick_access_custom_icon: block.settings.quick_access_custom_icon_2,
+                      class: "mt-2"
+                    %}
+                  {%- endif -%}
+                  {%- if block.settings.block_title_3 != blank -%}
+                    {%- assign number = number | plus: 1 -%}
+                    {% render 'quick-access',
+                      block_title: block.settings.block_title_3,
+                      block_link: block.settings.block_link_3,
+                      quick_access_icon: block.settings.quick_access_icon_3,
+                      quick_access_custom_icon: block.settings.quick_access_custom_icon_3,
+                      class: "mt-2"
+                    %}
+                  {%- endif -%}
+                  {%- if block.settings.block_title_4 != blank -%}
+                    {%- assign number = number | plus: 1 -%}
+                    {% render 'quick-access',
+                      block_title: block.settings.block_title_4,
+                      block_link: block.settings.block_link_4,
+                      quick_access_icon: block.settings.quick_access_icon_4,
+                      quick_access_custom_icon: block.settings.quick_access_custom_icon_4,
+                      class: "mt-2"
+                    %}
+                  {%- endif -%}
+                  {%- style -%}
+                    {%- if number == 0 -%}
+                      .grid-quick-access-{{ block_id }} {
+                        display: none;
+                      }
+                    {%- endif -%}
+                  {%- endstyle -%}
+                </div>
+              </div>
+            {%- endif -%}
+            {%- if total_block > 0 -%}
+              <div class="overflow-hidden relative float-right md:right-5 lg:right-0 pt-8 pb-5 {{ class_image_width -}}
+                {%- if block.settings.promotion_position == 'right' and quick_access_count > 0 %}{% unless is_rtl %} order-4{% endunless %}{% endif -%}
+                {%- if block.settings.promotion_position == 'left' and quick_access_count > 0 %} rtl:order-4{% endif %}"
+              > 
+                <div class="mega-nav-promotions scrollbar-body scrollbar-visible overflow-y-auto flex
+                  {%- if block.settings.promotion_layout == 'vertical' %} flex-col gap-y-3{% else %} flex-row ltr gap-x-5{% endif -%}
+                  {%- if quick_access_count <= 0 %}{% if block.settings.promotion_position == 'right' %} pl-5 rtl:pl-0 rtl:pr-5{% else %} pr-5 rtl:pr-0 rtl:pl-5{% endif %}{% endif %}"
+                >
+                  {%- if block.settings.image_1 -%}
+                    {% style %}
+                      .image-{{ block.id }}-1 {
+                        height: {{ block.settings.image_height_1 }}px;
+                      }
+                    {% endstyle %}
+                    {% assign block_id = block.id | append: "-1" %}
+                    <div class="mega-menu-card w-full group relative{% unless block.settings.enable_text_overlay_1 %} background-color-{{ block_id }}{% endunless -%}
+                      {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+                      {%- if block.settings.promotion_position == 'right' %}{% unless is_rtl %} ltr{% endunless %}{% endif -%}
+                      {%- if block.settings.promotion_position == 'left' %}{% if is_rtl %} ltr{% endif %}{% endif %}"
+                    >
+                      {% render 'promotion-image',
+                        blockID: block_id,
+                        image: block.settings.image_1,
+                        enable_text_overlay: block.settings.enable_text_overlay_1,
+                        heading: block.settings.heading_1,
+                        content: block.settings.text_1,
+                        button_label: block.settings.button_label_1,
+                        button_link: block.settings.button_link_1,
+                        open_new_window: block.settings.open_new_window_button_1,
+                        content_alignment: 'center',
+                        full_width: false,
+                        overlay_opacity: block.settings.overlay_opacity_1,
+                        show_button_style: block.settings.show_button_style,
+                        background_color: block.settings.background_color,
+                        color_text: block.settings.color_text,
+                        color_button: block.settings.color_button,
+                        color_text_button: block.settings.color_text_button,
+                        color_button_hover: block.settings.color_button_hover,
+                        color_text_button_hover: block.settings.color_text_button_hover,
+                        color_button_secondary: block.settings.color_button_secondary,
+                        secondary_button_text: block.settings.secondary_button_text,
+                        colors_text_link: block.settings.colors_text_link,
+                        heading_size: block.settings.heading_size_1,
+                        text_size: block.settings.text_size_1,
+                        content_position: block.settings.content_position_1,
+                        columns_desktop: 4,
+                        show_in_header: true
+                      %}
+                    </div>
+                  {%- endif -%} 
+                  {%- if block.settings.image_2 -%}
+                    {% style %}
+                      .image-{{ block.id }}-2 {
+                        height: {{ block.settings.image_height_2 }}px;
+                      }
+                    {% endstyle %}
+                    {% assign block_id = block.id | append: "-2" %}
+                    <div class="mega-menu-card w-full group relative{% unless block.settings.enable_text_overlay_2 %} background-color-{{ block_id }}{% endunless -%}
+                      {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+                      {%- if block.settings.promotion_position == 'right' %}{% unless is_rtl %} ltr{% endunless %}{% endif -%}
+                      {%- if block.settings.promotion_position == 'left' %}{% if is_rtl %} ltr{% endif %}{% endif %}"
+                    >
+                      {% render 'promotion-image',
+                        blockID: block_id,
+                        image: block.settings.image_2,
+                        enable_text_overlay: block.settings.enable_text_overlay_2,
+                        heading: block.settings.heading_2,
+                        content: block.settings.text_2,
+                        button_label: block.settings.button_label_2,
+                        button_link: block.settings.button_link_2,
+                        open_new_window: block.settings.open_new_window_button_2,
+                        content_alignment: 'center',
+                        full_width: false,
+                        overlay_opacity: block.settings.overlay_opacity_2,
+                        show_button_style: block.settings.show_button_style_2,
+                        background_color: block.settings.background_color,
+                        color_text: block.settings.color_text,
+                        color_button: block.settings.color_button,
+                        color_text_button: block.settings.color_text_button,
+                        color_button_hover: block.settings.color_button_hover,
+                        color_text_button_hover: block.settings.color_text_button_hover,
+                        color_button_secondary: block.settings.color_button_secondary,
+                        secondary_button_text: block.settings.secondary_button_text,
+                        colors_text_link: block.settings.colors_text_link,
+                        heading_size: block.settings.heading_size_2,
+                        text_size: block.settings.text_size_2,
+                        content_position: block.settings.content_position_2,
+                        columns_desktop: 4,
+                        show_in_header: true
+                      %}
+                    </div>
+                  {%- endif -%} 
+                  {%- if block.settings.image_3 -%}
+                    {% style %}
+                      .image-{{ block.id }}-3 {
+                        height: {{ block.settings.image_height_3 }}px;
+                      }
+                    {% endstyle %}
+                    {% assign block_id = block.id | append: "-3" %}
+                    <div class="mega-menu-card w-full group relative{% unless block.settings.enable_text_overlay_3 %} background-color-{{ block_id }}{% endunless -%}
+                      {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+                      {%- if block.settings.promotion_position == 'right' %}{% unless is_rtl %} ltr{% endunless %}{% endif -%}
+                      {%- if block.settings.promotion_position == 'left' %}{% if is_rtl %} ltr{% endif %}{% endif %}"
+                    >
+                      {% render 'promotion-image',
+                        blockID: block_id,
+                        image: block.settings.image_3,
+                        enable_text_overlay: block.settings.enable_text_overlay_3,
+                        heading: block.settings.heading_3,
+                        content: block.settings.text_3,
+                        button_label: block.settings.button_label_3,
+                        button_link: block.settings.button_link_3,
+                        open_new_window: block.settings.open_new_window_button_3,
+                        content_alignment: 'center',
+                        full_width: false,
+                        overlay_opacity: block.settings.overlay_opacity_3,
+                        show_button_style: block.settings.show_button_style_3,
+                        background_color: block.settings.background_color,
+                        color_text: block.settings.color_text,
+                        color_button: block.settings.color_button,
+                        color_text_button: block.settings.color_text_button,
+                        color_button_hover: block.settings.color_button_hover,
+                        color_text_button_hover: block.settings.color_text_button_hover,
+                        color_button_secondary: block.settings.color_button_secondary,
+                        secondary_button_text: block.settings.secondary_button_text,
+                        colors_text_link: block.settings.colors_text_link,
+                        heading_size: block.settings.heading_size_3,
+                        text_size: block.settings.text_size_3,
+                        content_position: block.settings.content_position_3,
+                        columns_desktop: 4,
+                        show_in_header: true
+                      %}
+                    </div>
+                  {%- endif -%} 
+                </div>
+              </div>
+            {%- endif -%}
+          </div>
+        </div>
+      </template>
+    {%- endif -%}
+  {%- when 'tree_menu' -%}
+    <template x-if="!runDispatch">
+      <ul class="pt-5 pb-5">
+        {% assign level = 0 %}
+        {%- for link in block.settings.menu.links -%}
+          {%- liquid
+            assign is_link = false
+            if link.links != blank
+              assign is_link = true
+            endif
+            if link.levels > level
+              assign level = link.levels
+            endif
+          -%}
+          <li {% if link.current or link.child_active %}@init-run.window="active = true"{% endif %} 
+            x-data="{ openSub: false }" 
+            class="relative pl-7 rtl:pl-6 pr-6 rtl:pr-7"
+            @mouseover="openSub = true; $el.classList.add('is-focus-child');" 
+            @mouseleave="$el.classList.remove('is-focus-child');"
+            @mouseover.away="openSub = false"
+            @focusin="openSub = true; $el.classList.add('is-focus-child');" 
+            @focusout="openSub = false; $el.classList.remove('is-focus-child');"
+          >
+            <div class="sub-menu flex items-center{% unless forloop.first %} pt-3{% endunless %}">
+              {%- render 'menu-item-image', link: link, show_image_product: block.settings.show_image_product, show_image_collection: block.settings.show_image_collection, show_first_image_product: block.settings.show_first_image_product, class_ratio: class_image_ratio, image_left: true, collection_metafield: block.settings.collection_metafield -%}
+              <span class="flex-1">
+                <a href="{{ link.url }}" class="nav-link relative p-break-words{% if is_link %} flex items-center pr-5 rtl:pr-0 rtl:pl-5{% else %} inline-block{% endif %} duration-200 transition hover-text-link is-focus-child:effect-inline{% if link.current or link.child_active %} flex border-b effect-inline{% endif %}"
+                  {% if select_motion == 'click' and is_link %}@click="openSub = true; $store.xHeaderMenu.clickItem($el, $event, true)"{% endif %}
+                >
+                  {% assign title = link.title %}
+                  {% if section.settings.enable_highlight %}
+                    {% liquid
+                      assign is_highlight = false
+                      assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                      assign menu_item = '||' | append: title | append: '||' | escape
+                      if list_menu contains menu_item
+                        assign is_highlight = true
+                      endif
+                    %}
+                    {% if is_highlight %}
+                      {% render 'menu-highlight',
+                        highlight_type: section.settings.highlight_style,
+                        menu_title: title,
+                        section_id: section.id,
+                      %}
+                    {% else %}
+                      <span class="p-break-words">{{ title | escape }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="p-break-words">{{ title | escape }}</span>
+                  {% endif %}
+                  {%- if is_link -%}
+                    <span class="icon-child z-10 w-5 h-4 p-1 rounded-full block absolute -rotate-90 right-0 rtl:right-auto rtl:left-0">
+                      {% render 'icon-alls', icon: 'icon-caret' %}
+                    </span>
+                  {%- endif -%}
+                </a>
+              </span>
+            </div>
+            {%- if is_link -%}
+              <div class="background-header child absolute{% if forloop.first %} -top-5{% else %} -top-2{% endif %} left-full w-full shadow-showdownInset" :class="openSub ? 'opacity-1 max-h-auto' : 'opacity-0 max-h-0 overflow-hidden' ">
+                <ul class="pt-5 pb-5">
+                  {%- for childlink in link.links -%}
+                    {%- liquid
+                      assign is_link = false
+                      if childlink.links != blank
+                        assign is_link = true
+                      endif
+                    -%}
+                    <li class="relative pl-7 pr-6 rtl:pr-7 rtl:pl-6" 
+                      x-data="{ openChild: false }" 
+                      @mouseover="openChild = true; $el.classList.add('is-focus-subchild');" 
+                      @mouseleave="$el.classList.remove('is-focus-subchild');"
+                      @mouseover.away="openChild = false"
+                      @focusin="openChild = true; $el.classList.add('is-focus-subchild');"
+                      @focusout="openChild= false; $el.classList.remove('is-focus-subchild');"
+                    >
+                      <div class="flex items-center{% unless forloop.first %} pt-3{% endunless %}">
+                        {%- render 'menu-item-image', link: childlink, show_image_product: block.settings.show_image_product, show_image_collection: block.settings.show_image_collection, show_first_image_product: block.settings.show_first_image_product, class_ratio: class_image_ratio, image_left: true, collection_metafield: block.settings.collection_metafield -%}
+                        <span class="flex-1">
+                          <a href="{{ childlink.url }}" class="nav-link{% if is_link %} flex items-center pr-5 rtl:pr-0 rtl:pl-5{% else %} inline-block{% endif %} p-break-words relative duration-200 hover-text-link transition is-focus-subchild:effect-inline{% if childlink.current or childlink.child_active %} border-b effect-inline{% endif %}"
+                            {% if select_motion == 'click' and is_link %}@click="openChild = true;$store.xHeaderMenu.clickItem($el, $event, true)"{% endif %}
+                          >
+                            {% assign title = childlink.title %}
+                            {% if section.settings.enable_highlight %}
+                              {% liquid
+                                assign is_highlight = false
+                                assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                assign menu_item = '||' | append: title | append: '||' | escape
+                                if list_menu contains menu_item
+                                  assign is_highlight = true
+                                endif
+                              %}
+                              {% if is_highlight %}
+                                {% render 'menu-highlight',
+                                  highlight_type: section.settings.highlight_style,
+                                  menu_title: title,
+                                  section_id: section.id,
+                                %}
+                              {% else %}
+                                <span class="p-break-words">{{ title | escape }}</span>
+                              {% endif %}
+                            {% else %}
+                              <span class="p-break-words">{{ title | escape }}</span>
+                            {% endif %}
+                            {%- if is_link -%}
+                              <span class="z-10 w-5 h-4 p-1 icon-child rounded-full block absolute -rotate-90 right-0 rtl:right-auto rtl:left-0">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+                            {%- endif -%}
+                          </a>
+                        </span>
+                      </div>
+                      {%- if is_link -%}
+                        <ul class="grandchildlink child absolute{% if forloop.first %} -top-5{% else %} -top-2{% endif %} w-full left-full background-header shadow-showdownInset" :class="openChild ? 'opacity-1 pt-5 pb-5 max-h-auto' : 'opacity-0 max-h-0 overflow-hidden' ">
+                          {%- for grandchildlink in childlink.links -%}
+                            <li class="flex items-center pl-7 pr-6 rtl:pr-7 rtl:pl-6 relative{% unless forloop.first %} pt-3{% endunless %}">
+                              {%- render 'menu-item-image', link: grandchildlink, show_image_product: block.settings.show_image_product, show_image_collection: block.settings.show_image_collection, show_first_image_product: block.settings.show_first_image_product, class_ratio: class_image_ratio, image_left: true, collection_metafield: block.settings.collection_metafield -%}
+                              <span class="flex-1">
+                                <a 
+                                  class="nav-link relative p-break-words duration-200 transition hover-text-link{% if grandchildlink.current %} flex border-b effect-inline{% else %} inline-block{% endif %}"
+                                  href="{{ grandchildlink.url }}" 
+                                  {% if grandchildlink.current %} aria-current="page"{% endif %}>
+                                  {% assign title = grandchildlink.title %}
+                                  {% if section.settings.enable_highlight %}
+                                    {% liquid
+                                      assign is_highlight = false
+                                      assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                      assign menu_item = '||' | append: title | append: '||' | escape
+                                      if list_menu contains menu_item
+                                        assign is_highlight = true
+                                      endif
+                                    %}
+                                    {% if is_highlight %}
+                                      {% render 'menu-highlight',
+                                        highlight_type: section.settings.highlight_style,
+                                        menu_title: title,
+                                        section_id: section.id,
+                                      %}
+                                    {% else %}
+                                      <span class="p-break-words">{{ title | escape }}</span>
+                                    {% endif %}
+                                  {% else %}
+                                    <span class="p-break-words">{{ title | escape }}</span>
+                                  {% endif %}
+                                </a>
+                              </span>
+                            </li>
+                          {%- endfor -%}
+                        </ul>
+                      {%- endif -%}
+                    </li>
+                  {%- endfor -%}
+                </ul>
+              </div>
+            {%- endif -%}
+          </li>
+        {%- endfor -%}
+      </ul>
+    </template>
+  {%- when 'banner_menu' -%}
+    <template x-if="!runDispatch">
+      <div class="toggle-menu toggle-menu-hidden top-full banner-menu-container is-focus:text-[rgba(var(--colors-text))] absolute w-full background-header left-0 z-50 shadow-md overflow-x-hidden scrollbar-body overflow-y-auto">     
+        <div class="grid gap-grid-{{ block.id }} grid-cols-{{ block.settings.banner_columns }}{% unless block.settings.full_width %} mx-auto x-pgw page-width pb-5{% endunless %} pt-8 pb-8"> 
+          {%- if block.settings.image_1 != blank -%}
+            <div class="mega-menu-card group section--{{ section.id }} w-full flex relative overflow-hidden {% if block.settings.enable_content_overlay %}h-[{{ block.settings.desktop_height }}]{% else %}flex-col{% endif %}">
+              {% assign block_id = block.id | append: "-1" %}
+              {% render 'promotion-image',
+                blockID: block_id,
+                image: block.settings.image_1,
+                image_link: block.settings.button_link_1,
+                enable_text_overlay: block.settings.enable_content_overlay,
+                heading: block.settings.heading_1,
+                content: block.settings.content_1,
+                subheading: block.settings.subheading_1,
+                button_label: block.settings.button_label_1,
+                button_link: block.settings.button_link_1,
+                open_new_window: block.settings.open_new_window_button_1,
+                content_alignment: block.settings.text_align_1,
+                full_width: block.settings.full_width,
+                overlay_opacity: block.settings.overlay_opacity_1,
+                show_button_style: block.settings.show_button_style_1,
+                background_color: block.settings.background_color,
+                color_text: block.settings.color_text,
+                color_button: block.settings.color_button,
+                color_text_button: block.settings.color_text_button,
+                color_button_hover: block.settings.color_button_hover,
+                color_text_button_hover: block.settings.color_text_button_hover,
+                color_button_secondary: block.settings.color_button_secondary,
+                secondary_button_text: block.settings.secondary_button_text,
+                colors_text_link: block.settings.colors_text_link,
+                heading_size: block.settings.heading_size_1,
+                text_size: block.settings.text_size_1,
+                content_position: block.settings.content_position_1,
+                columns_desktop: columns_desktop,
+                show_in_header: true,
+                desktop_img_height: block.settings.desktop_height,
+                is_banner_menu: true
+              %}
+            </div>
+          {% endif %}
+          {%- if block.settings.image_2 != blank -%}
+            {% assign block_id = block.id | append: "-2" %}
+            <div class="mega-menu-card group section--{{ section.id }} w-full flex relative overflow-hidden {% if block.settings.enable_content_overlay %}h-[{{ block.settings.desktop_height }}]{% else %}flex-col{% endif %}">
+              {% render 'promotion-image',
+                blockID: block_id,
+                image: block.settings.image_2,
+                image_link: block.settings.button_link_2,
+                enable_text_overlay: block.settings.enable_content_overlay,
+                heading: block.settings.heading_2,
+                content: block.settings.content_2,
+                subheading: block.settings.subheading_2,
+                button_label: block.settings.button_label_2,
+                button_link: block.settings.button_link_2,
+                open_new_window: block.settings.open_new_window_button_2,
+                content_alignment: block.settings.text_align_2,
+                full_width: block.settings.full_width,
+                overlay_opacity: block.settings.overlay_opacity_2,
+                show_button_style: block.settings.show_button_style_2,
+                background_color: block.settings.background_color,
+                color_text: block.settings.color_text,
+                color_button: block.settings.color_button,
+                color_text_button: block.settings.color_text_button,
+                color_button_hover: block.settings.color_button_hover,
+                color_text_button_hover: block.settings.color_text_button_hover,
+                color_button_secondary: block.settings.color_button_secondary,
+                secondary_button_text: block.settings.secondary_button_text,
+                colors_text_link: block.settings.colors_text_link,
+                heading_size: block.settings.heading_size_2,
+                text_size: block.settings.text_size_2,
+                content_position: block.settings.content_position_2,
+                columns_desktop: columns_desktop,
+                show_in_header: true,
+                desktop_img_height: block.settings.desktop_height,
+                is_banner_menu: true
+              %}
+            </div>
+          {% endif %}
+          {%- if block.settings.image_3 != blank -%}
+            {% assign block_id = block.id | append: "-3" %}
+            <div class="mega-menu-card group section--{{ section.id }} w-full flex relative overflow-hidden {% if block.settings.enable_content_overlay %}h-[{{ block.settings.desktop_height }}]{% else %}flex-col{% endif %}">
+              {% render 'promotion-image',
+                blockID: block_id,
+                image: block.settings.image_3,
+                image_link: block.settings.button_link_3,
+                enable_text_overlay: block.settings.enable_content_overlay,
+                heading: block.settings.heading_3,
+                content: block.settings.content_3,
+                subheading: block.settings.subheading_3,
+                button_label: block.settings.button_label_3,
+                button_link: block.settings.button_link_3,
+                open_new_window: block.settings.open_new_window_button_3,
+                content_alignment: block.settings.text_align_3,
+                full_width: block.settings.full_width,
+                overlay_opacity: block.settings.overlay_opacity_3,
+                show_button_style: block.settings.show_button_style_3,
+                background_color: block.settings.background_color,
+                color_text: block.settings.color_text,
+                color_button: block.settings.color_button,
+                color_text_button: block.settings.color_text_button,
+                color_button_hover: block.settings.color_button_hover,
+                color_text_button_hover: block.settings.color_text_button_hover,
+                color_button_secondary: block.settings.color_button_secondary,
+                secondary_button_text: block.settings.secondary_button_text,
+                colors_text_link: block.settings.colors_text_link,
+                heading_size: block.settings.heading_size_3,
+                text_size: block.settings.text_size_3,
+                content_position: block.settings.content_position_3,
+                columns_desktop: columns_desktop,
+                show_in_header: true,
+                desktop_img_height: block.settings.desktop_height,
+                is_banner_menu: true
+              %}
+            </div>
+          {% endif %}
+          {%- if block.settings.image_4 != blank -%}
+            {% assign block_id = block.id | append: "-4" %}
+            <div class="mega-menu-card group section--{{ section.id }} w-full flex relative overflow-hidden {% if block.settings.enable_content_overlay %}h-[{{ block.settings.desktop_height }}]{% else %}flex-col{% endif %}">
+              {% render 'promotion-image',
+                blockID: block_id,
+                image: block.settings.image_4,
+                image_link: block.settings.button_link_4,
+                enable_text_overlay: block.settings.enable_content_overlay,
+                heading: block.settings.heading_4,
+                content: block.settings.content_4,
+                subheading: block.settings.subheading_4,
+                button_label: block.settings.button_label_4,
+                button_link: block.settings.button_link_4,
+                open_new_window: block.settings.open_new_window_button_4,
+                content_alignment: block.settings.text_align_4,
+                full_width: block.settings.full_width,
+                overlay_opacity: block.settings.overlay_opacity_4,
+                show_button_style: block.settings.show_button_style_4,
+                background_color: block.settings.background_color,
+                color_text: block.settings.color_text,
+                color_button: block.settings.color_button,
+                color_text_button: block.settings.color_text_button,
+                color_button_hover: block.settings.color_button_hover,
+                color_text_button_hover: block.settings.color_text_button_hover,
+                color_button_secondary: block.settings.color_button_secondary,
+                secondary_button_text: block.settings.secondary_button_text,
+                colors_text_link: block.settings.colors_text_link,
+                heading_size: block.settings.heading_size_4,
+                text_size: block.settings.text_size_4,
+                content_position: block.settings.content_position_4,
+                columns_desktop: columns_desktop,
+                show_in_header: true,
+                desktop_img_height: block.settings.desktop_height,
+                is_banner_menu: true
+              %}
+            </div>
+          {% endif %}
+          {%- if block.settings.image_5 != blank -%}
+            {% assign block_id = block.id | append: "-5" %}
+            <div class="mega-menu-card group section--{{ section.id }} w-full flex relative overflow-hidden {% if block.settings.enable_content_overlay %}h-[{{ block.settings.desktop_height }}]{% else %}flex-col{% endif %}">
+              {% render 'promotion-image',
+                blockID: block_id,
+                image: block.settings.image_5,
+                image_link: block.settings.button_link_5,
+                enable_text_overlay: block.settings.enable_content_overlay,
+                heading: block.settings.heading_5,
+                content: block.settings.content_5,
+                subheading: block.settings.subheading_5,
+                button_label: block.settings.button_label_5,
+                button_link: block.settings.button_link_5,
+                open_new_window: block.settings.open_new_window_button_5,
+                content_alignment: block.settings.text_align_5,
+                full_width: block.settings.full_width,
+                overlay_opacity: block.settings.overlay_opacity_5,
+                show_button_style: block.settings.show_button_style_5,
+                background_color: block.settings.background_color,
+                color_text: block.settings.color_text,
+                color_button: block.settings.color_button,
+                color_text_button: block.settings.color_text_button,
+                color_button_hover: block.settings.color_button_hover,
+                color_text_button_hover: block.settings.color_text_button_hover,
+                color_button_secondary: block.settings.color_button_secondary,
+                secondary_button_text: block.settings.secondary_button_text,
+                colors_text_link: block.settings.colors_text_link,
+                heading_size: block.settings.heading_size_5,
+                text_size: block.settings.text_size_5,
+                content_position: block.settings.content_position_5,
+                columns_desktop: columns_desktop,
+                show_in_header: true,
+                desktop_img_height: block.settings.desktop_height,
+                is_banner_menu: true
+              %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </template>
+  {%- when 'product_menu' -%}
+    {% liquid
+      if settings.enable_lazy_loading_image
+        assign loading = 'lazy'
+      else
+        assign loading = 'eager'
+      endif
+    %}
+    <div class="toggle-menu toggle-menu-hidden top-full background-header text-[rgba(var(--colors-text))] mega-menu-{{ block.settings.tab_style }} is-focus:text-[rgba(var(--colors-text))] absolute w-full background-header left-0 rtl:left-auto rtl:right-0 z-50 shadow-md">
+      <div class="mega-menu-container x-pgw page-width mx-auto{% if block.settings.tab_style == 'vertical' %} md:max-h-[80vh]{% endif %}{% if block.settings.enable_quick_access_blocks %} flex flex-wrap flex-row gap-5 xl:gap-8 grow{% endif %} ltr">
+        {%- if block.settings.enable_quick_access_blocks -%}
+          {% assign block_id = block.id | append: "-quick-access" %}
+          {%- style -%}
+            .button-{{ block_id }} .icon-access  {
+              width: {{ block.settings.quick_access_icon_size }}px;
+              height: {{ block.settings.quick_access_icon_size }}px;
+              min-width: {{ block.settings.quick_access_icon_size }}px;
+            }
+            {%- unless block.settings.color_bg_quick_access.alpha == 0.0 -%}
+              .button-{{ block_id }} {
+                background: rgba({{ block.settings.color_bg_quick_access.red }}, {{ block.settings.color_bg_quick_access.green }}, {{ block.settings.color_bg_quick_access.blue }});
+              }
+            {%- endunless -%} 
+            {%- unless block.settings.color_bg_dark_quick_access.alpha == 0.0 -%}
+              .dark .button-{{ block_id }} {
+                background: rgba({{ block.settings.color_bg_dark_quick_access.red }}, {{ block.settings.color_bg_dark_quick_access.green }}, {{ block.settings.color_bg_dark_quick_access.blue }});
+              }
+            {%- endunless -%} 
+            .button-{{ block_id }} .button-solid,
+            .button-{{ block_id }} .button-solid:before { 
+              font-size: {{ block.settings.quick_access_font_size | times: 0.01 | times: text_base_size }}rem;
+              border-radius: {{ block.settings.quick_access_corner_radius }}px;
+              {%- unless block.settings.color_button_quick_access.alpha == 0.0 -%}
+                --colors-line-and-border: {{ block.settings.color_button_quick_access.red }}, {{ block.settings.color_button_quick_access.green }}, {{ block.settings.color_button_quick_access.blue }};
+                --colors-button: {{ block.settings.color_button_quick_access.red }}, {{ block.settings.color_button_quick_access.green }}, {{ block.settings.color_button_quick_access.blue }};
+              {%- else -%}
+                --colors-line-and-border: var(--colors-button);
+              {%- endunless -%}
+              {%- unless block.settings.color_text_button_quick_access.alpha == 0.0 -%}
+                --colors-button-text: {{ block.settings.color_text_button_quick_access.red }}, {{ block.settings.color_text_button_quick_access.green }}, {{ block.settings.color_text_button_quick_access.blue }};
+              {%- endunless -%}
+              {%- unless block.settings.color_button_hover_quick_access.alpha == 0.0 -%}
+                --colors-button-hover: rgb({{ block.settings.color_button_hover_quick_access.red }}, {{ block.settings.color_button_hover_quick_access.green }}, {{ block.settings.color_button_hover_quick_access.blue }});
+              {%- endunless -%}
+              {%- unless block.settings.color_text_button_hover_quick_access.alpha == 0.0 -%}
+                --colors-button-text-hover: {{ block.settings.color_text_button_hover_quick_access.red }}, {{ block.settings.color_text_button_hover_quick_access.green }}, {{ block.settings.color_text_button_hover_quick_access.blue }};
+              {%- endunless -%}
+            }
+            .dark .button-{{ block_id }} .button-solid,
+            .dark .button-{{ block_id }} .button-solid:before { 
+              {%- unless block.settings.color_button_dark_quick_access.alpha == 0.0 -%}
+                --colors-line-and-border: {{ block.settings.color_button_dark_quick_access.red }}, {{ block.settings.color_button_dark_quick_access.green }}, {{ block.settings.color_button_dark_quick_access.blue }};
+                --colors-button: {{ block.settings.color_button_dark_quick_access.red }}, {{ block.settings.color_button_dark_quick_access.green }}, {{ block.settings.color_button_dark_quick_access.blue }};
+              {%- else -%}
+                --colors-button: {{ settings.colors_dark_button.red }}, {{ settings.colors_dark_button.green }}, {{ settings.colors_dark_button.blue }};
+                --colors-line-and-border: var(--colors-button);
+              {%- endunless -%}
+              {%- unless block.settings.color_text_button_dark_quick_access.alpha == 0.0 -%}
+                --colors-button-text: {{ block.settings.color_text_button_dark_quick_access.red }}, {{ block.settings.color_text_button_dark_quick_access.green }}, {{ block.settings.color_text_button_dark_quick_access.blue }};
+              {%- else -%}
+                --colors-button-text: {{ settings.colors_dark_button_text.red }}, {{ settings.colors_dark_button_text.green }}, {{ settings.colors_dark_button_text.blue }};
+              {%- endunless -%}
+              {%- unless block.settings.color_button_hover_dark_quick_access.alpha == 0.0 -%}
+                --colors-button-hover: rgb({{ block.settings.color_button_hover_dark_quick_access.red }}, {{ block.settings.color_button_hover_dark_quick_access.green }}, {{ block.settings.color_button_hover_dark_quick_access.blue }});
+              {%- else -%}
+                --colors-button-hover: rgb({{ settings.colors_dark_button_hover.red }}, {{ settings.colors_dark_button_hover.green }}, {{ settings.colors_dark_button_hover.blue }});
+              {%- endunless -%}
+              {%- unless block.settings.color_text_button_hover_dark_quick_access.alpha == 0.0 -%}
+                --colors-button-text-hover: {{ block.settings.color_text_button_hover_dark_quick_access.red }}, {{ block.settings.color_text_button_hover_dark_quick_access.green }}, {{ block.settings.color_text_button_hover_dark_quick_access.blue }};
+              {% else %}  
+                --colors-button-text-hover: {{ settings.colors_dark_button_text_hover.red }}, {{ settings.colors_dark_button_text_hover.green }}, {{ settings.colors_dark_button_text_hover.blue }};
+              {%- endunless -%}
+            }
+          {%- endstyle -%}
+          <div class="grid-quick-access-{{ block_id }} mega-menu-card relative pt-8 pb-3 z-10 w-24 lg:w-1/6{% if is_rtl %} rtl{% endif -%}
+            {%- if block.settings.desktop_position == 'right' %} ml-auto rtl:ml-0 order-2 rtl:order-none{% else %} order-none rtl:order-2 rtl:ml-auto{% endif %}"
+          >
+            <div class="{%- unless block.settings.color_bg_quick_access.alpha == 0.0 -%} p-3{% endunless %} button-{{ block_id }}">
+              {%- assign number = 0 -%}
+              {%- if block.settings.block_title != blank -%}
+                {%- assign number = number | plus: 1 -%}
+                {% render 'quick-access',
+                  block_title: block.settings.block_title,
+                  block_link: block.settings.block_link,
+                  quick_access_icon: block.settings.quick_access_icon,
+                  quick_access_custom_icon: block.settings.quick_access_custom_icon
+                %}
+              {%- endif -%}
+              {%- if block.settings.block_title_2 != blank -%}
+                {%- assign number = number | plus: 1 -%}
+                {% render 'quick-access',
+                  block_title: block.settings.block_title_2,
+                  block_link: block.settings.block_link_2,
+                  quick_access_icon: block.settings.quick_access_icon_2,
+                  quick_access_custom_icon: block.settings.quick_access_custom_icon_2,
+                  class: "mt-2"
+                %}
+              {%- endif -%}
+              {%- if block.settings.block_title_3 != blank -%}
+                {%- assign number = number | plus: 1 -%}
+                {% render 'quick-access',
+                  block_title: block.settings.block_title_3,
+                  block_link: block.settings.block_link_3,
+                  quick_access_icon: block.settings.quick_access_icon_3,
+                  quick_access_custom_icon: block.settings.quick_access_custom_icon_3,
+                  class: "mt-2"
+                %}
+              {%- endif -%}
+              {%- if block.settings.block_title_4 != blank -%}
+                {%- assign number = number | plus: 1 -%}
+                {% render 'quick-access',
+                  block_title: block.settings.block_title_4,
+                  block_link: block.settings.block_link_4,
+                  quick_access_icon: block.settings.quick_access_icon_4,
+                  quick_access_custom_icon: block.settings.quick_access_custom_icon_4,
+                  class: "mt-2"
+                %}
+              {%- endif -%}
+              {%- style -%}
+                {%- if number == 0 -%}
+                  .grid-quick-access-{{ block_id }} {
+                    display: none;
+                  }
+                {%- endif -%}
+              {%- endstyle -%}
+            </div>
+          </div>
+        {%- endif -%}
+        <div class="mega-nav pt-8 h-fit{% if block.settings.tab_style == 'vertical' %} relative{% if is_rtl %} rtl{% endif %}{% endif %}{% if block.settings.enable_quick_access_blocks %} md:w-4/5 relative{% endif %}">
+          {%- style -%}
+            {%- if block.settings.sub_label != blank -%}
+              .color-sub-label-{{ block.id }} {
+                background: {{ block.settings.sub_label_color }};
+                color: {{ block.settings.sub_label_text_color_light }};
+              }
+              .color-sub-label-{{ block.id }}:before{
+                border-top-color: {{ block.settings.sub_label_color }}; 
+              }
+              .dark .color-sub-label-{{ block.id }} {
+                background: {{ block.settings.sub_label_color_dark }};
+                color: {{ block.settings.sub_label_text_color_dark }}
+              }
+              .dark .color-sub-label-{{ block.id }}:before {
+                border-top-color: {{ block.settings.sub_label_color_dark }};
+              }
+            {% endif %}
+          {%- endstyle -%}
+          {% if block.settings.tab_style == 'horizontal' %}
+            <div class="x-splide splide flex gap-x-8 mb-8 disable-effect-hover"
+              id="horizontal-menu-{{ block.id }}"
+              x-intersect.once.margin.200px='$store.xSplide.load($el, {
+                "speed": 1000,
+                "pagination": false, 
+                "updateOnMove": "true",
+                "autoWidth": "true",
+                "gap": "2rem",
+                {%- if is_rtl %} 
+                "direction": "rtl",
+                {%- endif %}
+                "focus": "right",
+                "perPage": 1,
+                "perMove": 2,
+                "events": [
+                  {
+                    "event": "ready",
+                    "callback": () => {
+                      let slide = document.getElementById("horizontal-menu-{{ block.id }}");
+                      let slideList = slide.querySelector(".splide__list");
+                      let btnArrow = slide.querySelector(".splide__arrows");
+                      if (slide.offsetWidth <= slideList.offsetWidth) {
+                        btnArrow.classList.remove("md:hidden");
+                      } else {
+                        btnArrow.classList.add("md:hidden");
+                      }
+                    }
+                  }
+                ]
+              })'
+            >
+              <div class="absolute top-1/2 splide__arrows flex justify-center md:hidden w-full items-center">
+                <button class="splide__arrow splide__arrow--prev button-arrow lg:absolute top-1/2 -translate-y-1/2 rtl:rotate-180 left-0 rtl:left-auto rtl:right-0 pl-2 pr-2 pt-2 pb-2 rounded-full z-10 w-7 h-7 after:text-[20px] duration-200 hover:opacity-100 disabled:cursor-not-allowed disabled:hidden transition-all ease-in-out disabled:opacity-30" aria-label="previous slide">
+                  {% render 'icon-labels-bags', icon: 'chevron-left' %}
+                </button>
+                <button class="splide__arrow splide__arrow--next button-arrow lg:absolute top-1/2 -translate-y-1/2 rtl:rotate-180 right-0 rtl:right-auto rtl:left-0 pl-2 pr-2 pt-2 pb-2 rounded-full z-10 w-7 h-7 after:text-[20px] duration-200 hover:opacity-100 disabled:cursor-not-allowed disabled:hidden transition-all ease-in-out disabled:opacity-30" aria-label="next slide">
+                  {% render 'icon-labels-bags', icon: 'chevron-right' %}
+                </button>
+              </div>
+              <div class="splide__track">
+                <div class="splide__list flex items-end pb-0.5">
+                  {% assign block_id_downcase = block.id | replace: "_", "" | downcase %}
+                  {%- for link in block.settings.menu.links -%}
+                    <div 
+                      class="sub-menu-horizontal splide__slide x-splide-slide table{% if link.links != blank %} has-dropdown{% if forloop.first %} active{% endif %}{% endif %}"
+                      x-on:mouseover="$dispatch('mouseover-{{ block_id_downcase }}-{{ forloop.index }}');$el.classList.add('is-focus-child');$el.closest('.splide__list').querySelector('.sub-menu-horizontal.active')?.classList.remove('active'); $el.classList.add('active'); $dispatch('setheight-{{ block_id_downcase }}-{{ forloop.index }}');"
+                      @mouseleave="$el.classList.remove('is-focus-child');"
+                      @focusin="$dispatch('focusin-{{ block_id_downcase }}-{{ forloop.index }}'); $el.classList.add('is-focus-child');$el.closest('.splide__list').querySelector('.sub-menu-horizontal.active')?.classList.remove('active'); $el.classList.add('active'); $dispatch('setheight-{{ block_id_downcase }}-{{ forloop.index }}');"
+                      @focusout="$el.classList.remove('is-focus-child');$el.classList.remove('active')"
+                    >
+                        <div class="sub-menu flex items-end z-10 relative pl-2.5 pr-2.5 w-[15.6rem]">
+                          <span class="flex-1">
+                            {%- liquid
+                              assign count = 0
+                              for childlink in link.links
+                                if childlink.type == 'product_link'
+                                  assign count = count | plus: 1
+                                endif
+                              endfor
+                              assign enable_slider = false
+                              if count > 4
+                                assign enable_slider = true
+                              endif
+                            -%}
+                              <a href="{{ link.url }}"
+                                class="nav-link w-full text-left p-break-words z-10 pb-3 pt-3 flex flex-wrap gap-2 items-center{% if count > 0 and link.links != blank %} pr-5 rtl:pr-0 rtl:pl-5{% endif %} hover-text-link is-focus-child:effect-inline{%- if link.current or link.child_active %} flex effect-inline{% endif %}"
+                                {% if link.links != blank %}@init-run.window="$store.xHeaderMenu.isTouch && $store.xHeaderMenu.touchItem($el, true)"{% endif %}
+                              >
+                                {% liquid
+                                  assign is_labeled = false
+                                  assign menu_item = '||' | append: link.title | append: '||' | escape
+                                  if list_sub_menu contains menu_item
+                                    assign is_labeled = true
+                                  endif
+                                %}
+                                {% assign title = link.title %}
+                                {% if section.settings.enable_highlight %}
+                                  {% liquid
+                                    assign is_highlight = false
+                                    assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                    assign menu_item = '||' | append: title | append: '||' | escape
+                                    if list_menu contains menu_item
+                                      assign is_highlight = true
+                                    endif
+                                  %}
+                                  {% if is_highlight %}
+                                    {% render 'menu-highlight',
+                                      highlight_type: section.settings.highlight_style,
+                                      menu_title: title,
+                                      section_id: section.id,
+                                    %}
+                                  {% else %}
+                                    <span class="p-break-words">{{ title | escape }}</span>
+                                  {% endif %}
+                                {% else %}
+                                  <span class="p-break-words">{{ title | escape }}</span>
+                                {% endif %}
+                                {% if is_labeled %}
+                                  {{ sub_label }}
+                                {% endif %}
+                                {%- if count > 0 and link.links != blank -%}
+                                  <span class="z-10 w-5 h-4 p-1 rounded-full block absolute right-0 rtl:right-auto rtl:left-0 -rotate-90 rtl:rotate-90">
+                                    {% render 'icon-alls', icon: 'icon-caret' %}
+                                  </span>
+                                {%- endif -%}
+                              </a>
+                          </span>
+                        </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            <ul class="mega-list-nav items-end md:max-h-[calc(80vh-3rem)] md:overflow-y-scroll scrollbar-body scrollbar-visible{% if block.settings.tab_style == 'vertical' %} w-72 pt-12 pb-8 flex-wrap{% else %} w-72 h-0 pt-0 pb-0 overflow-hidden{% endif %}" x-refs="mega_nav"> 
+              {%- for link in block.settings.menu.links -%}
+                {%- liquid
+                  assign count = 0
+                  for childlink in link.links
+                    if childlink.type == 'product_link'
+                      assign count = count | plus: 1
+                    endif
+                  endfor
+                  assign enable_slider = false
+                  if count > 4
+                    assign enable_slider = true
+                  endif
+                -%}
+                <li 
+                  class="sub-menu-item table{% if link.links != blank %} has-dropdown{% endif %}"
+                  {% if link.links != blank and forloop.first %}
+                    x-intersect.once="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');setTimeout(() => {$store.xHeaderMenu.tongleHorizontalHeight($el)}, 100);"
+                  {% endif %}
+                    @setheight-{{ block_id_downcase }}-{{ forloop.index }}.window="$store.xHeaderMenu.tongleHorizontalHeight($el);"
+                    @mouseover-{{ block_id_downcase }}-{{ forloop.index }}.window="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');"
+                    @mouseleave="$el.classList.remove('is-focus-child');"
+                    @focusin-{{ block_id_downcase }}-{{ forloop.index }}.window="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');"
+                    @focusout="$el.classList.remove('is-focus-child');"
+                  {%- if link.current or link.child_active %}@init-run.window="active = true;"{% endif %}
+                >
+                  <div class="sub-menu flex items-end z-10 relative pl-2.5 pr-2.5 w-[15.6rem]">
+                    <span class="flex-1">
+                      <a
+                        href="{{ link.url }}"
+                        class="nav-link p-break-words z-10 pb-3 pt-3 flex flex-wrap gap-2 items-center{% if count > 0 and link.links != blank %} pr-5 rtl:pr-0 rtl:pl-5{% endif %} hover-text-link is-focus-child:effect-inline{%- if link.current or link.child_active %} flex effect-inline{% endif %}"
+                        {% if link.links != blank %}@init-run.window="$store.xHeaderMenu.isTouch && $store.xHeaderMenu.touchItem($el, true)"{% endif %}
+                      >
+                        {% liquid
+                          assign is_labeled = false
+                          assign menu_item = '||' | append: link.title | append: '||' | escape
+                          if list_sub_menu contains menu_item
+                            assign is_labeled = true
+                          endif
+                        %}
+                        {% assign title = link.title %}
+                        {% if section.settings.enable_highlight %}
+                          {% liquid
+                            assign is_highlight = false
+                            assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                            assign menu_item = '||' | append: title | append: '||' | escape
+                            if list_menu contains menu_item
+                              assign is_highlight = true
+                            endif
+                          %}
+                          {% if is_highlight %}
+                            {% render 'menu-highlight',
+                              highlight_type: section.settings.highlight_style,
+                              menu_title: title,
+                              section_id: section.id,
+                            %}
+                          {% else %}
+                            <span class="p-break-words">{{ title | escape }}</span>
+                          {% endif %}
+                        {% else %}
+                          <span class="p-break-words">{{ title | escape }}</span>
+                        {% endif %}
+                        {% if is_labeled %}
+                          {{ sub_label }}
+                        {% endif %}
+                        {%- if count > 0 and link.links != blank -%}
+                          <span class="z-10 w-5 h-4 p-1 rounded-full block absolute right-0 rtl:right-auto rtl:left-0 -rotate-90 rtl:rotate-90">
+                            {% render 'icon-alls', icon: 'icon-caret' %}
+                          </span>
+                        {%- endif -%}
+                      </a>
+                    </span>
+                  </div>
+                  {%- if count > 0 -%}
+                    {% liquid 
+                      assign columns_desktop = 4
+                      if block.settings.tab_style == 'horizontal'
+                        assign columns_desktop = 5
+                      endif
+                    %}
+                    <div class="toggle-menu-sub left-0 overflow-hidden absolute right-0{% if block.settings.tab_style == 'horizontal' %} z-20 invisible opacity-0 background-header{% if image_count < 1 %} top-full{% endif %}{% if link.links != blank %} pb-8 pt-5{% endif %}{% else %} z-0 top-0 left-0 pl-7 xl:pr-5{% endif %} toggle-menu-sub-hidden">   
+                      <div class="mega-sub-container{% if is_rtl %} pl-0{% else %} pr-0{% endif %} relative scrollbar-body scrollbar-visible ltr{% if block.settings.tab_style == 'vertical' %} pb-8 pl-[18rem] rtl:pl-0 rtl:pr-[18rem]{% endif %} x-pgw page-width mx-auto"
+                      >
+                        <div class="mega-sub-nav scrollbar-body scrollbar-visible{% if is_rtl %} pl-5{% unless enable_slider %} rtl{% endunless %}{% else %} pr-5{% endif %}">                                     
+                          <div class="order-2 w-full">
+                            <div 
+                              id="x-product-menu-{{ block.id }}-{{ forloop.index }}"
+                              {% if enable_slider %}
+                                class="overflow-hidden x-splide splide w-full"
+                                x-intersect.once.margin.200px='$store.xSplide.load($el, {
+                                  "focus": "center",
+                                  "perPage": {{ columns_desktop }},
+                                  "speed": 500,
+                                  "updateOnMove": "true",
+                                  "progressBar": {{ columns_desktop }},
+                                  "progressBarHeader": "true",
+                                  "gap": "1.75rem",
+                                  "perMove": {{ columns_desktop }},
+                                  "pagination": false, 
+                                  "classes": {
+                                    "pagination": "hidden"
+                                  }
+                                  {% if is_rtl %}
+                                    ,"direction": "rtl"
+                                  {% endif %}
+                                })'
+                              {%- endif -%}
+                            >
+                              {%- if enable_slider -%}
+                                <div class="splide__arrows lg:block ml-5 rtl:ml-0 rtl:mr-5 hidden">
+                                  <button class="splide__arrow splide__arrow--prev button-arrow hidden lg:block absolute top-1/2 left-0 rtl:left-auto rtl:right-0 -mt-6 p-3 rounded-full z-10 w-11 h-11 after:text-[20px] rtl:rotate-180 duration-200 hover:opacity-100 disabled:cursor-not-allowed transition-all ease-in-out rtl:lg:translate-x-full lg:-translate-x-full disabled:opacity-30" aria-label="previous slide">
+                                    <span class="hidden">previous slide</span>
+                                    {% render 'icon-labels-bags', icon: 'chevron-left' %}
+                                  </button>
+                                  <button class="splide__arrow splide__arrow--next button-arrow hidden lg:block absolute top-1/2 right-0 rtl:right-auto rtl:left-0 -mt-6 p-3 rounded-full z-10 w-11 h-11 after:text-[20px] rtl:rotate-180 duration-200 hover:opacity-100 disabled:cursor-not-allowed transition-all ease-in-out rtl:lg:-translate-x-full lg:translate-x-full disabled:opacity-30" aria-label="next slide">
+                                    <span class="hidden">next slide</span>
+                                    {% render 'icon-labels-bags', icon: 'chevron-right' %}
+                                  </button>
+                                </div>
+                              {%- endif -%}
+                              <div class="relative{% if enable_slider %} splide__track{% endif %} overflow-hidden">
+                                <div class="w-full{% if enable_slider %} splide__list flex{% else %} grid md:grid-cols-{{ columns_desktop }} gap-x-7{% endif %}">
+                                  {%- assign grid_items_count = 0 -%}
+                                  {%- assign menu_child_index = block.id | append: forloop.index -%}
+                                  {%- for childlink in link.links -%}
+                                    {% if childlink.type == 'product_link' and childlink.object.published_at %}
+                                      {%- assign  grid_items_count = grid_items_count | plus: 1 -%}
+                                      {%- liquid
+                                        assign card_product = childlink.object
+                                        assign product_card_id = menu_child_index | append: forloop.index
+                                        assign class_slide = 'splide__slide x-splide-slide mega-menu-card'
+                                        if enable_slider
+                                          assign class_slide = 'splide__slide x-splide-slide mega-menu-card h-auto w-1/5'
+                                        endif
+                                      -%}
+                                      {% render 'card-product',
+                                        card_product: card_product,
+                                        section_id: section.id,
+                                        class_slide: class_slide,
+                                        columns_desktop: columns_desktop,
+                                        column_mobile: 1,
+                                        index: forloop.index,
+                                        list_name: "",
+                                        collection: "",
+                                        enable_desktop_slider: true,
+                                        block_id: block_id,
+                                        product_card_id: product_card_id,
+                                        disable_quickview: true,
+                                        disable_color_swatch: true,
+                                        disable_highlight_icon: true,
+                                        animation_loading: true,
+                                        loading: loading
+                                      %}
+                                    {% endif %}
+                                  {%- endfor -%}
+                                </div>
+                              </div>
+                              {%- if enable_slider -%}
+                                <div class="lg:flex items-center hidden mt-5 pb-8 w-3/4 ml-auto mr-auto">
+                                  <div class="splide-progress inline-block grow">
+                                    {% liquid
+                                      assign my_float = columns_desktop | times: 1.0
+                                      assign width_bar = my_float | divided_by: grid_items_count 
+                                    %} 
+                                    <div class="splide-progress-bar" style="width: {{ width_bar | times: 100 }}%;"></div>
+                                  </div>
+                                </div>
+                              {%- endif -%}
+                            </div>
+                          </div>
+                        </div>
+                        {% if block.settings.see_more_link != blank and block.settings.see_more_title != blank %}
+                          <div class="mega-sub-nav pr-5 py-4 hidden md:block">
+                            <div class="border-t w-full pt-3 hidden ltr md:flex justify-{{ block.settings.see_more_alignment }} rtl:justify-{% if block.settings.see_more_alignment == 'center' %}center{% elsif block.settings.see_more_alignment == 'start' %}right{% else %}left{% endif %}">
+                              <a href="{{ block.settings.see_more_link }}" class="hover-text-link nav-link relative w-fit flex gap-1{% if is_rtl %} rtl{% endif %}"
+                                {% if block.settings.see_more_open_new_window %} target="_blank" {% endif %}
+                              >
+                                {{ block.settings.see_more_title }}
+                                <span class="block w-5 h-5 rtl:rotate-180">{% render 'icon-alls', icon: 'icon-arrow' %}</span>
+                              </a>
+                            </div>
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  {% else %}
+                    {% if block.settings.see_more_link != blank and block.settings.see_more_title != blank %}
+                      <div class="toggle-menu-sub pb-7 left-0 overflow-hidden z-0 absolute right-0{% if block.settings.tab_style == 'horizontal' %} background-header{% if image_count < 1 %} top-full{% endif %}{% else %} shadow-md background-header min-h-full top-0 left-0 pl-7 xl:pr-5{% endif %}{% if forloop.first %} block{% else %} hidden{% endif %}">
+                        <div class="mega-sub-container relative ltr x-pgw page-width mx-auto{% if block.settings.tab_style == 'vertical' %} pl-[18rem] rtl:pl-0 rtl:pr-[18rem]{% endif %}"
+                          {% if block.settings.tab_style == 'vertical' %}{% if is_rtl %} style="padding-left: 5rem"{% endif %}{% endif %}
+                          >
+                          <div class="border-t w-full pt-3 hidden ltr md:flex justify-{{ block.settings.see_more_alignment }} rtl:justify-{% if block.settings.see_more_alignment == 'center' %}center{% elsif block.settings.see_more_alignment == 'start' %}right{% else %}left{% endif %}">
+                            <a href="{{ block.settings.see_more_link }}" class="hover-text-link nav-link relative w-fit flex gap-1{% if is_rtl %} rtl{% endif %}"
+                              {% if block.settings.see_more_open_new_window %} target="_blank" {% endif %}
+                            >
+                              {{ block.settings.see_more_title }}
+                              <span class="block w-5 h-5 rtl:rotate-180">{% render 'icon-alls', icon: 'icon-arrow' %}</span>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    {% endif %}
+                  {%- endif -%}
+                </li>
+              {%- endfor -%}
+            </ul>
+          {% else %}
+            <ul class="mega-list-nav w-72 pb-8 items-end flex-wrap md:max-h-[calc(80vh-3rem)] md:overflow-y-scroll scrollbar-body scrollbar-visible" x-refs="mega_nav">
+              {%- for link in block.settings.menu.links -%}
+                {%- liquid
+                  assign count = 0
+                  for childlink in link.links
+                    if childlink.type == 'product_link'
+                      assign count = count | plus: 1
+                    endif
+                  endfor
+                  assign enable_slider = false
+                  if count > 4
+                    assign enable_slider = true
+                  endif
+                -%}
+                <li 
+                  class="sub-menu-item table{% if link.links != blank %} has-dropdown{% endif %}{% if block.settings.tab_style == 'vertical' %} tabbed-animation-change{% if forloop.first %} is-active{% endif %}{% endif %}"
+                  x-on:mouseover="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');{% if block.settings.tab_style == 'vertical' %} $store.xHeaderMenu.setHeightScroll($el){% endif %}"
+                  @mouseleave="$el.classList.remove('is-focus-child');{% if block.settings.tab_style == 'horizontal' %} $store.xHeaderMenu.hideMenu($el, true);{% endif %}"
+                  @focusin="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');"
+                  @focusout="$el.classList.remove('is-focus-child');"
+                  {%- if link.current or link.child_active %}@init-run.window="active = true;"{% endif %}
+                >
+                  <div class="sub-menu {% if forloop.first %} border-t{% endif %} flex items-end z-10 relative pl-2.5 pr-2.5{% if block.settings.tab_style == 'vertical' %} w-56{% else %} w-[15.6rem]{% endif %}">
+                    <span class="flex-1">
+                      <a
+                        href="{{ link.url }}"
+                        class="nav-link p-break-words z-10 pb-3 pt-3 flex flex-wrap gap-2 items-center{% if count > 0 and link.links != blank %} pr-5 rtl:pr-0 rtl:pl-5{% endif %} hover-text-link is-focus-child:effect-inline{%- if link.current or link.child_active %} flex effect-inline{% endif %}"
+                        {% if link.links != blank %}@init-run.window="$store.xHeaderMenu.isTouch && $store.xHeaderMenu.touchItem($el, true)"{% endif %}
+                      >
+                        {% liquid
+                          assign is_labeled = false
+                          assign menu_item = '||' | append: link.title | append: '||' | escape
+                          if list_sub_menu contains menu_item
+                            assign is_labeled = true
+                          endif
+                        %}
+                        {% assign title = link.title %}
+                        {% if section.settings.enable_highlight %}
+                          {% liquid
+                            assign is_highlight = false
+                            assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                            assign menu_item = '||' | append: title | append: '||' | escape
+                            if list_menu contains menu_item
+                              assign is_highlight = true
+                            endif
+                          %}
+                          {% if is_highlight %}
+                            {% render 'menu-highlight',
+                              highlight_type: section.settings.highlight_style,
+                              menu_title: title,
+                              section_id: section.id,
+                            %}
+                          {% else %}
+                            <span class="p-break-words">{{ title | escape }}</span>
+                          {% endif %}
+                        {% else %}
+                          <span class="p-break-words">{{ title | escape }}</span>
+                        {% endif %}
+                        {% if is_labeled %}
+                          {{ sub_label }}
+                        {% endif %}
+                        {%- if count > 0 and link.links != blank -%}
+                          <span class="z-10 w-5 h-4 p-1 rounded-full block absolute right-0 rtl:right-auto rtl:left-0 -rotate-90 rtl:rotate-90">
+                            {% render 'icon-alls', icon: 'icon-caret' %}
+                          </span>
+                        {%- endif -%}
+                      </a>
+                    </span>
+                  </div>
+                  {%- if count > 0 -%}
+                    {% liquid 
+                      assign columns_desktop = 4
+                      if block.settings.tab_style == 'horizontal'
+                        assign columns_desktop = 5
+                      endif
+                    %}
+                    <div class="toggle-menu-sub left-0 overflow-hidden absolute right-0{% if block.settings.tab_style == 'horizontal' %} z-20 invisible opacity-0 background-header{% if image_count < 1 %} top-full{% endif %}{% if link.links != blank %} pb-8 pt-5{% endif %}{% else %} z-0 top-0 left-[18rem] rtl:left-0 rtl:right-[18rem] pl-7 xl:pr-5{% if forloop.first %} open{% endif %}{% endif %} toggle-menu-sub-hidden">   
+                      <div class="mega-sub-container{% if is_rtl %} pl-0{% else %} pr-0{% endif %} relative scrollbar-body scrollbar-visible ltr{% if block.settings.tab_style == 'vertical' %} pb-8{% endif %} x-pgw page-width mx-auto">
+                        <div class="mega-sub-nav scrollbar-body scrollbar-visible{% if is_rtl %} pl-5{% unless enable_slider %} rtl{% endunless %}{% else %} pr-5{% endif %}">                                     
+                          <div class="order-2 w-full">
+                            <div 
+                              id="x-product-menu-{{ block.id }}-{{ forloop.index }}"
+                              {% if enable_slider %}
+                                class="overflow-hidden x-splide splide w-full"
+                                x-intersect.once.margin.200px='$store.xSplide.load($el, {
+                                  "focus": "center",
+                                  "perPage": {{ columns_desktop }},
+                                  "speed": 500,
+                                  "updateOnMove": "true",
+                                  "progressBar": {{ columns_desktop }},
+                                  "progressBarHeader": "true",
+                                  "gap": "1.75rem",
+                                  "perMove": {{ columns_desktop }},
+                                  "pagination": false, 
+                                  "classes": {
+                                    "pagination": "hidden"
+                                  }
+                                  {% if is_rtl %}
+                                    ,"direction": "rtl"
+                                  {% endif %}
+                                })'
+                              {%- endif -%}
+                            >
+                              {%- if enable_slider -%}
+                                <div class="splide__arrows lg:block ml-5 rtl:ml-0 rtl:mr-5 hidden">
+                                  <button class="splide__arrow splide__arrow--prev button-arrow hidden lg:block absolute top-1/2 left-0 rtl:left-auto rtl:right-0 -mt-6 p-3 rounded-full z-10 w-11 h-11 after:text-[20px] rtl:rotate-180 duration-200 hover:opacity-100 disabled:cursor-not-allowed transition-all ease-in-out rtl:lg:translate-x-full lg:-translate-x-full disabled:opacity-30" aria-label="previous slide">
+                                    <span class="hidden">previous slide</span>
+                                    {% render 'icon-labels-bags', icon: 'chevron-left' %}
+                                  </button>
+                                  <button class="splide__arrow splide__arrow--next button-arrow hidden lg:block absolute top-1/2 right-0 rtl:right-auto rtl:left-0 -mt-6 p-3 rounded-full z-10 w-11 h-11 after:text-[20px] rtl:rotate-180 duration-200 hover:opacity-100 disabled:cursor-not-allowed transition-all ease-in-out rtl:lg:-translate-x-full lg:translate-x-full disabled:opacity-30" aria-label="next slide">
+                                    <span class="hidden">next slide</span>
+                                    {% render 'icon-labels-bags', icon: 'chevron-right' %}
+                                  </button>
+                                </div>
+                              {%- endif -%}
+                              <div class="relative{% if enable_slider %} splide__track{% endif %} overflow-hidden">
+                                <div class="w-full{% if enable_slider %} splide__list flex{% else %} grid md:grid-cols-{{ columns_desktop }} gap-x-7{% endif %}">
+                                  {%- assign grid_items_count = 0 -%}
+                                  {%- assign menu_child_index = block.id | append: forloop.index -%}
+                                  {%- for childlink in link.links -%}
+                                    {% if childlink.type == 'product_link' and childlink.object.published_at %}
+                                      {%- assign  grid_items_count = grid_items_count | plus: 1 -%}
+                                      {%- liquid
+                                        assign card_product = childlink.object
+                                        assign product_card_id = menu_child_index | append: forloop.index
+                                        assign class_slide = 'splide__slide x-splide-slide mega-menu-card'
+                                        if enable_slider
+                                          assign class_slide = 'splide__slide x-splide-slide mega-menu-card h-auto w-1/4'
+                                        endif
+                                      -%}
+                                      {% render 'card-product',
+                                        card_product: card_product,
+                                        section_id: section.id,
+                                        class_slide: class_slide,
+                                        columns_desktop: columns_desktop,
+                                        column_mobile: 1,
+                                        index: forloop.index,
+                                        list_name: "",
+                                        collection: "",
+                                        enable_desktop_slider: true,
+                                        block_id: block_id,
+                                        product_card_id: product_card_id,
+                                        disable_quickview: true,
+                                        disable_color_swatch: true,
+                                        show_vendor: block.settings.show_vendor,
+                                        show_highlighted_features: block.settings.show_highlighted_features,
+                                        show_highlighted_attributes: block.settings.show_highlighted_attributes,
+                                        show_rating: block.settings.show_rating
+                                        animation_loading: true,
+                                        loading: loading
+                                      %}
+                                    {% endif %}
+                                  {%- endfor -%}
+                                </div>
+                              </div>
+                              {%- if enable_slider -%}
+                                <div class="lg:flex items-center hidden mt-5 w-3/4 ml-auto mr-auto">
+                                  <div class="splide-progress inline-block grow">
+                                    {% liquid
+                                      assign my_float = columns_desktop | times: 1.0
+                                      assign width_bar = my_float | divided_by: grid_items_count 
+                                    %} 
+                                    <div class="splide-progress-bar" style="width: {{ width_bar | times: 100 }}%;"></div>
+                                  </div>
+                                </div>
+                              {%- endif -%}
+                            </div>
+                          </div>
+                        </div>
+                        {% if block.settings.see_more_link != blank and block.settings.see_more_title != blank %}
+                          <div class="mega-sub-nav pr-5 py-4 hidden md:block">
+                            <div class="border-t w-full pt-3 hidden ltr md:flex justify-{{ block.settings.see_more_alignment }} rtl:justify-{% if block.settings.see_more_alignment == 'center' %}center{% elsif block.settings.see_more_alignment == 'start' %}right{% else %}left{% endif %}">
+                              <a href="{{ block.settings.see_more_link }}" class="hover-text-link nav-link relative w-fit flex gap-1{% if is_rtl %} rtl{% endif %}"
+                                {% if block.settings.see_more_open_new_window %} target="_blank" {% endif %}
+                              >
+                                {{ block.settings.see_more_title }}
+                                <span class="block w-5 h-5 rtl:rotate-180">{% render 'icon-alls', icon: 'icon-arrow' %}</span>
+                              </a>
+                            </div>
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  {% else %}
+                    {% if block.settings.see_more_link != blank and block.settings.see_more_title != blank %}
+                      <div class="toggle-menu-sub pb-7 left-0 overflow-hidden z-0 absolute right-0{% if block.settings.tab_style == 'horizontal' %} background-header{% if image_count < 1 %} top-full{% endif %}{% else %} shadow-md background-header min-h-full top-0 left-0 pl-7 xl:pr-5{% endif %}{% if forloop.first %} block{% else %} hidden{% endif %}">
+                        <div class="mega-sub-container relative ltr x-pgw page-width mx-auto{% if block.settings.tab_style == 'vertical' %} pl-[18rem] rtl:pl-0 rtl:pr-[18rem]{% endif %}"
+                          {% if block.settings.tab_style == 'vertical' %}{% if is_rtl %} style="padding-left: 5rem"{% endif %}{% endif %}
+                        >
+                          <div class="border-t w-full pt-3 hidden ltr md:flex justify-{{ block.settings.see_more_alignment }} rtl:justify-{% if block.settings.see_more_alignment == 'center' %}center{% elsif block.settings.see_more_alignment == 'start' %}right{% else %}left{% endif %}">
+                            <a href="{{ block.settings.see_more_link }}" class="hover-text-link nav-link relative w-fit flex gap-1{% if is_rtl %} rtl{% endif %}"
+                              {% if block.settings.see_more_open_new_window %} target="_blank" {% endif %}
+                            >
+                              {{ block.settings.see_more_title }}
+                              <span class="block w-5 h-5 rtl:rotate-180">{% render 'icon-alls', icon: 'icon-arrow' %}</span>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    {% endif %}
+                  {%- endif -%}
+                </li>
+              {%- endfor -%}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {%- when 'simple_menu'-%}
+    {%- liquid 
+      assign image_count = 0
+      if block.settings.image_1 != blank
+        assign image_count = image_count | plus: 1
+      endif
+      if block.settings.image_2 != blank
+        assign image_count = image_count | plus: 1
+      endif
+      if block.settings.image_3 != blank
+        assign image_count = image_count | plus: 1
+      endif
+      assign quick_access_count = 0
+      if block.settings.enable_quick_access_blocks
+        if block.settings.block_title != blank
+          assign quick_access_count = 1
+        endif
+        if block.settings.block_title_2 != blank
+          assign quick_access_count = 1
+        endif
+        if block.settings.block_title_3 != blank
+          assign quick_access_count = 1
+        endif
+        if block.settings.block_title_4 != blank
+          assign quick_access_count = 1
+        endif
+      endif 
+      assign image_count = image_count | plus: quick_access_count
+      assign total_block = image_count | minus: quick_access_count
+      assign class_menu_width = 'w-full'
+      if image_count > 0
+        assign class_image_width = 'w-1/5'
+        if total_block > 0 and quick_access_count > 0
+          assign class_menu_width = 'md:w-3/5 grid-cols-3'
+        else 
+          assign class_menu_width = 'w-4/5'
+        endif
+        if block.settings.promotion_layout == 'horizontal'
+         if image_count >= 2 and quick_access_count == 0
+            assign class_image_width = 'w-1/2'
+            assign class_menu_width = 'w-1/2'
+         endif
+         if image_count >= 3 and quick_access_count > 0
+            assign class_image_width = 'w-7/12'
+            assign class_menu_width = 'w-5/12 2xl:w-[38.75%] grid-cols-2'
+          endif
+        endif
+      endif
+      assign multiple_menu = false
+      for childlink in block.settings.menu.links
+        if childlink.links != blank
+          assign multiple_menu = true
+        endif
+      endfor
+      assign promotion_position = block.settings.promotion_position
+      if is_rtl
+        if promotion_position == 'left'
+          assign promotion_position = 'right'
+        elsif promotion_position == 'right'
+          assign promotion_position = 'left'
+        endif
+      endif
+    -%}
+    <template x-if="!runDispatch">  
+      <div class="toggle-menu toggle-menu-hidden top-full text-[rgba(var(--colors-text))] mega-menu-horizontal{% if image_count > 0 %} main-nav-child-{{ promotion_position }}{% endif %} is-focus:text-[rgba(var(--colors-text))] absolute w-full background-header left-0 z-50 shadow-md ltr overflow-hidden h-fit max-h-[80vh]">
+        <div>
+          <div class="x-pgw page-width mx-auto{% if image_count > 0 %} flex promotion-{{ block.settings.promotion_layout }} image-count-{{ total_block }}{% else %} mega-menu-container{% endif %} md:max-h-[80vh]{% if quick_access_count > 0 %} flex gap-5 xl:gap-8{% endif %}">
+            {%- if block.settings.menu != blank -%}
+              <ul class="mega-nav justify-{{ block.settings.menu_content_alignment }} order-2 scrollbar-body scrollbar-visible flex-wrap relative gap-5 xl:gap-8 flex mt-7 mb-8 flex-row z-50 left-0 right-0 {{ class_menu_width }} top-full{% if is_rtl %} rtl{% endif %}">
+                {%- style -%}
+                  {%- if block.settings.sub_label != blank -%}
+                    .color-sub-label-{{ block.id }} {
+                      background: {{ block.settings.sub_label_color }};
+                      color: {{ block.settings.sub_label_text_color_light }};
+                    }
+                    .color-sub-label-{{ block.id }}:before{
+                      border-top-color: {{ block.settings.sub_label_color }}; 
+                    }
+                    .dark .color-sub-label-{{ block.id }} {
+                      background: {{ block.settings.sub_label_color_dark }};
+                      color: {{ block.settings.sub_label_text_color_dark }}
+                    }
+                    .dark .color-sub-label-{{ block.id }}:before {
+                      border-top-color: {{ block.settings.sub_label_color_dark }};
+                    }
+                  {% endif %}
+                {%- endstyle -%}
+                {%- for childlink in block.settings.menu.links -%}
+                  <li class="relative w-24 lg:w-48">
+                    <div class="{% if menu_font_weight < 600 and multiple_menu == true %}font-semibold{% endif %}">
+                      {%- render 'menu-item-image', link: childlink, show_image_product: block.settings.show_image_product, show_image_collection: block.settings.show_image_collection, show_first_image_product: block.settings.show_first_image_product, image_ratio: block.settings.image_ratio, column: column, collection_metafield: block.settings.collection_metafield -%}
+                      <a href="{{ childlink.url }}" class="flex flex-wrap gap-2 nav-link relative transition duration-200 p-break-words hover-text-link{% if childlink.current %} flex border-b effect-inline{% else %} inline-block{%- endif -%}{% if childlink.links != blank %} mb-3{% endif %}">
+                        {% liquid
+                          assign is_labeled = false
+                          assign menu_item = '||' | append: childlink.title | append: '||' | escape
+                          if list_sub_menu contains menu_item
+                            assign is_labeled = true
+                          endif
+                        %}
+                        {% assign title = childlink.title %}
+                        {% if section.settings.enable_highlight %}
+                          {% liquid
+                            assign is_highlight = false
+                            assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                            assign menu_item = '||' | append: title | append: '||' | escape
+                            if list_menu contains menu_item
+                              assign is_highlight = true
+                            endif
+                          %}
+                          {% if is_highlight %}
+                            {% render 'menu-highlight',
+                              highlight_type: section.settings.highlight_style,
+                              menu_title: title,
+                              section_id: section.id,
+                            %}
+                          {% else %}
+                            <span class="p-break-words">{{ title | escape }}</span>
+                          {% endif %}
+                        {% else %}
+                          <span class="p-break-words">{{ title | escape }}</span>
+                        {% endif %}
+                        {% if is_labeled %}
+                          {{ sub_label }}
+                        {% endif %}
+                      </a>
+                    </div>
+                    {%- if childlink.links != blank -%}
+                      <ul class="list-unstyled{% if is_rtl %} rtl{% endif %}" role="list">
+                        {%- for grandchildlink in childlink.links -%}
+                          <li class="flex items-center pt-1.5 pb-1.5 relative font-normal font_menu-normal">
+                            {%- render 'menu-item-image', link: grandchildlink, show_image_product: block.settings.show_sub_image_product, show_image_collection: block.settings.show_sub_image_collection, show_first_image_product: block.settings.show_sub_first_image_product, class_ratio: class_image_ratio, image_left: true, collection_metafield: block.settings.collection_metafield -%}
+                            <span class="flex-1">
+                              <a href="{{ grandchildlink.url }}" class="flex flex-wrap gap-2 nav-link relative transition duration-200 p-break-words hover-text-link{% if grandchildlink.current %} flex effect-inline border-b{% else %} inline-block{% endif %}">
+                                {% liquid
+                                  assign is_labeled = false
+                                  assign menu_item = '||' | append: grandchildlink.title | append: '||' | escape
+                                  if list_sub_menu contains menu_item
+                                    assign is_labeled = true
+                                  endif
+                                %}
+                                {% assign title = grandchildlink.title %}
+                                {% if section.settings.enable_highlight %}
+                                  {% liquid
+                                    assign is_highlight = false
+                                    assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                    assign menu_item = '||' | append: title | append: '||' | escape
+                                    if list_menu contains menu_item
+                                      assign is_highlight = true
+                                    endif
+                                  %}
+                                  {% if is_highlight %}
+                                    {% render 'menu-highlight',
+                                      highlight_type: section.settings.highlight_style,
+                                      menu_title: title,
+                                      section_id: section.id,
+                                    %}
+                                  {% else %}
+                                    <span class="p-break-words">{{ title | escape }}</span>
+                                  {% endif %}
+                                {% else %}
+                                  <span class="p-break-words">{{ title | escape }}</span>
+                                {% endif %}
+                                {% if is_labeled %}
+                                  {{ sub_label }}
+                                {% endif %}
+                              </a>
+                            </span>
+                          </li>
+                        {%- endfor -%}
+                      </ul>
+                    {%- endif -%}
+                  </li>
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+            {%- if block.settings.enable_quick_access_blocks -%}
+              {% assign block_id = block.id | append: "-quick-access" %}
+              {%- style -%}
+                .button-{{ block_id }} .icon-access  {
+                  width: {{ block.settings.quick_access_icon_size }}px;
+                  height: {{ block.settings.quick_access_icon_size }}px;
+                  min-width: {{ block.settings.quick_access_icon_size }}px;
+                }
+                {%- unless block.settings.color_bg_quick_access.alpha == 0.0 -%}
+                  .button-{{ block_id }} {
+                    background: rgba({{ block.settings.color_bg_quick_access.red }}, {{ block.settings.color_bg_quick_access.green }}, {{ block.settings.color_bg_quick_access.blue }});
+                  }
+                {%- endunless -%} 
+                {%- unless block.settings.color_bg_dark_quick_access.alpha == 0.0 -%}
+                  .dark .button-{{ block_id }} {
+                    background: rgba({{ block.settings.color_bg_dark_quick_access.red }}, {{ block.settings.color_bg_dark_quick_access.green }}, {{ block.settings.color_bg_dark_quick_access.blue }});
+                  }
+                {%- endunless -%} 
+                .button-{{ block_id }} .button-solid,
+                .button-{{ block_id }} .button-solid:before { 
+                  font-size: {{ block.settings.quick_access_font_size | times: 0.01 | times: text_base_size }}rem;
+                  border-radius: {{ block.settings.quick_access_corner_radius }}px;
+                  {%- unless block.settings.color_button_quick_access.alpha == 0.0 -%}
+                    --colors-line-and-border: {{ block.settings.color_button_quick_access.red }}, {{ block.settings.color_button_quick_access.green }}, {{ block.settings.color_button_quick_access.blue }};
+                    --colors-button: {{ block.settings.color_button_quick_access.red }}, {{ block.settings.color_button_quick_access.green }}, {{ block.settings.color_button_quick_access.blue }};
+                  {%- else -%}
+                    --colors-line-and-border: var(--colors-button);
+                  {%- endunless -%}
+                  {%- unless block.settings.color_text_button_quick_access.alpha == 0.0 -%}
+                    --colors-button-text: {{ block.settings.color_text_button_quick_access.red }}, {{ block.settings.color_text_button_quick_access.green }}, {{ block.settings.color_text_button_quick_access.blue }};
+                  {%- endunless -%}
+                  {%- unless block.settings.color_button_hover_quick_access.alpha == 0.0 -%}
+                    --colors-button-hover: rgb({{ block.settings.color_button_hover_quick_access.red }}, {{ block.settings.color_button_hover_quick_access.green }}, {{ block.settings.color_button_hover_quick_access.blue }});
+                  {%- endunless -%}
+                  {%- unless block.settings.color_text_button_hover_quick_access.alpha == 0.0 -%}
+                    --colors-button-text-hover: {{ block.settings.color_text_button_hover_quick_access.red }}, {{ block.settings.color_text_button_hover_quick_access.green }}, {{ block.settings.color_text_button_hover_quick_access.blue }};
+                  {%- endunless -%}
+                }
+                .dark .button-{{ block_id }} .button-solid,
+                .dark .button-{{ block_id }} .button-solid:before { 
+                  {%- unless block.settings.color_button_dark_quick_access.alpha == 0.0 -%}
+                    --colors-line-and-border: {{ block.settings.color_button_dark_quick_access.red }}, {{ block.settings.color_button_dark_quick_access.green }}, {{ block.settings.color_button_dark_quick_access.blue }};
+                    --colors-button: {{ block.settings.color_button_dark_quick_access.red }}, {{ block.settings.color_button_dark_quick_access.green }}, {{ block.settings.color_button_dark_quick_access.blue }};
+                  {%- else -%}
+                    --colors-button: {{ settings.colors_dark_button.red }}, {{ settings.colors_dark_button.green }}, {{ settings.colors_dark_button.blue }};
+                    --colors-line-and-border: var(--colors-button);
+                  {%- endunless -%}
+                  {%- unless block.settings.color_text_button_dark_quick_access.alpha == 0.0 -%}
+                    --colors-button-text: {{ block.settings.color_text_button_dark_quick_access.red }}, {{ block.settings.color_text_button_dark_quick_access.green }}, {{ block.settings.color_text_button_dark_quick_access.blue }};
+                  {%- else -%}
+                    --colors-button-text: {{ settings.colors_dark_button_text.red }}, {{ settings.colors_dark_button_text.green }}, {{ settings.colors_dark_button_text.blue }};
+                  {%- endunless -%}
+                  {%- unless block.settings.color_button_hover_dark_quick_access.alpha == 0.0 -%}
+                    --colors-button-hover: rgb({{ block.settings.color_button_hover_dark_quick_access.red }}, {{ block.settings.color_button_hover_dark_quick_access.green }}, {{ block.settings.color_button_hover_dark_quick_access.blue }});
+                  {%- else -%}
+                    --colors-button-hover: rgb({{ settings.colors_dark_button_hover.red }}, {{ settings.colors_dark_button_hover.green }}, {{ settings.colors_dark_button_hover.blue }});
+                  {%- endunless -%}
+                  {%- unless block.settings.color_text_button_hover_dark_quick_access.alpha == 0.0 -%}
+                    --colors-button-text-hover: {{ block.settings.color_text_button_hover_dark_quick_access.red }}, {{ block.settings.color_text_button_hover_dark_quick_access.green }}, {{ block.settings.color_text_button_hover_dark_quick_access.blue }};
+                  {% else %}  
+                    --colors-button-text-hover: {{ settings.colors_dark_button_text_hover.red }}, {{ settings.colors_dark_button_text_hover.green }}, {{ settings.colors_dark_button_text_hover.blue }};
+                  {%- endunless -%}
+                }
+              {%- endstyle -%}
+              <div class="grid-quick-access-{{ block_id }} mega-menu-card relative pt-8 pb-3 z-10 w-1/5{% if block.settings.desktop_position == 'right' %} ml-auto rtl:ml-0 order-3 rtl:order-1{% else %} order-1 rtl:order-3 rtl:ml-auto{% endif %}">
+                <div class="{%- unless block.settings.color_bg_quick_access.alpha == 0.0 -%} p-3{% endunless %} w-full button-{{ block_id }} {% if is_rtl %} rtl{% endif %}">
+                  {%- assign number = 0 -%}
+                  {%- if block.settings.block_title != blank -%}
+                    {%- assign number = number | plus: 1 -%}
+                    {% render 'quick-access',
+                      block_title: block.settings.block_title,
+                      block_link: block.settings.block_link,
+                      quick_access_icon: block.settings.quick_access_icon,
+                      quick_access_custom_icon: block.settings.quick_access_custom_icon
+                    %}
+                  {%- endif -%}
+                  {%- if block.settings.block_title_2 != blank -%}
+                    {%- assign number = number | plus: 1 -%}
+                    {% render 'quick-access',
+                      block_title: block.settings.block_title_2,
+                      block_link: block.settings.block_link_2,
+                      quick_access_icon: block.settings.quick_access_icon_2,
+                      quick_access_custom_icon: block.settings.quick_access_custom_icon_2,
+                      class: "mt-2"
+                    %}
+                  {%- endif -%}
+                  {%- if block.settings.block_title_3 != blank -%}
+                    {%- assign number = number | plus: 1 -%}
+                    {% render 'quick-access',
+                      block_title: block.settings.block_title_3,
+                      block_link: block.settings.block_link_3,
+                      quick_access_icon: block.settings.quick_access_icon_3,
+                      quick_access_custom_icon: block.settings.quick_access_custom_icon_3,
+                      class: "mt-2"
+                    %}
+                  {%- endif -%}
+                  {%- if block.settings.block_title_4 != blank -%}
+                    {%- assign number = number | plus: 1 -%}
+                    {% render 'quick-access',
+                      block_title: block.settings.block_title_4,
+                      block_link: block.settings.block_link_4,
+                      quick_access_icon: block.settings.quick_access_icon_4,
+                      quick_access_custom_icon: block.settings.quick_access_custom_icon_4,
+                      class: "mt-2"
+                    %}
+                  {%- endif -%}
+                  {%- style -%}
+                    {%- if number == 0 -%}
+                      .grid-quick-access-{{ block_id }} {
+                        display: none;
+                      }
+                    {%- endif -%}
+                  {%- endstyle -%}
+                </div>
+              </div>
+            {%- endif -%}
+            {%- if total_block > 0 -%}
+              <div class="relative float-right md:right-5 lg:right-0 pt-8 pb-8 {{ class_image_width -}}
+                {%- if block.settings.promotion_position == 'right' %}{% unless is_rtl %} order-4{% endunless %}{% endif -%}
+                {%- if block.settings.promotion_position == 'left' %}{% if is_rtl %} order-4{% endif %}{% endif %}"
+              > 
+                <div class="mega-nav-promotions scrollbar-body scrollbar-visible overflow-y-auto{% if block.settings.promotion_layout == 'horizontal' %} flex gap-5{% else %} flex flex-col gap-3{% endif %}">
+                  {%- if block.settings.image_1 -%}
+                    {% style %}
+                      .image-{{ block.id }}-1 {
+                        height: {{ block.settings.image_height_1 }}px;
+                      }
+                    {% endstyle %}
+                    {% assign block_id = block.id | append: "-1" %}
+                    <div class="mega-menu-card w-full group relative{% unless block.settings.enable_text_overlay_1 %} background-color-{{ block_id }}{% endunless -%}
+                      {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+                      {%- if block.settings.promotion_position == 'right' %}{% unless is_rtl %} ltr{% endunless %}{% endif -%}
+                      {%- if block.settings.promotion_position == 'left' %}{% if is_rtl %} ltr{% endif %}{% endif %}"
+                    >
+                      {% render 'promotion-image',
+                        blockID: block_id,
+                        image: block.settings.image_1,
+                        enable_text_overlay: block.settings.enable_text_overlay_1,
+                        heading: block.settings.heading_1,
+                        content: block.settings.text_1,
+                        button_label: block.settings.button_label_1,
+                        button_link: block.settings.button_link_1,
+                        open_new_window: block.settings.open_new_window_button_1,
+                        content_alignment: 'center',
+                        full_width: false,
+                        overlay_opacity: block.settings.overlay_opacity_1,
+                        show_button_style: block.settings.show_button_style_1,
+                        background_color: block.settings.background_color,
+                        color_text: block.settings.color_text,
+                        color_button: block.settings.color_button,
+                        color_text_button: block.settings.color_text_button,
+                        color_button_hover: block.settings.color_button_hover,
+                        color_text_button_hover: block.settings.color_text_button_hover,
+                        color_button_secondary: block.settings.color_button_secondary,
+                        secondary_button_text: block.settings.secondary_button_text,
+                        colors_text_link: block.settings.colors_text_link,
+                        heading_size: block.settings.heading_size_1,
+                        text_size: block.settings.text_size_1,
+                        content_position: block.settings.content_position_1,
+                        columns_desktop: 4,
+                        show_in_header: true
+                      %}
+                    </div>
+                  {%- endif -%} 
+                  {%- if block.settings.image_2 -%}
+                    {% style %}
+                      .image-{{ block.id }}-2 {
+                        height: {{ block.settings.image_height_2 }}px;
+                      }
+                    {% endstyle %}
+                    {% assign block_id = block.id | append: "-2" %}
+                    <div class="mega-menu-card w-full group relative{% unless block.settings.enable_text_overlay_2 %} background-color-{{ block_id }}{% endunless -%}
+                      {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+                      {%- if block.settings.promotion_position == 'right' %}{% unless is_rtl %} ltr{% endunless %}{% endif -%}
+                      {%- if block.settings.promotion_position == 'left' %}{% if is_rtl %} ltr{% endif %}{% endif %}"
+                    >
+                      {% render 'promotion-image',
+                        blockID: block_id,
+                        image: block.settings.image_2,
+                        enable_text_overlay: block.settings.enable_text_overlay_2,
+                        heading: block.settings.heading_2,
+                        content: block.settings.text_2,
+                        button_label: block.settings.button_label_2,
+                        button_link: block.settings.button_link_2,
+                        open_new_window: block.settings.open_new_window_button_2,
+                        content_alignment: 'center',
+                        full_width: false,
+                        overlay_opacity: block.settings.overlay_opacity_2,
+                        show_button_style: block.settings.show_button_style_2,
+                        background_color: block.settings.background_color,
+                        color_text: block.settings.color_text,
+                        color_button: block.settings.color_button,
+                        color_text_button: block.settings.color_text_button,
+                        color_button_hover: block.settings.color_button_hover,
+                        color_text_button_hover: block.settings.color_text_button_hover,
+                        color_button_secondary: block.settings.color_button_secondary,
+                        secondary_button_text: block.settings.secondary_button_text,
+                        colors_text_link: block.settings.colors_text_link,
+                        heading_size: block.settings.heading_size_2,
+                        text_size: block.settings.text_size_2,
+                        content_position: block.settings.content_position_2,
+                        columns_desktop: 4,
+                        show_in_header: true
+                      %}
+                    </div>
+                  {%- endif -%} 
+                  {%- if block.settings.image_3 -%}
+                    {% style %}
+                      .image-{{ block.id }}-3 {
+                        height: {{ block.settings.image_height_3 }}px;
+                      }
+                    {% endstyle %}
+                    {% assign block_id = block.id | append: "-3" %}
+                    <div class="mega-menu-card w-full group relative{% unless block.settings.enable_text_overlay_3 %} background-color-{{ block_id }}{% endunless -%}
+                      {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
+                      {%- if block.settings.promotion_position == 'right' %}{% unless is_rtl %} ltr{% endunless %}{% endif -%}
+                      {%- if block.settings.promotion_position == 'left' %}{% if is_rtl %} ltr{% endif %}{% endif %}"
+                    >
+                      {% render 'promotion-image',
+                        blockID: block_id,
+                        image: block.settings.image_3,
+                        enable_text_overlay: block.settings.enable_text_overlay_3,
+                        heading: block.settings.heading_3,
+                        content: block.settings.text_3,
+                        button_label: block.settings.button_label_3,
+                        button_link: block.settings.button_link_3,
+                        open_new_window: block.settings.open_new_window_button_3,
+                        content_alignment: 'center',
+                        full_width: false,
+                        overlay_opacity: block.settings.overlay_opacity_3,
+                        show_button_style: block.settings.show_button_style_3,
+                        background_color: block.settings.background_color,
+                        color_text: block.settings.color_text,
+                        color_button: block.settings.color_button,
+                        color_text_button: block.settings.color_text_button,
+                        color_button_hover: block.settings.color_button_hover,
+                        color_text_button_hover: block.settings.color_text_button_hover,
+                        color_button_secondary: block.settings.color_button_secondary,
+                        secondary_button_text: block.settings.secondary_button_text,
+                        colors_text_link: block.settings.colors_text_link,
+                        heading_size: block.settings.heading_size_3,
+                        text_size: block.settings.text_size_3,
+                        content_position: block.settings.content_position_3,
+                        columns_desktop: 4,
+                        show_in_header: true
+                      %}
+                    </div>
+                  {%- endif -%} 
+                </div>
+              </div>
+            {%- endif -%}
+          </div>
+          {% if block.settings.see_more_link != blank and block.settings.see_more_title != blank %}
+            <div class="x-pgw page-width">
+              <div class="see-more border-t py-4 mt-2 hidden ltr md:flex justify-{{ block.settings.see_more_alignment }} rtl:justify-{% if block.settings.see_more_alignment == 'center' %}center{% elsif block.settings.see_more_alignment == 'start' %}right{% else %}left{% endif %}">
+                <a href="{{ block.settings.see_more_link }}" class="hover-text-link nav-link relative w-fit flex gap-1{% if is_rtl %} rtl{% endif %}"{% if block.settings.see_more_open_new_window %} target="_blank" {% endif %}>
+                  {{ block.settings.see_more_title }}
+                  <span class="block w-5 h-5 rtl:rotate-180">{% render 'icon-alls', icon: 'icon-arrow' %}</span>
+                </a>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </template>
+  {%- when 'blog_menu' -%}
+    <template x-if="!runDispatch">
+      <div class="toggle-menu toggle-menu-hidden top-full is-focus:text-[rgba(var(--colors-text))] absolute w-full background-header text-[rgba(var(--colors-text))] left-0 z-50 shadow-md overflow-hidden">
+        <div class="x-pgw page-width mx-auto ltr{% if blog and blog.articles_count > 0 or is_link %} flex gap-x-3{% endif -%}
+          {%- if is_rtl %}{% if block.settings.position == 'left' %} blog-position-right{% else %} blog-position-left{% endif %}{% else %} blog-position-{{ block.settings.position }}{% endif %}"
+        >
+          {%- if is_link -%}
+            <div class="pt-8 pb-5">
+              {% if block.settings.heading_menu != blank %}
+                <div class="blog-other-title{% if is_rtl %} rtl{% endif %}">
+                  <p class="table relative w-[15.6rem] pt-1 pb-3 border-b uppercase text-normal opacity-70">
+                    {{ block.settings.heading_menu }}
+                  </p>
+                </div>
+              {% endif %}
+              <ul class="list-blog-menu{% if block.settings.heading_menu != blank %} pt-2{% endif %} overflow-x-hidden scrollbar-body scrollbar-visible overflow-y-auto"> 
+                {%- style -%}
+                  {%- if block.settings.sub_label != blank -%}
+                    .color-sub-label-{{ block.id }} {
+                      background: {{ block.settings.sub_label_color }};
+                      color: {{ block.settings.sub_label_text_color_light }};
+                    }
+                    .color-sub-label-{{ block.id }}:before{
+                      border-top-color: {{ block.settings.sub_label_color }}; 
+                    }
+                    .dark .color-sub-label-{{ block.id }} {
+                      background: {{ block.settings.sub_label_color_dark }};
+                      color: {{ block.settings.sub_label_text_color_dark }}
+                    }
+                    .dark .color-sub-label-{{ block.id }}:before {
+                      border-top-color: {{ block.settings.sub_label_color_dark }};
+                    }
+                  {% endif %}
+                {%- endstyle -%}
+                {%- for link in block.settings.menu.links -%}
+                  <li 
+                    class="table{% if link.links != blank %} has-dropdown{% endif %}{% if is_rtl %} rtl{% endif %}"
+                    x-on:mouseover="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');"
+                    @mouseleave="$el.classList.remove('is-focus-child');"
+                    @focusin="$store.xHeaderMenu.selectItem($el, true); $el.classList.add('is-focus-child');"
+                    @focusout="$el.classList.remove('is-focus-child');"
+                    {%- if link.current or link.child_active %}@init-run.window="active = true;"{% endif %}
+                  >
+                    <div class="sub-menu z-10 relative mb-2 w-[15.6rem] pt-1 pb-1">
+                      <a
+                        href="{{ link.url }}"
+                        class="flex flex-wrap gap-2 {% if section.settings.highlight_style == 'bling_bling' %} pl-3 rtl:pr-3 {% endif %} nav-link p-break-words relative z-10 pb-1 hover-text-link is-focus-child:effect-inline{%- if link.current %} effect-inline{% endif %}"
+                        @init-run.window="$store.xHeaderMenu.isTouch && $store.xHeaderMenu.touchItem($el, true)"
+                      >
+                        {% liquid
+                          assign is_labeled = false
+                          assign menu_item = '||' | append: link.title | append: '||' | escape
+                          if list_sub_menu contains menu_item
+                            assign is_labeled = true
+                          endif
+                        %}
+                        {% assign title = link.title %}
+                        {% if section.settings.enable_highlight %}
+                          {% liquid
+                            assign is_highlight = false
+                            assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                            assign menu_item = '||' | append: title | append: '||' | escape
+                            if list_menu contains menu_item
+                              assign is_highlight = true
+                            endif
+                          %}
+                          {% if is_highlight %}
+                            {% render 'menu-highlight',
+                              highlight_type: section.settings.highlight_style,
+                              menu_title: title,
+                              section_id: section.id,
+                            %}
+                          {% else %}
+                            <span class="p-break-words">{{ title | escape }}</span>
+                          {% endif %}
+                        {% else %}
+                          <span class="p-break-words">{{ title | escape }}</span>
+                        {% endif %}
+                        {% if is_labeled %}
+                          {{ sub_label }}
+                        {% endif %}
+                      </a>
+                    </div>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            </div>
+          {%- endif -%}
+          {% assign post_limit = block.settings.rows_desktop | times: block.settings.columns_desktop %}
+          {% if blog %}
+            <div class="pt-8 pb-11 grow">
+              <p class="menu-heading {% if is_link %}blog-menu-title{% endif %} relative pt-1 pb-3 uppercase text-normal opacity-70{% if is_rtl %} rtl{% endif %}">{% if block.settings.heading_post != blank %}{{ block.settings.heading_post }}{% else %}{{ 'blogs.recent_posts' | t }}{% endif %}</p>
+              <div class="blog-posts-menu{% if is_link %} list-blog{% endif %} overflow-x-hidden scrollbar-body scrollbar-visible overflow-y-auto">
+                <div class="grid grid-cols-{{ block.settings.columns_desktop }} md:gap-x-8 pb-1" {% if is_rtl %} style="direction: rtl"{% endif %}>
+                  {%- for article in blog.articles limit: post_limit -%}
+                    {% liquid
+                      assign image_desktop_top = false
+                      if forloop.index <= block.settings.columns_desktop and block.settings.enable_featured_post
+                        assign image_desktop_top = true
+                      endif
+                    %}
+                    {%- render 'article-card',
+                      article: article,
+                      index: forloop.index,
+                      columns_desktop: block.settings.columns_desktop,
+                      columns_mobile: "2",
+                      blog_header: true,
+                      image_desktop_top: image_desktop_top,
+                      class_margin: '',
+                      image_ratio: block.settings.image_ratio,
+                      show_image: block.settings.show_image, 
+                      show_excerpt: block.settings.show_excerpt,
+                      show_in_header: true
+                    -%}
+                  {%- endfor -%}
+                </div>
+                {% if block.settings.see_more_link != blank and block.settings.see_more_title != blank %}
+                  <span class="see-more border-t py-4 hidden ltr md:flex justify-{{ block.settings.see_more_alignment }} rtl:justify-{% if block.settings.see_more_alignment == 'center' %}center{% elsif block.settings.see_more_alignment == 'start' %}right{% else %}left{% endif %}">
+                    <a href="{{ block.settings.see_more_link }}" class="hover-text-link nav-link relative w-fit flex gap-1 {% if is_rtl %} rtl{% endif %}"
+                      {% if block.settings.see_more_open_new_window %} target="_blank" {% endif %}
+                    >
+                      {{ block.settings.see_more_title }}
+                      <span class="block w-5 h-5 rtl:rotate-180">{% render 'icon-alls', icon: 'icon-arrow' %}</span>
+                    </a>
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </template>
+  {%- when 'contact_menu' -%}
+    <template x-if="!runDispatch">
+      <div class="toggle-menu toggle-menu-hidden top-full is-focus:text-[rgba(var(--colors-text))] text-[rgba(var(--colors-text))] absolute w-full background-header left-0 z-50 shadow-md overflow-hidden">
+        <div class="flex mx-auto x-pgw page-width gap-x-7 pt-8 pb-11">
+          <div class="overflow-hidden {{ class_map }}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+            {%- if block.settings.image != blank -%}
+              {% liquid
+                if settings.enable_lazy_loading_image
+                  assign loading = 'lazy'
+                else
+                  assign loading = 'eager'
+                endif
+              %}
+              {%- capture sizes -%}
+                (min-width: {{ settings.page_width }}px) calc({{ settings.page_width | divided_by: 3 | plus: 200 }}px ), 
+                (min-width: 768px) 50vw, 
+                100vw
+              {%- endcapture -%}
+              {{ block.settings.image | image_url: width: 3000 | image_tag: loading: loading, sizes: sizes, widths: '375, 450, 750, 900, 1100, 1500, 1780, 2000, 3000, 3840', class: 'w-full h-full object-center object-cover z-0 inset-0 image-hover' }} 
+            {%- elsif block.settings.store_address != blank -%}
+              <div x-data="xMap('{{ block.settings.store_address }}')" class="h-full" x-intersect.once.margin.250px="load()"> 
+                <iframe src="" class="w-full h-full" title="Map"></iframe>
+              </div>
+            {%- else -%}
+              <div class="flex items-center justify-center bg-[#c9c9c9] w-full h-full">
+                {% render 'icon-placeholder', icon: 'icon-location-map', class: 'w-20 h-20 md:h-auto md:w-auto' %}
+              </div>
+            {%- endif -%}
+          </div>
+          <div class="{{ class_form }}">
+            {%- if block.settings.contact_heading != blank -%}
+              <h2 class="text-large leading-tight font-inherit">
+                {{ block.settings.contact_heading | escape }}
+              </h2>
+            {%- endif -%}
+            {% if block.settings.infomation != blank %}
+              <div class="rte mt-3 font-normal">
+                {{ block.settings.infomation }}
+              </div>
+            {% endif %}
+            {% assign form_id = "contact-form-" | append: block.id %}
+            {%- form 'contact', id: form_id, class: 'eurus' -%}
+              <div class="contact__fields font-normal{% if block.settings.infomation != blank %} mt-8{% else %} mt-6{% endif %}">
+                <div class="flex gap-x-3.5">
+                  <div class="mb-3 flex-1 relative">
+                    <input
+                      type="text"
+                      id="ContactFormName-{{ section.id }}"
+                      class="w-full pl-5 pr-5 lg:pl-6 lg:pr-6 pt-4 pb-1.5 border focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                      name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}name{% endif %}]"
+                      value="{% if form.name %}{{ form.name }}{% elsif customer %}{{ customer.name }}{% endif %}"
+                      autocapitalize="words" 
+                      placeholder="{{ 'customer.name' | t }}"
+                      {% if block.settings.mark_as_required %}
+                        required
+                      {% endif %}>
+                    <label class="leading-tight absolute top-1/2 left-5 rtl:left-auto rtl:right-5 lg:left-6 rtl:lg:left-auto rtl:lg:right-6 -translate-y-1/2 input_focus:text-xs input_focus:top-2.5 input_not_empty:top-2.5 input_not_empty:text-xs" for="ContactFormName-{{ section.id }}">
+                      {{ 'customer.name' | t }}
+                      {% if block.settings.mark_as_required %}
+                        <span aria-hidden="true">*</span>
+                      {%- endif %}
+                    </label>
+                  </div>
+                  <div class="mb-3 flex-1 relative"> 
+                    <input
+                      type="email"
+                      id="ContactFormEmail-{{ section.id }}"
+                      class="w-full border pl-5 pr-5 lg:pl-6 lg:pr-6 pt-4 pb-1.5 focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                      name="contact[email]"
+                      autocomplete="email"
+                      autocapitalize="off"
+                      autocorrect="off"
+                      value="{% if form.email %}{{ form.email }}{% elsif customer %}{{ customer.email }}{% endif %}" 
+                      placeholder="{{ 'customer.email' | t }}"
+                      required>
+                      <label 
+                        class="leading-tight absolute top-1/2 left-5 rtl:left-auto rtl:right-5 lg:left-6 rtl:lg:left-auto rtl:lg:right-6 -translate-y-1/2 input_focus:text-xs input_focus:top-2.5 input_not_empty:top-2.5 input_not_empty:text-xs" 
+                        for="ContactFormEmail-{{ section.id }}"
+                      >
+                        {{ 'customer.email' | t }}
+                        <span aria-hidden="true">*</span>
+                      </label>
+                  </div>
+                </div>
+                <div class="mb-3 relative">
+                  <input
+                    type="tel"
+                    id="ContactFormPhone-{{ section.id }}"
+                    class="border w-full pl-5 pr-5 lg:pl-6 lg:pr-6 pt-4 pb-1.5 focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}{% if is_rtl %} rtl{% endif %}"
+                    name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}phone{% endif %}]"
+                    pattern="[0-9\-]*"
+                    value="{% if form.phone %}{{ form.phone }}{% elsif customer %}{{ customer.phone }}{% endif %}" 
+                    placeholder="{{ 'customer.email' | t }}"
+                    {% if block.settings.mark_as_required -%}
+                      required
+                    {%- endif -%}>
+                    <label 
+                      class="absolute top-1/2 left-5 rtl:left-auto rtl:right-5 lg:left-6 rtl:lg:left-auto rtl:lg:right-6 -translate-y-1/2 input_focus:text-xs input_focus:top-2.5 input_not_empty:top-2.5 input_not_empty:text-xs" 
+                      for="ContactFormPhone-{{ section.id }}"
+                    >
+                      {{ 'templates.contact.form.phone' | t }}
+                      {% if block.settings.mark_as_required %}
+                        <span aria-hidden="true">*</span>
+                      {%- endif -%}
+                    </label>
+                </div>
+                <div class="mb-2 md:mb-3 relative"> 
+                  <textarea
+                    id="ContactFormMessage-{{ section.id }}"
+                    class="w-full pl-5 pr-5 lg:pl-6 lg:pr-6 pt-5 pb-1.5 border focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                    rows="4"
+                    name="contact[{%- if block.settings.heading != blank -%}{{ block.settings.heading }}{%- else -%}message{% endif %}]" 
+                    placeholder="{{ 'customer.email' | t }}"
+                    {% if block.settings.mark_as_required %}
+                      required
+                    {% endif %}>
+                    {{- form.message -}}
+                  </textarea>
+                  <label 
+                    class="absolute top-3 md:top-4 left-5 rtl:left-auto rtl:right-5 lg:left-6 rtl:lg:left-auto rtl:lg:right-6 input_focus:text-xs input_focus:top-1 input_not_empty:top-1 input_not_empty:text-xs" 
+                    for="ContactFormMessage-{{ section.id }}"
+                  >
+                    {{ 'templates.contact.form.message' | t }}
+                    {% if block.settings.mark_as_required %}
+                      <span aria-hidden="true">*</span>
+                    {%- endif -%}
+                  </label>
+                </div>
+              </div>
+              <div class="text-right rtl:text-left mt-2.5">
+                <button type="submit" class="button button-solid leading-normal pl-8 pr-8 pt-2.5 pb-2.5 lg:pt-3 lg:pb-3 cursor-pointer empty:hidden pointer-events-auto">
+                  {%- if section.settings.button_label != blank -%}
+                    {% assign button_label = section.settings.button_label %}
+                  {%- else -%}
+                    {% assign button_label = 'templates.contact.form.send' | t %}
+                  {%- endif -%}
+                  {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+                </button>
+              </div>
+            {%- endform -%}
+          </div>
+          {% if block.settings.show_contact_information %}
+            <div class="contact-infomation {{ class_infomation }}">
+              {%- if block.settings.heading_information != blank -%}
+                 <h2 class="text-large leading-tight font-inherit">
+                  {{ block.settings.heading_information | escape }}
+                </h2>
+              {%- endif -%}
+              {% if block.settings.subheading != blank %}
+                <div class="rte mt-3 font-normal">
+                  {{ block.settings.subheading }}
+                </div>
+              {% endif %}
+              <ul class="flex gap-y-6 flex-col{% if block.settings.heading != blank %} mt-4{% endif %} pb-9 font-normal">
+                {% if block.settings.store_address != blank %}
+                  <li class="rte relative flex items-center">
+                    <span class="w-5 mr-4 rtl:mr-0 rtl:ml-4 left-0 rtl:left-auto rtl:right-0 absolute top-1/2 -translate-y-1/2">{% render 'icon-alls', icon: 'icon-location' %}</span>
+                    <span class="pl-8 rtl:pl-0 rtl:pr-8 pt-0.5">{{ block.settings.store_address }}</span>
+                  </li>
+                {% endif %}
+                {% if block.settings.phone_nummber != blank %}
+                  <li class="rte relative flex items-center">
+                    <span class="w-5 mr-4 rtl:mr-0 rtl:ml-4 left-0 rtl:left-auto rtl:right-0 absolute top-1/2 -translate-y-1/2">{% render 'icon-alls', icon: 'icon-phone' %}</span>
+                    <span class="pl-8 rtl:pl-0 rtl:pr-8 pt-0.5">{{ block.settings.phone_nummber }}</span>
+                  </li>
+                {% endif %}
+                {% if block.settings.email_address != blank %}
+                  <li class="rte relative flex items-center">
+                    <span class="w-5 mr-4 rtl:mr-0 rtl:ml-4 left-0 rtl:left-auto rtl:right-0 absolute top-1/2 -translate-y-1/2">{% render 'icon-alls', icon: 'icon-email' %}</span>
+                    <span class="pl-8 rtl:pl-0 rtl:pr-8 pt-0.5">{{ block.settings.email_address }}</span>
+                  </li>
+                {% endif %}
+              </ul>
+              {% if block.settings.contact_text != blank or block.settings.enable_social_icon %}
+                <div class="pt-6 border-t font-normal">
+                  {% if block.settings.contact_text != blank %}
+                    <div class="rte mb-3">
+                      {{ block.settings.contact_text }}
+                    </div>
+                  {% endif %}
+                  {% if block.settings.enable_social_icon %}
+                    <ul class="-ml-4 -mr-3 flex flex-wrap">
+                      {%- render 'social-icons' -%}
+                    </ul>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </template>
+{%- endcase -%}

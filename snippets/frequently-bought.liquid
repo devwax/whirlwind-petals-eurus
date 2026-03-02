@@ -1,0 +1,320 @@
+{% liquid
+  assign show_rounded_image = false
+  if settings.edges_type == 'rounded_corners'
+    assign show_rounded_image = true
+  endif
+
+  assign can_show_preorder = false
+  if settings.preorder_show == 'yes' or settings.preorder_show == 'on_backordered' and product.selected_or_first_available_variant.inventory_policy == 'continue' and product.selected_or_first_available_variant.inventory_quantity < 1 and product.selected_or_first_available_variant.inventory_management != nil
+    if settings.applied_products_preorder == blank and settings.applied_collections_preorder == blank
+      assign can_show_preorder = true
+    else 
+      assign list_product = ''
+      for prod in settings.applied_products_preorder
+        assign list_product = list_product | append: ';' | append: prod.id
+      endfor 
+      for collec in settings.applied_collections_preorder
+        for prod in collec.products 
+          assign list_product = list_product | append: ';' | append: prod.id
+        endfor
+      endfor
+      if list_product contains product.id 
+        assign can_show_preorder = true
+      endif
+    endif
+  endif 
+%}
+{% style %}
+  {% if block.settings.show_border %}
+    .border-{{ section.id }}-{{ block.id }} {
+      {% if block.settings.border_color_light.alpha != 0.0 %}
+        --colors-line-and-border: {{ block.settings.border_color_light.red }}, {{ block.settings.border_color_light.green }}, {{ block.settings.border_color_light.blue }};
+      {% else %}
+        --colors-line-and-border: {{ settings.colors_line_and_borders.red }}, {{ settings.colors_line_and_borders.green }}, {{ settings.colors_line_and_borders.blue }};
+      {% endif %}
+    }
+    .dark .border-{{ section.id }}-{{ block.id }} {
+      {% if block.settings.border_color_dark.alpha != 0.0 %}
+        --colors-line-and-border: {{ block.settings.border_color_dark.red }}, {{ block.settings.border_color_dark.green }}, {{ block.settings.border_color_dark.blue }};
+      {% else %}
+        --colors-line-and-border: {{ settings.colors_dark_line_and_borders.red }}, {{ settings.colors_dark_line_and_borders.green }}, {{ settings.colors_dark_line_and_borders.blue }};
+      {% endif %}
+    }
+  {% endif %}
+{% endstyle %}
+<div x-intersect.once="load = true" x-data="xProductFrequently('{{ section.id }}',{% if settings.currency_code_enable %}'{{ shop.money_with_currency_format | escape }}'{% else %}'{{ shop.money_format | escape }}'{% endif %})">
+  <button :disabled="loading" {% if block.settings.list_products != blank %}@click="setTimeout(() => { openPopup($el) }, 0)"{% endif %} class="flex justify-between w-full items-center{% if block.settings.list_products != blank %} cursor-pointer{% else %} cursor-not-allowed{% endif %}">
+    <div class="flex items-center">
+      {% if block.settings.icon != 'none' %}
+        {% unless block.settings.custom_image == blank and block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+          <span class="inline-block relative min-w-[24px] h-6 w-6 mr-2 rtl:ml-2 rtl:mr-0">
+            {% if block.settings.custom_image != blank %}
+              {% # theme-check-disable ImgLazyLoading %}
+              <img 
+                src="{{ block.settings.custom_image | image_url: width: section.settings.icon_size }}"
+                alt="{{ block.settings.custom_image.alt | escape }}"
+                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                width="{{ block.settings.custom_image.width }}"
+                height="{{ block.settings.custom_image.height }}"
+                style="object-position: {{ block.settings.custom_image.presentation.focal_point }}"
+                class="object-cover absolute top-0 left-0 w-full h-full"
+              >
+              {% # theme-check-enable ImgLazyLoading %}
+            {% else %}
+              {% if block.settings.custom_icon == blank %}
+                {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                  {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                {% else %}
+                  {% render 'icon-labels-bags', icon: block.settings.icon %}
+                {% endif %}
+              {% else %}
+                {{ block.settings.custom_icon }}
+              {% endif %}
+            {% endif %}
+          </span>
+        {% endunless %}
+      {% endif %}
+      {% if block.settings.text != blank %}
+        <span class="text-[110%] text-left rtl:text-right">{{ block.settings.text | escape }}</span>
+      {% endif %}
+    </div>
+    {% if block.settings.list_products != blank %}
+      <div class="text-[rgba(var(--colors-text-link))] ml-2 rtl:mr-2 rtl:ml-0">
+        <span :class="JSON.parse(JSON.stringify(productsList)).length > 0 ? 'hidden': 'block'">{{ 'products.product.add' | t }}</span>
+        <span x-cloak :class="JSON.parse(JSON.stringify(productsList)).length > 0 ? 'block': 'hidden'">{{ 'products.product.edit' | t }}</span>
+      </div>
+    {% endif %}
+  </button>
+  {% if block.settings.list_products != blank %}
+    <div class="list-items">
+      <div x-cloak :class="JSON.parse(JSON.stringify(productsList)).length > 0 ? 'block': 'hidden'">
+        <div class="md:mt-5" :class="JSON.parse(JSON.stringify(productsList)).length > 0 && 'mt-5'">
+          <div class="w-full overflow-hidden">
+            <div class="w-full mb-5{% unless block.settings.show_background %}{% if block.settings.show_border %} pt-4 pb-4 pr-4 pl-4 border border-solid border-{{ section.id }}-{{ block.id }} {% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}{% endif %}{% endunless %}">
+              <template x-for="(item,index) in Object.values(productsList)" :key="index">
+                <div 
+                  class="w-full flex bundler-product relative gap-4 pt-5 pb-5{% if block.settings.show_background %} bg-[rgba(var(--colors-background-secondary))] mt-1.5 mb-1.5 pl-5 pr-5{% if show_rounded_image %} rounded-[10px]{% endif %}{% else %} border-b border-solid last:border-b-0{% endif %}"
+                  x-data="{ 
+                    item: JSON.parse(JSON.stringify(item))
+                  }"
+                >
+                  <div class="bundler-product-image min-w-[84px] w-[84px] h-[84px] relative">
+                    <a x-bind:href="item.productUrl" class="block disable-effect w-full">
+                      <div class="relative w-full overflow-hidden float-left before:h-0 before:block before:pb-[100.0%]{% if show_rounded_image %} rounded-md{% endif %}">
+                        {% # theme-check-disable ImgLazyLoading %}
+                        <img
+                          x-show="item.featured_image"
+                          class="absolute top-0 right-0 left-0 bottom-0 object-cover h-full w-full image-hover" 
+                          x-bind:src="`${ item.featured_image }`"
+                          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                          width="150"
+                          height="150"
+                          alt=""
+                        >
+                        {% # theme-check-enable ImgLazyLoading %}
+                        <div class="bg-[#c9c9c9] absolute top-0 left-0 w-full h-full" x-show="!item.featured_image">{%- render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}</div>
+                      </div>
+                    </a>
+                  </div>
+                  <div class="flex justify-between w-full gap-2 lg:gap-5">
+                    <div class="grow">
+                      {% if block.settings.show_vendor %}
+                        <p class="uppercase tracking-widest text-small p-break-words" x-text="item.vendor"></p>
+                      {% endif %}
+                      {% if block.settings.show_rating %}
+                        <div x-html="item.rating"></div>
+                      {% endif %}
+                      <div class="flex justify-between lg:gap-5 lg:items-center">
+                        <a x-bind:href="item.productUrl" class="text-[rgba(var(--colors-heading))] text-[120%] mr-0 duration-200 transition disable-effect hover-text-link p-break-words grow" x-text="item.product_name"></a>
+                      </div>
+                      <p class="text-[rgba(var(--colors-text))] mt-1 opacity-70" x-show="item.title" x-text="item.title"></p>
+                      <p class="block lg:hidden mt-1 text-[rgba(var(--colors-text))] opacity-70 pl-0 pr-0">x<span x-text="item.quantity"></span></p>
+                    </div>
+                    <button class="block lg:hidden cursor-pointer h-fit" @click="setTimeout(() => { removeItem($el, index) }, 0)">
+                      <span class="block underline">{{ 'products.product.remove' | t }}</span>
+                    </button>
+                    <div class="hidden lg:flex gap-5 min-w-fit">
+                      <p class="text-[rgba(var(--colors-text))] opacity-70 pl-4 pr-4">x<span x-text="item.quantity"></span></p>
+                      <button class="cursor-pointer h-fit" @click="setTimeout(() => { removeItem($el, index) }, 0)">
+                        <span class="block underline">{{ 'products.product.remove' | t }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+        <div>
+          <button
+            class="button-atc button button-solid block w-full pl-7 pr-7 pt-3 pb-3 disabled:cursor-not-allowed disable-action-btn-animation disabled:opacity-60"
+            @click="handleAddToCart($el)"
+          >
+            {% assign button_label = 'products.product.add_selected_to_cart' | t %}
+            <span :class="{ 'lg:block opacity-0 is-focus-button' : loading }">
+              <span class="flex items-center justify-center">
+                {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+              </span>
+            </span>
+
+            <div class="lg:inline-block animate-spin w-4 h-4 md:w-5 md:h-5 absolute top-[calc(50%-8px)] left-[calc(50%-8px)] md:top-[calc(50%-10px)] md:left-[calc(50%-10px)]" x-show="loading" x-cloak>
+              {% render 'icon-alls', icon: 'icon-loading' %}
+            </div>
+          </button>
+        </div>
+        <div class="flex relative w-full mt-2 pt-3 pb-3 pr-3.5 pl-3.5 bg-[rgba(var(--color-error),0.2)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" x-cloak x-show="errorMessage">
+          <span class="absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2 w-3">{% render 'icon-alls', icon: 'icon-error' %}</span>
+          <span class="cart-warning text-small pl-5 rtl:pl-0 rtl:pr-5"></span>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  {% if block.settings.list_products != blank %}
+    <template x-if="load">
+      <template x-teleport="#popup-fbt-{{ section.id }}">
+        <div x-show="show" {% if settings.product_reviews_app == 'yotpo' %}x-init="renderRatingYotpo($el)"{% endif %} class="x-container-fbt-popup fixed z-[70] left-0 top-0 right-0 bottom-0 flex justify-end" x-cloak>
+          <div x-show="show" x-cloak class="x-overlay absolute top-0 left-0 right-0 bottom-0 bg-[#acacac] bg-opacity-30"></div>
+          <div class="x-container-fbt-popup-content w-full md:w-[700px] flex flex-col justify-between relative bg-[rgba(var(--background-color))]{% if settings.edges_type == 'rounded_corners' %} md:m-2.5 md:rounded-[10px]{% endif %}"
+            x-show="show" x-cloak
+            x-transition:enter="transition-all ease-in-out duration-500"
+            x-transition:enter-start="opacity-0 transform translate-y-1/3{% if settings.lang_direction contains request.locale.iso_code %} md:-translate-x-1/3{% else %} md:translate-x-1/3{% endif %} md:translate-y-0"
+            x-transition:enter-end="opacity-100 transform translate-y-0 md:translate-x-0 md:translate-y-0"
+            x-transition:leave="transition-all ease-in-out duration-500"
+            x-transition:leave-end="opacity-0 transform translate-y-1/3{% if settings.lang_direction contains request.locale.iso_code %} md:-translate-x-1/3{% else %} md:translate-x-1/3{% endif %} md:translate-y-0"
+            @click.away="setTimeout(() => { closePopup(); $store.xModal.removeFocus(); }, 0)"
+          >
+            <div class="x-container-fbt-popup-header ml-4 mr-4 md:ml-10 md:mr-10 pt-8 pb-6 md:pt-10 md:pb-6 flex items-center justify-between">
+              <p class="text-[150%] leading-tight p-break-words">{{ block.settings.text | escape }}</p>
+              <button aria-label="Close popup fbt" class="icon-close-container rounded-full absolute top-2 right-2 group-close-btn cursor-pointer" @click.prevent="setTimeout(() => { closePopup(); $store.xModal.removeFocus(); }, 0)">
+                {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+              </button>
+            </div>
+            <div class="x-container-fbt-popup-products ml-4 rtl:ml-0 rtl:pl-4 pr-4 md:ml-10 md:pr-10 rtl:md:ml-0 rtl:md:pl-10 grid grid-cols-2 gap-1 overflow-y-auto scrollbar-body" role="list">
+              {%- for prod in block.settings.list_products -%}
+                {% if prod.available %}
+                  {% liquid
+                    assign page_param = section.index | append: forloop.index | plus: 0
+                    if settings.enable_combined
+                      assign product_form_id = block.id | append: page_param 
+                      assign section_id = section.id | append: block.id | append: page_param
+                    else
+                      assign product_form_id = block.id | append: prod.id 
+                      assign section_id = section.id | append: block.id | append: prod.id
+                    endif
+                  %}
+                  {% render 'card-product-frequently',
+                    card_product: prod,
+                    product_form_id: product_form_id,
+                    picker_type: block.settings.variant_type,
+                    section_id: section_id,
+                    index: forloop.index,
+                    page_param: page_param,
+                    show_vendor: block.settings.show_vendor,
+                    show_rating: block.settings.show_rating,
+                    show_highlighted_features: block.settings.show_highlighted_features,
+                    animation_loading: true
+                  %}
+                {% endif %}
+              {%- endfor -%}
+            </div>
+            <div class="x-container-fbt-popup-footer ml-4 mr-4 md:ml-10 md:mr-10 mb-8">
+              <div>
+                <button @click="setTimeout(() => { addToList($el) }, 0)" :disabled="!isSelectItems" 
+                  class="w-full disable-effect flex justify-center button button-solid empty:hidden p-break-words leading-normal text-center mt-2 lg:ml-0 lg:mr-0 h-full pl-4 pr-4 lg:pl-7 lg:pr-7 pt-2.5 pb-2.5 md:pt-3 md:pb-3 disabled:cursor-not-allowed disabled:opacity-70">
+                  {% render 'button-label', show_button_style: 'primary', button_select_fbt: true %}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </template>
+    {% if settings.product_reviews_app == 'yotpo' %}
+      <div class="hidden" id="list-rating-yotpo-{{ section.id }}">
+        {%- for prod in block.settings.list_products -%}
+          <div>
+            <div class="yotpo bottomLine" data-product-id="{{ prod.id }}"> </div>
+          </div>
+        {%- endfor -%}
+      </div>
+    {% endif %}
+  {% endif %}
+  {% liquid
+    unless settings.enable_combined
+      assign section_id = section.id | append: block.id | append: product.id 
+      assign product_form_id = 'product-form-' | append: section_id
+    endunless
+  %}
+    {% if settings.enable_combined %}
+      {%- paginate pages by 1 -%}
+      {% liquid
+        assign section_id = section.id | append: block.id | append: paginate.current_page
+        assign product_form_id = 'product-form-' | append: section_id
+      %}
+      <div class="hidden card-product-fbt-clone" id="x-product-template-{{ product.id }}-{{ section_id }}">
+        {% render 'card-product-frequently',
+          card_product: product,
+          product_form_id: product_form_id,
+          picker_type: block.settings.variant_type,
+          section_id: section_id,
+          page_param: paginate.current_page,
+          show_vendor: block.settings.show_vendor,
+          show_rating: block.settings.show_rating,
+          show_highlighted_features: block.settings.show_highlighted_features,
+          animation_loading: true
+        %}
+      </div>
+      {% endpaginate %}
+    {% else %}
+      <div class="hidden card-product-fbt-clone" id="x-product-template-{{ product.id }}-{{ section_id }}">
+        {%- unless settings.hide_cart -%}
+          {% if settings.show_in_cart_items != 'none' %}
+            {% if settings.hide_when_pre_order %}                   
+              <div class="hidden" id="cart-edt-{{ section_id }}">
+                {% if can_show_preorder == false %}
+                  {% render 'estimate-shipping-cart', product: product, message: settings.message_estimate_cart, disable_cart_edt: disable_cart_edt %}
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="hidden" id="cart-edt-{{ section_id }}">
+                {% render 'estimate-shipping-cart', product: product, message: settings.message_estimate_cart, disable_cart_edt: disable_cart_edt %}
+              </div>
+            {% endif %}
+          {% endif %}
+          {% if settings.preorder_show != 'no' %}
+            <div class="hidden" id="preorder-{{ section_id }}">
+              {% if can_show_preorder %}
+                {% liquid  
+                  assign message_preorder = 'general.preorder.message_preorder' | t
+                  if settings.message_preorder != blank
+                    assign message_preorder = settings.message_preorder
+                  endif 
+                %}
+                <input name="properties[{{ 'general.preorder.name' | t }}]" aria-label="Preorder" class="hidden preorder-edt-properties" value="{{ message_preorder }}"/>
+              {% endif %}
+            </div>
+          {% endif %} 
+          {%- form 'product', product, id: product_form_id, class: 'form h-full', novalidate: 'novalidate', data-type: 'add-to-cart-form', x-ref: 'product_form' -%}
+            <button 
+              type="submit"
+              name="add"
+              id="x-atc-button-{{ section_id }}"
+              class="button add_to_cart_button x-atb-button w-full not-icon button-outline text-center inline-block border empty:hidden pl-6 pr-6 pt-2.5 pb-2.5 md:pt-3 md:pb-3 mt-2.5 leading-normal disabled:cursor-not-allowed disabled:opacity-60"
+              {% if product.selected_or_first_available_variant.available == false %}disabled{% endif %}
+            >
+              <span class="x-atc-text">
+                {%- if product.selected_or_first_available_variant.available -%}
+                  <span class="flex items-center justify-center">
+                    {{ 'products.product.add' | t }}
+                  </span>
+                {%- else -%}
+                  {{ 'products.product.sold_out' | t }}
+                {%- endif -%}
+              </span>
+            </button>
+          {%- endform -%}
+        {%- endunless -%}
+      </div>
+    {% endif %}
+  </div>
+<script src="{{ 'frequently-bought-together.js' | asset_url }}" defer></script>  

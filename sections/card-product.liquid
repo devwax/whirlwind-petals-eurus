@@ -1,0 +1,318 @@
+{%- paginate pages by 1 -%}
+  {% liquid 
+    assign choose_option_id = product.id | append: paginate.current_page
+    assign section_id = section.id | append: choose_option_id
+
+    assign product_form_id = 'product-form-' | append: section_id
+
+    assign can_show_preorder = false
+    if settings.preorder_show == 'yes' or settings.preorder_show == 'on_backordered' and product.selected_or_first_available_variant.inventory_policy == 'continue' and product.selected_or_first_available_variant.inventory_quantity < 1 and product.selected_or_first_available_variant.inventory_management != nil
+      if settings.applied_products_preorder == blank and settings.applied_collections_preorder == blank
+        assign can_show_preorder = true
+      else 
+        assign applied_product_ids = settings.applied_products_preorder | map: 'id' | join: ','
+        assign applied_collection_ids = settings.applied_collections_preorder | map: 'id' | join: ','
+
+        if applied_product_ids contains product.id
+          assign can_show_preorder = true
+        endif
+
+        unless can_show_preorder 
+          assign product_collection_ids = product.collections | map: 'id'
+          for id in product_collection_ids
+            if applied_collection_ids contains id
+              assign can_show_preorder = true
+            endif
+          endfor
+        endunless
+      endif
+    endif 
+
+    assign disable_cart_edt = false
+    if product.gift_card? or can_show_preorder and settings.hide_when_pre_order
+      assign disable_cart_edt = true
+    endif
+
+    assign check_against_inventory = true
+    if product.selected_or_first_available_variant.inventory_management != 'shopify' or product.selected_or_first_available_variant.inventory_policy == 'continue'
+      assign check_against_inventory = false
+    endif
+    if product.selected_or_first_available_variant.quantity_rule.min > product.selected_or_first_available_variant.inventory_quantity and check_against_inventory
+      assign quantity_rule_soldout = true
+    endif
+
+    assign only_default_variant = product.has_only_default_variant
+    assign swatch_enabled = settings.products_color_swatches_enable_on_collection_page
+  %}
+  {%- form 'product', product, id: product_form_id, class: 'form', novalidate: 'novalidate', data-type: 'add-to-cart-form', x-ref: 'product_form' -%}
+    <input type="hidden" aria-hidden="true" id="update-variant-{{ section_id }}" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+    {% render 'estimate-shipping-cart', product: product, message: settings.message_estimate_cart, disable_cart_edt: disable_cart_edt %}
+    {% liquid  
+      assign message_preorder = 'general.preorder.message_preorder' | t
+      if settings.message_preorder != blank
+        assign message_preorder = settings.message_preorder
+      endif 
+    %}
+    <input name="properties[{{ 'general.preorder.name' | t }}]" aria-label="Preorder" class="hidden" value="{{ message_preorder }}"/>
+    <button
+      id="x-atc-button-{{ section_id }}"
+      role="button"
+      name="add"
+      type="submit"
+      {% if product.selected_or_first_available_variant == nil %}
+        disabled
+        aria-label="{{ 'products.product.unavailable' | t }}"
+      {%- elsif product.selected_or_first_available_variant.available == false or quantity_rule_soldout or product.selected_or_first_available_variant == nil -%}
+        disabled
+        aria-label="{{ 'products.product.sold_out' | t }}"
+      {%- elsif can_show_preorder -%}
+        aria-label="{{ 'products.product.pre_order' | t }}"
+      {%- elsif only_default_variant or swatch_enabled -%}
+        aria-label="{{ 'products.product.add_to_cart' | t }}"
+      {%- else -%}
+        aria-label="{{ 'products.product.choose_options' | t }}"
+      {%- endif -%}
+    >
+      <span class="button-text">
+        {% if product.selected_or_first_available_variant == nil %}
+          {{ 'products.product.unavailable' | t }}
+        {%- elsif product.selected_or_first_available_variant.available == false or quantity_rule_soldout or product.selected_or_first_available_variant == nil -%}
+          {{ 'products.product.sold_out' | t }}
+        {%- elsif can_show_preorder -%}
+          {% if settings.card_button_preorder != blank %}
+            {{ settings.card_button_preorder }}
+          {% else %}
+            {{ 'products.product.pre_order' | t }}
+          {% endif %}
+        {%- elsif only_default_variant or swatch_enabled -%}
+          {{ 'products.product.add_to_cart' | t }}
+        {%- else -%}
+          {{ 'products.product.choose_options' | t }}
+        {% endif %}
+      </span>
+    </button>
+  {%- endform -%}
+
+  {% liquid 
+    assign price = product.selected_or_first_available_variant.price | default: 1999
+    if settings.currency_code_enable
+      assign money_price = price | money_with_currency
+    else 
+      assign money_price = price | money
+    endif 
+  %}
+  <span class="variant-price-{{ product.id }}">{{ money_price }}</span>
+
+  <div class="x-variants-data-js">
+    <script type="application/json">
+      {{ product.selected_or_first_available_variant | json }}
+    </script>
+    <div id="current-variant" class="current-variant hidden">
+      {{ product.selected_or_first_available_variant.id }}
+    </div>
+    <div
+      id="variant-update"
+      class="variant-update options-container"
+    >
+      {%- for option in product.options_with_values -%}
+        {% assign option_index = forloop.index | minus: 1 %}
+        <fieldset>
+          <legend class="option-selected-value" data-option-name="{{ option.name | handle }}">{{ option.name }}{% if settings.products_color_swatches_enable_on_collection_page and settings.swatches_type == 'color' or settings.swatches_type == 'both_text_and_color' and settings.color_option_name contains option.name %}:
+          <span>{{- option.selected_value -}}</span>{% endif %}
+          </legend>
+          <div>
+            {%- liquid
+              assign swatch_natural = false     
+              if settings.products_color_swatches_style == 'natural'
+                assign swatch_natural = true
+              endif
+              assign ratio_image = false
+            %}
+            {%- for value in option.values -%}
+              {% liquid
+                assign preview_image = blank
+                assign variant_value = value.variant
+                if variant_value.featured_media.preview_image
+                  assign preview_image = variant_value.featured_media.preview_image
+                  unless ratio_image
+                    assign ratio_image = 1 | divided_by: variant_value.featured_media.preview_image.aspect_ratio | times: 100
+                  endunless
+                elsif product.featured_media
+                  assign preview_image = product.featured_media
+                  unless ratio_image
+                    assign ratio_image = 1 | divided_by: product.featured_media.aspect_ratio | times: 100
+                  endunless
+                endif
+              %}
+              <input 
+                id="{{ section_id }}-{{ option.position }}-{{ forloop.index0 }}"
+                data-available="{{ value.available }}"
+                data-product-url="{{ product.url }}"
+                data-option-value-id="{{ value.id }}"
+                type="radio"
+                name="{{ option.name }}"
+                value="{{ value | escape | replace: '&lt;', '\u003c' | replace: '&gt;', '\u003e' }}"
+                form="{{ product_form_id }}"
+                class="{% unless value.available %} disabled{% endunless %}"
+                aria-label="{{ value | escape }}"
+                {% if value == option.selected_value %}
+                  checked
+                {% endif %}
+              >
+              <option
+                data-available="{{ value.available }}"
+                data-product-url="{{ product.url }}"
+                data-option-value-id="{{ value.id }}"
+                value="{{ value | escape | replace: '&lt;', '\u003c' | replace: '&gt;', '\u003e' }}"
+                {% if value == option.selected_value %} 
+                  selected
+                {% endif %}
+              >
+                {% unless value.available -%}
+                  {{- 'products.product.value_unavailable' | t: value: value -}}
+                {%- else -%}
+                  {{- value | escape -}}
+                {%- endunless %}
+              </option>
+              {% if settings.swatches_type == 'color' or settings.swatches_type == 'both_text_and_color' and settings.color_option_name contains option.name %}
+                <label 
+                  for="{{ section_id }}-{{ option.position }}-{{ forloop.index0 }}" 
+                  data-optionindex="{{ option_index }}"
+                  data-optionvalue="{{ value | escape | replace: '&lt;', '\u003c' | replace: '&gt;', '\u003e' }}"
+                  data-option-value-id="{{ value.id }}"
+                  {% if swatch_natural and ratio_image %}
+                    style="--ratio-image: {{ ratio_image }}%; --bg-image: url('{{ preview_image | image_url: width: 100, height: 100 }}')"
+                  {% else %}
+                    style="--bg-image: url('{{ preview_image | image_url: width: 100, height: 100 }}')"
+                  {% endif %}
+                  tabindex="0"
+                  data-name="{{ value | escape }}"
+                  aria-label="{{ value | escape }}"
+                >
+                </label>
+              {% elsif settings.swatches_type == 'text' or settings.swatches_type == 'both_text_and_color' and settings.text_option_name contains option.name %}
+                <label
+                  for="{{ section_id }}-{{ option.position }}-{{ forloop.index0 }}"
+                  data-option-value-id="{{ value.id }}"
+                >
+                </label>
+              {% endif %}
+              <script type="application/json" data-option-value-id="{{ value.id }}" data-resource="{{ section_id }}-{{ option.position }}-{{ forloop.index0 }}">
+                {{ value.variant | json }}
+              </script>
+            {%- endfor -%}
+          </div>
+        </fieldset>
+      {%- endfor -%}
+    </div>
+  </div>
+
+  <div class="x-card-price">
+    <div class="product-card-price">
+      {% if product.selected_or_first_available_variant != nil %}
+        {%- liquid 
+          assign swatch_count = 0
+          if swatch_enabled
+            for option in product.options_with_values
+              assign name = option.name
+              case settings.swatches_type
+                when 'text'
+                  if settings.text_option_name contains name
+                    assign swatch_count = swatch_count | plus: 1
+                  endif
+                when 'color'
+                  if settings.color_option_name contains name
+                    assign swatch_count = swatch_count | plus: 1
+                  endif
+                when 'both_text_and_color'
+                  if settings.text_option_name contains name or settings.color_option_name contains name
+                    assign swatch_count = swatch_count | plus: 1
+                  endif
+              endcase
+            endfor 
+          endif
+        -%}
+        {% if product.options_with_values.size == swatch_count %}
+          {% render 'price', product: product, use_variant: true %}
+        {% else %}
+          {% render 'price', product: product %}
+        {% endif %}
+        <div class="leading-none next-price empty:hidden"></div>
+      {% endif %}
+    </div>
+    <div class="choose-option-price">
+      {% if product.selected_or_first_available_variant != nil %}
+        {% render 'price', product: product, use_variant: true %}
+      {% endif %}
+    </div>
+  </div>
+
+  {%- capture data_for_label -%}
+    [
+    {% assign variant = product.selected_or_first_available_variant %}
+    {%- liquid
+      assign current_date = 'now' | date: '%s' 
+      assign product_created_at = product.created_at | date: "%s"
+      assign product_published_at = product.published_at | date: "%s"
+      assign difference_in_seconds_created = current_date | minus: product_created_at
+      assign difference_in_days_created = difference_in_seconds_created | times: 1.0 | divided_by: 86400 | round: 2
+      assign difference_in_seconds_published = current_date | minus: product_published_at
+      assign difference_in_days_published = difference_in_seconds_published | times: 1.0 | divided_by: 86400 | round: 2
+
+      assign list_metafield_label = ''
+      if settings.metafield_label != blank
+        assign metafield_labels = settings.metafield_label | newline_to_br | strip_newlines | split: '<br />'
+        for metafield_label in metafield_labels
+          assign mtf_key = metafield_label | remove: ' ' | split: '.'
+          assign mtf_value = variant.metafields[mtf_key.first][mtf_key.last]
+          if mtf_value == blank or mtf_value.type != 'single_line_text_field'
+            assign mtf_value = product.metafields[mtf_key.first][mtf_key.last]
+            if mtf_value != blank and mtf_value.type != 'single_line_text_field'
+              assign mtf_value = ''
+            endif
+          endif
+          if forloop.last
+            assign list_metafield_label = list_metafield_label | append: '"' | append: metafield_label | append: '":"' | append: mtf_value | append: '"'
+          else
+            assign list_metafield_label = list_metafield_label | append: '"' | append: metafield_label | append: '":"' | append: mtf_value | append: '",'
+          endif
+        endfor
+      endif
+    -%}
+    {
+      "variant_id": {{ variant.id }},
+      "product_id": {{ product.id }},
+      "available": {{ variant.available }},
+      "title": "{{ product.title | escape }}",
+      "compare_at_price": {{ variant.compare_at_price | default: 0 }},
+      "price": {{ variant.price }},
+      "price_with_currency": "{% if settings.currency_code_enable %}{{ variant.price | money_with_currency | escape }}{% else %}{{ variant.price | money | escape }}{% endif %}",
+      "sale_amount": "{{ variant.compare_at_price | minus: variant.price | money | escape | strip_html }}",
+      "collections": "||{{ product.collections | map: 'id' | join: '||' }}||",
+      "inventory_management": "{{ variant.inventory_management }}",
+      "qty": {{ variant.inventory_quantity | default: -1 }},
+      "container": "card",
+      "can_show_preorder": {{ can_show_preorder }},
+      "diff_day_create": {{ difference_in_days_created }},
+      "diff_day_publish": {{ difference_in_days_published }}
+      {% if settings.metafield_label != blank %}
+        ,"metafield_label": { 
+          {{ list_metafield_label }}
+        }
+      {% endif %}
+    }
+    ]
+  {%- endcapture %}
+  <div class="x-labels-data" {% if product.selected_or_first_available_variant != nil %}x-labels-data="{{ data_for_label | escape }}"{% endif %}></div>
+
+  <div id="x-availability-notice">
+    {% render 'availability-notice', product: product %}
+  </div>
+  {% liquid
+    assign preview_image = product.selected_or_first_available_variant.featured_media.preview_image
+    if preview_image == blank and product.featured_media
+      assign preview_image = product.featured_media
+    endif
+  %}
+  <div id="x-variant-image" data-image-url="{{ preview_image | image_url }}"></div>
+{%- endpaginate -%}

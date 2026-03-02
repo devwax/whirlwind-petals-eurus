@@ -1,0 +1,464 @@
+{% liquid
+  assign swiper_on_mobile = false
+  if section.settings.swiper_on_mobile
+    if section.settings.min_columns_mobile == '1' and section.blocks.size > 1
+      assign swiper_on_mobile = true
+    elsif section.settings.min_columns_mobile == '2' and section.blocks.size > 2
+      assign swiper_on_mobile = true
+    endif
+  endif
+%}
+{% if swiper_on_mobile %}
+  {% liquid
+    assign progress_bar = section.blocks.size
+  %}
+  <div
+    id="collage-{{ section.id }}"
+    class="overflow-hidden x-splide visible splide{% if section.settings.full_width_mobile %} pl-5 pr-5 md:pl-0 md:pr-0{% endif %}{% if section.settings.enable_arrow_mobile %} flex flex-col{% endif %}"
+    x-data-slider="{{ section.id }}"
+    x-intersect.once.margin.200px='$store.xSplide.load($el, {
+      "speed": 1000,
+      "pagination": false, 
+      "mediaQuery": "min",
+      "updateOnMove": "true",
+      "pauseOnHover": true,
+      "pauseOnFocus": false,
+      "progressBar": {{ progress_bar }},
+      {%- if section.settings.enable_arrow_mobile %}
+        "drag": false,
+      {%- endif %}
+      {%- if settings.lang_direction contains request.locale.iso_code %} 
+        "direction": "rtl",
+      {%- endif %}
+      {%- if section.settings.auto_play -%}
+        "rewind": true,
+        "autoplay": true,
+        "interval": {{ section.settings.change_slides_speed | times: 1000 }},
+      {%- endif %}
+      "breakpoints": {
+        300: {
+          {% if swiper_on_mobile == false %}
+            "destroy": true,
+          {%- endif %}
+          "gap": "{{ section.settings.spacing_mobile }}px",
+          "perPage": {{ min_columns_mobile }},
+          "perMove": 1
+        },
+        768: {
+          "destroy": true
+        }
+      },
+      "classes": {
+        "arrows" : "block"
+      },
+      "events": [
+        {
+          "event": "ready",
+          "callback": () => {
+            document.dispatchEvent(new CustomEvent("eurus:{{ section.id }}:splide-ready"));
+          }
+        }
+      ]
+    });'
+    x-intersect.once='$el.classList.add("is-ready-to-animate")'
+  >
+    <div class="md:hidden splide__arrows{% if swiper_on_mobile and section.settings.enable_arrow_mobile %} flex items-center justify-center gap-3 mb-1 mt-5{% endif %} order-2">
+      <button 
+        class="splide__arrow splide__arrow--prev button-arrow p-3 rounded-full z-10 w-11 h-11 border border-solid after:text-[20px] rtl:rotate-180 disabled:cursor-not-allowed disabled:opacity-30
+        {%- unless section.settings.enable_arrow_mobile %} hidden{% else %} block{% endunless %}"
+        aria-label="previous slide"
+      >
+        {% render 'icon-labels-bags', icon: 'chevron-left' %}
+      </button>
+      <button 
+        class="splide__arrow splide__arrow--next button-arrow p-3 rounded-full z-10 w-11 h-11 border border-solid after:text-[20px] rtl:rotate-180 disabled:cursor-not-allowed disabled:opacity-30
+        {%- unless section.settings.enable_arrow_mobile %} hidden{% else %} block{% endunless %}"
+        aria-label="next slide"
+      >
+        {% render 'icon-labels-bags', icon: 'chevron-right' %}
+      </button>
+    </div>
+    {% style %}
+      .gap-{{ section.id }} {
+        {% if swiper_on_mobile %}
+          gap: 0px;
+        {% else %}
+          gap: {{ section.settings.spacing_mobile }}px;
+        {% endif %}
+      }
+      .collage-splide-slide-{{ section.id }} {
+        {% if swiper_on_mobile %}
+          width: calc({{ 100 | divided_by: min_columns_mobile }}% - {{ section.settings.spacing_mobile | divided_by: 2 }}px);
+          {%- if settings.lang_direction contains request.locale.iso_code %} 
+            margin-left: {{ section.settings.spacing_mobile }}px;
+          {% else %}
+            margin-right: {{ section.settings.spacing_mobile }}px;
+          {% endif %}
+        {% else %}
+          width: 100%;
+          margin-right: 0;
+        {% endif %}
+      }
+      @media (min-width: 768px) {
+        .gap-{{ section.id }} {
+          gap: {{ section.settings.spacing }}px;
+        }
+        .collage-splide-slide-{{ section.id }} {
+          width: 100%;
+          margin-right: 0;
+        }
+      }
+    {% endstyle %}
+    <div class="splide__track lg:pl-0 lg:pr-0">
+      <div class="{% if request.visual_preview_mode %}gap-4 md:gap-7 {% endif %}splide__list md:grid md:grid-cols-{{ max_columns }}{% if swiper_on_mobile %} flex w-full{% else %} grid grid-cols-{{ min_columns_mobile }}{% endif %} gap-{{ section.id }}">
+{% else %}
+  <div x-intersect.once='$el.classList.add("is-ready-to-animate")' id="collage-{{ section.id }}" class="grid collage grid-cols-{{ min_columns_mobile }} md:grid-cols-{{ max_columns }} spacing--{{ section.id }}{% if request.visual_preview_mode %} gap-4 md:gap-7{% endif %}">
+{% endif %}
+{%- for block in section.blocks -%}
+  {% style %}
+    .x-slide-animation-duration-{{ forloop.index }} {
+      --delay-time: {{ forloop.index0 | times: 100 | append: 'ms' }}
+    }
+  {% endstyle %}
+  {% liquid 
+    assign columns_desktop = block.settings.number_of_columns
+    assign columns_mobile = block.settings.number_of_columns
+    if columns_desktop > max_columns
+      assign columns_desktop = max_columns  
+    endif
+    if columns_mobile > min_columns_mobile
+      assign columns_mobile = min_columns_mobile
+    endif
+    assign percent_width = max_columns | divided_by: columns_desktop | round
+  %}
+  <div class="{% unless settings.disable_carousel_animation %}x-slide-animation x-slide-animation-duration-{{ forloop.index }}{% endunless %} {% if swiper_on_mobile %}splide__slide x-splide-slide collage-splide-slide-{{ section.id }} {% endif %}x-block-{{ block.type }}-{{ forloop.index }} flex flex-col overflow-hidden relative col-span-{{ columns_mobile }} md:col-span-{{ columns_desktop }} row-span-{{ block.settings.number_of_row }}{% if block.type == 'product' %} collage-product-{{ percent_width }}-{{ block.settings.desktop_size }}{% endif %}{% if block.type == 'video' %} group{% endif %}" {{ block.shopify_attributes }}>
+    {%- case block.type -%}
+      {%- when 'image' -%}
+        <div class="relative group h-full w-full flex items-center{% if block.settings.image_padding %} object-contain{% endif %}">
+          {%- if section.settings.full_width -%}
+            {%- capture sizes -%}(min-width: 768px) {{ columns_desktop | times: 100 | divided_by: max_columns }}vw, {% if swiper_on_mobile %}{{ 100 | divided_by: min_columns_mobile }}{% else %}{{ columns_mobile | times: 100 | divided_by: min_columns_mobile }}{% endif %}vw{%- endcapture -%}
+          {%- else -%}
+            {%- capture sizes -%}(min-width: {{ settings.page_width }}px) {{ settings.page_width | times: columns_desktop | divided_by: max_columns }}px, (min-width: 768px) {{ columns_desktop | times: 100 | divided_by: max_columns }}vw, {% if swiper_on_mobile %}{{ 100 | divided_by: min_columns_mobile }}{% else %}{{ columns_mobile | times: 100 | divided_by: min_columns_mobile }}{% endif %}vw{%- endcapture -%}
+          {%- endif -%}
+          {% render 'promotion-image',
+            blockID: block.id,
+            image: block.settings.image,
+            image_link: block.settings.image_link,
+            image_ratio: 'auto',
+            enable_text_overlay: true,
+            heading: block.settings.title,
+            content: block.settings.text,
+            button_label: block.settings.button_label,
+            button_link: block.settings.button_link,
+            content_alignment: block.settings.text_align,
+            full_width: section.settings.full_width,
+            overlay_opacity: block.settings.overlay_opacity,
+            show_button_style: block.settings.show_button_style,
+            title_color: block.settings.title_color,
+            color_text: block.settings.text_color,
+            color_button: block.settings.color_button,
+            color_text_button: block.settings.color_text_button,
+            color_button_hover: block.settings.color_button_hover,
+            color_text_button_hover: block.settings.color_text_button_hover,
+            color_button_secondary: block.settings.color_button_secondary,
+            secondary_button_text: block.settings.secondary_button_text,
+            colors_text_link: block.settings.colors_text_link,
+            heading_size: block.settings.title_size,
+            text_size: block.settings.text_size,
+            content_position: block.settings.content_position,
+            open_new_window : block.settings.open_new_window_button,
+            sizes: sizes,
+            collage: true,
+            color_heading_highlight_dark: block.settings.color_heading_highlight_light,
+            color_heading_highlight_light: block.settings.color_heading_highlight_light,
+            highlight_type: block.settings.highlight_type,
+            animation_loading: true,
+            use_original_ratio: block.settings.image_padding
+          %}
+        </div>
+      {%- when 'product' -%}
+        {%- if block.settings.product != blank %}
+          {% liquid
+            assign disable_quickview = true
+            if block.settings.show_quickview
+              assign disable_quickview = false
+            endif 
+            assign index_param = section.index | append: forloop.index | plus: 0
+            if settings.enable_lazy_loading_image
+              assign loading = 'lazy'
+            else
+              assign loading = 'eager'
+            endif
+          %}
+          {%- render 'card-product',
+            card_product: block.settings.product, 
+            collage: true,
+            extend_height: false,
+            block_id: block.id,
+            disable_quickview: disable_quickview,
+            info_alignment: block.settings.info_alignment,
+            card_full_width: section.settings.full_width_mobile,
+            full_width: section.settings.full_width,
+            show_rating: show_rating,
+            show_highlighted_features: show_highlighted_features,
+            show_highlighted_attributes: show_highlighted_attributes
+            show_vendor: show_vendor,
+            columns_desktop: columns_desktop,
+            columns_mobile: columns_mobile,
+            max_columns: max_columns,
+            min_columns_mobile: min_columns_mobile,
+            section_id: section.id,
+            product_card_id: forloop.index,
+            index_param: index_param,
+            animation_loading: true,
+            loading: loading,
+            show_price_range: true,
+            swiper_on_mobile: swiper_on_mobile
+          -%}
+          <script src="{{ 'preview-color-swatches.js' | asset_url }}" defer></script>
+        {% else %}
+          <div class="flex flex-col h-full">
+            <div class="grow{% if settings.edges_type == 'rounded_corners' %} overflow-hidden md:rounded-[10px]{% unless section.settings.full_width_mobile %} rounded-[10px]{% endunless %}{% endif %}"> 
+              {% render 'icon-placeholder', icon: 'icon-product', class: 'bg-[#c9c9c9] w-full h-full' %}
+            </div>
+            <div class="pt-4 pb-4 text-{{ block.settings.info_alignment }}{% if section.settings.full_width_mobile %} pl-5 pr-5 md:pl-0 md:pr-0{% endif %}">
+              <p class="x-card-title h5 leading-tight text-[rgba(var(--colors-heading))]">
+                {{ 'sections.featured_collection.product_title' | t }}
+              </p>
+              <p class="x-card-price price mt-2">
+                {% if settings.currency_code_enable %}
+                  {{ 3000 | money_with_currency }}
+                {% else %}
+                  {{ 3000 | money }}
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        {% endif %}
+      {%- when 'collection' -%}
+        {%- liquid
+          assign image_ratio = 100
+          if block.settings.collection.featured_image != blank 
+            assign image_ratio = 'auto'
+          endif
+        -%}
+        {% render 'card-collection',
+          card_collection: block.settings.collection,
+          image_ratio: image_ratio,
+          extend_height: true,
+          collage: true,
+          columns: 2,
+          ratio: 100,
+          block_type: "featured_collection",
+          card_full_width: section.settings.full_width_mobile,
+          content_alignment: "center",
+          full_width: section.settings.full_width,
+          columns_desktop: columns_desktop,
+          columns_mobile: columns_mobile,
+          max_columns: max_columns,
+          min_columns_mobile: min_columns_mobile
+        %}
+      {%- when 'video' -%}
+        {% liquid 
+          assign video_alt = block.settings.video_alt_text
+          assign video_type = false
+          if block.settings.video_url.type == 'youtube' 
+            assign video_type = 'youtube'
+            assign video_id = block.settings.video_url.id
+          endif
+
+          if block.settings.video_url.type == 'vimeo' 
+            assign video_type = 'vimeo'
+            assign video_id = block.settings.video_url.id
+          endif
+
+          if block.settings.video != null 
+              assign video_type = 'video_select'
+          endif 
+        %}
+        {% if block.settings.enable_video_autoplay %}
+          <div class="h-full{% if block.settings.video_url != blank %} flex items-center{% endif %}"> 
+            <div class="relative external-video{% if video_type != 'video_select' %} h-0{% if request.design_mode %} pb-[55.75%]{% else %} pb-[56.25%]{% endif %} md:h-full{% else %} h-full{% endif %} w-full overflow-hidden video-hero{% if settings.edges_type == 'rounded_corners' %} md:rounded-[10px]{% unless section.settings.full_width_mobile %} rounded-[10px]{% endunless %}{% endif %}" 
+              x-intersect:leave="$store.xVideo.pause($el)"
+              @click.stop="$store.xVideo.togglePlay($el)"
+              {% if video_type == 'video_select' %}x-intersect="$store.xVideo.play($el)"{% endif %}  
+              {% if video_type == 'youtube' or video_type == 'vimeo' %}
+                x-intersect.once="$store.xVideo.externalLoad($el, '{{ video_type }}', '{{ video_id }}', false, '{{ video_alt }}', 1)"
+                x-intersect="$store.xVideo.play($el)"
+              {% endif %}
+              {% if block.settings.video != blank %}
+                style="padding-bottom: {{ 1 | divided_by: block.settings.video.aspect_ratio | times: 100 }}%;"
+              {% endif %}
+            >
+              {%- render 'media-video',
+                collage: true,
+                enable_video_autoplay: true,
+                video_type: video_type,
+                video_id: video_id,
+                video_alt: video_alt,
+                video: block.settings.video,
+                cover_image: block.settings.image,
+                show_sound_control: block.settings.show_sound_control
+              -%}
+            </div>
+          </div>
+        {% else %}
+          {%- if section.settings.full_width -%}
+            {%- capture sizes -%}(min-width: 1025px) {% if section.blocks.size == 1 %}100vw{% else %}70vw{% endif %}, (min-width: 768px){% if section.blocks.size == 1 %} 100vw{% else %} 540px{% endif %}, 100vw{%- endcapture -%}
+          {%- else -%}
+            {%- capture sizes -%}(min-width: {{ settings.page_width }}px) {% if section.blocks.size == 1 %}{{ settings.page_width }}px{% else %}{{ settings.page_width | times: 0.7 | round }}px{% endif %}, (min-width: 768px){% if section.blocks.size == 1 %} calc(100vw - 30px){% else %} 540px{% endif %}, calc(100vw - 30px){%- endcapture -%}
+          {%- endif -%}
+          <div 
+            class="h-full{% if block.settings.video_url != blank %} flex items-center{% endif %}" 
+            x-data="{open: false, load: false}"
+            x-intersect.once="load = true"
+          > 
+            <div class="relative h-full w-full overflow-hidden{% if settings.edges_type == 'rounded_corners' %} md:rounded-[10px]{% unless section.settings.full_width_mobile %} rounded-[10px]{% endunless %}{% endif %}">
+              <button
+                id="OpenVideoModal-{{ block.id }}"
+                {% if video_type != false %}@click="$store.xModal.setActiveElement('OpenVideoModal-{{ block.id }}'); open = true; $store.xPopup.open = true;"{% else %}disabled{% endif %}
+                class="group button-play absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] md:w-[60px] md:h-[60px] rounded-full pl-5 pr-5 pt-5 pb-5 bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 disabled:cursor-not-allowed" 
+                aria-label="image-video">
+                <span class="pointer-events-none duration-200 bg-button-play absolute w-4 h-5 md:w-4 md:h-5 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+                  {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+                </span>
+              </button>
+              {% if video_type == 'youtube' %}
+                {% # theme-check-disable %}
+                <div
+                  class="h-full w-full animate_transition_card__image animate-Xpulse skeleton-image">
+                  <picture>
+                    <source type="image/webp" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+                    <source type="image/jpeg" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi/' | append: '/maxresdefault.jpg' }}">
+                    <img 
+                      src="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}" 
+                      {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                      onload="this.closest('.animate_transition_card__image')?.classList.remove('animate-Xpulse', 'skeleton-image');
+                        setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);
+                      "
+                      alt="{{ video_alt }}" class="w-full h-full object-cover" alt="dd" width="1280" height="890"
+                    />
+                  </picture>
+                </div>
+                {% # theme-check-enable %}
+              {% endif %}  
+              {% if video_type == 'vimeo' %}
+                {%- capture options -%}
+                  {
+                    'alt': '{{ video_alt }}',
+                    'width': 1280
+                  }
+                {%- endcapture -%}
+                <div class="w-full h-full" x-intersect.once="$store.xVideo.renderVimeoFacade($el, '{{ video_id }}', {{ options }})"></div>
+              {% endif %}
+              {% if video_type == "video_select" %}
+                {% capture onload %}this.closest(".skeleton-image")?.classList.remove("animate-Xpulse", "skeleton-image");{% endcapture %}
+                {% # theme-check-disable ImgLazyLoading %}
+                <img
+                  srcset="{{ block.settings.video.preview_image | image_url: width: 250 }} 250w,
+                    {{ block.settings.video.preview_image | image_url: width: 375 }} 375w,
+                    {{ block.settings.video.preview_image | image_url: width: 450 }} 450w,
+                    {{ block.settings.video.preview_image | image_url: width: 750 }} 750w,
+                    {{ block.settings.video.preview_image | image_url: width: 900 }} 900w,
+                    {{ block.settings.video.preview_image | image_url: width: 1100 }} 1100w,
+                    {{ block.settings.video.preview_image | image_url: width: 1500 }} 1500w,
+                    {{ block.settings.video.preview_image | image_url: width: 1780 }} 1780w,
+                    {{ block.settings.video.preview_image | image_url }} {{ block.settings.video.preview_image.width }}w"
+                  src="{{ block.settings.video.preview_image | image_url: width: 1780 }}"
+                  alt="{{ block.settings.video.preview_image.alt | escape }}"
+                  sizes="{{ sizes }}"
+                  onload="this.classList.remove('animate-Xpulse', 'skeleton-image');"
+                  {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                  width="{{ block.settings.video.preview_image.width }}"
+                  height="{{ block.settings.video.preview_image.height }}"
+                  class="w-full h-full object-cover z-0 animate-Xpulse skeleton-image"
+                >
+                {% # theme-check-enable ImgLazyLoading %}
+              {% endif %}
+              {% if video_type == false %}
+                <div class="bg-[#c9c9c9] h-full w-full z-0">
+                  {%- render 'icon-media', icon: 'icon-video' , class: ' text-[#acacac] w-full h-full scale-50' -%}
+                </div>
+              {% endif %}
+            </div>
+            <template x-if="load">
+              <template x-teleport=".video-modal-container-{{ section.id }}">
+                <div 
+                  id="VideoModal-{{ block.id }}"
+                  class="top-0 left-0 right-0 bottom-0 bg-[rgba(var(--background-color))] duration-150 block fixed z-[60]"
+                  x-show="open"
+                  @keydown.escape="$store.xModal.removeFocus(); open = false; $store.xPopup.close();"
+                  x-intersect.full="$store.xModal.focus('VideoModal-{{ block.id }}', 'CloseVideoModal-{{ block.id }}');"
+                  x-cloak
+                >
+                  <button
+                    id="CloseVideoModal-{{ block.id }}"
+                    class="button group-close-btn w-fit disable-effect button_rounded rounded-full icon-close-container cursor-pointer z-20 fixed right-2 top-2"
+                    @click="open = false; $store.xPopup.close()" 
+                  >
+                    {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+                  </button>
+                  <div class="relative z-10 h-[80%] mt-24 w-[90%] m-auto overflow-hidden modal-content"
+                    x-intersect:leave="$store.xVideo.pause($el)"
+                    x-intersect="$store.xVideo.play($el)"
+                  >
+                    <div class="external-video" {% if video_type == 'youtube' or video_type == 'vimeo' %}x-intersect.once="$store.xVideo.externalLoad($el, '{{ video_type }}', '{{ video_id }}', false, '{{ block.settings.video_alt_text | escape }}')"{% endif %}>
+                    {% if video_type == "video_select" %}
+                      {% capture onload %}this.closest(".skeleton-image")?.classList.remove("animate-Xpulse", "skeleton-image");{% endcapture %}
+                      {{ block.settings.video
+                        | video_tag:
+                          image_size: "1100x",
+                          loop: false,
+                          controls: true,
+                          muted: false,
+                          class: "w-full h-full absolute top-0 left-0 video z-0 animate-Xpulse skeleton-image",
+                          onloadeddata: onload,
+                          alt: block.settings.video.alt
+                      }}
+                    {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </template>
+          </div>
+        {% endif %}
+        <script src="{{ 'video.js' | asset_url }}" defer></script>
+      {%- endcase -%}
+    </div>
+  {%- endfor -%}
+{% if swiper_on_mobile %}
+      </div>
+    </div>
+    <div class="md:hidden items-center{% if section.settings.enable_arrow_mobile or swiper_on_mobile == false %} hidden{% else %} flex w-full{% endif %} gap-5 mt-2.5 md:mt-5 md:w-3/4 ml-auto mr-auto">
+      <div class="splide-progress inline-block grow rounded-md">
+        {% liquid
+          assign my_float = max_columns | times: 1.0
+          assign width_bar = my_float | divided_by: progress_bar
+          if width_bar > 1
+            assign width_bar = 1
+          endif
+          assign mobile_float = min_columns_mobile | times: 1.0
+          assign mobile_width_bar = mobile_float | divided_by: progress_bar 
+          if mobile_width_bar > 1
+            assign mobile_width_bar = 1
+          endif
+        %} 
+        {%- style -%}
+          .splide-progress-bar-{{ section.id }} {
+            width: {{ mobile_width_bar | times: 100 }}%;
+          }
+          @media (min-width: 768px) {
+            .splide-progress-bar-{{ section.id }} {
+              width: {{ width_bar | times: 100 }}%;
+            }
+          }
+        {%- endstyle -%}
+        <div class="splide-progress-bar-{{ section.id }} splide-progress-bar rounded-md"></div>
+      </div>
+    </div>
+  </div>
+{% else %}
+  </div>
+{% endif %}
+<div class="video-modal-container-{{ section.id }} w-0 h-0"></div>

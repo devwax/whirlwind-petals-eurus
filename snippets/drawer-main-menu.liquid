@@ -1,0 +1,1428 @@
+{% comment %}
+    Renders a mobile Nav
+
+    Accepts:
+    - links: {Array} Menu navigation of menu item or main menu navigation. Default: "main-menu"
+    - start_level: {Number} Level which menu start with
+    - start_id: {String} Id which menu start with
+    - title: {String} Text of menu item (optional)
+    - link: {String} Link url of menu item (optional)
+    - block: {Object} Block
+
+    Usage:
+    {% render 'mobile-main-menu', links: section.settings.menu.links, start_level: 0, start_id: '' %}
+{% endcomment %}
+{% liquid
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+  if section.settings.enable_highlight
+    assign menus = section.settings.menus | newline_to_br | strip_newlines | split: '<br />'
+  endif
+  if start_level == 0 
+    assign sub_menus = section.settings.applied_menus | newline_to_br | strip_newlines | split: '<br />'
+    assign list_sub_menu = sub_menus | join: '||' | prepend: '||' | append: '||' | escape
+    
+    assign sub_menus_2 = section.settings.applied_menus_2 | newline_to_br | strip_newlines | split: '<br />'
+    assign list_sub_menu_2 = sub_menus_2 | join: '||' | prepend: '||' | append: '||' | escape
+  else
+    assign sub_menus = block.settings.applied_sub_menus | newline_to_br | strip_newlines | split: '<br />'
+    assign list_sub_menu = sub_menus | join: '||' | prepend: '||' | append: '||' | escape
+  endif
+%}
+{% capture sub_label_2 %}
+  {%- if start_level == 0 -%}
+    {%- if section.settings.menu_label_2 != blank -%}
+      <div class="color-label-2-{{ section.id }} z-10 min-w-[40px] flex items-center justify-center -right-1.5 bottom-[85%] {% if settings.edges_type == "rounded_corners" %}rounded-[4px]{% endif %} shadow-md pl-2 pr-2 pt-0.5 pb-0.5 text-[12px]">
+        {% if section.settings.menu_label_icon_2 != 'none' %}
+          {% unless section.settings.menu_label_custom_icon_2 == blank and section.settings.menu_label_another_icon_2 == blank and section.settings.menu_label_icon_2 == 'another_icon' %}
+            <span class="w-3.5 h-3.5 min-w-[14px] min-h-[14px]{% if is_rtl %} ml-1{% else %} mr-1{% endif %}">
+              {% if section.settings.menu_label_custom_icon_2 == blank %}
+                {% if section.settings.menu_label_another_icon_2 != blank and section.settings.menu_label_icon_2 == 'another_icon' %}
+                  {% render 'icon-new-alls', icon: section.settings.menu_label_another_icon_2 %}
+                {% else %}
+                  {% render 'icon-labels-bags', icon: section.settings.menu_label_icon_2 %}
+                {% endif %}
+              {% else %}
+                {{ section.settings.menu_label_custom_icon_2 }}
+              {% endif %}
+            </span>
+          {% endunless %}
+        {%- endif -%}                
+        <span>{{ section.settings.menu_label_2 }}</span>
+      </div>
+    {%- endif -%}
+  {% endif %}
+{% endcapture %}
+{% capture sub_label %}
+  {%- if start_level == 0 -%}
+    {%- if section.settings.menu_label != blank -%}
+      <div class="color-label-{{ section.id }} z-10 min-w-[40px] flex items-center justify-center -right-1.5 bottom-[85%] {% if settings.edges_type == "rounded_corners" %}rounded-[4px]{% endif %} shadow-md pl-2 pr-2 pt-0.5 pb-0.5 text-[12px]">
+        {% if section.settings.menu_label_icon != 'none' %}
+          {% unless section.settings.menu_label_custom_icon == blank and section.settings.menu_label_another_icon == blank and section.settings.menu_label_icon == 'another_icon' %}
+            <span class="w-3.5 h-3.5 min-w-[14px] min-h-[14px]{% if is_rtl %} ml-1{% else %} mr-1{% endif %}">
+              {% if section.settings.menu_label_custom_icon == blank %}
+                {% if section.settings.menu_label_another_icon != blank and section.settings.menu_label_icon == 'another_icon' %}
+                  {% render 'icon-new-alls', icon: section.settings.menu_label_another_icon %}
+                {% else %}
+                  {% render 'icon-labels-bags', icon: section.settings.menu_label_icon %}
+                {% endif %}
+              {% else %}
+                {{ section.settings.menu_label_custom_icon }}
+              {% endif %}
+            </span>
+          {% endunless %}
+        {%- endif -%}                
+        <span>{{ section.settings.menu_label }}</span>
+      </div>
+    {%- endif -%}
+  {% else %}
+    {%- if block.settings.sub_label != blank -%}
+      <div class="color-sub-label-{{ block.id }} z-10 min-w-[40px] flex items-center -right-1.5 bottom-[85%] {% if settings.edges_type == "rounded_corners" %}rounded-[4px]{% endif %} shadow-md pl-2 pr-2 pt-0.5 pb-0.5 text-[12px]">
+        {% if block.settings.sub_label_icon != 'none' %}
+          {% unless block.settings.sub_label_custom_icon == blank and block.settings.sub_label_another_icon == blank and block.settings.sub_label_icon == 'another_icon' %}
+            <span class="w-3.5 h-3.5 min-w-[14px] min-h-[14px]{% if is_rtl %} ml-1{% else %} mr-1{% endif %}">
+              {% if block.settings.sub_label_custom_icon == blank %}
+                {% if block.settings.sub_label_another_icon != blank and block.settings.sub_label_icon == 'another_icon' %}
+                  {% render 'icon-new-alls', icon: block.settings.sub_label_another_icon %}
+                {% else %}
+                  {% render 'icon-labels-bags', icon: block.settings.sub_label_icon %}
+                {% endif %}
+              {% else %}
+                {{ block.settings.sub_label_custom_icon }}
+              {% endif %}
+            </span>
+          {% endunless %}
+        {%- endif -%}                
+        <span>{{ block.settings.sub_label }}</span>
+      </div>
+    {%- endif -%}
+  {% endif %}
+{% endcapture %}
+{% case menu_type %}
+  {% when 'tab' %}
+    {%- for link in links -%}
+      {%- liquid
+        assign is_link = false
+        if link.links != blank
+          assign is_link = true
+        endif
+        assign menu_level_1 = start_id | append: '-' | append: forloop.index
+
+        assign is_large_img = false
+        if block.settings.item_image_type == 'large'
+          assign is_large_img = true
+        endif
+        
+        assign rounded_class = 'rounded-none'
+        assign rounded_class_level_1 = 'rounded-none'
+        if image_style == 'rounded'
+          if is_large_img
+            assign rounded_class = 'rounded-[10px]'
+          else
+            assign rounded_class = 'rounded-full'
+          endif
+          assign rounded_class_level_1 = 'rounded-full'
+        else
+          if settings.edges_type == 'rounded_corners'
+            assign rounded_class = 'rounded-[10px]'
+            assign rounded_class_level_1 = 'rounded-[10px]'
+          endif
+        endif
+      -%}
+      <div {% if is_link %}@click="$store.xMenuDrawer.scrollTop($el); $store.xMenuDrawer.setActiveLink('{{ menu_level_1 }}')"{% endif %} 
+        class="flex items-center gap-4 pr-4 pl-4 border-b" 
+        {%- if link.current or link.child_active %}x-init="active = true;"{% endif %}
+      >
+        {%- style -%}
+          {%- if start_level == 0 -%}
+            {%- if section.settings.menu_label != blank -%}
+              .color-label-{{ section.id }} {
+                background: {{ section.settings.menu_label_color }};
+                color: {{ section.settings.menu_label_text_color_light }};
+              }
+              .color-label-{{ section.id }}:before{
+                border-top-color: {{ section.settings.menu_label_color }}; 
+              }
+              .dark .color-label-{{ section.id }} {
+                background: {{ section.settings.menu_label_color_dark }};
+                color: {{ section.settings.menu_label_text_color_dark }}
+              }
+              .dark .color-label-{{ section.id }}:before {
+                border-top-color: {{ section.settings.menu_label_color_dark }};
+              }
+            {% endif %}
+
+            {%- if section.settings.menu_label_2 != blank -%}
+              .color-label-2-{{ section.id }} {
+                background: {{ section.settings.menu_label_color_2 }};
+                color: {{ section.settings.menu_label_text_color_light_2 }};
+              }
+              .color-label-2-{{ section.id }}:before{
+                border-top-color: {{ section.settings.menu_label_color_2 }}; 
+              }
+              .dark .color-label-2-{{ section.id }} {
+                background: {{ section.settings.menu_label_color_dark_2 }};
+                color: {{ section.settings.menu_label_text_color_dark_2 }}
+              }
+              .dark .color-label-2-{{ section.id }}:before {
+                border-top-color: {{ section.settings.menu_label_color_dark_2 }};
+              }
+            {% endif %}
+          {%- else -%}
+            {%- if block.settings.sub_label != blank -%}
+              .color-sub-label-{{ block.id }} {
+                background: {{ block.settings.sub_label_color }};
+                color: {{ block.settings.sub_label_text_color_light }};
+              }
+              .color-sub-label-{{ block.id }}:before{
+                border-top-color: {{ block.settings.sub_label_color }}; 
+              }
+              .dark .color-sub-label-{{ block.id }} {
+                background: {{ block.settings.sub_label_color_dark }};
+                color: {{ block.settings.sub_label_text_color_dark }}
+              }
+              .dark .color-sub-label-{{ block.id }}:before {
+                border-top-color: {{ block.settings.sub_label_color_dark }};
+              }
+            {% endif %}
+          {% endif %}
+        {%- endstyle -%}
+        {% if is_link %}
+          <span class="flex-1 pt-2.5 pb-2.5 flex gap-4 items-center disable-effect{% if link.current or link.child_active %} effect-inline active{% endif %}">
+        {% else %}
+          <a href="{{ link.url }}" class="flex-1 pt-2.5 pb-2.5 gap-4 flex items-center disable-effect{% if link.current or link.child_active %} effect-inline active{% endif %}">
+        {% endif %}
+          {% if link.type == 'collection_link' and block.settings.show_collection_image %}
+            {% liquid 
+              assign collection_handle_1 = link.object.handle
+              assign tab_collection_1 = collections[collection_handle_1]
+              assign collection_metafield = block.settings.collection_metafield
+              assign menu_image_1 = blank
+              if collection_metafield != blank and tab_collection_1.metafields.custom[collection_metafield] != blank
+                assign menu_image_1 = tab_collection_1.metafields.custom[collection_metafield]
+              elsif tab_collection_1.image != blank
+                assign menu_image_1 = tab_collection_1.image
+              elsif block.settings.show_first_image_product and tab_collection_1.featured_image
+                assign menu_image_1 = tab_collection_1.featured_image
+              endif
+            %}
+            {% if menu_image_1 != blank %}
+              <span aria-label="mobile-navigation-image">
+                {% # theme-check-disable ImgLazyLoading %}
+                <img
+                  srcset="{{ menu_image_1 | image_url: width: 100 }} 100w,
+                  {{ menu_image_1 | image_url: width: 225 }} 225w,
+                  {{ menu_image_1 | image_url: width: 375 }} 375w,
+                  {{ menu_image_1 | image_url: width: 450 }} 450w,
+                  {{ menu_image_1 | image_url: width: 750 }} 750w,
+                  {{ menu_image_1 | image_url: width: 900 }} 900w,
+                  {{ menu_image_1 | image_url: width: 1100 }} 1100w,
+                  {{ menu_image_1 | image_url: width: 1500 }} 1500w,
+                  {{ menu_image_1 | image_url: width: 1780 }} 1780w"
+                  src="{{ menu_image_1 | image_url: width: 3840 }}"
+                  sizes="{%- unless is_large_img -%}(min-width: 768px) calc({{ settings.page_width }}px / {{ column | plus: 1 }}),{% endunless %}(min-width: 768px) 100px"
+                  alt="{{ menu_image_1.alt | escape }}"
+                  height="{{ menu_image_1.height }}"
+                  width="{{ menu_image_1.width }}"
+                  {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                  class="w-[45px] h-[45px] min-w-[45px] min-h-[45px] object-cover object-center image-hover {{ rounded_class_level_1 }}"
+                >
+                {% # theme-check-enable ImgLazyLoading %}
+              </span>
+            {% endif %}
+          {% endif %}
+          {% if link.type == 'product_link' and block.settings.show_product_image %}
+            {% liquid 
+              assign product_image_1 = link.object.featured_media
+            %}
+            {% if product_image_1 %}
+              <span aria-label="mobile-navigation-image">
+                {% # theme-check-disable ImgLazyLoading %}
+                <img
+                  src="{{ product_image_1 | image_url: width: 50 }}"
+                  alt="{{ product_image_1.alt | escape }}"
+                  height="{{ product_image_1.height }}"
+                  width="{{ product_image_1.width }}"
+                  {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                  class="w-[45px] h-[45px] min-w-[45px] min-h-[45px] object-cover object-center image-hover {{ rounded_class_level_1 }}"
+                >
+                {% # theme-check-enable ImgLazyLoading %}
+              </span>
+            {% endif %}
+          {% endif %}
+          <span class="flex flex-wrap gap-x-2">
+            <span class="p-break-words font-medium font-menu-level-{{ start_level }}">
+              {% assign title = link.title %}
+              {% if section.settings.enable_highlight %}
+                {% liquid
+                  assign is_highlight = false
+                  assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                  assign menu_item = '||' | append: title | strip | append: '||' | escape
+                  if list_menu contains menu_item
+                    assign is_highlight = true
+                  endif
+                %}
+                {% if is_highlight %}
+                  {% render 'menu-highlight',
+                    highlight_type: section.settings.highlight_style,
+                    menu_title: title,
+                    section_id: section.id,
+                    transparent: false
+                  %}
+                {% else %}
+                  <span>{{ title | escape }}</span>
+                {% endif %}
+              {% else %}
+                <span>{{ title | escape }}</span>
+              {% endif %}
+            </span>
+            {% liquid
+              assign is_labeled = false
+              assign menu_item = '||' | append: link.title | append: '||' | escape
+              if list_sub_menu contains menu_item
+                assign is_labeled = true
+              endif
+              assign is_labeled_2 = false
+              if list_sub_menu_2 contains menu_item
+                assign is_labeled_2 = true
+              endif
+            %}
+            {% if is_labeled %}
+              {{ sub_label }}
+            {% endif %}
+            {% if is_labeled_2 %}
+              {{ sub_label_2 }}
+            {% endif %}
+          </span>
+        {% if is_link %}</span>{% else %}</a>{% endif %}
+        {%- if is_link -%}
+          <span
+            class="icon-caret-mobile h-3 w-3 min-h-3 min-w-[12px] block {%- if link.child_active %} text-[rgba(var(--colors-text-link))]{% endif %}{% if is_rtl %} rotate-90{% else %} -rotate-90{% endif %}"
+          >{% render 'icon-alls', icon: 'icon-caret' %}</span>
+        {%- endif -%}
+      </div>
+      {%- if is_link -%}
+        <div
+          class="menu-drawer duration-300 ease-in-out top-0 left-0 {% if start_level == 0 %}fixed{% else %}absolute{% endif %} background-header w-full h-full z-30 invisible{% if is_rtl %} translate-x-full{% else %} -translate-x-full{% endif %}"
+          :class="{ 'menu-opening': $store.xMenuDrawer.currentMenuLinks.includes('{{ menu_level_1 }}')}"
+        >
+          <div class="overflow-x-hidden pb-4 scrollbar-body absolute top-0 z-30 w-full h-full"
+            :class="$store.xMenuDrawer.currentMenuLinks.length == {{ start_level | plus: 2 }} ? 'overflow-hidden' : 'overflow-y-auto'"
+          >
+            <div class="flex items-center sticky top-0 background-header z-30 pt-4 pb-4 pl-4 pr-4 gap-4 justify-between">
+              <div class="flex items-center">
+                <span class="w-10 h-10 min-w-[40px] min-h-10 pl-3 pr-3 pt-6 block{% if is_rtl %} -rotate-90{% else %} rotate-90{% endif %}" 
+                  @click="$store.xMenuDrawer.removeActiveLink('{{ menu_level_1 }}'); "
+                >
+                  {% render 'icon-alls', icon: 'icon-caret' %}
+                </span>
+                <a href="{{ link.url }}" class="flex flex-wrap gap-x-2 flex-1 font-medium disable-effect{% if link.current or link.child_active %} active{% endif %}">
+                  <span class="p-break-words font-menu-level-0">
+                    {% assign title = link.title %}
+                    {% if section.settings.enable_highlight %}
+                      {% liquid
+                        assign is_highlight = false
+                        assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                        assign menu_item = '||' | append: title | append: '||' | escape
+                        if list_menu contains menu_item
+                          assign is_highlight = true
+                        endif
+                      %}
+                      {% if is_highlight %}
+                        {% render 'menu-highlight',
+                          highlight_type: section.settings.highlight_style,
+                          menu_title: title,
+                          section_id: section.id,
+                          transparent: false
+                        %}
+                      {% else %}
+                        <span>{{ title | escape }}</span>
+                      {% endif %}
+                    {% else %}
+                      <span>{{ title | escape }}</span>
+                    {% endif %}
+                  </span>
+                  {% liquid
+                    assign is_labeled = false
+                    assign menu_item = '||' | append: link.title | append: '||' | escape
+                    if list_sub_menu contains menu_item
+                      assign is_labeled = true
+                    endif
+                    assign is_labeled_2 = false
+                    if list_sub_menu_2 contains menu_item
+                      assign is_labeled_2 = true
+                    endif
+                  %}
+                  {% if is_labeled %}
+                    {{ sub_label }}
+                  {% endif %}
+                  {% if is_labeled_2 %}
+                    {{ sub_label_2 }}
+                  {% endif %}
+                </a>
+              </div>
+              <span
+                class="cursor-pointer w-10 h-10 min-w-[40px] min-h-10 inline-block p-3.5 rounded-full bg-[rgba(var(--colors-line-header))]"
+                @click="setTimeout(() => { $store.xMenuDrawer.close() }, 0)"
+              >{% render 'icon-alls', icon: 'icon-close' %}</span>
+            </div>
+            <ul 
+              id="menu-level-{{ start_level | plus: 1 }}"
+              class="background-header w-full{% if block.settings.sub_column == '2' %} grid grid-cols-2 gap-x-4 gap-y-7 px-4{% endif %}" 
+            >
+              {%- for childlink in link.links -%}
+                {%- liquid
+                  assign is_link = false
+                  if childlink.links != blank
+                    assign is_link = true
+                  endif
+                  assign menu_level_2 = menu_level_1 | append: '-' | append: forloop.index
+                -%}
+                <li {% if childlink.current or childlink.child_active %}x-init="active = true;"{% endif %} class="border-b pb-3{% unless block.settings.sub_column == '2' %} px-4 pt-3{% endunless %}">
+                  {% capture icon_caret_mobile %} 
+                    <span class="icon-caret-mobile h-3 w-3 min-h-3 min-w-[12px] block {%- if childlink.current or childlink.child_active %} text-[rgba(var(--colors-text-link))]{% endif -%}{% if is_rtl %} rotate-90{% else %} -rotate-90{% endif %}">
+                      {% render 'icon-alls', icon: 'icon-caret' %}
+                    </span>
+                  {% endcapture %}
+                  <div
+                    class="flex items-center justify-between h-full gap-"
+                    {% if is_link %}@click="$store.xMenuDrawer.scrollTop($el); $store.xMenuDrawer.setActiveLink('{{ menu_level_2 }}');"{% endif %}
+                  >
+                    {% if is_link %}
+                      <span class="p-break-words flex gap-3 h-full flex-1 disable-effect{% if childlink.current or childlink.child_active %} text-[rgba(var(--colors-text-link))] active{% endif %}{% if is_large_img %} flex-col items-start{% else %} items-center{% endif %}">
+                    {% else %}
+                      <a href="{{ childlink.url }}" class="p-break-words h-full flex gap-3 flex-1 disable-effect{% if childlink.current or childlink.child_active %} text-[rgba(var(--colors-text-link))] active{% endif %}{% if is_large_img %} flex-col items-start{% else %} items-center{% endif %}">
+                    {% endif %}
+                      {% if childlink.type == 'collection_link' and block.settings.sub_show_collection_image %}
+                        {% liquid 
+                          assign collection_handle_sub = childlink.object.handle
+                          assign tab_collection_sub = collections[collection_handle_sub]
+                          assign collection_metafield = block.settings.collection_metafield
+                          assign menu_image_sub = blank
+                          if collection_metafield != blank and tab_collection_sub.metafields.custom[collection_metafield] != blank
+                            assign menu_image_sub = tab_collection_sub.metafields.custom[collection_metafield]
+                          elsif tab_collection_sub.image != blank
+                            assign menu_image_sub = tab_collection_sub.image
+                          elsif block.settings.sub_show_first_image_product and tab_collection_sub.featured_image
+                            assign menu_image_sub = tab_collection_sub.featured_image
+                          endif
+                        %}
+                        {% if menu_image_sub != blank %}
+                          <span class="min-w-[45px] min-h-[45px]{% if is_large_img %} w-full{% else %} w-[45px] h-[45px]{% endif %}" aria-label="mobile-navigation-image">
+                            {% # theme-check-disable ImgLazyLoading %}
+                            <img
+                              srcset="{{ menu_image_sub | image_url: width: 100 }} 100w,
+                              {{ menu_image_sub | image_url: width: 225 }} 225w,
+                              {{ menu_image_sub | image_url: width: 375 }} 375w,
+                              {{ menu_image_sub | image_url: width: 450 }} 450w,
+                              {{ menu_image_sub | image_url: width: 750 }} 750w,
+                              {{ menu_image_sub | image_url: width: 900 }} 900w,
+                              {{ menu_image_sub | image_url: width: 1100 }} 1100w,
+                              {{ menu_image_sub | image_url: width: 1500 }} 1500w,
+                              {{ menu_image_sub | image_url: width: 1780 }} 1780w"
+                              src="{{ menu_image_sub | image_url: width: 3840 }}"
+                              sizes="{%- unless is_large_img -%}(min-width: 768px) calc({{ settings.page_width }}px / {{ column | plus: 1 }}),{% endunless %}(min-width: 768px) 100px"
+                              alt="{{ menu_image_sub.alt | escape }}"
+                              height="{{ menu_image_sub.height }}"
+                              width="{{ menu_image_sub.width }}"
+                              {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                              class="w-full h-full object-cover object-center image-hover {{ rounded_class }}{% if is_large_img %}{% if block.settings.sub_column == '1' %} aspect-16/9{% else %} aspect-square{% endif %}{% endif %}"
+                            >
+                            {% # theme-check-enable ImgLazyLoading %}
+                          </span>
+                        {% endif %}
+                      {% endif %}
+                      {% if childlink.type == 'product_link' and block.settings.sub_show_product_image %}
+                        {% liquid 
+                          assign menu_prod_image_sub = childlink.object.featured_media
+                        %}
+                        {% if menu_prod_image_sub != blank %}
+                          <span class="min-w-[45px]{% if is_large_img %} w-full{% endif %}" aria-label="mobile-navigation-image">
+                            {% # theme-check-disable %}
+                            <img
+                              src="{% if is_large_img %}{{ menu_prod_image_sub | image_url: width: 200 }}{% else %}{{ menu_prod_image_sub | image_url: width: 50 }}{% endif %}"
+                              alt="{{ menu_prod_image_sub.alt | escape }}"
+                              height="{{ menu_prod_image_sub.height }}"
+                              width="{{ menu_prod_image_sub.width }}"
+                              {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                              class="{% if is_large_img %}w-full h-full{% else %}w-[45px] h-[45px] min-w-[45px] min-h-[45px]{% endif %} object-cover object-center image-hover {{ rounded_class }}{% if is_large_img %}{% if block.settings.sub_column == '1' %} aspect-16/9{% else %} aspect-square{% endif %}{% endif %}"
+                            >
+                            {% # theme-check-enable %}
+                          </span>
+                        {% endif %}
+                      {% endif %}
+                      <span class="flex justify-between items-center{% if start_level == 0 %} font-medium{% endif %} font-menu-level-{{ start_level | plus: 1 }} mt-auto{% unless is_large_img %} mb-auto{% endunless %} w-full gap-2">
+                        <span class="flex flex-wrap gap-x-2">
+                          {% assign title = childlink.title %}
+                          {% if section.settings.enable_highlight %}
+                            {% liquid
+                              assign is_highlight = false
+                              assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                              assign menu_item = '||' | append: title | append: '||' | escape
+                              if list_menu contains menu_item
+                                assign is_highlight = true
+                              endif
+                            %}
+                            {% if is_highlight %}
+                              {% render 'menu-highlight',
+                                highlight_type: section.settings.highlight_style,
+                                menu_title: title,
+                                section_id: section.id,
+                                transparent: false
+                              %}
+                            {% else %}
+                              <span>{{ title | escape }}</span>
+                            {% endif %}
+                          {% else %}
+                            <span>{{ title | escape }}</span>
+                          {% endif %}
+                          {% liquid
+                            assign is_labeled = false
+                            assign menu_item = '||' | append: childlink.title | append: '||' | escape
+                            if list_sub_menu contains menu_item
+                              assign is_labeled = true
+                            endif
+                            assign is_labeled_2 = false
+                            if list_sub_menu_2 contains menu_item
+                              assign is_labeled_2 = true
+                            endif
+                          %}
+                          {% if is_labeled %}
+                            {{ sub_label }}
+                          {% endif %}
+                          {% if is_labeled_2 %}
+                            {{ sub_label_2 }}
+                          {% endif %}
+                        </span>
+                        {% if is_link and is_large_img %}{{ icon_caret_mobile }}{% endif %}
+                      </span>
+                    {% if is_link %}</span>{% else %}</a>{% endif %}
+                    {%- if is_link and is_large_img != true -%}
+                      {{ icon_caret_mobile }}
+                    {%- endif -%}
+                  </div>
+                  {%- if is_link -%}
+                    <div
+                      class="menu-drawer duration-300 ease-in-out top-0 left-0 absolute background-header w-full h-full z-30 invisible{% if is_rtl %} translate-x-full{% else %} -translate-x-full{% endif %}" 
+                      :class="{ 'menu-opening': $store.xMenuDrawer.currentMenuLinks.includes('{{ menu_level_2 }}')} "
+                    >
+                      <div class="overflow-x-hidden pb-4 scrollbar-body absolute top-0 z-30 w-full h-full"
+                        :class="$store.xMenuDrawer.currentMenuLinks.length == {{ start_level | plus: 3 }} ? 'overflow-hidden' : 'overflow-y-auto'"
+                      >
+                        <div class="flex items-center sticky top-0 background-header justify-between pt-4 pb-4 pl-4 pr-4 gap-4">
+                          <div class="flex items-center">
+                            <span
+                              class="w-10 h-10 min-w-[40px] min-h-10 pl-3 pr-3 pt-6 block{% if is_rtl %} -rotate-90{% else %} rotate-90{% endif %}{%- if childlink.current %} text-[rgba(var(--colors-text-link))]{% endif %}"
+                              @click="$store.xMenuDrawer.removeActiveLink('{{ menu_level_2 }}')"
+                            >{% render 'icon-alls', icon: 'icon-caret' %}</span>
+                            <a href="{{ childlink.url }}" class="p-break-words flex flex-wrap gap-x-2 flex-1 font-menu-level-0 font-medium disable-effect{% if childlink.current %} effect-inline active{% endif %}">
+                              {% assign title = childlink.title %}
+                              {% if section.settings.enable_highlight %}
+                                {% liquid
+                                  assign is_highlight = false
+                                  assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                  assign menu_item = '||' | append: title | append: '||' | escape
+                                  if list_menu contains menu_item
+                                    assign is_highlight = true
+                                  endif
+                                %}
+                                {% if is_highlight %}
+                                  {% render 'menu-highlight',
+                                    highlight_type: section.settings.highlight_style,
+                                    menu_title: title,
+                                    section_id: section.id,
+                                    transparent: false
+                                  %}
+                                {% else %}
+                                  <span>{{ title | escape }}</span>
+                                {% endif %}
+                              {% else %}
+                                <span>{{ title | escape }}</span>
+                              {% endif %}
+                              {% liquid
+                                assign is_labeled = false
+                                assign menu_item = '||' | append: childlink.title | append: '||' | escape
+                                if list_sub_menu contains menu_item
+                                  assign is_labeled = true
+                                endif
+                                assign is_labeled_2 = false
+                                if list_sub_menu_2 contains menu_item
+                                  assign is_labeled_2 = true
+                                endif
+                              %}
+                              {% if is_labeled %}
+                                {{ sub_label }}
+                              {% endif %}
+                              {% if is_labeled_2 %}
+                                {{ sub_label_2 }}
+                              {% endif %}
+                            </a>
+                          </div>
+                          <span
+                            class="cursor-pointer w-10 h-10 min-w-[40px] min-h-10 inline-block p-3.5 rounded-full bg-[rgba(var(--colors-line-header))]"
+                            @click="setTimeout(() => { $store.xMenuDrawer.close() }, 0)"
+                          >{% render 'icon-alls', icon: 'icon-close' %}</span>
+                        </div>
+                        <ul
+                          id="menu-level-{{ start_level | plus: 2 }}"
+                          class="w-full background-header{% if block.settings.sub_column == '2' %} grid grid-cols-2 gap-x-4 gap-y-7 px-4{% endif %}"
+                        >
+                          {%- for grandchildlink in childlink.links -%}
+                            <li {% if childlink.current or childlink.child_active %}x-init="active = true;"{% endif %} class="pb-3 border-b{% unless block.settings.sub_column == '2' %} px-4 pt-3{% endunless %}">
+                              <a
+                                href="{{ grandchildlink.url }}"
+                                class="p-break-words h-full disable-effect flex gap-3{% if grandchildlink.current %} effect-inline active{% endif %}{% if is_large_img %} flex-col items-start{% else %} items-center{% endif %}"
+                                {% if grandchildlink.current %} aria-current="page"{% endif %}
+                              >
+                                {% if grandchildlink.type == 'collection_link' and block.settings.sub_show_collection_image %}
+                                  {% liquid 
+                                    assign collection_handle_sub = grandchildlink.object.handle
+                                    assign tab_collection_sub = collections[collection_handle_sub]
+                                    assign collection_metafield = block.settings.collection_metafield
+                                    assign menu_image_sub = blank
+                                    if collection_metafield != blank and tab_collection_sub.metafields.custom[collection_metafield] != blank
+                                      assign menu_image_sub = tab_collection_sub.metafields.custom[collection_metafield]
+                                    elsif tab_collection_sub.image != blank
+                                      assign menu_image_sub = tab_collection_sub.image
+                                    elsif block.settings.sub_show_first_image_product and tab_collection_sub.featured_image
+                                      assign menu_image_sub = tab_collection_sub.featured_image
+                                    endif
+                                  %}
+                                  {% if menu_image_sub != blank %}
+                                    <span class="menu-level-{{ start_level | plus: 2 }} min-w-[45px]{% if is_large_img %} w-full{% else %} w-[45px] h-[45px]{% endif %}" aria-label="mobile-navigation-image">
+                                      {% # theme-check-disable ImgLazyLoading %}
+                                      <img
+                                        srcset="{{ menu_image_sub | image_url: width: 100 }} 100w,
+                                        {{ menu_image_sub | image_url: width: 225 }} 225w,
+                                        {{ menu_image_sub | image_url: width: 375 }} 375w,
+                                        {{ menu_image_sub | image_url: width: 450 }} 450w,
+                                        {{ menu_image_sub | image_url: width: 750 }} 750w,
+                                        {{ menu_image_sub | image_url: width: 900 }} 900w,
+                                        {{ menu_image_sub | image_url: width: 1100 }} 1100w,
+                                        {{ menu_image_sub | image_url: width: 1500 }} 1500w,
+                                        {{ menu_image_sub | image_url: width: 1780 }} 1780w"
+                                        src="{{ menu_image_sub | image_url: width: 3840 }}"
+                                        sizes="{%- unless is_large_img -%}(min-width: 768px) calc({{ settings.page_width }}px / {{ column | plus: 1 }}),{% endunless %}(min-width: 768px) 100px"
+                                        alt="{{ menu_image_sub.alt | escape }}"
+                                        height="{{ menu_image_sub.height }}"
+                                        width="{{ menu_image_sub.width }}"
+                                        {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                        class="w-full h-full object-cover object-center image-hover {{ rounded_class }}{% if is_large_img %}{% if block.settings.sub_column == '1' %} aspect-16/9{% else %} aspect-square{% endif %}{% endif %}"
+                                      >
+                                      {% # theme-check-enable ImgLazyLoading %}
+                                    </span>
+                                  {% endif %}
+                                {% endif %}
+                                {% if grandchildlink.type == 'product_link' and block.settings.sub_show_product_image %}
+                                  {% liquid 
+                                    assign menu_prod_image_sub = grandchildlink.object.featured_media
+                                  %}
+                                  {% if menu_prod_image_sub != blank %}
+                                    <span class="min-w-[45px]{% if is_large_img %} w-full{% endif %}" aria-label="mobile-navigation-image">
+                                      {% # theme-check-disable %}
+                                      <img
+                                        src="{% if is_large_img %}{{ menu_prod_image_sub | image_url: width: 400 }}{% else %}{{ menu_prod_image_sub | image_url: width: 50 }}{% endif %}"
+                                        alt="{{ menu_prod_image_sub.alt | escape }}"
+                                        height="{{ menu_prod_image_sub.height }}"
+                                        width="{{ menu_prod_image_sub.width }}"
+                                        {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                        class="{% if is_large_img %}w-full h-full{% else %}w-[45px] h-[45px] min-w-[45px] min-h-[45px]{% endif %} object-cover object-center image-hover {{ rounded_class }}{% if is_large_img %}{% if block.settings.sub_column == '1' %} aspect-16/9{% else %} aspect-square{% endif %}{% endif %}"
+                                      >
+                                      {% # theme-check-enable %}
+                                    </span>
+                                  {% endif %}
+                                {% endif %}
+                                <span class="flex flex-wrap gap-x-2">
+                                  <span class="font-menu-level-2 mt-auto{% unless is_large_img %} mb-auto{% endunless %}">
+                                    {% assign title = grandchildlink.title %}
+                                    {% if section.settings.enable_highlight %}
+                                      {% liquid
+                                        assign is_highlight = false
+                                        assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                        assign menu_item = '||' | append: title | append: '||' | escape
+                                        if list_menu contains menu_item
+                                          assign is_highlight = true
+                                        endif
+                                      %}
+                                      {% if is_highlight %}
+                                        {% render 'menu-highlight',
+                                          highlight_type: section.settings.highlight_style,
+                                          menu_title: title,
+                                          section_id: section.id,
+                                          transparent: false
+                                        %}
+                                      {% else %}
+                                        <span>{{ title | escape }}</span>
+                                      {% endif %}
+                                    {% else %}
+                                      <span>{{ title | escape }}</span>
+                                    {% endif %}
+                                  </span>
+                                  {% liquid
+                                    assign is_labeled = false
+                                    assign menu_item = '||' | append: grandchildlink.title | append: '||' | escape
+                                    if list_sub_menu contains menu_item
+                                      assign is_labeled = true
+                                    endif
+                                    assign is_labeled_2 = false
+                                    if list_sub_menu_2 contains menu_item
+                                      assign is_labeled_2 = true
+                                    endif
+                                  %}
+                                  {% if is_labeled %}
+                                    {{ sub_label }}
+                                  {% endif %}
+                                  {% if is_labeled_2 %}
+                                    {{ sub_label_2 }}
+                                  {% endif %}
+                                </span>
+                              </a>
+                            </li>
+                          {%- endfor -%}
+                        </ul>
+                      </div>
+                    </div>
+                  {%- endif -%}
+                </li>
+              {%- endfor -%}
+            </ul>
+          </div>
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+  {% when 'accordion' %}
+    {%- for link in links -%}
+      {%- liquid
+        assign is_link = false
+        if link.links != blank
+          assign is_link = true
+        endif
+        assign menu_level_1 = start_id | append: '-' | append: forloop.index
+
+        assign is_large_img = false
+        if block.settings.item_image_type == 'large'
+          assign is_large_img = true
+        endif
+      -%}
+      <li>
+        <div {% if is_link %}@click="openSub = (openSub === 0 || openSub !== {{ forloop.index }}) ? {{ forloop.index }} : 0; $store.xMenuDrawer.setActiveLink('{{ menu_level_1 }}'); setTimeout(() => {$el.scrollIntoView({ behavior: 'smooth' })}, 500);"{% endif %} 
+          class="flex items-center gap-4 mr-4 ml-3 rtl:mr-3 rtl:ml-4" 
+          {%- if link.current or link.child_active %}x-init="active = true;"{% endif %}
+        >
+          {%- style -%}
+            {%- if block.settings.sub_label != blank -%}
+              .color-sub-label-{{ block.id }} {
+                background: {{ block.settings.sub_label_color }};
+                color: {{ block.settings.sub_label_text_color_light }};
+              }
+              .color-sub-label-{{ block.id }}:before{
+                border-top-color: {{ block.settings.sub_label_color }}; 
+              }
+              .dark .color-sub-label-{{ block.id }} {
+                background: {{ block.settings.sub_label_color_dark }};
+                color: {{ block.settings.sub_label_text_color_dark }}
+              }
+              .dark .color-sub-label-{{ block.id }}:before {
+                border-top-color: {{ block.settings.sub_label_color_dark }};
+              }
+            {% endif %}
+          {%- endstyle -%}
+          {% if is_link %}
+            <span class="flex-1 pt-2.5 pb-2.5 flex gap-4 items-center disable-effect{% if link.current or link.child_active %} effect-inline active{% endif %}">
+          {% else %}
+            <a href="{{ link.url }}" class="flex-1 pt-2.5 pb-2.5 gap-4 flex items-center disable-effect{% if link.current or link.child_active %} effect-inline active{% endif %}">
+          {% endif %}
+            {% if link.type == 'collection_link' and block.settings.show_collection_image %}
+              {% liquid 
+                assign collection_handle_1 = link.object.handle
+                assign tab_collection_1 = collections[collection_handle_1]
+                assign collection_metafield = block.settings.collection_metafield
+                assign menu_image_1 = blank
+                if collection_metafield != blank and tab_collection_1.metafields.custom[collection_metafield] != blank
+                  assign menu_image_1 = tab_collection_1.metafields.custom[collection_metafield]
+                elsif tab_collection_1.image != blank
+                  assign menu_image_1 = tab_collection_1.image
+                elsif block.settings.show_first_image_product and tab_collection_1.featured_image
+                  assign menu_image_1 = tab_collection_1.featured_image
+                endif
+              %}
+              {% if menu_image_1 != blank %}
+                <span class="w-[45px] h-[45px]" aria-label="mobile-navigation-image">
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <img
+                    srcset="{{ menu_image_1 | image_url: width: 100 }} 100w,
+                    {{ menu_image_1 | image_url: width: 225 }} 225w,
+                    {{ menu_image_1 | image_url: width: 375 }} 375w,
+                    {{ menu_image_1 | image_url: width: 450 }} 450w,
+                    {{ menu_image_1 | image_url: width: 750 }} 750w,
+                    {{ menu_image_1 | image_url: width: 900 }} 900w,
+                    {{ menu_image_1 | image_url: width: 1100 }} 1100w,
+                    {{ menu_image_1 | image_url: width: 1500 }} 1500w,
+                    {{ menu_image_1 | image_url: width: 1780 }} 1780w"
+                    src="{{ menu_image_1 | image_url: width: 3840 }}"
+                    sizes="{%- unless is_large_img -%}
+                      (min-width: 768px) calc({{ settings.page_width }}px / {{ column | plus: 1 }}),
+                    {% endunless %}
+                    (min-width: 768px) 100px"
+                    alt="{{ menu_image_1.alt | escape }}"
+                    height="{{ menu_image_1.height }}"
+                    width="{{ menu_image_1.width }}"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    class="w-[45px] h-[45px] min-w-[45px] min-h-[45px] object-cover object-center image-hover{% if image_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% else %} rounded-full{% endif %}"
+                  >
+                  {% # theme-check-enable ImgLazyLoading %}
+                </span>
+              {% endif %}
+            {% endif %}
+            {% if link.type == 'product_link' and block.settings.show_product_image %}
+              {% liquid 
+                assign product_image_1 = link.object.featured_media
+              %}
+              {% if product_image_1 %}
+                <span class="w-[45px] h-[45px]" aria-label="mobile-navigation-image">
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <img
+                    src="{{ product_image_1 | image_url: width: 50 }}"
+                    alt="{{ product_image_1.alt | escape }}"
+                    height="{{ product_image_1.height }}"
+                    width="{{ product_image_1.width }}"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    class="w-[45px] h-[45px] min-w-[45px] min-h-[45px] object-cover object-center image-hover{% if image_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% else %} rounded-full{% endif %}"
+                  >
+                  {% # theme-check-enable ImgLazyLoading %}
+                </span>
+              {% endif %}
+            {% endif %}
+            <span class="flex flex-wrap gap-x-2">
+              <span class="p-break-words font-medium font-menu-level-1">
+                {% assign title = link.title %}
+                {% if section.settings.enable_highlight %}
+                  {% liquid
+                    assign is_highlight = false
+                    assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                    assign menu_item = '||' | append: title | strip | append: '||' | escape
+                    if list_menu contains menu_item
+                      assign is_highlight = true
+                    endif
+                  %}
+                  {% if is_highlight %}
+                    {% render 'menu-highlight',
+                      highlight_type: section.settings.highlight_style,
+                      menu_title: title,
+                      section_id: section.id,
+                      transparent: false
+                    %}
+                  {% else %}
+                    <span>{{ title | escape }}</span>
+                  {% endif %}
+                {% else %}
+                  <span>{{ title | escape }}</span>
+                {% endif %}
+              </span>
+              {% liquid
+                assign is_labeled = false
+                assign menu_item = '||' | append: link.title | append: '||' | escape
+                if list_sub_menu contains menu_item
+                  assign is_labeled = true
+                endif
+                assign is_labeled_2 = false
+                if list_sub_menu_2 contains menu_item
+                  assign is_labeled_2 = true
+                endif
+              %}
+              {% if is_labeled %}
+                {{ sub_label }}
+              {% endif %}
+              {% if is_labeled_2 %}
+                {{ sub_label_2 }}
+              {% endif %}
+            </span>
+          {% if is_link %}
+            </span>
+          {% else %}
+            </a>
+          {% endif %}
+          {%- if is_link -%}
+            <span
+              x-cloak x-show="openSub !== {{ forloop.index }}"
+              class="icon-caret-mobile h-3 w-3 min-h-3 min-w-[12px] block {%- if request.path == link %} text-[rgba(var(--colors-text-link))]{% endif %}"
+              :class="{ 'text-[rgba(var(--colors-text-link))]': active }"
+            >
+              {% render 'icon-alls', icon: 'icon-plus' %}
+            </span>
+            <span
+              x-cloak x-show="openSub === {{ forloop.index }}"
+              class="icon-caret-mobile h-3 w-3 min-h-3 min-w-[12px] block {%- if request.path == link %} text-[rgba(var(--colors-text-link))]{% endif %}"
+              :class="{ 'text-[rgba(var(--colors-text-link))]': active }"
+            >
+              {% render 'icon-alls', icon: 'icon-minus', class: "w-full h-full" %}
+            </span>
+          {%- endif -%}
+        </div>
+        {%- if is_link -%}
+          <div
+            x-collapse.duration.500ms
+            x-show="openSub === {{ forloop.index }}"
+            class="background-header w-full h-full overflow-hidden"
+            :class="{ 'menu-opening': $store.xMenuDrawer.currentMenuLinks.includes('{{ menu_level_1 }}')}"
+          >
+            <div class="w-full h-full">
+              <ul 
+                x-data="{ openSubCur: 0 }"
+                id="menu-level-{{ start_level | plus: 1 }}"
+                class="background-header w-full pl-6 pr-4 rtl:pl-4 rtl:pr-6" 
+              >
+                {%- for childlink in link.links -%}
+                  {%- liquid
+                    assign is_link = false
+                    if childlink.links != blank
+                      assign is_link = true
+                    endif
+                    assign menu_level_2 = menu_level_1 | append: '-' | append: forloop.index
+                  -%}
+                  <li {% if childlink.current or childlink.child_active %}x-init="active = true;"{% endif %} class="">
+                    {% capture icon_caret_mobile %} 
+                      <span
+                        x-cloak x-show="openSubCur !== {{ forloop.index }}"
+                        class="icon-caret-mobile h-3 w-3 min-h-3 min-w-[12px] block {%- if request.path == link %} text-[rgba(var(--colors-text-link))]{% endif %}"
+                        :class="{ 'text-[rgba(var(--colors-text-link))]': active }"
+                      >
+                        {% render 'icon-alls', icon: 'icon-plus' %}
+                      </span>
+                      <span
+                        x-cloak x-show="openSubCur === {{ forloop.index }}"
+                        class="icon-caret-mobile h-3 w-3 min-h-3 min-w-[12px] block {%- if request.path == link %} text-[rgba(var(--colors-text-link))]{% endif %}"
+                        :class="{ 'text-[rgba(var(--colors-text-link))]': active }"
+                      >
+                        {% render 'icon-alls', icon: 'icon-minus', class: "w-full h-full" %}
+                      </span>
+                    {% endcapture %}
+                    <div
+                      class="flex items-center gap-4 justify-between h-full"
+                      {% if is_link %}@click="openSubCur = (openSubCur === 0) ? {{ forloop.index }} : 0; $store.xMenuDrawer.setActiveLink('{{ menu_level_2 }}'); setTimeout(() => {$el.scrollIntoView({ behavior: 'smooth' })}, 500);"{% endif %}
+                    >
+                      {% if is_link %}
+                        <span class="p-break-words flex gap-2.5 h-full flex-1 pt-2.5 pb-2.5 disable-effect{% if childlink.current or childlink.child_active %} text-[rgba(var(--colors-text-link))] active{% endif %}{% if is_large_img %} flex-col items-start{% else %} items-center{% endif %}">
+                      {% else %}
+                        <a href="{{ childlink.url }}" class="p-break-words h-full flex gap-2.5 flex-1 pt-2.5 pb-2.5 disable-effect{% if childlink.current or childlink.child_active %} text-[rgba(var(--colors-text-link))] active{% endif %}{% if is_large_img %} flex-col items-start{% else %} items-center{% endif %}">
+                      {% endif %}
+                        {% if childlink.type == 'collection_link' and block.settings.sub_show_collection_image %}
+                          {% liquid 
+                            assign collection_handle_sub = childlink.object.handle
+                            assign tab_collection_sub = collections[collection_handle_sub]
+                            assign collection_metafield = block.settings.collection_metafield
+                            assign menu_image_sub = blank
+                            if collection_metafield != blank and tab_collection_sub.metafields.custom[collection_metafield] != blank
+                              assign menu_image_sub = tab_collection_sub.metafields.custom[collection_metafield]
+                            elsif tab_collection_sub.image != blank
+                              assign menu_image_sub = tab_collection_sub.image
+                            elsif block.settings.sub_show_first_image_product and tab_collection_sub.featured_image
+                              assign menu_image_sub = tab_collection_sub.featured_image
+                            endif
+                          %}
+                          {% if menu_image_sub != blank %}
+                            <span class="min-w-[45px]{% if is_large_img %} w-full{% else %} w-[45px] h-[45px]{% endif %}" aria-label="mobile-navigation-image">
+                              {% # theme-check-disable ImgLazyLoading %}
+                              <img
+                                srcset="{{ menu_image_sub | image_url: width: 100 }} 100w,
+                                {{ menu_image_sub | image_url: width: 225 }} 225w,
+                                {{ menu_image_sub | image_url: width: 375 }} 375w,
+                                {{ menu_image_sub | image_url: width: 450 }} 450w,
+                                {{ menu_image_sub | image_url: width: 750 }} 750w,
+                                {{ menu_image_sub | image_url: width: 900 }} 900w,
+                                {{ menu_image_sub | image_url: width: 1100 }} 1100w,
+                                {{ menu_image_sub | image_url: width: 1500 }} 1500w,
+                                {{ menu_image_sub | image_url: width: 1780 }} 1780w"
+                                src="{{ menu_image_sub | image_url: width: 3840 }}"
+                                sizes="{%- unless is_large_img -%}
+                                  (min-width: 768px) calc({{ settings.page_width }}px / {{ column | plus: 1 }}),
+                                {% endunless %}
+                                (min-width: 768px) 100px"
+                                alt="{{ menu_image_sub.alt | escape }}"
+                                height="{{ menu_image_sub.height }}"
+                                width="{{ menu_image_sub.width }}"
+                                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                class="w-full h-full object-cover object-center image-hover{% if image_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% else %} rounded-full{% endif %}{% if is_large_img %}{% if block.settings.sub_column == '1' %} aspect-16/9{% else %} aspect-square{% endif %}{% endif %}"
+                              >
+                              {% # theme-check-enable ImgLazyLoading %}
+                            </span>
+                          {% endif %}
+                        {% endif %}
+                        {% if childlink.type == 'product_link' and block.settings.sub_show_product_image %}
+                          {% liquid 
+                            assign menu_prod_image_sub = childlink.object.featured_media
+                          %}
+                          {% if menu_prod_image_sub != blank %}
+                            <span class="min-w-[45px]{% if is_large_img %} w-full{% endif %}" aria-label="mobile-navigation-image">
+                              {% # theme-check-disable %}
+                              <img
+                                src="{% if is_large_img %}{{ menu_prod_image_sub | image_url: width: 200 }}{% else %}{{ menu_prod_image_sub | image_url: width: 50 }}{% endif %}"
+                                alt="{{ menu_prod_image_sub.alt | escape }}"
+                                height="{{ menu_prod_image_sub.height }}"
+                                width="{{ menu_prod_image_sub.width }}"
+                                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                class="{% if is_large_img %}w-full h-full{% else %}w-[45px] h-[45px] min-w-[45px] min-h-[45px]{% endif %} object-cover object-center image-hover{% if image_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% else %} rounded-full{% endif %}{% if is_large_img %}{% if block.settings.sub_column == '1' %} aspect-16/9{% else %} aspect-square{% endif %}{% endif %}"
+                              >
+                              {% # theme-check-enable %}
+                            </span>
+                          {% endif %}
+                        {% endif %}
+                        <span class="flex justify-between items-center w-full gap-2 font-menu-level-2">
+                          <span class="flex flex-wrap gap-x-2">
+                            {% assign title = childlink.title %}
+                            {% if section.settings.enable_highlight %}
+                              {% liquid
+                                assign is_highlight = false
+                                assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                assign menu_item = '||' | append: title | append: '||' | escape
+                                if list_menu contains menu_item
+                                  assign is_highlight = true
+                                endif
+                              %}
+                              {% if is_highlight %}
+                                {% render 'menu-highlight',
+                                  highlight_type: section.settings.highlight_style,
+                                  menu_title: title,
+                                  section_id: section.id,
+                                  transparent: false
+                                %}
+                              {% else %}
+                                <span>{{ title | escape }}</span>
+                              {% endif %}
+                            {% else %}
+                              <span>{{ title | escape }}</span>
+                            {% endif %}
+                            {% liquid
+                              assign is_labeled = false
+                              assign menu_item = '||' | append: childlink.title | append: '||' | escape
+                              if list_sub_menu contains menu_item
+                                assign is_labeled = true
+                              endif
+                              assign is_labeled_2 = false
+                              if list_sub_menu_2 contains menu_item
+                                assign is_labeled_2 = true
+                              endif
+                            %}
+                            {% if is_labeled %}
+                              {{ sub_label }}
+                            {% endif %}
+                            {% if is_labeled_2 %}
+                              {{ sub_label_2 }}
+                            {% endif %}
+                          </span>
+                          {% if is_link and is_large_img %}{{ icon_caret_mobile }}{% endif %}
+                        </span>
+                      {% if is_link %}</span>{% else %}</a>{% endif %}
+                      {%- if is_link and is_large_img != true -%}
+                        {{ icon_caret_mobile }}
+                      {%- endif -%}
+                    </div>
+                    {%- if is_link -%}
+                      <div
+                        x-collapse.duration.500ms
+                        x-show="openSubCur === {{ forloop.index }}"
+                        class="background-header w-full h-full overflow-hidden" 
+                        :class="{ 'menu-opening': $store.xMenuDrawer.currentMenuLinks.includes('{{ menu_level_2 }}')} "
+                      >
+                        <div class="w-full h-full">
+                          <ul
+                            id="menu-level-{{ start_level | plus: 2 }}"
+                            class="w-full background-header pl-3 pr-0 rtl:pl-0 rtl:pr-3"
+                          >
+                            {%- for grandchildlink in childlink.links -%}
+                              <li {% if childlink.current or childlink.child_active %}x-init="active = true;"{% endif %}>
+                                <a
+                                  href="{{ grandchildlink.url }}"
+                                  class="p-break-words pt-2.5 pb-2.5 h-full disable-effect flex gap-2.5{% if grandchildlink.current %} effect-inline active{% endif %}{% if is_large_img %} flex-col items-start{% else %} items-center{% endif %}"
+                                  {% if grandchildlink.current %} aria-current="page"{% endif %}
+                                >
+                                  {% if grandchildlink.type == 'collection_link' and block.settings.sub_show_collection_image %}
+                                    {% liquid 
+                                      assign collection_handle_sub = grandchildlink.object.handle
+                                      assign tab_collection_sub = collections[collection_handle_sub]
+                                      assign collection_metafield = block.settings.collection_metafield
+                                      assign menu_image_sub = blank
+                                      if collection_metafield != blank and tab_collection_sub.metafields.custom[collection_metafield] != blank
+                                        assign menu_image_sub = tab_collection_sub.metafields.custom[collection_metafield]
+                                      elsif tab_collection_sub.image != blank
+                                        assign menu_image_sub = tab_collection_sub.image
+                                      elsif block.settings.sub_show_first_image_product and tab_collection_sub.featured_image
+                                        assign menu_image_sub = tab_collection_sub.featured_image
+                                      endif
+                                    %}
+                                    {% if menu_image_sub != blank %}
+                                      <span class="menu-level-{{ start_level | plus: 2 }} min-w-[45px]{% if is_large_img %} w-full{% else %} w-[45px] h-[45px]{% endif %}" aria-label="mobile-navigation-image">
+                                        {% # theme-check-disable ImgLazyLoading %}
+                                        <img
+                                          srcset="{{ menu_image_sub | image_url: width: 100 }} 100w,
+                                          {{ menu_image_sub | image_url: width: 225 }} 225w,
+                                          {{ menu_image_sub | image_url: width: 375 }} 375w,
+                                          {{ menu_image_sub | image_url: width: 450 }} 450w,
+                                          {{ menu_image_sub | image_url: width: 750 }} 750w,
+                                          {{ menu_image_sub | image_url: width: 900 }} 900w,
+                                          {{ menu_image_sub | image_url: width: 1100 }} 1100w,
+                                          {{ menu_image_sub | image_url: width: 1500 }} 1500w,
+                                          {{ menu_image_sub | image_url: width: 1780 }} 1780w"
+                                          src="{{ menu_image_sub | image_url: width: 3840 }}"
+                                          sizes="{%- unless is_large_img -%}
+                                            (min-width: 768px) calc({{ settings.page_width }}px / {{ column | plus: 1 }}),
+                                          {% endunless %}
+                                          (min-width: 768px) 100px"
+                                          alt="{{ menu_image_sub.alt | escape }}"
+                                          height="{{ menu_image_sub.height }}"
+                                          width="{{ menu_image_sub.width }}"
+                                          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                          class="w-full h-full object-cover object-center image-hover{% if image_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% else %} rounded-full{% endif %}{% if is_large_img %}{% if block.settings.sub_column == '1' %} aspect-16/9{% else %} aspect-square{% endif %}{% endif %}"
+                                        >
+                                        {% # theme-check-enable ImgLazyLoading %}
+                                      </span>
+                                    {% endif %}
+                                  {% endif %}
+                                  {% if grandchildlink.type == 'product_link' and block.settings.sub_show_product_image %}
+                                    {% liquid 
+                                      assign menu_prod_image_sub = grandchildlink.object.featured_media
+                                    %}
+                                    {% if menu_prod_image_sub != blank %}
+                                      <span class="min-w-[45px]{% if is_large_img %} w-full{% endif %}" aria-label="mobile-navigation-image">
+                                        {% # theme-check-disable %}
+                                        <img
+                                          src="{% if is_large_img %}{{ menu_prod_image_sub | image_url: width: 400 }}{% else %}{{ menu_prod_image_sub | image_url: width: 50 }}{% endif %}"
+                                          alt="{{ menu_prod_image_sub.alt | escape }}"
+                                          height="{{ menu_prod_image_sub.height }}"
+                                          width="{{ menu_prod_image_sub.width }}"
+                                          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                          class="{% if is_large_img %}w-full h-full{% else %}w-[45px] h-[45px] min-w-[45px] min-h-[45px]{% endif %} object-cover object-center image-hover{% if image_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% else %} rounded-full{% endif %}{% if is_large_img %}{% if block.settings.sub_column == '1' %} aspect-16/9{% else %} aspect-square{% endif %}{% endif %}"
+                                        >
+                                        {% # theme-check-enable %}
+                                      </span>
+                                    {% endif %}
+                                  {% endif %}
+                                  <span class="flex flex-wrap gap-x-2">
+                                    <span class="font-menu-level-2">
+                                      {% assign title = grandchildlink.title %}
+                                      {% if section.settings.enable_highlight %}
+                                        {% liquid
+                                          assign is_highlight = false
+                                          assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                                          assign menu_item = '||' | append: title | append: '||' | escape
+                                          if list_menu contains menu_item
+                                            assign is_highlight = true
+                                          endif
+                                        %}
+                                        {% if is_highlight %}
+                                          {% render 'menu-highlight',
+                                            highlight_type: section.settings.highlight_style,
+                                            menu_title: title,
+                                            section_id: section.id,
+                                            transparent: false
+                                          %}
+                                        {% else %}
+                                          <span>{{ title | escape }}</span>
+                                        {% endif %}
+                                      {% else %}
+                                        <span>{{ title | escape }}</span>
+                                      {% endif %}
+                                    </span>
+                                    {% liquid
+                                      assign is_labeled = false
+                                      assign menu_item = '||' | append: grandchildlink.title | append: '||' | escape
+                                      if list_sub_menu contains menu_item
+                                        assign is_labeled = true
+                                      endif
+                                      assign is_labeled_2 = false
+                                      if list_sub_menu_2 contains menu_item
+                                        assign is_labeled_2 = true
+                                      endif
+                                    %}
+                                    {% if is_labeled %}
+                                      {{ sub_label }}
+                                    {% endif %}
+                                    {% if is_labeled_2 %}
+                                      {{ sub_label_2 }}
+                                    {% endif %}
+                                  </span>
+                                </a>
+                              </li>
+                            {%- endfor -%}
+                          </ul>
+                        </div>
+                      </div>
+                    {%- endif -%}
+                  </li>
+                {%- endfor -%}
+              </ul>
+            </div>
+          </div>
+        {%- endif -%}
+      </li>
+    {%- endfor -%}
+  {% when 'carousel' %}
+    {%- for link in links -%}
+      {%- liquid
+        assign menu_level_1 = start_id | append: '-' | append: forloop.index
+
+        assign is_large_img = false
+        if block.settings.item_image_type == 'large'
+          assign is_large_img = true
+        endif
+      -%}
+      <li>
+        <div class="flex items-center mr-4 ml-3 rtl:mr-3 rtl:ml-4" {%- if link.current or link.child_active %}x-init="active = true;"{% endif %}>
+          {%- style -%}
+            {%- if block.settings.sub_label != blank -%}
+              .color-sub-label-{{ block.id }} {
+                background: {{ block.settings.sub_label_color }};
+                color: {{ block.settings.sub_label_text_color_light }};
+              }
+              .color-sub-label-{{ block.id }}:before{
+                border-top-color: {{ block.settings.sub_label_color }}; 
+              }
+              .dark .color-sub-label-{{ block.id }} {
+                background: {{ block.settings.sub_label_color_dark }};
+                color: {{ block.settings.sub_label_text_color_dark }}
+              }
+              .dark .color-sub-label-{{ block.id }}:before {
+                border-top-color: {{ block.settings.sub_label_color_dark }};
+              }
+            {% endif %}
+          {%- endstyle -%}
+          <a href="{{ link.url }}" class="flex-1 pt-2.5 pb-2.5 gap-2.5 flex flex-col items-center disable-effect{% if link.current or link.child_active %} effect-inline active{% endif %}">
+            {% assign has_image = false %}
+            {% if link.type == 'collection_link' and block.settings.show_collection_image %}
+              {% liquid 
+                assign collection_handle_1 = link.object.handle
+                assign tab_collection_1 = collections[collection_handle_1]
+                assign collection_metafield = block.settings.collection_metafield
+                assign menu_image_1 = blank
+                if collection_metafield != blank and tab_collection_1.metafields.custom[collection_metafield] != blank
+                  assign menu_image_1 = tab_collection_1.metafields.custom[collection_metafield]
+                elsif tab_collection_1.image != blank
+                  assign menu_image_1 = tab_collection_1.image
+                elsif block.settings.show_first_image_product and tab_collection_1.featured_image
+                  assign menu_image_1 = tab_collection_1.featured_image
+                endif
+              %}
+              {% if menu_image_1 != blank %}
+                {% assign has_image = true %}
+                <span class="w-[45px] h-[45px]" aria-label="mobile-navigation-image">
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <img
+                    srcset="{{ menu_image_1 | image_url: width: 100 }} 100w,
+                    {{ menu_image_1 | image_url: width: 225 }} 225w,
+                    {{ menu_image_1 | image_url: width: 375 }} 375w,
+                    {{ menu_image_1 | image_url: width: 450 }} 450w,
+                    {{ menu_image_1 | image_url: width: 750 }} 750w,
+                    {{ menu_image_1 | image_url: width: 900 }} 900w,
+                    {{ menu_image_1 | image_url: width: 1100 }} 1100w,
+                    {{ menu_image_1 | image_url: width: 1500 }} 1500w,
+                    {{ menu_image_1 | image_url: width: 1780 }} 1780w"
+                    src="{{ menu_image_1 | image_url: width: 3840 }}"
+                    sizes="{%- unless is_large_img -%}
+                      (min-width: 768px) calc({{ settings.page_width }}px / {{ column | plus: 1 }}),
+                    {% endunless %}
+                    (min-width: 768px) 100px"
+                    alt="{{ menu_image_1.alt | escape }}"
+                    height="{{ menu_image_1.height }}"
+                    width="{{ menu_image_1.width }}"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    class="w-[45px] h-[45px] min-w-[45px] min-h-[45px] object-cover object-center image-hover{% if image_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% else %} rounded-full{% endif %}"
+                  >
+                  {% # theme-check-enable ImgLazyLoading %}
+                </span>
+              {% endif %}
+            {% endif %}
+            {% if link.type == 'product_link' and block.settings.show_product_image %}
+              {% liquid 
+                assign product_image_1 = link.object.featured_media
+              %}
+              {% if product_image_1 %}
+                {% assign has_image = true %}
+                <span class="w-[45px] h-[45px]" aria-label="mobile-navigation-image text-center">
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <img
+                    src="{{ product_image_1 | image_url: width: 50 }}"
+                    alt="{{ product_image_1.alt | escape }}"
+                    height="{{ product_image_1.height }}"
+                    width="{{ product_image_1.width }}"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    class="w-[45px] h-[45px] min-w-[45px] min-h-[45px] object-cover object-center image-hover{% if image_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% else %} rounded-full{% endif %}"
+                  >
+                  {% # theme-check-enable ImgLazyLoading %}
+                </span>
+              {% endif %}
+            {% endif %}
+            {% if block.settings.show_collection_image or block.settings.show_product_image %}
+              {% unless has_image %}
+                <div class="w-[45px] h-[45px] min-w-[45px] min-h-[45px]"></div>
+              {% endunless %}
+            {% endif %}
+            <span class="flex flex-wrap justify-center gap-x-2">
+              <span class="p-break-words text-center font-menu-level-2">
+                {% assign title = link.title %}
+                {% if section.settings.enable_highlight %}
+                  {% liquid
+                    assign is_highlight = false
+                    assign list_menu = menus | join: '||' | prepend: '||' | append: '||' | escape
+                    assign menu_item = '||' | append: title | strip | append: '||' | escape
+                    if list_menu contains menu_item
+                      assign is_highlight = true
+                    endif
+                  %}
+                  {% if is_highlight %}
+                    {% render 'menu-highlight',
+                      highlight_type: section.settings.highlight_style,
+                      menu_title: title,
+                      section_id: section.id,
+                      transparent: false
+                    %}
+                  {% else %}
+                    <span>{{ title | escape }}</span>
+                  {% endif %}
+                {% else %}
+                  <span>{{ title | escape }}</span>
+                {% endif %}
+              </span>
+              {% liquid
+                assign is_labeled = false
+                assign menu_item = '||' | append: link.title | append: '||' | escape
+                if list_sub_menu contains menu_item
+                  assign is_labeled = true
+                endif
+                assign is_labeled_2 = false
+                if list_sub_menu_2 contains menu_item
+                  assign is_labeled_2 = true
+                endif
+              %}
+              {% if is_labeled %}
+                {{ sub_label }}
+              {% endif %}
+              {% if is_labeled_2 %}
+                {{ sub_label_2 }}
+              {% endif %}
+            </span>
+          </a>
+        </div>
+      </li>
+    {%- endfor -%}
+{% endcase %}
+{% if block.settings.promotion_image != blank and menu_type != 'carousel' %}
+  {% liquid 
+    assign image = block.settings.promotion_image
+    assign heading_size =  block.settings.heading_size | times: settings.heading_base_size | times: 0.000225
+    assign text_size =  block.settings.text_size | times: settings.text_base_size | times: 0.0000875
+  %}
+  {%- style -%}
+    .text-{{ block.id }} {
+      font-size: {{ text_size | times: 0.9 }}rem;
+    }
+    .heading-{{ block.id }} {
+      font-size: {{ heading_size | times: 0.6 }}rem;
+    }
+    @media (min-width: 768px) {
+      .heading-{{ block.id }} {
+        font-size: {{ heading_size }}rem; 
+      }
+      .text-{{ block.id }} {
+        font-size: {{ text_size }}rem;
+      }
+    }
+    {%- if block.settings.text_color.alpha != 0.0 -%}
+      .text-color-{{ block.id }} {
+        color: {{ block.settings.text_color }}
+      }
+    {%- endif -%}
+    {%- if block.settings.button_style == 'primary' -%}
+      .button--{{ block.id }}.button-solid,
+      .button--{{ block.id }}.button-solid:before { 
+        {%- if block.settings.button_color.alpha != 0.0 -%}
+          --colors-button: {{ block.settings.button_color.red }}, {{ block.settings.button_color.green }}, {{ block.settings.button_color.blue }} ;
+        {%- endif -%}
+        {%- if block.settings.button_text_color.alpha != 0.0 -%}
+          --colors-button-text: {{ block.settings.button_text_color.red }}, {{ block.settings.button_text_color.green }}, {{ block.settings.button_text_color.blue }};
+        {%- endif -%}
+        {%- if block.settings.button_hover_color.alpha != 0.0 -%}
+          --colors-button-hover: rgb({{ block.settings.button_hover_color.red }}, {{ block.settings.button_hover_color.green }}, {{ block.settings.button_hover_color.blue }});
+        {%- endif -%}
+        {%- if block.settings.button_text_hover_color.alpha != 0.0 -%}
+          --colors-button-text-hover: {{ block.settings.button_text_hover_color.red }}, {{ block.settings.button_text_hover_color.green }}, {{ block.settings.button_text_hover_color.blue }};
+        {%- endif -%}
+      }
+    {%- endif -%}
+    .button--{{ block.id }}.button-outline {
+      {%- if block.settings.button_secondary_text_color.alpha != 0.0 -%} 
+        --colors-secondary-button: {{ block.settings.button_secondary_text_color.red }}, {{ block.settings.button_secondary_text_color.green }}, {{ block.settings.button_secondary_text_color.blue }}; 
+        --colors-line-secondary-button: {{ block.settings.button_secondary_text_color.red }}, {{ block.settings.button_secondary_text_color.green }}, {{ block.settings.button_secondary_text_color.blue }};
+        --background-secondary-button: transparent;
+      {%- endif -%}
+      {%- if block.settings.button_secondary_color.alpha != 0.0 -%} 
+        --background-secondary-button: {{ block.settings.button_secondary_color.red }}, {{ block.settings.button_secondary_color.green }}, {{ block.settings.button_secondary_color.blue }}; 
+        --colors-line-secondary-button: {{ block.settings.button_secondary_color.red }}, {{ block.settings.button_secondary_color.green }}, {{ block.settings.button_secondary_color.blue }}; 
+      {%- endif -%}
+    }
+    
+    .button--{{ block.id }}.button-text-link, .button--{{ block.id }}.button-text-link::after, .button--{{ block.id }}.button-text-link::before {
+      {% if block.settings.colors_text_link.alpha != 0.0 %}
+        --colors-text-link: {{ block.settings.colors_text_link.red }}, {{ block.settings.colors_text_link.green }}, {{ block.settings.colors_text_link.blue }};
+      {% else %}
+        --colors-text-link: {{ settings.colors_text_link.red }}, {{ settings.colors_text_link.green }}, {{ settings.colors_text_link.blue }};
+      {% endif %}
+    }
+    .dark .button--{{ block.id }}.button-text-link, .dark .button--{{ block.id }}.button-text-link::after, .dark .button--{{ block.id }}.button-text-link::before {
+      {% if block.settings.colors_text_link.alpha != 0.0 %}
+        --colors-text-link: {{ block.settings.colors_text_link.red }}, {{ block.settings.colors_text_link.green }}, {{ block.settings.colors_text_link.blue }};
+      {% else %}
+        --colors-text-link: {{ settings.colors_dark_text_link.red }}, {{ settings.colors_dark_text_link.green }}, {{ settings.colors_dark_text_link.blue }};
+      {% endif %}
+    }
+  {%- endstyle -%}
+  <div class="w-full relative overflow-hidden{% if menu_type == 'accordion' %} mt-4 pb-4{% if is_rtl %} pr-3 pl-7{% else %} pl-3 pr-7{% endif %}{% else %} mt-2.5 px-4{% endif %}">
+    {% capture promotion_content %}
+      <div class="content-menu-level-{{ start_level | plus: 1 }} z-20 flex flex-col items-{{ block.settings.content_alignment }}{% if block.settings.enable_overlay %} absolute bottom-4 right-9 left-9{% else %} pt-4{% endif %}">
+        <p class="w-max max-w-full empty:hidden nav-promotion-heading text-{{ block.settings.content_alignment }} font-medium heading-{{ block.id }} text-color-{{ block.id }}">{{ block.settings.heading_promotion }}</p>
+        <p class="w-max max-w-full empty:hidden nav-promotion-text text-{{ block.settings.content_alignment }} text-{{ block.id }} text-color-{{ block.id }}">{{ block.settings.text }}</p>
+        {%- if block.settings.button_label != blank -%}
+          <a {% if block.settings.button_link != blank %}href="{{ block.settings.button_link }}"
+            {% if block.settings.open_new_window_button %} target="_blank"{% endif %}{% else %} role="link" aria-disabled="true"{% endif %} 
+            class="w-max max-w-full button button--{{ block.id }} pointer-events-auto inline-block empty:hidden pl-4 pr-4 lg:pl-6 lg:pr-6 pt-2.5 pb-2.5 leading-normal md:pt-3 md:pb-3 cursor-pointer p-break-words
+              {%- if block.settings.button_style == 'secondary' %} button-outline mt-2 lg:mt-2.5{% elsif block.settings.button_style == 'text-link' %} button-text-link text-[rgba(var(--colors-text-link))]{% else %} button-solid mt-2 lg:mt-2.5{% endif -%}
+              {%- if block.settings.button_link == blank %} hover:cursor-not-allowed opacity-70{% endif -%}"
+          >
+            {% render 'button-label', button_label: block.settings.button_label, show_button_style: block.settings.button_style %}
+          </a>
+        {% endif %}
+      </div>
+    {% endcapture %}
+    <div class="image-mobile-nav relative w-full">
+      <span class="absolute top-0 left-0 bottom-0 right-0 z-10 image-treatment-overlay opacity-{{ block.settings.overlay_opacity }}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"></span>
+      {% # theme-check-disable ImgLazyLoading %}
+      <img
+        srcset="{{ image | image_url: width: 225 }} 225w,
+        {{ image | image_url: width: 375 }} 375w,
+        {{ image | image_url: width: 450 }} 450w,
+        {{ image | image_url: width: 750 }} 750w,
+        {{ image | image_url: width: 900 }} 900w,
+        {{ image | image_url: width: 1100 }} 1100w,
+        {{ image | image_url: width: 1500 }} 1500w,
+        {{ image | image_url: width: 1780 }} 1780w"
+        src="{{ image | image_url: width: 1780 }}"
+        sizes="(min-width: {{ settings.page_width }}px) 1500px, (min-width: 768px) 900px, 100vw"
+        alt="{{ image.alt | escape }}"
+        width="{{ image.width }}"
+        height="{{ image.width | divided_by: image.aspect_ratio }}"
+        style="object-position: {{ image.presentation.focal_point }};"
+        {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+        class="w-full object-cover z-10 aspect-16/9{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+      />
+      {% # theme-check-enable ImgLazyLoading %}
+      {% if block.settings.enable_overlay %}
+        {{ promotion_content }}
+      {% endif %}
+    </div>
+    {% unless block.settings.enable_overlay %}
+      {{ promotion_content }}
+    {% endunless %}
+  </div>
+{% endif %}

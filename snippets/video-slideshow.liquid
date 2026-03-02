@@ -1,0 +1,206 @@
+{% comment %}
+    Renders video in slideshow
+    Accepts:
+    - video_mode: {String} Show video on desktop or mobile
+    - video_type: {String} Type of video (video_select, youtube, vimeo)
+    - video_id: {String} Video ID for youtube or vimeo
+    - video_select_object: {String} Video object for video_select
+    - block: {Object} Block object to access settings
+    Usage:
+    {% render 'video-slideshow' %}
+{% endcomment %}
+{% liquid
+  assign image_cover = blank
+  if video_type == 'video_select'
+    assign image_cover = video_select_object.preview_image
+  endif
+  assign video_alt = block.settings.video_alt_text              
+%}
+{%- capture sizes -%}
+  {%- if section.settings.full_width -%}
+    (min-width: 1024px) 100vw,
+  {%- else -%}
+    (min-width: {{ settings.page_width }}px) {{ settings.page_width }}px,
+  {%- endif -%}
+  (min-width: 768px) calc(100vw / 3),
+{%- endcapture -%}
+{% capture button_play %}
+  <div class="button-play z-20 absolute top-1/2 left-1/2">
+    <div class="cursor-pointer absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] md:w-[60px] md:h-[60px] rounded-full p-5 bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 disabled:cursor-not-allowed">
+      <span class="pointer-events-none duration-200 bg-button-play absolute w-4 h-5 md:w-4 md:h-5 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[rgba(var(--image-treatment-text))]">
+        {% render 'icon-media', icon: 'icon-play', class: 'w-full h-full' %}
+      </span>
+    </div>
+  </div>
+{% endcapture %}
+{% if block.settings.enable_video_autoplay or block.settings.enable_bakground %}
+  <div 
+    class="video-slideshow-{{ video_mode }} video-hero external-video w-full object-cover{% if video_mode == 'desktop' %} hidden md:block{% elsif video_mode == 'mobile' %} block md:hidden{% endif %}{% unless section.settings.show_content_below_image %} absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-full{% endunless %} md:h-full md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2"
+    x-intersect:leave="$store.xVideo.pause($el)"
+    @click.stop="$store.xVideo.togglePlay($el)"
+    {% if video_type == 'video_select' %}x-intersect="$store.xVideo.play($el)"{% endif %}
+    {% if video_type == 'youtube' or video_type == 'vimeo' %}
+      x-intersect.once="$store.xVideo.externalLoad($el, '{{ video_type }}', '{{ video_id }}', true, '{{ block.settings.video_alt_text }}', 1)"
+      x-intersect="$store.xVideo.play($el)"
+    {% endif %}  
+    {% if video_select_object != blank and section.settings.desktop_height == "natural" %}
+      style="padding-bottom: {{ 1 | divided_by: video_select_object.aspect_ratio | times: 100 }}%;"
+    {% elsif video_type == 'youtube' or video_type == 'vimeo' %}
+      style="padding-bottom: 56.25%;"
+    {% endif %}
+  >
+    <span class="absolute top-0 left-0 bottom-0 right-0 z-10 image-treatment-overlay opacity-{{ block.settings.overlay_opacity }}"></span>
+    {%- if video_type == 'youtube' or video_type == 'vimeo' -%}
+      <div class="w-full h-full absolute"></div>
+    {%- endif -%}
+    {% if video_type == 'video_select' %}
+      {% if image_cover != blank %}
+      {% # theme-check-disable ImgLazyLoading %}
+        <img
+          srcset="{{ image_cover | image_url: width: 375 }} 375w,
+          {{ image_cover | image_url: width: 450 }} 450w,
+          {{ image_cover | image_url: width: 750 }} 750w,
+          {{ image_cover | image_url: width: 900 }} 900w,
+          {{ image_cover | image_url: width: 1100 }} 1100w,
+          {{ image_cover | image_url: width: 1500 }} 1500w,
+          {{ image_cover | image_url: width: 1780 }} 1780w"
+          sizes="{{ sizes }}"
+          src="{{ image_cover | image_url: width: 1780 }}"
+          alt="{{ image_cover.alt | escape }}"
+          class="object-cover absolute top-0 left-0 h-full w-full img-thumbnail animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+          {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+          onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+          width="{{ image_cover.width }}"
+          height="{{ image_cover.height }}"
+          style="object-position:{{ image_cover.presentation.focal_point }};"
+        >
+      {% # theme-check-enable ImgLazyLoading %}
+      {% endif %}
+      <template x-if="intersect">
+        {{ video_select_object
+        | video_tag:
+          image_size: "1100x",
+          autoplay: block.settings.enable_video_autoplay,
+          loop: true,
+          controls: false,
+          muted: true,
+          class: "w-full h-full absolute top-0 left-0 video z-10 object-cover",
+          alt: video_select_object.alt
+          | replace: '<img ', '<img loading="lazy" alt="" '
+        }}
+      </template>
+    {% endif %}
+    {% if block.settings.show_sound_control and video_type == 'video_select' %}
+      <button x-data="{ muted: true }" class="z-20 button-sound-control bg-[rgba(var(--image-treatment-text),0.06)] hover:bg-[rgba(var(--image-treatment-text),0.1)] bg-opacity-30 {% if settings.edges_type == 'rounded_corners' %}rounded-[10px] {% endif %}flex items-center justify-center absolute right-2 rtl:left-2 rtl:right-auto cursor-pointer w-[35px] h-[35px] md:w-[34px] md:h-[34px]{% if section.settings.slider_visual == 'image' %} top-2 {% else %} bottom-2 {% endif %}" @click.stop="$store.xVideo.toggleMute($el); muted=!muted" aria-label="button sound control">
+        <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="muted">
+          {% render 'icon-media', icon: 'icon-unmute' %}
+        </span>
+        <span class="w-[18px] h-[18px] lg:w-[18px] lg:h-[18px] text-[rgba(var(--image-treatment-text))]" x-show="!muted" x-cloak>
+          {% render 'icon-media', icon: 'icon-mute' %}
+        </span>
+      </button>
+    {% endif %}
+  </div>
+{% else %}
+  <div
+    class="video-slideshow-{{ video_mode }} video-hero external-video w-full object-cover{% if video_mode == 'desktop' %} hidden md:block{% elsif video_mode == 'mobile' %} block md:hidden{% else %}{% endif %}{% unless section.settings.show_content_below_image %} absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-full{% endunless %} md:h-full md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2"
+    x-intersect:leave="$store.xVideo.pause($el)"
+    x-data="{ isHovered: false }"
+    {% if video_type == 'video_select' %}@click.prevent="$store.xVideo.mp4Thumbnail($el)"{% endif %}
+    {% if video_type == 'youtube' or video_type == 'vimeo' %}
+      @click.prevent="$store.xVideo.externalLoad($el, '{{ video_type }}', '{{ video_id }}', false, '{{ video_alt }}')"
+      {% if section.settings.show_content_below_image %}
+        style="padding-bottom: 56.25%"
+      {% endif %}
+    {% endif %}
+    {% if video_select_object != blank and section.settings.desktop_height == "natural" %}
+      style="padding-bottom: {{ 1 | divided_by: video_select_object.aspect_ratio | times: 100 }}%;"
+    {% endif %}
+  >
+    <span class="absolute top-0 left-0 bottom-0 right-0 z-20 image-treatment-overlay opacity-{{ block.settings.overlay_opacity }}"></span>
+    {% if image_cover != blank %}
+      {% # theme-check-disable ImgLazyLoading %}
+      <img
+        srcset="{{ image_cover | image_url: width: 375 }} 375w,
+        {{ image_cover | image_url: width: 450 }} 450w,
+        {{ image_cover | image_url: width: 750 }} 750w,
+        {{ image_cover | image_url: width: 900 }} 900w,
+        {{ image_cover | image_url: width: 1100 }} 1100w,
+        {{ image_cover | image_url: width: 1500 }} 1500w,
+        {{ image_cover | image_url: width: 1780 }} 1780w"
+        sizes="{{ sizes }}"
+        src="{{ image_cover | image_url: width: 1780 }}"
+        alt="{{ image_cover.alt | escape }}"
+        class="object-cover z-10 absolute top-0 left-0 h-full w-full img-thumbnail animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+        {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+        onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+        width="{{ image_cover.width }}"
+        height="{{ image_cover.height }}"
+        style="object-position:{{ image_cover.presentation.focal_point }};"
+      >
+      {% # theme-check-enable ImgLazyLoading %}
+      {% if video_type == 'video_select' %}
+        {{ video_select_object
+          | video_tag:
+            image_size: "1100x",
+            loop: false,
+            muted: false,
+            class: "w-full h-full absolute top-0 left-0 video object-cover",
+            alt: video_select_object.alt
+            | replace: '<video ', '<video x-on:mouseover="isHovered = true" x-on:mouseleave="isHovered = false" :controls="isHovered" '
+            | replace: '<img ', '<img loading="lazy" alt="" '
+        }}
+        {{ button_play }}
+      {% endif %}
+    {% else %}
+      {% unless video_mode == 'desktop' %}
+        <div class="w-full h-full flex justify-center items-center absolute bg-[#c9c9c9]">
+          <span class="w-20 md:w-40 h-20 md:h-40 flex items-center">
+            {% render 'icon-media', icon: 'icon-video', class: 'text-[#acacac] w-full h-full' %}
+          </span>
+        </div>
+      {% endunless %}
+      {% if video_type == 'youtube' %}
+        {% # theme-check-disable %}
+        <div class="absolute h-full w-full video">
+          <picture>
+            <source type="image/webp" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}">
+            <source type="image/jpeg" srcset="{{ video_id | prepend: 'https://i.ytimg.com/vi/' | append: '/maxresdefault.jpg' }}">
+            <img 
+              src="{{ video_id | prepend: 'https://i.ytimg.com/vi_webp/' | append: '/maxresdefault.webp' }}" 
+              class="w-full h-full object-cover animate-Xpulse skeleton-image" alt="{{ video_alt }}" width="1280" height="890"
+              {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+              onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+            />
+          </picture>
+        </div>
+        {% # theme-check-enable %}
+        {{ button_play }}
+      {% elsif video_type == 'vimeo' %}
+        {%- capture options -%}
+          {
+            'alt': '{{ video_alt }}',
+            'width': 1280
+          }
+        {%- endcapture -%}
+        <div class="external-video w-full h-full">
+          <div class="h-full w-full" x-init="$store.xVideo.renderVimeoFacade($el, '{{ video_id }}', {{ options }})"></div>
+          {{ button_play }}
+        </div>
+      {% elsif video_type == 'video_select' %}
+        {{ video_select_object
+          | video_tag:
+            image_size: "1100x",
+            loop: false,
+            controls: true,
+            muted: false,
+            class: "w-full h-full absolute video",
+            alt: video_select_object.alt
+            | replace: '<video ', '<video x-on:pause="paused = true" x-on:play="paused = false" x-on:mouseover="isHovered = true" x-on:mouseleave="isHovered = false" :controls="isHovered" '
+            | replace: '<img ', '<img loading="lazy" alt="" '
+        }}
+        {{ button_play }}
+      {% endif %}
+    {% endif %}
+  </div>
+{% endif %}

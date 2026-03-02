@@ -1,0 +1,802 @@
+{%-liquid
+  assign heading_size =  section.settings.heading_size | times: settings.heading_base_size | times: 0.000225
+-%}
+{%- style -%} 
+  .heading-{{ section.id }} {
+    font-size: {{ heading_size | times: 0.6 }}rem;
+  }
+  .x-product-comparison-config .retail_price {
+    margin-bottom: 0;
+  }
+  .bg-{{ section.id }} {
+    background: {{ section.settings.background_color_light }};
+  }
+  .dark .bg-{{ section.id }} {
+    {% if section.settings.background_color_dark.alpha != 0.0 %}
+      background: {{ section.settings.background_color_dark }};
+    {% else %}
+      background: transparent;
+    {% endif %}
+  }
+  {% if section.settings.criteria_light.alpha != 0.0 %}
+  .bg-col-{{ section.id }} {
+    background: {{ section.settings.criteria_light }};
+  }
+  {% endif %}
+  .dark .bg-col-{{ section.id }} {
+    {% if section.settings.criteria_dark.alpha != 0.0 %}
+      background: {{ section.settings.criteria_dark }};
+    {% else %}
+      background: transparent;
+    {% endif %}
+  }
+  {% if section.settings.heading_light.alpha != 0.0 %}
+    .bg-{{ section.id }} {
+      --colors-heading: {{ section.settings.heading_light.red }},{{ section.settings.heading_light.green }},{{ section.settings.heading_light.blue }};
+    }
+  {% endif %}
+  {% if section.settings.text_light.alpha != 0.0 %}
+    .bg-{{ section.id }} {
+      --colors-text: {{ section.settings.text_light.red }},{{ section.settings.text_light.green }},{{ section.settings.text_light.blue }};
+    }
+  {% endif %}
+  {% if section.settings.line_border_light.alpha != 0.0 %}
+    .bg-{{ section.id }} {
+      --colors-line-and-border: {{ section.settings.line_border_light.red }},{{ section.settings.line_border_light.green }},{{ section.settings.line_border_light.blue }}; 
+    }
+  {% endif %}
+  .dark .bg-{{ section.id }} {
+    {% if section.settings.line_border_dark.alpha != 0.0 %}
+      --colors-line-and-border: {{ section.settings.line_border_dark.red }},{{ section.settings.line_border_dark.green }},{{ section.settings.line_border_dark.blue }}; 
+    {% else %}
+      --colors-line-and-border: {{ settings.colors_dark_line_and_borders.red }}, {{ settings.colors_dark_line_and_borders.green }}, {{ settings.colors_dark_line_and_borders.blue }};
+    {% endif %}
+  }
+  .dark .bg-{{ section.id }} {
+    {% if section.settings.text_dark.alpha != 0.0 %}
+      --colors-text: {{ section.settings.text_dark.red }},{{ section.settings.text_dark.green }},{{ section.settings.text_dark.blue }};
+    {% else %}        
+      --colors-text: {{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }};
+    {% endif %}
+    {% if section.settings.heading_dark.alpha != 0.0 %}
+      --colors-heading: {{ section.settings.heading_dark.red }},{{ section.settings.heading_dark.green }},{{ section.settings.heading_dark.blue }};
+    {% else %}        
+      --colors-heading: {{ settings.colors_dark_heading.red }}, {{ settings.colors_dark_heading.green }}, {{ settings.colors_dark_heading.blue }};
+    {% endif %}
+  }
+  @media (min-width: 768px) {
+    .heading-{{ section.id }} {
+      font-size: {{ heading_size }}rem; 
+    }
+  }
+{%- endstyle -%}
+
+{% render 'section-divider' %}
+
+<div x-data="xProductComparison()" class="{% if section.index == 1 %}preload-image {% endif %}bg-{{ section.id }} pt-[{{ section.settings.padding_top_mobile }}px] md:pt-[{{ section.settings.padding_top }}px] pb-[{{ section.settings.padding_bottom_mobile }}px] md:pb-[{{ section.settings.padding_bottom }}px]">
+  <div class="mb-5 lg:mb-2 pl-5 pr-5 text-[rgb(var(--colors-text))] {% unless section.settings.full_width %} x-pgw page-width{% endunless %}">
+    <div class="empty:hidden text-{{ section.settings.heading_alignment }} rtl:text-{% if section.settings.heading_alignment == 'center' %}center{% elsif section.settings.heading_alignment == 'left' %}right{% else %}left{% endif %}">
+      {%- if section.settings.title != blank -%}
+        <div class="mb-2">
+          {% render 'heading-highlight',
+            headingId: section.id,
+            heading: section.settings.title,
+            highlight_type: section.settings.highlight_type,
+            color_heading_highlight_dark: section.settings.color_heading_highlight_dark,
+            color_heading_highlight_light: section.settings.color_heading_highlight_light,
+            class: 'leading-tight flex-auto p-break-words',
+            heading_tag: 'h2',
+            animation_heading: true
+          %}
+        </div>
+      {%- endif -%}
+      {%- if section.settings.view_all != blank and section.settings.link_view_all != blank -%}
+        <div class="pt-0.5 pb-0.5">
+          <a {%- if section.settings.link_view_all != blank %} href="{{ section.settings.link_view_all }}" {% else %} role="link" aria-disabled="true" {% endif %}
+            class="nav-link effect-inline relative inline-block hover-text-link empty:hidden cursor-pointer" 
+          >
+            {{ section.settings.view_all }}
+          </a>
+        </div>
+      {%- endif -%}
+      {%- if section.settings.text != blank -%}
+        <div class="pt-2 pb-2 rte">
+          {{ section.settings.text }}
+        </div>
+      {%- endif -%}
+    </div>
+    <div class="product-recommendations hidden lg:block" >  
+      <div id="product-comparison-table" class="product-comparison-table mt-5 overflow-auto scrollbar-horizontal block text-left" 
+        {% if section.settings.auto_product_recommendation %}
+          x-intersect.once.margin.200px='$store.xProductComparisonPopup.loadTablet($el,"{{ routes.product_recommendations_url }}?section_id={{ section.id }}&product_id={{ product.id }}&limit=5")'
+        {% else %}
+          x-intersect.once.margin.200px='$store.xProductComparisonPopup.loadTablet($el,null)'
+        {% endif %}
+      >
+        {%- liquid 
+          assign product_count = 0
+          assign product_ids = ''
+          if section.settings.auto_product_recommendation and recommendations.performed and recommendations.products_count > 0
+            for prod in recommendations.products
+              assign product_count = product_count | plus: 1
+              assign product_id = prod.id | append: ","
+              assign product_ids = product_ids | append: product_id
+              render 'card-product-compare', product: prod, class_js: 'content-tablet', product_count: recommendations.products_count
+              if product_count >= 5
+                break
+              endif
+            endfor
+          endif
+          unless section.settings.auto_product_recommendation
+            for prod in section.settings.compare_products
+              assign product_id = prod.id | append: ","
+              unless product_ids contains product_id
+                assign product_count = product_count | plus : 1
+                render 'card-product-compare', product: prod, class_js: 'content-tablet', product_count: section.settings.compare_products.count
+              endunless
+              if product_count >= 5
+                break
+              endif
+            endfor
+          endunless
+        -%}
+        {% liquid  
+          if product_count == 0 and request.visual_preview_mode
+            for i in (1..5)
+              render 'card-product-compare', product: blank, class_js: 'content-tablet', product_count: section.settings.compare_products.count
+            endfor
+          endif
+        %}
+        {%- if product_count > 0 or request.visual_preview_mode -%}
+          {%- for block in section.blocks -%}
+            {%- case block.type -%}
+              {%- when "product_summary" -%}
+                <div class="compare-block compare-summary-block text-center flex flex-row">
+                  <div class="border-b pb-3 pl-3 pr-3 flex-shrink-0 flex gap-2.5 md:block w-[192px] md:w-1/{{ product_count | plus: 1 }}"></div>
+                </div>
+              {%- when "vendor" -%}
+                <div class="compare-block compare-vendor-block text-center flex flex-row">
+                  <div class="border-b p-break-words text-[rgb(var(--colors-heading))] bg-col-{{ section.id }} py-3 px-3 flex-shrink-0 justify-center w-[192px] md:w-1/{{ product_count | plus: 1 }} flex items-center">{{ 'products.product.vendor' | t }}</div>
+                </div>
+              {%- when "description" -%}
+                <div class="compare-block compare-des-block text-center flex flex-row">
+                  <div class="border-b des-block rte text-[rgb(var(--colors-heading))] bg-col-{{ section.id }} py-3 px-3 flex-shrink-0 w-[192px] justify-center md:w-1/{{ product_count | plus: 1 }} flex items-center">{{ 'products.product.description' | t }}</div>
+                </div>
+              {%- when "variant_picker" -%}
+                {%- if block.settings.option_name != blank -%}
+                  <div class="compare-block text-center compare-variant-{{ block.settings.option_name | md5 }}-block flex flex-row">
+                    <div class="border-b py-3 px-3 bg-col-{{ section.id }} text-[rgb(var(--colors-heading))] flex-shrink-0 w-[192px] justify-center md:w-1/{{ product_count | plus: 1 }} flex items-center">{{ block.settings.option_name }}</div>
+                  </div>
+                {%- endif -%} 
+              {%- when "rating" -%}
+                <div class="compare-block compare-rating-block flex text-center flex-row">
+                  <div class="border-b py-3 px-3 bg-col-{{ section.id }} text-[rgb(var(--colors-heading))] flex-shrink-0 w-[192px] md:w-1/{{ product_count | plus: 1 }} justify-center flex items-center">{{ 'products.product.rating' | t }}</div>
+                </div>
+              {%- when "view_detail" -%}
+                <div class="compare-block compare-button-block flex text-center flex-row">
+                  <div class="border-b button-block pt-4 bg-col-{{ section.id }} text-[rgb(var(--colors-heading))] flex-shrink-0 w-[192px] pl-3 pr-3 justify-center md:w-1/{{ product_count | plus: 1 }}"></div>
+                </div>
+              {%- when "metafield" -%} 
+                {%- if block.settings.metafield_key != blank and block.settings.metafield_name != blank -%}
+                  <div class="compare-block text-center compare-metafield-{{ block.settings.metafield_name | md5 }}-block flex flex-row"> 
+                    <div class="border-b py-3 px-3 bg-col-{{ section.id }} text-[rgb(var(--colors-heading))] flex-shrink-0 w-[192px] justify-center md:w-1/{{ product_count | plus: 1 }} flex items-center">{{ block.settings.metafield_name }}</div>
+                  </div>
+                {%- endif -%} 
+            {%- endcase -%}
+          {%- endfor -%}
+        {%- endif -%}
+      </div>
+    </div>
+    <div 
+      {% if section.settings.auto_product_recommendation %}
+        x-intersect.once.margin.200px='$store.xProductComparisonPopup.loadMobile($el,"{{ routes.product_recommendations_url }}?section_id={{ section.id }}&product_id={{ product.id }}&limit=5")'
+      {% endif %} 
+      id="product-comparison-table-mobile" class="lg:hidden"
+    >
+      {% liquid 
+        assign compare_products = section.settings.compare_products
+        assign product_count = section.settings.compare_products.count
+        if section.settings.auto_product_recommendation and recommendations.performed and recommendations.products_count > 0
+          assign compare_products = recommendations.products
+          assign product_count = recommendations.products_count
+        endif
+      %}
+      <div class="image-product flex gap-3 overflow-auto max-w-full hide-scrollbar mb-4">
+        {% assign product_count = 0 %}
+        {% for product in compare_products %}
+          {% liquid
+            assign ratio = 100 
+            if section.settings.product_image_ratio != blank
+              assign media_aspect_ratio = section.settings.product_image_ratio
+              case media_aspect_ratio
+                when "portrait"
+                  assign ratio = 150
+                when "landscape"
+                  assign ratio = 75
+                when "wide"
+                  assign ratio = 56.25
+              endcase
+            endif 
+          %}
+          {% for block in section.blocks %}
+            {% if block.type == 'product_summary' %}
+              {% liquid
+                assign show_image = block.settings.product_image
+                assign show_product_name = block.settings.product_name
+                assign show_price = block.settings.price
+              %}
+            {% endif %}
+          {% endfor %}
+          <div @click="show = {{ forloop.index }}" :class="show != {{ forloop.index }} && 'opacity-50'" class="relative pb-6 min-w-[150px] w-[150px] md:min-w-[300px] md:w-1/{{ product_count }} text-center">
+            {% if product.featured_media != blank and show_image %}
+              {% unless section.settings.product_image_ratio == "natural" %}
+                <div class="relative{% if section.settings.product_image_ratio == "portrait" %} w-auto{% endif %} before:h-0 w-full before:block before:pb-[{{ ratio }}%]" >
+              {% endunless %}
+                {% # theme-check-disable ImgLazyLoading %}
+                <picture class="block md:pt-0 animate-Xpulse skeleton-image{% if section.settings.product_image_ratio == "natural" %} md:pb-2 w-20 md:w-auto{% else %} absolute top-0 left-0 w-full h-full{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                  <img
+                    srcset="{{ product.featured_media | image_url: width: 250 }} 250w,
+                      {{ product.featured_media | image_url: width: 300 }} 300w,
+                      {{ product.featured_media | image_url: width: 375 }} 375w,
+                      {{ product.featured_media | image_url: width: 450 }} 450w,
+                      {{ product.featured_media | image_url: width: 750 }} 750w,
+                      {{ product.featured_media | image_url: width: 900 }} 900w,
+                      {{ product.featured_media | image_url: width: 1100 }} 1100w,
+                      {{ product.featured_media | image_url: width: 1500 }} 1500w
+                      {% if product.featured_media.width %},{{ product.featured_media | image_url }} {{ product.featured_media.width }}w{% endif %}" 
+                    sizes="(min-width: 768px) 300px, 150px"
+                    src="{{ product.featured_media | image_url: width: 1500 }}"
+                    alt="{{ product.featured_media.alt | split: "#" | first | escape }}"
+                    class="preview-img motion-reduce relative min-w-full h-full object-cover{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %} animate_transition_slide__image"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image'); this.closest('.animate_transition_slide__image')?.classList.add('active');"
+                    width="{{ product.featured_media.width }}"
+                    height="{{ product.featured_media.height }}"
+                  />
+                </picture>
+                {% # theme-check-enable ImgLazyLoading %}
+              {% unless section.settings.product_image_ratio == "natural" %}
+                </div>
+              {% endunless %}
+            {% endif %}
+            {% if show_product_name %}
+              <div class="product-title text-center text-[rgb(var(--colors-heading))] font-semibold pt-4">
+                <span class="break-words">{{ product.title | escape }}</span>
+              </div>
+            {% endif %}
+            {%- if show_price -%}
+              <div class="show-block price font-semibold pt-4 flex-shrink-0">{% render 'price', product: product %}</div>
+            {%- endif -%}
+            <div x-show="show == {{ forloop.index }}" class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-[rgb(var(--colors-text))]"></div>
+          </div>
+          {% liquid
+            if product_count >= 5
+              break
+            endif
+          %}
+        {% endfor %}
+      </div>
+      {% liquid
+        assign empty_fields = '-'
+        if section.settings.text_to_use_for_empty_fields != blank
+          assign empty_fields = section.settings.text_to_use_for_empty_fields
+        endif
+      %}  
+      {% assign product_count = 0 %}
+      {% for product in compare_products %}
+        <div x-show="show=={{ forloop.index }}" class="text-center">
+        {% for block in section.blocks %}
+          {%- case block.type -%}
+            {%- when "view_detail" -%}
+              <div class="x-block-view-detail-mobile x-block-view-detail-{{ product.id }} button-block pb-3 pt-3 md:pt-3 md:pb-3 tr">
+                <a class="w-full text-center inline-block button button-solid leading-normal pl-5 pr-5 pt-2.5 pb-2.5 lg:pt-3 lg:pb-3 cursor-pointer empty:hidden pointer-events-auto" href="{{ product.url | within: collection }}">
+                  <span class="flex items-center justify-center">
+                    {% assign label = 'product_comparison.view_detail' | t %}
+                    {% render 'button-label', button_label: label , show_button_style: 'primary' %}
+                  </span>
+                </a>
+              </div>
+            {%- when "metafield" -%}
+              {% if block.settings.metafield_name != blank %}
+                <div class="x-block-metafield-mobile border-b border-solid">
+                  <div @click="setOpenTab('metafield_{{ forloop.index }}')" class="flex items-center font-semibold justify-between cursor-pointer pt-3 pb-3">
+                    <p>{{ block.settings.metafield_name }}</p>
+                    <span class="w-3 duration-300 inline-block" :class="checkOpenTab('metafield_{{ forloop.index }}') && 'rotate-180'">
+                      {% render 'icon-alls', icon: 'icon-caret' %}
+                    </span>
+                  </div>
+                  <div x-show="checkOpenTab('metafield_{{ forloop.index }}')" x-collapse x-cloak class="x-block-metafield-block-{{ product.id }} p-break-words">
+                    {% assign key = block.settings.metafield_key | split: "." %}
+                      <p class="metafield-content mb-3">
+                        {% if product.metafields[key.first][key.last] != blank %}
+                          {{ product.metafields[key.first][key.last] }}
+                        {% else %}
+                          {{ empty_fields }}
+                        {% endif %}
+                      </p>
+                  </div>
+                </div>
+              {% endif %}
+            {%- when "vendor" -%}
+              <div class="x-block-vendor-mobile border-b border-solid">
+                <div @click="setOpenTab('vendor')" class="flex items-center font-semibold justify-between cursor-pointer pt-3 pb-3">
+                  <p>{{ 'products.product.vendor' | t }}</p>
+                  <span class="w-3 duration-300 inline-block" :class="checkOpenTab('vendor') && 'rotate-180'">
+                    {% render 'icon-alls', icon: 'icon-caret' %}
+                  </span>
+                </div>
+                <div x-show="checkOpenTab('vendor')" x-collapse x-cloak class="x-block-vendor-block-{{ product.id }} vendor-block p-break-words">
+                  {% if product.vendor %}
+                    <div class="vendor-content mb-3">
+                      <span class="break-words">{{ product.vendor }}</span>
+                    </div>
+                  {% else %}
+                    {{ empty_fields }}
+                  {% endif %}
+                </div>
+              </div>
+            {%- when "description" -%}
+              <div class="x-block-description-mobile border-b border-solid">
+                <div @click="setOpenTab('description')" class="flex items-center font-semibold justify-between cursor-pointer pt-3 pb-3">
+                  <p>{{ 'products.product.description' | t }}</p>
+                  <span class="w-3 duration-300 inline-block" :class="checkOpenTab('description') && 'rotate-180'">
+                    {% render 'icon-alls', icon: 'icon-caret' %}
+                  </span>
+                </div>
+                <div x-show="checkOpenTab('description')" x-collapse x-cloak class="x-block-des-block-{{ product.id }} description-block p-break-words">
+                  {%- if product.description != "" -%}
+                    <div class="description-content mb-3 overflow-auto rte">
+                      {{ product.description }}
+                    </div>
+                  {%- else -%}
+                    {{ empty_fields }}
+                  {%- endif -%}
+                </div>
+              </div>
+            {%- when "variant_picker" -%}
+              <div class="x-block-variants-mobile border-b border-solid">
+                <div @click="setOpenTab('variant_picker_{{ forloop.index }}')" class="flex items-center font-semibold justify-between cursor-pointer pt-3 pb-3">
+                  <p>{{ block.settings.option_name }}</p>
+                  <span class="w-3 duration-300 inline-block" :class="checkOpenTab('variant_picker_{{ forloop.index }}') && 'rotate-180'">
+                    {% render 'icon-alls', icon: 'icon-caret' %}
+                  </span>
+                </div>
+                <div x-show="checkOpenTab('variant_picker_{{ forloop.index }}')" x-collapse x-cloak class="x-block-variant-block-{{ product.id }} variant-block p-break-words">
+                  <div class="variant-content mb-3">
+                    {% liquid
+                      assign rounded_corner_image = false
+                      if settings.edges_type == 'rounded_corners'
+                        assign rounded_corner_image = true
+                      endif
+                      assign section_id = section.id | append: "-" | append: product.id
+                      assign show = false
+                    %}
+                    {% for option in product.options_with_values %}
+                      {% if option.name == block.settings.option_name %}
+                        {% assign show = true %}
+                        {% assign option_index = forloop.index | minus: 1 %}
+                        <fieldset class="show-block options-product-compare-popup pl-0 flex flex-wrap justify-center gap-2 h-max">
+                          {% render 'product-variant-options',
+                            product: product,
+                            option: option,
+                            option_index: option_index,
+                            product_form_id: product.id,
+                            input_type: 'radio',
+                            enable_color_swatches: block.settings.enable_color_swatches,
+                            rounded_corner_option: rounded_corner_image,
+                            disable_option_disabled: true,
+                            section_compare: true,
+                            swatch_size: settings.swatch_size,
+                            section_id: section_id
+                          %}
+                        </fieldset>
+                      {% endif %}
+                    {% endfor %}
+                    {% if show == false %}
+                      {{ empty_fields }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {%- when "rating" -%}
+              <div class="x-block-rating-mobile border-b border-solid">
+                <div @click="setOpenTab('rating')" class="flex items-center font-semibold justify-between cursor-pointer pt-3 pb-3">
+                  <p>{{ 'products.product.rating' | t }}</p>
+                  <span class="w-3 duration-300 inline-block" :class="checkOpenTab('rating') && 'rotate-180'">
+                    {% render 'icon-alls', icon: 'icon-caret' %}
+                  </span>
+                </div>
+                <div x-show="checkOpenTab('rating')" x-collapse x-cloak class="x-block-rating-block-{{ product.id }} rating-block p-break-words">
+                  <div class="rating-content mb-3">
+                    {% render 'review-product', product: product, is_comparison: true %}
+                  </div>
+                </div>
+              </div>
+          {%- endcase -%}
+        {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<script src="{{ 'product-comparison.js' | asset_url }}" defer></script>
+{% schema %}
+{
+  "name": "t:sections.product-comparison-table.name",
+  "tag": "section",
+  "class": "section section-product-comparison-table x-section",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer",
+      "aside"
+    ]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.section_and_blocks.product_comparison_table"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "default": "Product comparison",
+      "label": "t:sections.all.text.heading",
+      "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+    },
+    {
+      "type": "select",
+      "id": "highlight_type",
+      "default": "underline",
+      "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+      "options": [
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        },
+        {
+          "value": "font_highlight",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 50,
+      "max": 200,
+      "step": 10,
+      "unit": "%",
+      "default": 100,
+      "label": "t:sections.all.text.heading_size"
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "default": "center",
+      "label": "t:sections.all.text.heading_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ]
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "default": "<p>Facilitates decision making by helping your consumers focus on the similarities and differences between the items.</p>",
+      "label": "t:sections.all.text.text"
+    },
+    {
+      "type": "text",
+      "id": "view_all",
+      "label": "t:sections.product-comparison-table.settings.view_all.label"
+    },
+    {
+      "type": "url",
+      "id": "link_view_all",
+      "label": "t:sections.product-comparison-table.settings.link_view_all.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.product-comparison-table.settings.table.content"
+    },
+    {
+      "type": "product_list",
+      "id": "compare_products",
+      "label": "t:sections.main-product.blocks.frequently_bought_together.settings.list_products",
+      "limit": 5
+    },
+    {
+      "type": "checkbox",
+      "id": "auto_product_recommendation",
+      "default": false,
+      "label": "t:sections.product-comparison-table.settings.auto_product_recommendation.label",
+      "info": "t:sections.product-comparison-table.settings.auto_product_recommendation.info"
+    },
+    {
+      "type": "text",
+      "id": "text_to_use_for_empty_fields",
+      "default": "-",
+      "label": "t:settings_schema.product-compare.text_to_use_for_empty_fields.label"
+    },
+    {
+      "type": "select",
+      "id": "product_image_ratio",
+      "options": [
+        {
+          "value": "natural",
+          "label": "t:sections.all.image_ratio.options__1.label"
+        },
+        {
+          "value": "square",
+          "label": "t:sections.all.image_ratio.options__2.label"
+        },
+        {
+          "value": "landscape",
+          "label": "t:sections.all.image_ratio.options__3.label"
+        },
+        {
+          "value": "portrait",
+          "label": "t:sections.all.image_ratio.options__4.label"
+        },
+        {
+          "value": "wide",
+          "label": "t:sections.all.image_ratio.options__5.label"
+        }
+      ],
+      "default": "square",
+      "label": "t:sections.all.image_ratio.label"
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.colors.name"
+    },
+    {
+      "type": "color",
+      "id": "background_color_light",
+      "label": "t:sections.all.background.background_color_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "criteria_light",
+      "label": "Criteria (light)",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "heading_light",
+      "label": "t:sections.all.text.color_heading_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_heading_highlight_light",
+      "label": "t:sections.all.text.color_heading_highlight_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "text_light",
+      "label": "t:sections.all.text.color",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "line_border_light",
+      "label": "t:sections.all.text.line_border",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "label": "t:sections.all.background.background_color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "criteria_dark",
+      "label": "Criteria (dark)",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "heading_dark",
+      "label": "t:sections.all.text.color_heading_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_heading_highlight_dark",
+      "label": "t:sections.all.text.color_heading_highlight_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "text_dark",
+      "label": "t:sections.all.text.color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "line_border_dark",
+      "label": "t:sections.all.text.line_border_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "default": false,
+      "label": "t:sections.all.full_width.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_bottom"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider_mobile",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_bottom"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "product_summary",
+      "name": "t:sections.product-comparison-popup.blocks.product_summary.name",
+       "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "product_image",
+          "default": true,
+          "label": "t:sections.product-comparison-popup.blocks.product_image.name"
+        },
+        {
+          "type": "checkbox",
+          "id": "product_name",
+          "default": true,
+          "label": "t:sections.product-comparison-popup.blocks.product_name.name"
+        },
+        {
+          "type": "checkbox",
+          "id": "price",
+          "default": true,
+          "label": "t:settings_schema.search_navigation.settings.predictive_search_show_price.label"
+        }
+      ]
+    },
+    {
+      "type": "vendor",
+      "name": "t:sections.featured-product.blocks.vendor_name.name",
+      "limit": 1
+    },
+    {
+      "type": "description",
+      "name": "t:settings_schema.seo.business_description.label",
+      "limit": 1
+    },
+    {
+      "type": "view_detail",
+      "name": "t:settings_schema.colors.settings.header__2.content",
+      "limit": 1
+    },
+    {
+      "type": "variant_picker",
+      "name": "t:sections.product-comparison-popup.blocks.variant_picker.name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "option_name",
+          "label": "t:sections.featured-product.blocks.customize_picker.settings.option_name.label",
+          "info": "t:sections.product-comparison-popup.blocks.variant_picker.option_name.infor"
+        },          
+        {
+          "type": "checkbox",
+          "id": "enable_color_swatches",
+          "label": "t:sections.featured-product.settings.enable_color_swatches.label",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "rating",
+      "name": "t:sections.product-comparison-popup.blocks.rating.name",
+      "limit": 1
+    },
+    {
+      "type": "metafield",
+      "name": "t:sections.product-comparison-table.settings.metafield.name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "metafield_key",
+          "label": "t:sections.product-comparison-table.settings.metafield.settings.metafield_key.label"
+        },    
+        {
+          "type": "text",
+          "id": "metafield_name",
+          "label": "t:sections.product-comparison-table.settings.metafield.settings.metafield_name.label"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.product-comparison-table.name",
+      "category": "t:categories.products",
+      "blocks": [
+        {
+          "type": "product_summary"
+        },
+        {
+          "type": "description"
+        },
+        {
+          "type": "view_detail"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,450 @@
+{% if section.blocks != blank %}
+  {%- capture store_list -%}
+    [
+    {%- for block in section.blocks -%}
+      {{ block.settings.store_name | escape | append: '-' | append: forloop.index | json }}{%- unless forloop.last -%},{%- endunless -%}
+    {%- endfor -%}
+    ]
+  {%- endcapture -%}
+  {% style %}
+    .bg-store-selector {
+      {% unless section.settings.colors_background.alpha == 0.0 %}
+        background-color: rgba({{ section.settings.colors_background.red }}, {{ section.settings.colors_background.green }}, {{ section.settings.colors_background.blue }});
+      {% else %}
+        background-color: rgba(var(--background-color-header));
+      {% endunless %}
+    }
+    .dark .bg-store-selector {
+      {% unless section.settings.colors_background_dark.alpha == 0.0 %}
+        background-color: rgba({{ section.settings.colors_background_dark.red }}, {{ section.settings.colors_background_dark.green }}, {{ section.settings.colors_background_dark.blue }});
+      {% else %}
+        background-color: rgba(var(--background-color-header));
+      {% endunless %}
+    }
+  {% endstyle %}
+  <div id="StoreSelector" x-show="$store.xStoreSelector?.show" x-cloak class="flex items-end md:items-center fixed top-0 left-0 right-0 bottom-0 z-[60]">
+    <div class="x-overlay absolute top-0 left-0 right-0 bottom-0 bg-[#acacac] bg-opacity-30" ></div>
+    <div 
+      role="dialog"
+      aria-label="Store selector"
+      aria-modal="true"
+      id="StoreSelector-{{ section.id }}"
+      x-init="
+        $store.xStoreSelector?.initStoreSelector({{ section.settings.enable_store_selector }}, {{ section.settings.enable_on_product_card }}, [{{ section.settings.store_selector_products | map: 'id' | join: ', ' }}], [{{ section.settings.store_selector_collections | map: 'id' | join: ', ' }}]);
+        $store.xStoreSelector?.checkSelection({{ store_list | escape }});
+      "
+      x-show="$store.xStoreSelector?.show"
+      x-transition:enter="transition-all ease-in-out duration-500"
+      x-transition:enter-start="opacity-0 transform translate-y-1/3"
+      x-transition:enter-end="opacity-100 transform translate-y-0"
+      x-transition:leave="transition-all ease-in-out duration-500"
+      x-transition:leave-end="opacity-0 transform translate-y-1/3"
+      x-cloak
+      class="quick_view flex items-end md:items-center fixed top-0 left-0 right-0 bottom-0 z-[60]"
+    >
+      <div 
+        role="dialog"
+        class="duration-400 x-pgw md:page-width w-full"
+        @click.away="$store.xStoreSelector?.close()"
+      >
+        <div class="flex flex-col relative bg-store-selector max-h-[90vh] h-[90vh] md:max-h-[80vh] md:h-[80vh]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}" >
+          {% style %}
+            .text-pickup-location {
+              font-size: {{ settings.heading_base_size | times: 0.01 }}rem;
+            }
+            .store-selector-item__title {
+              font-size: {{ settings.heading_base_size | times: 0.00875 }}rem;
+            }
+            .store-selector-item__text {
+              font-size: {{ settings.text_base_size | times: 0.00875 }}rem;
+            }
+            @media (min-width: 768px) {
+              .text-pickup-location {
+                font-size: {{ settings.heading_base_size | times: 0.0125 }}rem;
+              }
+              .store-selector-item__title {
+                font-size: {{ settings.heading_base_size | times: 0.01 }}rem;
+              }
+            }
+          {% endstyle %}
+          {% capture store_selector_header %}
+            <div class="text-pickup-location font-medium h2 z-10 grow">{{ 'store_selector.select_pickup_location' | t }}</div>
+            <div @click="$store.xStoreSelector?.close()" class="z-20 w-fit icon-close-container top-4 md:top-3 right-4 md:right-9 rtl:right-auto rtl:left-4 rtl:md:right-auto rtl:md:left-9 absolute cursor-pointer rounded-full group-close-btn flex items-center justify-center">
+              {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+            </div>
+          {% endcapture %}
+          <div class="md:flex md:flex-row flex flex-col grow">
+            <div class="md:hidden flex border-b md:border-b-0 flex-row items-center w-full bg-store-selector sticky top-0 pt-4 pb-4 pr-4 pl-4 md:pt-5 md:pb-5 md:pl-9 md:pr-9 gap-4 h-[72px]">
+              {{ store_selector_header }}
+            </div>
+            <div class="background--{{ section.id }} grow w-full md:max-w-[50%] relative flex flex-col justify-center order-last">
+              <div class="hidden md:flex flex-row items-center w-full bg-store-selector sticky top-0 pt-4 pb-4 pr-4 pl-4 md:pt-5 md:pb-5 md:pl-9 md:pr-9 gap-4{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                {{ store_selector_header }}
+              </div>
+              <div class="col-location-text relative pt-1 pb-4 pl-4 pr-4 md:pt-2 md:pb-2 md:pl-9 md:pr-9 w-full flex flex-col grow h-full">
+                <ul class="h-0 grow overflow-y-auto scrollbar-body flex flex-col gap-2">
+                  {% for block in section.blocks %}
+                    <li {% if forloop.first %}x-init='$store.xStoreSelector?.setStoreFirst({{ block.settings.store_name | escape | append: '-' | append: forloop.index | json }}, "{{ section.id }}")'{% endif %}>
+                      <div id="{{ block.id }}" class="duration-200 p-break-words items-center pt-4 pb-4 pl-4 pr-4 border border-[rgba(var(--colors-line-and-border))]{% if settings.edges_type == "rounded_corners" %} rounded-[10px]{% endif %}" tabindex="0">                        
+                        <div x-data="{ open: '{{ block.id }}-{{ forloop.index }}' }">
+                          <div class="rte address_location flex flex-row overflow-hidden">
+                            <div class="flex flex-row gap-4 w-full">
+                              <div class="flex flex-row gap-2.5 grow">
+                                <div x-data="{checked: false}" class="w-6 h-6 min-w-[24px] min-h-[24px]" @click='$store.xStoreSelector?.setStore({{ block.settings.store_name | escape | append: '-' | append: forloop.index | json }})'>
+                                  <input type="hidden" aria-hidden="true" name="store-select" value='{{ block.settings.store_name | escape | append: '-' | append: forloop.index | json }}'>
+                                  <div class="text-[rgba(var(--colors-button))]" x-show='{{ block.settings.store_name | escape | append: '-' | append: forloop.index | json }} === $store.xStoreSelector?.currentSelected'>{% render 'icon-alls', icon: 'icon-radio-checked' %}</div>
+                                  <div class="text-[rgba(var(--colors-line-and-border))] cursor-pointer" x-show='{{ block.settings.store_name | escape | append: '-' | append: forloop.index | json }} !== $store.xStoreSelector?.currentSelected'>{% render 'icon-alls', icon: 'icon-radio-unchecked' %}</div>
+                                </div>
+                                <div class="flex flex-col grow gap-4">
+                                  <div class="flex flex-col gap-2">
+                                    <div class="flex items-center w-full gap-4">
+                                      <h5 class="store-selector-item__title font-medium h5">{{ block.settings.store_name }}</h5>
+                                    </div>
+                                    <div class="store-selector-item__text flex flex-col justify-between flex-grow gap-1">
+                                      <span class="store-selector-item__subtitle text-[rgba(var(--colors-heading))]">
+                                        {{ block.settings.pickup_time }}
+                                      </span>
+                                      <span>{{ block.settings.pickup_price }}</span>
+                                    </div>
+                                  </div>
+                                  <div x-show="open === $store.xStoreSelector?.opened" x-collapse class="store-selector-item__text store-selector-item__body block box-border" role="tabpanel">
+                                    <div class="store-selector-item__address rte">
+                                      {{ block.settings.store_details }}
+                                    </div>
+                                    {%- if block.settings.store_detail_image != blank -%}
+                                      {%- capture sizes -%}
+                                        (min-width: {{ settings.page_width }}px) {% if section.settings.full_width %} calc(100vw - 460px) {% else -%} {{ settings.page_width | minus: 460 }}px{%- endif -%}, 
+                                        (min-width: 768px) 70vw, 
+                                        100vw
+                                      {%- endcapture -%}
+                                      {% # theme-check-disable ImgLazyLoading %}
+                                      <img 
+                                        srcset="{{ block.settings.store_detail_image | image_url: width: 225 }} 225w,
+                                          {{ block.settings.store_detail_image | image_url: width: 375 }} 375w,
+                                          {{ block.settings.store_detail_image | image_url: width: 450 }} 450w,
+                                          {{ block.settings.store_detail_image | image_url: width: 750 }} 750w,
+                                          {{ block.settings.store_detail_image | image_url: width: 900 }} 900w,
+                                          {{ block.settings.store_detail_image | image_url: width: 1100 }} 1100w,
+                                          {{ block.settings.store_detail_image | image_url: width: 1400 }} 1400w,
+                                          {{ block.settings.store_detail_image | image_url: width: 1500 }} 1500w,
+                                          {{ block.settings.store_detail_image | image_url: width: 1780 }} 1780w,
+                                          {{ block.settings.store_detail_image | image_url: width: 2000 }} 2000w,
+                                          {{ block.settings.store_detail_image | image_url: width: 3000 }} 3000w,
+                                          {{ block.settings.store_detail_image | image_url: width: 3840 }} 3840w"
+                                        src="{{ block.settings.store_detail_image | image_url: width: 1080 }}"
+                                        sizes="{{ sizes }}"
+                                        alt="{{ block.settings.store_detail_image.alt | escape }}"
+                                        class="w-full h-full mt-4 object-cover {% if settings.edges_type == "rounded_corners" %} rounded-[10px]{% endif %}"
+                                        {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                        height="{{ block.settings.store_detail_image.height }}"
+                                        width="{{ block.settings.store_detail_image.width }}"
+                                      >
+                                      {% # theme-check-enable ImgLazyLoading %}
+                                    {%- endif -%}
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="w-10 h-10 min-w-[40px] min-h-[40px] p-3 flex justify-center cursor-pointer" @click.stop="(open !== $store.xStoreSelector.opened) ? ($store.xStoreSelector.opened = open) : ($store.xStoreSelector.opened = '')">
+                                <div :class="open === $store.xStoreSelector?.opened && 'rotate-180'" class="self-center">{% render 'icon-alls', icon: 'icon-caret' %}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div class="store-selector-set bg-store-selector border-t sticky bottom-0 z-100 flex justify-center items-center w-full pt-4 pb-4 pl-4 pr-4 md:pl-9 md:pr-9{% if settings.edges_type == 'rounded_corners' %} md:rounded-b-[10px]{% endif %}">
+                <button :class="$store.xStoreSelector?.currentSelected === '' ? 'pointer-events-none cursor-auto' : 'pointer-events-auto'" class="flex justify-center items-center w-full button button-solid min-w-[90px] whitespace-nowrap p-break-words empty:hidden pl-9 pr-9 pt-3 pb-3 leading-normal cursor-pointer pointer-events-auto h-10" @click="$store.xStoreSelector?.setSelectedStore('{{ section.id }}');">
+                  <span class="button-text">{{ 'store_selector.select_pickup_store' | t }}</span>
+                  {% if settings.buttons_animation == 'sliced' %}
+                    <span class="button-icon opacity-0 w-5 -translate-x-[4px]">
+                      {% if settings.custom_icon_button != blank %}
+                      {{ settings.custom_icon_button }}
+                      {% else %}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewbox="0 0 19 19" fill="none" style="fill:none">
+                        <path d="M4.25 9.49927H14.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M9.5 4.24927L14.75 9.49927L9.5 14.7493" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                      </svg>
+                      {% endif %}
+                    </span>
+                  {% endif %}
+                </button>
+              </div>
+            </div>
+            <div class="grow max-h-[232px] md:max-h-full md:pt-0 md:pb-0 md:pl-0 md:pr-0 pt-4 pb-4 pl-4 pr-4 w-full md:max-w-[50%] flex items-start">
+              <div x-show="$store.xStoreSelector?.currentSelected === ''" class="bg-[#c9c9c9] w-full h-full object-cover{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %} flex items-center justify-center">
+                {% render 'icon-placeholder', icon: 'icon-location-map-full' %}
+              </div>
+              {% for block in section.blocks %}
+                {%- if block.settings.store_image != blank -%}
+                  {%- capture sizes -%}
+                    (min-width: {{ settings.page_width }}px) {% if section.settings.full_width %} calc(100vw - 460px) {% else -%} {{ settings.page_width | minus: 460 }}px{%- endif -%}, 
+                    (min-width: 768px) 70vw, 
+                    100vw
+                  {%- endcapture -%}
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <img
+                    x-show='{{ block.settings.store_name | escape | append: '-' | append: forloop.index | json }} === $store.xStoreSelector?.currentSelected'
+                    srcset="{{ block.settings.store_image | image_url: width: 225 }} 225w,
+                      {{ block.settings.store_image | image_url: width: 375 }} 375w,
+                      {{ block.settings.store_image | image_url: width: 450 }} 450w,
+                      {{ block.settings.store_image | image_url: width: 750 }} 750w,
+                      {{ block.settings.store_image | image_url: width: 900 }} 900w,
+                      {{ block.settings.store_image | image_url: width: 1100 }} 1100w,
+                      {{ block.settings.store_image | image_url: width: 1400 }} 1400w,
+                      {{ block.settings.store_image | image_url: width: 1500 }} 1500w,
+                      {{ block.settings.store_image | image_url: width: 1780 }} 1780w,
+                      {{ block.settings.store_image | image_url: width: 2000 }} 2000w,
+                      {{ block.settings.store_image | image_url: width: 3000 }} 3000w,
+                      {{ block.settings.store_image | image_url: width: 3840 }} 3840w"
+                    src="{{ block.settings.store_image | image_url: width: 1080 }}"
+                    sizes="{{ sizes }}"
+                    alt="{{ block.settings.store_image.alt | escape }}"
+                    class="w-full h-full max-h-[200px] md:max-h-full object-cover{% if settings.edges_type == "rounded_corners" %} rounded-[10px]{% endif %}"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    height="{{ block.settings.store_image.height }}"
+                    width="{{ block.settings.store_image.width }}"
+                  >
+                  {% # theme-check-enable ImgLazyLoading %}
+                {%- else -%}
+                  <div x-show='{{ block.settings.store_name | escape | append: '-' | append: forloop.index | json }} === $store.xStoreSelector?.currentSelected' class="bg-[#c9c9c9] w-full h-full max-h-[200px] md:max-h-full object-cover{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %} flex items-center justify-center">
+                    {% render 'icon-placeholder', icon: 'icon-location-map' %}
+                  </div>
+                {%- endif -%}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% style %}
+    .store-selector-icon {
+      height: {{ 0.16 | times: settings.text_base_size }}px;
+      min-height: {{ 0.16 | times: settings.text_base_size }}px;
+      width: {{ 0.16 | times: settings.text_base_size }}px;
+      min-width: {{ 0.16 | times: settings.text_base_size }}px;
+    }
+    .x-header-store-selector-container {
+      min-width: 110px;
+    }
+    {%- if request.design_mode -%}
+      .store-selector-item{
+        display: none
+      }
+      .x-header-store-selector-container .store-selector-item:nth-last-child(1){
+        display: flex
+      }
+    {%- endif -%}
+  {% endstyle %}
+  <div x-data="{ headerContainer: !!document.querySelector('#x-header-container .x-header-store-selector-container') }">
+    <template x-if="headerContainer">
+      <template x-teleport="#x-header-container .x-header-store-selector-container">
+        <div tabindex="0" class="store-selector-item {% unless section.settings.enable_store_selector %}hidden{% else %}text-[rgba(var(--colors-text-secondary))] bg-[rgba(var(--colors-background-secondary))] cursor-pointer rounded-full h-fit pt-2 pb-2 pl-2 pr-2 flex flex-row gap-2.5 w-max max-w-[200px]{% endunless %}" @click='$store.xStoreSelector?.open()'>
+          <div class="flex flex-row items-center gap-1">
+            <span class="block store-selector-icon">
+              {% if section.settings.custom_image != blank %}
+                {% # theme-check-disable ImgLazyLoading %}
+                <img 
+                  src="{{ section.settings.custom_image | image_url: width: 45 }}"
+                  alt="{{ section.settings.custom_image.alt | escape }}"
+                  {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                  onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                  width="{{ section.settings.custom_image.width }}"
+                  height="{{ section.settings.custom_image.height }}"
+                  style="object-position: {{ section.settings.custom_image.presentation.focal_point }}"
+                  class="object-cover w-full h-full animate-Xpulse skeleton-image"
+                >
+                {% # theme-check-enable ImgLazyLoading %}
+              {% else %}
+                {% if section.settings.custom_icon != blank %}
+                  {{ section.settings.custom_icon }}
+                {% else %}
+                  {% render 'icon-alls', icon: 'icon-store-selector', animation_class: 'icon-animation' %}
+                {% endif %}
+              {% endif %}
+            </span>
+            <span x-show="$store.xStoreSelector?.selectedStore === ''" id="store-selector-name-{{ section.id }}" class="font-medium">{{ 'store_selector.default_label' | t }}</span>
+            <span x-show="$store.xStoreSelector?.selectedStore !== ''" x-text="$store.xStoreSelector?.getStoreText()" class="line-clamp-2"></span>
+          </div>
+          <span class="block w-2 h-2 min-w-[8px] min-h-[8px] self-center">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+        </div>
+      </template>
+    </template>
+  </div>
+  <template x-if="!runDispatch">
+    <div x-data="{ mobileNav: !!document.querySelector('#mobile-navigation .x-header-store-selector-container') }">
+      <template x-if="mobileNav">
+        <template x-teleport="#mobile-navigation .x-header-store-selector-container">
+          <div tabindex="0" class="{% unless section.settings.enable_store_selector %}hidden{% else %}cursor-pointer rounded-full h-fit pt-3 pb-3 flex flex-row justify-end gap-2.5 w-full{% endunless %}" @click='$store.xStoreSelector?.open()'>
+            <div class="flex flex-row items-center gap-1">
+              <span class="block w-5 h-5 min-w-5 min-h-5">
+                {% if section.settings.custom_image != blank %}
+                  {% # theme-check-disable ImgLazyLoading %}
+                  <img 
+                    src="{{ section.settings.custom_image | image_url: width: 45 }}"
+                    alt="{{ section.settings.custom_image.alt | escape }}"
+                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                    onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+                    width="{{ section.settings.custom_image.width }}"
+                    height="{{ section.settings.custom_image.height }}"
+                    style="object-position: {{ section.settings.custom_image.presentation.focal_point }}"
+                    class="object-cover w-full h-full animate-Xpulse skeleton-image"
+                  >
+                  {% # theme-check-enable ImgLazyLoading %}
+                {% else %}
+                  {% if section.settings.custom_icon != blank %}
+                    {{ section.settings.custom_icon }}
+                  {% else %}
+                    {% render 'icon-alls', icon: 'icon-store-selector' %}
+                  {% endif %}
+                {% endif %}
+              </span>
+              <span x-show="$store.xStoreSelector?.selectedStore === ''" id="store-selector-name-{{ section.id }}" class="font-medium">{{ 'store_selector.default_label' | t }}</span>
+              <span x-show="$store.xStoreSelector?.selectedStore !== ''" x-text="$store.xStoreSelector?.getStoreText()" class="line-clamp-2"></span>
+            </div>
+          </div>
+        </template>
+      </template>
+    </div>
+  </template>
+{% else %}
+  <script>
+    localStorage.removeItem('selectedStore');
+  </script>
+{% endif %}
+
+{% schema %}
+  {
+    "name": "t:sections.store-selector.name",
+    "class": "section section-store-selector x-section",
+    "enabled_on": {
+      "groups": ["aside"]
+    },
+    "limit": 1,
+    "tag": "section",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "t:sections.user_guide_link.overlay_group.store_selector"
+      },
+      {
+        "type": "paragraph",
+        "content": "t:sections.store-selector.settings.paragraph"
+      },
+      {
+        "type": "header",
+        "content": "t:settings_schema.colors.settings.header__1.content"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_store_selector",
+        "label": "t:settings_schema.shipping_delivery.free_shipping.enable.label",
+        "default": true
+      },
+      {
+        "type": "image_picker",
+        "id": "custom_image",
+        "label": "t:sections.multicolumn.blocks.column.settings.custom_image",
+        "visible_if": "{{ section.settings.enable_store_selector }}"
+      },
+      {
+        "type": "html",
+        "id": "custom_icon",
+        "label": "t:sections.all.icon.custom_icon", 
+        "info": "t:sections.all.icon.custom_icon_info",
+        "visible_if": "{{ section.settings.enable_store_selector }}"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_on_product_card",
+        "label": "t:sections.product-labels-and-badges.blocks.show_on_product_card.label",
+        "default": false,
+        "visible_if": "{{ section.settings.enable_store_selector }}"
+      },
+      {
+        "type": "collection_list",
+        "id": "store_selector_collections",
+        "label": "t:sections.product-labels-and-badges.blocks.applied_collections.label"
+      },
+      {
+        "type": "product_list",
+        "id": "store_selector_products",
+        "label": "t:sections.product-labels-and-badges.blocks.applied_products.label"
+      },
+      {
+        "type": "header",
+        "content": "t:sections.all.header.style"
+      },
+      {
+        "type": "color",
+        "id": "colors_background",
+        "default": "rgba(0,0,0,0)",
+        "label": "t:sections.all.background.background_color_light"
+      },
+      {
+        "type": "color",
+        "id": "colors_background_dark",
+        "default": "rgba(0,0,0,0)",
+        "label": "t:sections.all.background.background_color_dark"
+      }
+    ],
+    "blocks": [
+      {
+        "type": "item",
+        "name": "t:sections.store-selector.blocks.name",
+        "settings": [
+          {
+            "type": "text",
+            "id": "store_name",
+            "label": "t:sections.contact-form.blocks.name.name",
+            "info": "t:sections.store-selector.blocks.settings.store_name.info",
+            "default": "t:sections.store-selector.blocks.settings.store_name.default"
+          },
+          {
+            "type": "text",
+            "id": "pickup_price",
+            "label": "t:sections.store-selector.blocks.settings.pickup_price.label",
+            "default": "t:sections.store-selector.blocks.settings.pickup_price.default"
+          },
+          {
+            "type": "text",
+            "id": "pickup_time",
+            "label": "t:sections.store-selector.blocks.settings.pickup_time.label",
+            "default": "t:sections.store-selector.blocks.settings.pickup_time.default"
+          },
+          {
+            "type": "richtext",
+            "id": "store_details",
+            "label": "t:sections.store-selector.blocks.settings.store_details.label",
+            "default": "t:sections.store-selector.blocks.settings.store_details.default"
+          },
+          {
+            "type": "image_picker",
+            "id": "store_image",
+            "label": "t:sections.store-selector.blocks.settings.store_image.label"
+          },
+          {
+            "type": "image_picker",
+            "id": "store_detail_image",
+            "label": "t:sections.store-selector.blocks.settings.store_detail_image.label"
+          }
+        ]
+      }
+    ],
+    "presets": [
+      {
+        "name": "t:sections.store-selector.name",
+        "category": "t:categories.utilities_and_layout",
+        "blocks": [
+          {
+            "type": "item"
+          }
+        ]
+      }
+    ]
+  }
+  {% endschema %}

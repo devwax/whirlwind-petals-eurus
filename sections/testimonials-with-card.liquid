@@ -1,0 +1,871 @@
+{% liquid
+  assign base_size_heading = settings.heading_base_size | times: 0.0225
+  assign size_heading = section.settings.heading_size | times: 0.01 | times: base_size_heading
+  assign size_heading_mobile = size_heading | times: 0.6
+  assign title_size_multiple = settings.text_base_size | times: 0.011375
+  assign title_size_multiple_mobile = title_size_multiple | times: 0.9
+  assign swiper_on_mobile = true
+  if section.blocks.size < 2 
+    assign swiper_on_mobile = false
+  endif
+  assign enable_desktop_slider = true
+  if section.blocks.size < 3
+    assign enable_desktop_slider = false
+  endif
+  assign heading_alignment = section.settings.heading_alignment
+  if settings.lang_direction contains request.locale.iso_code
+    if heading_alignment == 'left'
+      assign heading_alignment = 'right'
+    elsif heading_alignment == 'right'
+      assign heading_alignment = 'left'
+    endif
+  endif
+%}
+{% style %}
+  .size_icon_testimonial--{{ section.id }} {
+    width: {{ settings.text_base_size | times: 0.01125 | times: 0.9 }}rem;
+    height: {{ settings.text_base_size | times: 0.01125 | times: 0.9 }}rem;
+  }
+  .content-icon--{{ section.id }} {
+    height: {{ settings.text_base_size | times: 0.01125 | times: 0.9 }}rem;
+  }
+  .heading-{{ section.id }} {
+    font-size: {{ size_heading_mobile }}rem;
+  }
+  .title-size--{{ section.id }} {
+    font-size: {{ title_size_multiple_mobile }}rem;
+  }
+  .author-caption-text {
+    font-size: {{ settings.text_base_size | times: 0.01 | times: 0.9 }}rem;
+  }
+  .author-note-text {
+    font-size: {{ settings.text_base_size | times: 0.00938 | times: 0.9 }}rem;
+  }
+  @media (min-width: 768px) {
+    .size_icon_testimonial--{{ section.id }} {
+      width: {{ settings.text_base_size | times: 0.01125 }}rem;
+      height: {{ settings.text_base_size | times: 0.01125 }}rem;
+    }
+    .content-icon--{{ section.id }} {
+      height: {{ settings.text_base_size | times: 0.01125 }}rem;
+    }
+    .heading-{{ section.id }} {
+      font-size: {{ size_heading }}rem; 
+    }
+    .title-size--{{ section.id }} {
+      font-size: {{ title_size_multiple }}rem;
+    }
+    .author-caption-text {
+      font-size: {{ settings.text_base_size | times: 0.01 }}rem;
+    }
+    .author-note-text {
+      font-size: {{ settings.text_base_size | times: 0.00938 }}rem;
+    }
+  }
+  #shopify-section-{{ section.id }} {
+    background: {{ section.settings.background_color_light }}; 
+  }
+  .dark #shopify-section-{{ section.id }} {
+    {% if section.settings.background_color_dark.alpha == 0.0 -%}
+      background: transparent;
+    {%- else -%}
+      background: {{ section.settings.background_color_dark }}; 
+    {%- endif %}
+  }
+  .bg-item--{{ section.id }} {
+    {% if section.settings.item_background_color_light.alpha != 0.0 -%}
+      background: {{ section.settings.item_background_color_light }};
+    {%- else -%}
+      background: rgb(var(--colors-background));
+    {%- endif %}
+  }
+  .dark .bg-item--{{ section.id }} {
+    {% if section.settings.item_background_color_dark.alpha != 0.0 -%}
+      background: {{ section.settings.item_background_color_dark }}; 
+    {%- else -%}
+      background: rgb(var(--colors-background));
+    {%- endif %}
+  }
+  .border-item--{{ section.id }} {
+    {% if section.settings.item_border_color_light.alpha != 0.0 -%}
+      border-color: {{ section.settings.item_border_color_light }};
+    {%- else -%}
+      border-color: rgb(var(--colors-line-and-border));
+    {%- endif %}
+  }
+  .dark .border-item--{{ section.id }} {
+    {% if section.settings.item_border_color_dark.alpha != 0.0 -%}
+      border-color: {{ section.settings.item_border_color_dark }};
+    {%- else -%}
+      border-color: rgb(var(--colors-line-and-border));
+    {%- endif %}
+  }
+  {% unless section.settings.heading_and_title_light.alpha == 0.0 -%}
+    .color-heading--{{ section.id }} {
+      --colors-heading: {{ section.settings.heading_and_title_light.red }}, {{ section.settings.heading_and_title_light.green }}, {{ section.settings.heading_and_title_light.blue }};
+    }
+  {%- endunless %}
+  .dark .color-heading--{{ section.id }} {
+    {% if section.settings.heading_and_title_dark.alpha != 0.0 -%}
+      --colors-heading: {{ section.settings.heading_and_title_dark.red }}, {{ section.settings.heading_and_title_dark.green }}, {{ section.settings.heading_and_title_dark.blue }};
+    {%- else -%}
+      --colors-heading: var(--colors-heading-secondary);
+    {%- endif %}
+  }
+  {% unless section.settings.item_text_color_light.alpha == 0.0 -%}
+    .color-text-{{ section.id }} {
+      --colors-text: {{ section.settings.item_text_color_light.red }}, {{ section.settings.item_text_color_light.green }}, {{ section.settings.item_text_color_light.blue }};
+    }
+  {%- endunless %}
+  .dark .color-text-{{ section.id }} {
+    {% if section.settings.item_text_color_dark.alpha != 0.0 -%}
+      --colors-text: {{ section.settings.item_text_color_dark.red }}, {{ section.settings.item_text_color_dark.green }}, {{ section.settings.item_text_color_dark.blue }};
+    {%- else -%}
+      --colors-text: {{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }};
+    {%- endif %}
+  }
+  .pagination-color-{{ section.id }} {
+    {% if section.settings.item_text_color_light.alpha != 0.0 -%}
+      color: rgb({{ section.settings.item_text_color_light.red }}, {{ section.settings.item_text_color_light.green }}, {{ section.settings.item_text_color_light.blue }});
+      border-color: rgb({{ section.settings.item_text_color_light.red }}, {{ section.settings.item_text_color_light.green }}, {{ section.settings.item_text_color_light.blue }});
+    {%- else -%}
+      color: rgb({{ settings.colors_text.red }}, {{ settings.colors_text.green }}, {{ settings.colors_text.blue }});
+      border-color: rgb({{ settings.colors_text.red }}, {{ settings.colors_text.green }}, {{ settings.colors_text.blue }});
+    {%- endif %}
+  }
+  .dark .pagination-color-{{ section.id }} {
+    {% if section.settings.item_text_color_dark.alpha != 0.0 -%}
+      color: rgb({{ section.settings.item_text_color_dark.red }}, {{ section.settings.item_text_color_dark.green }}, {{ section.settings.item_text_color_dark.blue }});
+      border-color: rgb({{ section.settings.item_text_color_dark.red }}, {{ section.settings.item_text_color_dark.green }}, {{ section.settings.item_text_color_dark.blue }});
+    {%- else -%}
+      color: rgb({{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }});
+      border-color: rgb({{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }});
+    {%- endif %}
+  }
+  .button-pagination-color-{{ section.id }} {
+    {% if section.settings.item_text_color_light.alpha != 0.0 -%}
+      color: rgb({{ section.settings.item_text_color_light.red }}, {{ section.settings.item_text_color_light.green }}, {{ section.settings.item_text_color_light.blue }});
+    {%- else -%}
+      color: rgb({{ settings.colors_text.red }}, {{ settings.colors_text.green }}, {{ settings.colors_text.blue }});
+    {%- endif %}
+    {% if section.settings.item_border_color_light.alpha != 0.0 -%}
+      border-color: {{ section.settings.item_border_color_light }};
+    {%- else -%}
+      border-color: rgb(var(--colors-line-and-border));
+    {%- endif %}
+  }
+  .dark .button-pagination-color-{{ section.id }} {
+    {% if section.settings.item_text_color_dark.alpha != 0.0 -%}
+      color: rgb({{ section.settings.item_text_color_dark.red }}, {{ section.settings.item_text_color_dark.green }}, {{ section.settings.item_text_color_dark.blue }});
+    {%- else -%}
+      color: rgb({{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }});
+    {%- endif %}
+    {% if section.settings.item_border_color_dark.alpha != 0.0 -%}
+      border-color: {{ section.settings.item_border_color_dark }};
+    {%- else -%}
+      border-color: rgb(var(--colors-line-and-border));
+    {%- endif %}
+  }
+  {% if request.visual_preview_mode -%}
+    @media (min-width: 1024px){
+      .x-splide-slide {
+          width: calc(50% + 0px);
+      }
+    }
+    @media(min-width: 768px) {
+      .testimonial-with-card .testimonial_slide {
+        padding: 16px;
+      }
+    }
+    @media (max-width: 1023px) {
+      .x-splide-slide {
+        width: 100%
+      }
+    }
+  {%- endif %} 
+  {% if enable_desktop_slider -%}
+    @media (min-width: 1024px){
+      .preload-slide--{{ section.id }} .x-splide-slide {
+        width: calc(50% + 0px);
+      }
+    }
+  {%- endif %}
+  {% if swiper_on_mobile -%}
+    @media (max-width: 1023px) {
+      .preload-slide--{{ section.id }} .x-splide-slide {
+        width: 100%
+      }
+    }
+  {%- endif %}
+  .testimonial_slide .bg-item--{{ section.id }} {
+    flex-grow: 1;
+  }
+  @media (min-width: 1280px) {
+    .section--{{ section.id }} .testimonial-with-card {
+      max-width: min(calc(var(--page-width) + 40px), 100vw);
+    }
+  }
+  @media(min-width: 768px) {
+    .section--{{ section.id }} .testimonial_slide {% if request.visual_preview_mode %}, .testimonial-with-card .testimonial_slide{% endif %}{
+      padding: 16px;
+    }
+    .section--{{ section.id }} .testimonial_slide.is-active .x-testimonial-image, 
+    .section--{{ section.id }} .testimonial_slide.is-active .x-testimonial-content {
+      {% if settings.edges_type == 'rounded_corners' %} border-radius: 10px;{% endif %}
+      box-shadow: 0px 0px 24px 0px rgba(var(--colors-text), 0.16);
+    }
+  }
+{%- endstyle -%}
+
+{% render 'section-divider' %}
+
+<div class="section--{{ section.id }} x-container-testimonials-with-card flex flex-col color-item--{{ section.id }} pt-[{{ section.settings.top_padding_mobile }}px] md:pt-[{{ section.settings.top_padding }}px] pb-[{{ section.settings.bottom_padding_mobile }}px] md:pb-[{{ section.settings.bottom_padding }}px]">
+  <div class="testimonial-with-card carousel-mobile carousel-tablet x-pgw page-width max-w-full pl-5 pr-5 mx-auto">
+    <div
+      id="x-testimonial-{{ section.id }}"
+      class="duration-300 color-text-{{ section.id }}{% if enable_desktop_slider or swiper_on_mobile %} overflow-hidden x-splide splide visible preload-slide--{{ section.id }}{% endif %} mt-4 mb-4 relative splider-testimonial" 
+      {% if enable_desktop_slider or swiper_on_mobile -%}
+      x-intersect.once.margin.200px='$store.xSplide.load($el, {
+        "updateOnMove": "true",
+        "mediaQuery": "min",
+        "gap": 10,
+        "type": "loop",
+        {% if section.settings.auto_play -%}
+          "autoplay": true,
+          "interval": {{ section.settings.change_slides_speed | times: 1000 }},
+        {%- endif %}
+        {% if settings.lang_direction contains request.locale.iso_code -%} 
+          "direction": "rtl",
+        {%- endif %}
+        "pauseOnFocus": false,
+        "progressBar": {{ section.blocks.size }},
+        "breakpoints": {
+          768: {
+            {% if swiper_on_mobile == false -%} 
+              "destroy": true,
+            {%- endif %}
+            "gap": 0,
+            "perPage": 1,
+            "perMove": 1,
+          },
+          1024: {
+            {% if enable_desktop_slider -%} 
+              "destroy": false,
+            {%- else -%}
+              "destroy": true,
+            {%- endif %}
+            "perPage": 2,
+            "perMove": 1,
+            "speed": 800
+          }
+        },
+        "classes": {
+          "arrows": "splide__arrows block",
+          "pagination": "hidden"
+        },
+        "events": [
+          {
+            "event": "ready",
+            "callback": () => {
+              document.dispatchEvent(new CustomEvent("eurus:{{ section.id }}:splide-ready"));
+              let currentIndex = `1`;
+              document.querySelector(".pagination-current-{{ section.id }}").innerText = currentIndex;
+            }
+          },
+          {
+            "event": "move",
+            "callback": (index) => {
+              let currentIndex = `${index + 1}`;
+              document.querySelector(".pagination-current-{{ section.id }}").innerText = currentIndex;
+            }
+          }
+        ]
+      })'
+      {%- endif -%}
+      x-intersect.once='$el.classList.add("is-ready-to-animate")'
+    >
+      <div class="ltr testimonial-header-container flex {% if heading_alignment == 'right' %}flex-row-reverse{% else %}flex-row{% endif %} justify-between">
+        <div class="{% unless heading_alignment == 'center' %}justify-center md:justify-left{% else %}justify-left{% endunless %} flex {% if heading_alignment == 'right' %}flex-col md:flex-row-reverse{% else %}flex-col md:flex-row{% endif %} flex-grow gap-3 w-full {% if heading_alignment == 'right' %}pl-5{% elsif heading_alignment == 'left' %}pr-5{% endif %} empty:hidden">
+          {%- if section.settings.subheading != blank or section.settings.heading != blank -%}
+            <div class="text-{{ heading_alignment }}{% if heading_alignment == 'center' %} md:text-left{% endif %}">
+              {%- if section.settings.subheading != blank -%}
+                <div class="mb-1.5{% unless settings.disable_heading_animation %} overflow-hidden{% endunless %}"{% unless settings.disable_heading_animation %} x-intersect.once="$el.querySelector('.anm-move-up')?.classList.add('active-anm-heading')"{% endunless %}>
+                  <p class="subheading rte{% unless settings.disable_heading_animation %} anm-move-up{% endunless %}">{{ section.settings.subheading }}</p>
+                </div>
+              {% endif %}
+              {% if section.settings.heading != blank %}
+                {% render 'heading-highlight',
+                  headingId: section.id,
+                  heading: section.settings.heading,
+                  highlight_type: section.settings.highlight_type,
+                  class: 'h2 block empty:hidden',
+                  heading_tag: section.settings.heading_tag,
+                  animation_heading: true
+                %}
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+        {% if enable_desktop_slider %}
+          <div class="splide__arrows hidden w-fit z-10{% if section.blocks.size < 2 %} md:hidden{% else %} md:flex {% if heading_alignment == 'right' %}flex-row-reverse{% else %}flex-row{% endif %} items-center gap-7{% endif %}">
+            <div class="pagination-index-container w-fit h-12 min-w-12 min-h-12 flex justify-center items-center rtl:flex-row-reverse">
+              <span class="pagination-current-{{ section.id }} pagination-color-{{ section.id }} pr-3 rtl:pr-0 rtl:pl-3">1</span><div class="h-0 min-w-5 w-5 border-[1px] pagination-color-{{ section.id }} rounded-full"></div><span class="pagination-color-{{ section.id }} pl-3 rtl:pl-0 rtl:pr-3">{{ section.blocks.size }}</span>
+            </div>
+            <div class="pagination-arrow-container flex items-center gap-3 rtl:flex-row-reverse">
+              <button class="splide__arrow splide__arrow--prev bg-transparent border border-solid button-pagination-color-{{ section.id }} disable-effect-hover hidden md:block relative rounded-full w-11 h-11 border pr-3 pl-3 pt-3 pb-3 z-10 min-w-10 min-h-10 after:text-[20px] disabled:cursor-not-allowed disabled:opacity-30 duration-300" aria-label="previous slide">
+                <span class="hidden">previous slide</span>
+                {% render 'icon-labels-bags', icon: 'chevron-left' %}
+              </button>
+              <button class="splide__arrow splide__arrow--next bg-transparent border border-solid button-pagination-color-{{ section.id }} disable-effect-hover hidden md:block relative rounded-full w-11 h-11 border pr-3 pl-3 pt-3 pb-3 z-10 min-w-10 min-h-10 after:text-[20px] disabled:cursor-not-allowed disabled:opacity-30 duration-300" aria-label="next slide">
+                <span class="hidden">next slide</span>
+                {% render 'icon-labels-bags', icon: 'chevron-right' %}
+              </button>  
+            </div>
+          </div>
+        {% endif %}
+      </div>
+      <div class="splide__track pt-8{% if enable_desktop_slider %} md:cursor-grab{% endif %}">
+        <div class="splide__list {% if section.blocks.size == 1 %}justify-items-center{% endif %} flex w-full{% if enable_desktop_slider == false %} lg:grid lg:!translate-x-0{% if section.blocks.size > 3 %} lg:grid-cols-3{% else %} lg:grid-cols-{{ section.blocks.size }}{% endif %} lg:gap-7{% endif %}{% if swiper_on_mobile %} flex w-full{% else %} grid grid-cols-1{% endif %}">
+          {%- for block in section.blocks -%}
+            {% style %}
+              .x-slide-animation-duration-{{ forloop.index }} {
+                --delay-time: {{ forloop.index0 | times: 100 | append: 'ms' }}
+              }
+            {% endstyle %}
+            <div id="Slide-{{ section.id }}-{{ forloop.index }}" x-slide-index="{{ forloop.index | minus: 1 }}" class="{% if settings.lang_direction contains request.locale.iso_code %}ltr {% endif %}{% if section.blocks.size == 1 %}w-fit {% endif %}testimonial_slide{% if swiper_on_mobile or enable_desktop_slider %} splide__slide x-splide-slide{% if forloop.first %} is-active{% endif %}{% endif %} flex flex-col justify-center {% if section.blocks.size == 1 %} md:min-w-[350px]{% endif %} md:pl-12 md:pr-12 lg:pl-0 lg:pr-0" {{ block.shopify_attributes }}>
+              <div class="{% unless settings.disable_carousel_animation %}x-slide-animation x-slide-animation-duration-{{ forloop.index }}{% endunless %} scale-item{% if enable_desktop_slider %} opacity-100 scale-100 is-active:duration-300 ease-in-out duration-300{% endif %} origin-center h-full w-full flex md:flex-row flex-col gap-2 justify-center multiple md:ml-auto md:mr-auto {% if block.settings.show_author_image %} md:grid-cols-5{% else %} md:grid-cols-1{% endif %}">
+                {% if block.settings.cards_image != blank %}
+                  <div class="x-testimonial-image w-full md:w-1/2 flex-grow overflow-hidden {% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                    {%- capture sizes -%}
+                      (min-width: {{ settings.page_width }}px) {% if section.blocks.size > 1 %}{{ settings.page_width | divided_by: 4 }}px{% else %}{{ settings.page_width | divided_by: 2 }}px{% endif %}, 
+                      {% if settings.page_width > 1024 %} (min-width: 1024px) {% if section.blocks.size > 1 %}calc(100vw / 4){% else %}calc(100vw / 2){% endif %},{% endif %}
+                      (min-width: 768px) calc(100vw / 2),
+                      100vw
+                    {%- endcapture -%}
+                    {%- capture onload -%}
+                      this.closest('.animate_transition_card__image')?.classList.remove('animate-Xpulse', 'skeleton-image'); 
+                      setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);
+                    {%- endcapture -%}
+                    {% capture image_class %}
+                      h-full w-full object-cover image-hover{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}
+                    {% endcapture %}
+                    {% liquid
+                      if settings.enable_lazy_loading_image
+                        assign loading = 'lazy'
+                      else
+                        assign loading = 'eager'
+                      endif
+                    %}
+                    {{ block.settings.cards_image | image_url: width: 3840 | image_tag: 
+                      loading: loading, 
+                      sizes: sizes, 
+                      widths: '375, 450, 750, 900, 1100, 1500, 1780, 2000, 3000, 3840', 
+                      class: image_class, 
+                      onload: onload
+                    }}
+                  </div>
+                {% endif %}
+                <div class="x-testimonial-content flex flex-col flex-grow w-full {% if block.settings.cards_image != blank %}md:w-1/2{% else %}w-full{% endif %}">
+                  <div class="flex flex-col justify-between items-center border-solid border border-item--{{ section.id }} bg-item--{{ section.id }}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                    <div class="flex flex-col {% if block.settings.cards_image == blank %}w-full{% else %}w-full md:w-fit{% endif %}"> 
+                      <div class="x-testimonial-author-container flex flex-row rtl:flex-row-reverse rtl:text-right gap-4 justify-start pt-6 pb-4 mb-4 ml-6 mr-6 md:pt-7 md:mb-5 md:pb-5 md:ml-7 md:mr-7 border-b border-item--{{ section.id }}">
+                        {% if block.settings.show_author_image %}
+                          <div class="x-author-image relative inline-block aspect-square min-w-16 min-h-16 w-16 h-16 isolate overflow-hidden {% if block.settings.author_image != blank %} z-0 animate_transition_card__image animate-Xpulse skeleton-image{% endif %}{% if section.settings.image_ratio == 'round' %} rounded-full{% else %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}{% endif %} text-[#acacac]{% if block.settings.author_image == blank %} bg-[#c9c9c9]{% endif %}">
+                            {% if block.settings.author_image != blank %}
+                              {% # theme-check-disable ImgLazyLoading %}
+                              <img
+                                srcset="{{ block.settings.author_image | image_url: width: 150 }} 150w,
+                                {{ block.settings.author_image | image_url: width: 375 }} 375w"
+                                src="{{ block.settings.author_image | image_url: width: 375 }}"
+                                alt="{{ block.settings.author_image.alt | escape }}"
+                                {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                onload="this.closest('.animate_transition_card__image')?.classList.remove('animate-Xpulse', 'skeleton-image'); setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);"
+                                sizes="(min-width: 1024px) 150px, 150px"
+                                width="{{ block.settings.author_image.width }}"
+                                height="{{ block.settings.author_image.height }}"
+                                class="h-full w-full{% if section.settings.image_ratio == 'round' %} rounded-full{% endif %} object-cover absolute image-hover"
+                                style="object-position: {{ block.settings.author_image.presentation.focal_point }};"
+                              >
+                              {% # theme-check-enable ImgLazyLoading %}
+                            {% else %}
+                              {% render 'icon-placeholder', icon: 'icon-image', class: "w-full h-full absolute" %}
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                        <div class="flex flex-col justify-center empty:hidden" x-init="$el.innerHTML = $el.innerHTML.trim();">
+                          {% if block.settings.author != blank %}
+                            <p class="author-caption-text text-[rgb(var(--colors-text))] font-bold block">{{ block.settings.author | escape }}</p>
+                          {% endif %}
+                          {% if block.settings.author_note != blank %}
+                            <div class="author-note-text additional-note text-[rgb(var(--colors-text))] pt-1 block rte p-break-words">{{ block.settings.author_note }}</div>
+                          {% endif %}
+                        </div>
+                      </div>
+                      <div class="x-testimonial-main-content overflow-y-auto scrollbar-body mr-1 scrollbar-stable max-h-[240px] md:max-h-[315px] flex flex-col rtl:items-end rtl:text-right ml-7 pr-6 pt-0 pb-7">
+                        <div class="x-content-icon content-icon--{{ section.id }} w-fit md:max-w-fit mb-4 md:mb-5 flex">
+                          {% if block.settings.custom_icon == blank %}
+                            {% render 'icon-liststar', icon: block.settings.icon_star %}
+                          {% else %}
+                            {{ block.settings.custom_icon }}
+                          {% endif %}
+                        </div>
+                        {% if block.settings.title != blank %}
+                          <h3 class="x-content-title color-heading--{{ section.id }}  h2 title-size--{{ section.id }} mb-1 md:mb-2">{{ block.settings.title | escape }}</h3>
+                        {% endif %}
+                        <div class="x-content-text rte text-[rgb(var(--colors-text))]">
+                          {{ block.settings.text }}
+                        </div>
+                      </div>
+                    </div>
+                    {% if block.settings.product != blank %}
+                      {% liquid 
+                        assign product = block.settings.product
+                      %}
+                      <div class="x-testimonial-product-card w-full flex mb-7 pt-5 pl-7 pr-7 items-center">
+                          <a class="w-full flex justify-center" href="{{ product.url }}">
+                            <div class="flex rtl:flex-row-reverse p-5 gap-x-2.5 flex-grow xl:min-w-[unset] min-w-0 card-testimonial{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+                              {% if product.featured_image != blank %}
+                                {% # theme-check-disable ImgLazyLoading %}
+                                <img
+                                  srcset="{{ product.featured_media | image_url: width: 225 }} 225w,
+                                    {{ product.featured_media | image_url: width: 375 }} 375w,
+                                    {{ product.featured_media | image_url: width: 450 }} 450w,
+                                    {{ product.featured_media | image_url: width: 750 }} 750w,
+                                    {{ product.featured_media | image_url: width: 900 }} 900w,
+                                    {{ product.featured_media | image_url: width: 1100 }} 1100w,
+                                    {{ product.featured_media | image_url: width: 1500 }} 1500w
+                                    {% if product.featured_media.width %},{{ product.featured_media | image_url }} {{ product.featured_media.width }}w{% endif %}" 
+                                  src="{{ product.featured_media | image_url: width: 1080 }}"
+                                  alt="{{ product.featured_image.alt | escape }}"  
+                                  width="{{ product.featured_image.width }}"
+                                  height="{{ product.featured_image.height }}"
+                                  {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                  class="w-12 h-12 min-w-12 min-h-12 object-cover {% if settings.edges_type == 'rounded_corners' %}rounded-[10px]{% endif %}"
+                                >
+                                {% # theme-check-enable ImgLazyLoading %}
+                              {% else %}
+                                <div class="w-12 h-12 min-w-12 min-h-12">
+                                  <div class="h-0 w-full relative pb-[100%] overflow-hidden">
+                                    <div class="bg-[#c9c9c9] flex justify-center absolute top-0 left-0 w-full h-full items-center">
+                                      {% render 'icon-placeholder', icon: 'icon-product', class: "w-12 h-12" %}
+                                    </div>
+                                  </div>
+                                </div>
+                              {% endif %}
+                              <div class="flex flex-col gap-y-2.5 max-w-[168px] min-w-0 rtl:text-right">
+                                <p class="rte h3 text-[100%] p-break-words truncate rtl:text-right">{{ product.title }}</p>
+                                {% render 'price', product: product, align_left: true %}
+                              </div>
+                            </div>
+                          </a>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {%- endfor -%}
+        </div>
+        <div class="md:hidden items-center flex w-full gap-5 mt-2.5 md:mt-5 md:w-3/4 ml-auto mr-auto">
+          <div class="splide-progress inline-block grow rounded-md">
+            {% liquid
+              assign width_bar = 2 | times: 1.0 | divided_by: section.blocks.size                       
+              assign mobile_width_bar = 1 | times: 1.0 | divided_by: section.blocks.size 
+            %} 
+            {%- style -%}
+              .splide-progress-bar-{{ section.id }} {
+                width: {{ mobile_width_bar | times: 100 }}%;
+              }
+              @media (min-width: 768px) {
+                .splide-progress-bar-{{ section.id }} {
+                  width: {{ width_bar | times: 100 }}%;
+                }
+              }
+            {%- endstyle -%}
+            <div class="splide-progress-bar-{{ section.id }} splide-progress-bar rounded-md"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "t:sections.testimonials-with-card.name",
+  "tag": "section",
+  "class": "section section-testimonial x-section",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer",
+      "aside"
+    ]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.section_and_blocks.testimonial_with_cards"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "default": "Testimonials",
+      "label": "t:sections.all.text.heading",
+      "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+    },
+    {
+      "type": "select",
+      "id": "highlight_type",
+      "default": "underline",
+      "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+      "options": [
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        },
+        {
+          "value": "font_highlight",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "t:sections.all.text.subheading"
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "default": "left",
+      "label": "t:sections.all.text.heading_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ],
+      "info": "t:sections.testimonials-with-card.settings.heading_alignment.info"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 50,
+      "max": 200,
+      "step": 10,
+      "unit": "%",
+      "label": "t:sections.all.text.heading_size",
+      "default": 100
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "default": "h2",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "p",
+          "label": "p"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "auto_play",
+      "label": "t:sections.slideshow.settings.auto_play.label",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "change_slides_speed",
+      "min": 3,
+      "max": 10,
+      "step": 1,
+      "unit": "s",
+      "label": "t:sections.slideshow.settings.change_slides_speed.label",
+      "default": 5,
+      "visible_if": "{{ section.settings.auto_play }}"
+    },
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "options": [
+        {
+          "value": "100",
+          "label": "t:settings_schema.products.square"
+        },
+        {
+          "value": "round",
+          "label": "t:settings_schema.buttons.rounded"
+        }
+      ],
+      "default": "round",
+      "label": "t:sections.all.image_ratio.label_2"
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.colors.name"
+    },
+    {
+      "type": "color",
+      "id": "background_color_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_light"
+    },
+    {
+      "type": "color",
+      "id": "item_background_color_light",
+      "label": "t:sections.testimonials.item_background_color_light.label",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "item_border_color_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.testimonials-with-card.settings.item_border_color_light.label"
+    },
+    {
+      "type": "color",
+      "id": "heading_and_title_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.testimonials-with-card.settings.heading_and_title_light.label"
+    },
+    {
+      "type": "color",
+      "id": "item_text_color_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.testimonials.item_text_color_light.label"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_dark"
+    },
+    {
+      "type": "color",
+      "id": "item_border_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.testimonials-with-card.settings.item_border_color_dark.label"
+    },
+    {
+      "type": "color",
+      "id": "item_background_color_dark",
+      "label": "t:sections.testimonials.item_background_color_dark.label",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "heading_and_title_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.testimonials-with-card.settings.heading_and_title_dark.label"
+    },
+    {
+      "type": "color",
+      "id": "item_text_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.testimonials.item_text_color_dark.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "top_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 28
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider_mobile",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "top_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 20
+    }
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "t:sections.testimonials.block_testimonial.name",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "cards_image",
+          "label": "t:sections.featured-collection.blocks.collection.settings.image.label"
+        },
+        {
+          "type": "select",
+          "id": "icon_star",
+          "options": [
+            {
+              "value": "quote",
+              "label": "t:sections.testimonials.block_testimonial.options__6.label"
+            },
+            {
+              "value": "1_star",
+              "label": "t:sections.testimonials.block_testimonial.options__1.label"
+            },
+            {
+              "value": "2_star",
+              "label": "t:sections.testimonials.block_testimonial.options__2.label"
+            },
+            {
+              "value": "3_star",
+              "label": "t:sections.testimonials.block_testimonial.options__3.label"
+            },
+            {
+              "value": "4_star",
+              "label": "t:sections.testimonials.block_testimonial.options__4.label"
+            },
+            {
+              "value": "5_star",
+              "label": "t:sections.testimonials.block_testimonial.options__5.label"
+            }
+          ],
+          "default": "quote",
+          "label": "t:sections.all.icon.label"
+        },
+        {
+          "type": "html",
+          "id": "custom_icon",
+          "label": "t:sections.all.icon.custom_icon",
+          "info": "t:sections.all.icon.custom_icon_info"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Testimonials",
+          "label": "t:sections.all.text.title"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "default": "<p>Add customer reviews and testimonials to showcase your store's happy customers</p>",
+          "label": "t:sections.all.text.text"
+        },
+        {
+          "type": "image_picker",
+          "id": "author_image",
+          "label": "t:sections.all.image.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_author_image",
+          "label": "t:sections.testimonials.show_author_image.label",
+          "default": true
+        },    
+        {
+          "type": "text",
+          "id": "author",
+          "default": "Add a caption",
+          "label": "t:sections.testimonials.block_author.label"
+        },
+        {
+          "type": "richtext",
+          "id": "author_note",
+          "label": "t:sections.testimonials.block_author_note.label",
+          "info": "t:sections.testimonials.block_author_note.info"
+        },
+        {
+          "type": "product",
+          "id": "product",
+          "label": "t:settings_schema.cart.product"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.testimonials-with-card.name",
+      "category": "t:categories.brand_trust",
+      "blocks": [
+        {
+          "type": "testimonial"
+        },
+        {
+          "type": "testimonial"
+        },
+        {
+          "type": "testimonial"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

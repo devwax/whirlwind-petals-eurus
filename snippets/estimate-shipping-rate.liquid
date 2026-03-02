@@ -1,0 +1,86 @@
+{%- if cart.item_count > 0 -%}
+  {% liquid 
+    assign single_rate = 'shipping.singleRate' | t
+    assign multi_rate = 'shipping.multipleRates' | t
+    assign no_rate = 'shipping.noRates' | t
+    assign default_country = localization.country.name
+    if customer.default_address 
+     assign default_country = customer.default_address.country
+    endif 
+    if customer.default_address.province 
+     assign default_province = customer.default_address.province
+    endif 
+    if customer.default_address.zip 
+     assign default_zip = customer.default_address.zip
+    endif 
+
+    if settings.lang_direction contains request.locale.iso_code
+      assign is_rtl = true 
+    else 
+      assign is_rtl = false
+    endif
+  %}
+  <div x-data="xEstimateShipping($el,`{{ single_rate }}`,`{{ multi_rate }}`, `{{ no_rate }}`)">
+    <div class="w-full flex items-center justify-between mb-5">
+      {% unless main_cart_mobile %}
+        <p class="text-medium h6">{{ 'shipping.estimate' | t }}</p>
+      {% endunless %}
+      {% if popup %}
+        <span
+          class="cursor-pointer absolute top-2 {% if is_rtl %}left-2{% else %}right-2{% endif %} icon-close-container inline-block group-close-btn rounded-full"
+          @click="$store.xPopupShipping.open = false"
+        >
+          {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+        </span>
+      {% endif %}
+    </div>
+    {% if mini_cart %}
+      <div class="rates hidden w-full pt-4 pb-4 pl-4 pr-4 mb-5 text-[rgba(var(--color-success))] bg-[rgba(var(--color-success),0.2)] selection:bg-[rgba(var(--color-success),0.4)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">
+        <div x-text="rates_heading" class="rates-heading"></div>
+        <div x-html="rates_text" class="rates-text"></div>
+      </div>
+    {% endif %}
+    <div x-data="{ cart_shipping_zip: '' }" {% if cartPage %} class="flex flex-col lg:flex-row gap-3.5"{% endif %}>
+      <div class="w-full pb-4{% if cartPage %} md:pb-0{% endif %}" x-intersect.once="load()">
+        <label class="block mb-2 {% if mini_cart %}text-[12px] lg:text-[14px] font-medium{% endif %}" for="cart-shipping-country{% if main_cart_mobile %}-mobile{% endif %}">{{ 'shipping.country' | t }}</label>
+        <div class="relative">
+          <select id="cart-shipping-country{% if main_cart_mobile %}-mobile{% endif %}" data-default="{{ default_country }}" class="country-select shipping-rate w-full pl-5 pr-10 rtl:pr-5 rtl:pl-10 pt-3 pb-3 appearance-none border bg-transparent focus:border-current border-solid{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" name="country">
+            {{ country_option_tags }}
+          </select>
+          <span class="absolute top-1/2 -translate-y-1/2 w-2.5 right-5 rtl:right-auto rtl:left-5 cursor-pointer pointer-events-none">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+        </div>
+      </div>
+      <div class="w-full province-container pb-4{% if cartPage %} md:pb-0{% endif %}">
+        <label class="block mb-2 {% if mini_cart %}text-[12px] lg:text-[14px] font-medium{% endif %}" for="cart-shipping-province{% if main_cart_mobile %}-mobile{% endif %}">{{ 'shipping.province' | t }}</label>
+        <div class="relative">
+          <select id="cart-shipping-province{% if main_cart_mobile %}-mobile{% endif %}" {% if default_province %} data-default="{{ default_province }}"{% endif %} class="province-select shipping-rate w-full pl-5 pr-10 rtl:pr-5 rtl:pl-10 pt-3 pb-3 bg-transparent focus:border-current appearance-none border border-solid{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" name="province">
+          </select>
+          <span class="absolute top-1/2 -translate-y-1/2 w-2.5 right-5 rtl:right-auto rtl:left-5 cursor-pointer pointer-events-none">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+        </div>
+      </div>
+      <div class="w-full pb-4{% if cartPage %} md:pb-0{% endif %}">
+        <label class="block mb-2 {% if mini_cart %}text-[12px] lg:text-[14px] font-medium{% endif %}" for="cart-shipping-zip{% if main_cart_mobile %}-mobile{% endif %}">{{ 'shipping.zip' | t }}</label>
+        <input x-model="cart_shipping_zip" id="cart-shipping-zip{% if main_cart_mobile %}-mobile{% endif %}" class="zip-input w-full pl-5 pr-5 pt-3 pb-3 border bg-transparent focus:border-current border-solid{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" type="text"{% if default_zip %} value="{{ default_zip }}"{% endif %}>
+      </div>
+      <div class="w-full flex {% unless mini_cart %}flex-col{% endunless %} justify-end mb-4 lg:mb-0">
+        <button class="button button-solid {% if mini_cart %}w-full {% if is_rtl %} mr-1{% else %} ml-1{% endif %}{% else %}w-full{% endif %} pt-3 pb-3 pl-5 pr-5 relative leading-normal" @click="submit($event); localStorage.setItem('cart_shipping_zip', cart_shipping_zip)">
+          {% assign button_label = 'shipping.calculate' | t %}
+          <span :class="loadingShipping && 'opacity-0'" class="flex items-center justify-center">
+            {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+          </span>
+          <span class="inline-block w-5 h-5 animate-spin absolute top-[calc(50%-10px)] left-[calc(50%-10px)]" x-show="loadingShipping" x-cloak class="">{% render 'icon-alls', icon: 'icon-loading' %}</span>
+        </button>
+      </div>
+    </div>
+    {% unless mini_cart %}
+      <div class="rates hidden w-full mt-4 mb-4 pt-5 pb-5 pl-5 pr-5 text-[rgba(var(--color-success))] bg-[rgba(var(--color-success),0.2)] selection:bg-[rgba(var(--color-success),0.4)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">
+        <div x-text="rates_heading" class="rates-heading"></div>
+        <div x-html="rates_text" class="rates-text"></div>
+      </div>
+    {% endunless %}
+    <div class="errors hidden mt-4 w-full mb-4 pt-5 pb-5 pl-5 pr-5 text-[rgba(var(--color-error))] bg-[rgba(var(--color-error),0.2)] selection:bg-[rgba(var(--color-error),0.4)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}">
+      <div x-html="errors_message" class="errors-text"></div>
+    </div>
+  </div>
+  <script src="{{ 'estimate-shipping-rate.js' | asset_url }}" defer></script>
+{% endif %}

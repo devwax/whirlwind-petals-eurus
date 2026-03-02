@@ -1,0 +1,97 @@
+{% comment %}
+    Renders a product card
+
+    Accepts:
+    - product: {Object} Product Liquid object (optional)
+    - show_content_center: {Boolean} Show content center. Default: false
+    Usage:
+    {% render 'review-product', product: product %}
+{% endcomment %}
+{% liquid      
+  assign star_haft = 0 
+  assign star_fill = 0
+  assign star_empty = 0
+  assign rating_product = product.metafields.reviews.rating.value
+  if settings.product_reviews_app == 'loox' 
+    assign rating_product = product.metafields.loox.avg_rating
+  endif
+  if settings.product_reviews_app == 'okendo' 
+    assign rating_product = product.metafields.okendo.summaryData.reviewAverageValue
+  endif
+  if rating_product != blank
+    assign star_fill = rating_product.rating | floor 
+    assign decimal = rating_product.rating | modulo: 1
+    assign scale_max = product.metafields.reviews.rating.value.scale_max
+    assign rating_count = product.metafields.reviews.rating_count
+    if settings.product_reviews_app == 'loox'
+      assign star_fill = rating_product | floor 
+      assign decimal = rating_product | modulo: 1
+      assign rating_count = product.metafields.loox.num_reviews
+      assign scale_max = 5
+    endif
+    if settings.product_reviews_app == 'okendo'
+      assign star_fill = rating_product | floor 
+      assign decimal = rating_product | modulo: 1
+      assign rating_count = product.metafields.okendo.summaryData.reviewCount
+      assign scale_max = 5
+    endif
+  
+    if decimal >= 0.3 and decimal <= 0.7
+      assign star_haft = 1
+    elsif decimal > 0.7 
+      assign star_fill = star_fill | plus: 1
+    endif  
+    assign star_empty =  scale_max | minus: star_haft | minus: star_fill | floor  
+    if star_empty > 0
+      assign star_empty = 'icon_empty_' | append: star_empty
+    else
+      assign star_empty = blank
+    endif 
+    if star_fill > 0
+      assign star_fill = 'icon_fill_' | append: star_fill
+    else
+      assign star_fill = blank
+    endif 
+  else 
+    assign star_empty = 'icon_empty_' | append: 5
+  endif 
+  if content_alignment == 'right'
+    assign content_alignment = 'end'
+  elsif content_alignment == 'left'
+    assign content_alignment = 'start'
+  endif
+%}  
+<div 
+  class="x-review-product {{ settings.product_reviews_app }} flex w-full items-center
+    {%- if settings.product_reviews_app == 'yotpo' %} rating-review{% endif -%}
+    {%- if card_product %} justify-{{ content_alignment }}{% elsif show_content_center %} justify-center{% endif -%}
+    {%- if shop_the_look %} md:justify-{{ content_alignment }} rtl:md:flex-row-reverse{% else %} {%- unless video_with_text %}ltr{% endunless %}{% endif -%}
+    {%- if is_comparison %} justify-center{% endif -%}
+    {%- if is_product_page %} mb-4 md:mb-5{% else %}{% unless slideshow %} {% if product_complementary %}mb-2{% else %}mb-2.5{% endif %}{% endunless %}{% endif -%}
+    {%- if is_product_page and show_content_center == false %} rtl:justify-end{% elsif show_content_center %} justify-center{% endif -%}
+    {% if settings.lang_direction contains request.locale.iso_code %} md:list-layout:justify-end{% else %} md:list-layout:justify-start{% endif -%}
+  "
+>
+  {%- if settings.product_reviews_app == 'trustoo' -%}
+    <div class="custom-vstar-rating-widget" product-id="{{ product.id }}"></div>
+  {%- elsif settings.product_reviews_app == 'yotpo' -%}
+    <div class="yotpo bottomLine" data-product-id="{{ product.id }}"> </div>
+  {%- else -%}
+    <div class="rating gap-1 flex leading-tight" role="img" aria-label="{{ 'accessibility.star_reviews_info' | t: rating_value: rating_product, rating_max: scale_max }}">
+      {% liquid 
+        if star_fill != blank  
+          render 'icon-review', icon: star_fill, icon_star: " w-[var(--rating-star-size)] h-[var(--rating-star-size)]"
+        endif 
+        if star_haft > 0 
+          render 'icon-review', icon: 'icon_haft', icon_star: " text-[rgb(var(--colors-text),0.3)] w-[var(--rating-star-size)] h-[var(--rating-star-size)]" 
+        endif 
+        if star_empty != blank 
+          render 'icon-review', icon: star_empty, icon_star: " opacity-30 w-[var(--rating-star-size)] h-[var(--rating-star-size)]" 
+        endif 
+      %}
+    </div> 
+    <p class="rating-count leading-none caption ml-1 {%- if video_with_text %} rtl:mr-1 rtl:ml-0{% endif %} text-[{{ settings.text_base_size | times: 0.007 }}rem]">
+      {%- if rating_count -%}({{ rating_count }}){% else %} (0) {%- endif %}
+    </p>
+  {%- endif -%}
+</div>

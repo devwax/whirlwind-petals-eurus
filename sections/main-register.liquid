@@ -1,0 +1,196 @@
+{%  liquid 
+if settings.lang_direction contains request.locale.iso_code
+  assign is_rtl = true
+else
+  assign is_rtl = false
+endif
+%}
+<div class="px-5 pt-[{{ section.settings.top_padding_mobile }}px] md:pt-[{{ section.settings.top_padding }}px] pb-[{{ section.settings.bottom_padding_mobile }}px] md:pb-[{{ section.settings.bottom_padding }}px]">
+  <h1 class="h2 text-center mb-7 md:mb-9">{{ 'customer.register.title' | t }}</h1>
+  {%- form 'create_customer' -%}
+    {%- if form.errors -%}
+      {% capture check_notice %}
+        <h2 class="text-large w-full max-w-[570px] ml-auto mr-auto outline-none" tabindex="-1" autofocus>
+          <span>
+            {% render 'icon-alls', icon: 'icon-error', enable_customer_page: true %}
+          </span>
+          {{ 'templates.contact.form.error_heading' | t }}
+        </h2>
+        <ul class="w-full max-w-[570px] ml-auto mr-auto pl-12 rtl:pl-0 rtl:pr-12">
+          {%- for field in form.errors -%}
+            <li class="list-disc mt-3.5 mb-3.5">
+              {%- if field == 'form' -%}
+                {% if form.errors.messages[field] contains '&lt;a' %}
+                  {{ form.errors.messages[field] | replace: '&lt;', '<' | replace: '&gt;', '>' | replace: '<a', '<a class="nav-link relative effect-inline"' }}
+                {% else %}
+                  {{ form.errors.messages[field] }}
+                {% endif %}
+              {%- else -%}
+                <a href="#RegisterForm-{{ field }}" class="hidden_notice underline underline-offset-2 disable-effect hover:text-[rgb(var(--colors-text-link))] hover:opacity-100">
+                  {{ form.errors.translated_fields[field] | capitalize }}
+                  {{ form.errors.messages[field] }}
+                </a>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      {% endcapture %}
+      {{ check_notice }}
+    {%- endif -%}
+    <div class="relative mr-auto ml-auto mb-2.5 max-w-[570px]">
+      <input
+        id="RegisterForm-FirstName"
+        class="w-full input border px-5 lg:px-8 pt-5 pb-1 md:pt-5 md:pb-2 focus:outline-none focus:border-current bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} rounded-md{% else %} rounded-none{% endif %}{% if is_rtl %} text-right{% endif %}"
+        type="text"
+        name="customer[first_name]"
+        {% if form.first_name %}value="{{ form.first_name }}"{% endif %}
+        autocomplete="given-name"
+        placeholder="{{ 'customer.register.first_name' | t }}"
+      >
+      <label
+        for="RegisterForm-FirstName"
+        class="absolute top-1/2{% if is_rtl %} right-5 lg:right-8{% else %} left-5 lg:left-8{% endif %} -translate-y-1/2 input_focus:text-xs input_focus:top-3.5 input_not_empty:top-3.5 input_not_empty:text-xs"
+      >
+        {{ 'customer.register.first_name' | t }}
+      </label>
+    </div>
+    <div class="relative max-w-[570px] mr-auto ml-auto mb-2.5">
+      <input
+        id="RegisterForm-LastName"
+        class="w-full input border px-5 lg:px-8 pt-5 pb-1 md:pt-5 md:pb-2 focus:outline-none focus:border-current bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} rounded-md{% else %} rounded-none{% endif %}{% if is_rtl %} text-right{% endif %}"
+        type="text"
+        name="customer[last_name]"
+        {% if form.last_name %}value="{{ form.last_name }}"{% endif %}
+        autocomplete="family-name"
+        placeholder="{{ 'customer.register.last_name' | t }}"
+      >
+      <label
+        for="RegisterForm-LastName"
+        class="absolute top-1/2{% if is_rtl %} right-5 lg:right-8{% else %} left-5 lg:left-8{% endif %} -translate-y-1/2 input_focus:text-xs input_focus:top-3.5 input_not_empty:top-3.5 input_not_empty:text-xs"
+      >
+        {{ 'customer.register.last_name' | t }}
+      </label>
+    </div>
+    <div class="relative max-w-[570px] mr-auto ml-auto mb-2.5">
+      <input
+        id="RegisterForm-email"
+        class="w-full input border px-5 lg:px-8 pt-5 pb-1 md:pt-5 md:pb-2 focus:outline-none focus:border-current bg-transparent placeholder:opacity-0{% if form.errors contains 'email' %} border-[rgba(var(--color-error))] focus:border-[rgba(var(--color-error))]{% endif %}{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% else %} rounded-none{% endif %}{% if is_rtl %} text-right{% endif %}"
+        type="email"
+        name="customer[email]"
+        {% if form.email %} value="{{ form.email }}"{% endif %}
+        spellcheck="false" 
+        autocapitalize="off" 
+        autocomplete="email" 
+        aria-required="true"
+        required="required" 
+        {% if form.errors contains 'email' %}
+          aria-invalid="true"
+          aria-describedby="RegisterForm-email-error"
+        {% endif %}
+        placeholder="{{ 'customer.register.email' | t }}"
+      >
+      <label
+        for="RegisterForm-email"
+        class="absolute top-1/2{% if is_rtl %} right-5 lg:right-8{% else %} left-5 lg:left-8{% endif %} -translate-y-1/2 input_focus:text-xs input_focus:top-3.5 input_not_empty:top-3.5 input_not_empty:text-xs"
+      >
+        {{ 'customer.register.email' | t }}
+      </label>
+    </div>
+    {%- if form.errors contains 'email' -%}
+      <span id="RegisterForm-email-error" class="block w-full max-w-[570px] mr-auto ml-auto mb-2.5 text-normal">
+        {% render 'icon-alls', icon: 'icon-error', enable_customer_page: true %}
+        <span class="ml-0.5">{{ form.errors.translated_fields['email'] | capitalize }} {{ form.errors.messages['email'] }}.</span>
+      </span>
+    {%- endif -%}
+    <div class="relative max-w-[570px] mr-auto ml-auto mb-2.5">
+      <input
+        id="RegisterForm-password"
+        class="w-full input border px-5 lg:px-8 pt-5 pb-1 md:pt-5 md:pb-2 focus:outline-none focus:border-current bg-transparent placeholder:opacity-0{% if form.errors contains 'password' %} border-[rgba(var(--color-error))] focus:border-[rgba(var(--color-error))]{% endif %}{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% else %} rounded-none{% endif %}{% if is_rtl %} text-right{% endif %}"
+        type="password"
+        name="customer[password]"
+        aria-required="true"
+        required="required"
+        {% if form.errors contains 'password' %}
+          aria-invalid="true"
+          aria-describedby="RegisterForm-password-error"
+        {% endif %}
+        placeholder="{{ 'customer.register.password' | t }}"
+      >
+      <label
+        for="RegisterForm-password"
+        class="absolute top-1/2{% if is_rtl %} right-5 lg:right-8{% else %} left-5 lg:left-8{% endif %} -translate-y-1/2 input_focus:text-xs input_focus:top-3.5 input_not_empty:top-3.5 input_not_empty:text-xs"
+      >
+        {{ 'customer.register.password' | t }}
+      </label>
+    </div>
+    {%- if form.errors contains 'password' -%}
+      <span id="RegisterForm-password-error" class="block w-full max-w-[570px] mr-auto ml-auto mb-2.5 text-normal">
+        {% render 'icon-alls', icon: 'icon-error', enable_customer_page: true %}
+        <span class="ml-0.5">{{ form.errors.translated_fields['password'] | capitalize }} {{ form.errors.messages['password'] }}.</span>
+      </span>
+    {%- endif -%}
+    <div class="w-full flex justify-center">
+      <button class="button button-solid w-full block mr-auto ml-auto max-w-[570px] pt-2.5 pb-2.5 md:pt-3 md:pb-3 mt-8 leading-normal">
+        {% assign button_label = 'customer.register.submit' | t %}
+        <span class="flex items-center justify-center">
+          {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+        </span>
+      </button>
+    </div>
+  {%- endform -%}
+</div>
+{% schema %}
+{
+  "name": "t:sections.main-register.name",
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "top_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 52
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 52
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "range",
+      "id": "top_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 44
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 44
+    }
+  ]
+}
+{% endschema %}

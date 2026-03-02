@@ -1,0 +1,2020 @@
+{%- liquid
+  assign size_heading = section.settings.heading_size | times: settings.heading_base_size | times: 0.000225
+  assign textarea_heading = section.settings.heading | newline_to_br
+  if section.settings.products != blank
+    assign product_count = section.settings.products.count
+  elsif section.settings.collection.products_count != 0 and section.settings.collection != blank
+    if section.settings.product_to_show < section.settings.collection.products_count
+      assign product_count = section.settings.product_to_show
+    else
+      assign product_count = section.settings.collection.products_count
+    endif
+  else
+    if section.settings.summary_layout != 'vertical' 
+      assign product_count = 4
+    else
+      assign product_count = 3
+    endif
+  endif
+  if settings.edges_type == 'rounded_corners'
+    assign rounded_corner = true
+  endif
+  if settings.lang_direction contains request.locale.iso_code
+    assign is_rtl = true
+  else
+    assign is_rtl = false
+  endif
+  if section.settings.heading_alignment == 'left' and is_rtl == false
+    assign discount_label = 'start'
+  elsif section.settings.heading_alignment == 'right' and is_rtl == false
+    assign discount_label = 'end'
+  elsif section.settings.heading_alignment == 'left' and is_rtl
+    assign discount_label = 'start'
+  elsif section.settings.heading_alignment == 'right' and is_rtl
+    assign discount_label = 'end'
+  else
+    assign discount_label = 'center'
+  endif
+  case section.settings.label_type
+    when 'rounded'
+      assign big_label_radius = 'rounded-full'
+      assign small_label_radius = 'rounded-full'
+    when 'rounded_corners'
+      assign big_label_radius = 'rounded-2xl'
+      assign small_label_radius = 'rounded-md'
+    when 'mixed'
+      assign big_label_radius = 'rounded-tl-2xl rounded-br-2xl'
+      assign small_label_radius = 'rounded-tl-md rounded-br-md'
+    else
+      assign big_label_radius = 'rounded-none'
+      assign small_label_radius = 'rounded-none'
+  endcase
+    
+  assign enable_desktop_slider = false
+  assign swiper_on_mobile = false
+  
+  if section.blocks.size == 0 and section.settings.summary_layout != 'vertical'
+    if section.settings.enable_desktop_slider and product_count > 4
+      assign enable_desktop_slider = true
+    endif
+  elsif section.blocks.size > 0 and section.settings.summary_layout == 'vertical'
+    if section.settings.enable_desktop_slider and product_count > 2
+      assign enable_desktop_slider = true
+    endif
+  else 
+    if section.settings.enable_desktop_slider and product_count > 3 
+      assign enable_desktop_slider = true
+    endif
+  endif
+  if section.settings.swiper_on_mobile
+    if section.settings.columns_mobile == '1' and product_count > 1
+      assign swiper_on_mobile = true
+    elsif section.settings.columns_mobile == '2' and product_count > 2
+      assign swiper_on_mobile = true
+    endif
+  endif
+-%}
+{%- style -%}
+  {% if section.settings.summary_layout != 'vertical' %}
+    #bundle-content-container-{{ section.id }}.scrollbar-horizontal::-webkit-scrollbar {
+      height: 6px;
+    }
+  {% endif %}
+  .heading-{{ section.id }} { 
+    font-size: {{ size_heading | times: 0.6 }}rem; 
+  }
+  .heading-bundler--{{ section.id }} { 
+    font-size: {{ size_heading | times: 0.5 }}rem; 
+  }
+  .gap-mobile-{{ section.id }} {
+    gap: {{ section.settings.spacing_mobile }}px;
+  }
+  .gap-list-{{ section.id }} {
+    {% if swiper_on_mobile %}
+      gap: 0px;
+    {% else %}
+      gap: {{ section.settings.spacing_mobile }}px;
+    {% endif %}
+  }
+  .discount-value-{{ section.id }} {
+    font-size: {{ size_heading | times: 0.5 }}rem;
+    {%- assign discount_value_label_alpha = section.settings.discount_value_label.alpha | default: 0 -%}
+    {%- assign discount_value_label_text_alpha = section.settings.discount_value_label_text.alpha | default: 0 -%}
+    {%- if discount_value_label_alpha != 0.0 -%}
+      --discount-label-color: {{ section.settings.discount_value_label.red }}, {{ section.settings.discount_value_label.green }}, {{ section.settings.discount_value_label.blue }};
+    {%- else -%}
+      --discount-label-color: {{ settings.secondary_background.red }}, {{ settings.secondary_background.green }}, {{ settings.secondary_background.blue }};
+    {%- endif -%}
+    {%- if discount_value_label_text_alpha != 0.0 -%}
+      --discount-label-text-color: {{ section.settings.discount_value_label_text.red }}, {{ section.settings.discount_value_label_text.green }}, {{ section.settings.discount_value_label_text.blue }};
+    {%- else -%}
+      --discount-label-text-color: {{ settings.colors_price.red }}, {{ settings.colors_price.green }}, {{ settings.colors_price.blue }};
+    {%- endif -%}
+  }
+  @media screen and (min-width: 768px) {
+    .heading-{{ section.id }}{ font-size: {{ size_heading }}rem; } 
+    .heading-bundler--{{ section.id }}{ font-size: {{ size_heading | times: 0.65 }}rem; } 
+    .gap-{{ section.id }} {
+      gap: {{ section.settings.spacing }}px;
+    }
+    .discount-value-{{ section.id }} { 
+      font-size: {{ size_heading | times: 0.7 }}rem;
+    }
+    .gap-list-{{ section.id }} {
+      {% if enable_desktop_slider %}
+        gap: 0px;
+      {% else %}
+        gap: {{ section.settings.spacing }}px;
+      {% endif %}
+    }
+  }
+{%- endstyle -%}
+
+{% render 'section-divider' %}
+
+{% if product and settings.enable_combined %}
+  <div id="card-product-clone-{{ section.id }}" class="hidden product-card-cbl-clone">
+    {%- paginate pages by 1 -%}
+    {%- liquid 
+      assign section_id = section.id | append: "-" | append: paginate.current_page 
+      assign page_param = paginate.current_page | plus: 0
+      unless settings.disable_carousel_animation
+        assign anm_class = 'x-slide-animation x-slide-animation-duration-' | append: paginate.current_page
+      endunless
+    -%}
+    <script type="application/json" data-id="{{ product.id }}">
+      {{ product.selected_or_first_available_variant | json }}
+    </script>
+    {% render 'card-product-bundle',
+      card_product: product,
+      show_highlighted_features: section.settings.show_highlighted_features,
+      show_vendor: section.settings.show_vendor,
+      show_rating: section.settings.show_rating,
+      media_aspect_ratio: section.settings.image_ratio,
+      section_id: section_id,
+      full_width: section.settings.full_width,
+      rounded_corner: rounded_corner,
+      each_product_can_added_to_bundle_once: section.settings.each_product_can_added_to_bundle_once,
+      page_param: page_param,
+      anm_class: anm_class,
+      is_cbl: true,
+      swiper_on_mobile: swiper_on_mobile,
+      summary_layout: section.settings.summary_layout,
+      spacing_desktop: section.settings.spacing,
+      spacing_mobile: section.settings.spacing_mobile
+    %}
+    {% endpaginate %}
+  </div>
+{% else %}
+  <div class="x-container-products-bundle pt-[{{ section.settings.padding_top_mobile }}px] md:pt-[{{ section.settings.padding_top }}px] pb-[{{ section.settings.padding_bottom_mobile }}px] md:pb-[{{ section.settings.padding_bottom }}px]"
+    x-data="xProductBundle('{{ section.id }}', {{ section.settings.minimum_items }}, {% if settings.currency_code_enable %}'{{ shop.money_with_currency_format | escape }}'{% else %}'{{ shop.money_format | escape }}'{% endif %}, '{{ section.settings.discount_type }}', '{{ section.settings.discount_value }}', {{ section.settings.apply_discount_once_per_order }})"
+    x-init="initBundle($el)"
+    x-intersect.margin.200px="showBundleContent = true"
+    x-intersect:leave="showBundleContent = false"
+  >
+    {% if section.settings.heading != blank or section.settings.description != blank %}
+      <div class="x-block-products-bundle-header mb-5 pr-5 pl-5 text-{{ section.settings.heading_alignment }} rtl:text-{% if section.settings.heading_alignment == 'center' %}center{% elsif section.settings.heading_alignment == 'left' %}right{% else %}left{% endif %}{% unless section.settings.full_width %} x-pgw page-width{% endunless %}">
+        {%- if section.settings.show_discount_value_label %}<div class="flex flex-col md:flex-row md:items-center items-{{ discount_label }} round justify-{{ discount_label }}">{% endif -%}
+          {%- if section.settings.heading != blank -%}
+            <div class="{% if section.settings.show_discount_value_label == false %} flex-auto{% endif -%}
+              {%- if section.settings.heading_alignment == 'right' and is_rtl == false %} md:order-2{% endif -%}
+              {%- if section.settings.heading_alignment != 'right' and is_rtl %} md:order-2{% endif -%}"
+            >
+              {% render 'heading-highlight',
+                headingId: section.id,
+                heading: textarea_heading,
+                highlight_type: section.settings.highlight_type,
+                disable_liquid_escape: true,
+                class: 'h2 block leading-tight p-break-words',
+                heading_tag: section.settings.heading_tag,
+                animation_heading: true
+              %}
+            </div>
+          {%- endif -%}
+          {%- if section.settings.show_discount_value_label -%}
+            {% unless settings.disable_heading_animation %}<div class="overflow-hidden" x-intersect.once="$el.querySelector('.anm-move-up')?.classList.add('active-anm-heading')">{% endunless %}
+              <div class="pt-6.5 pb-6.5 pl-[37.5px] pr-[37.5px] mr-0 ml-0 mt-4 md:pt-8 md:pb-8 md:pl-10 md:pr-10 md:mt-0 discount-value-{{ section.id }} {{ big_label_radius }} bg-[rgba(var(--discount-label-color))]{% unless settings.disable_heading_animation %} anm-move-up{% endunless -%}
+                {%- if section.settings.heading_alignment == 'right' and is_rtl == false %} md:mr-4 md:order-1{% endif -%}
+                {%- if section.settings.heading_alignment != 'right' and is_rtl %} md:ml-4 md:order-1{% endif -%}
+                {%- if section.settings.heading_alignment == 'right' and is_rtl %} md:mr-4{% endif -%}
+                {%- if section.settings.heading_alignment != 'right' and is_rtl == false %} md:ml-4{% endif -%}"
+              >
+                <p class="h3 text-center text-[rgba(var(--discount-label-text-color))] ltr">
+                  {%- if section.settings.discount_type == 'percentage' %}{{ section.settings.discount_value }}% {{ 'sections.product-bundle.discount_label' | t }}
+                  {%- else %}<span x-text="displayDiscountValueLabel()"></span> {{ 'sections.product-bundle.discount_label' | t }}{% if section.settings.apply_discount_once_per_order == false %} / {{ 'sections.cart.headings.product' | t }}
+                  {% endif %}
+                  {%- endif -%}
+                </p>
+              </div>
+            {% unless settings.disable_heading_animation %}</div>{% endunless %}
+          {%- endif -%}
+        {%- if section.settings.show_discount_value_label %}</div>{% endif -%}
+        {%- if section.settings.description != blank -%}
+          <p class="leading-tight p-break-words lg:mb-8 mt-2.5">{{ section.settings.description | newline_to_br }}</p>
+        {%- endif -%}
+      </div>
+    {% endif %}
+    {% liquid
+      assign width_class_content = 'w-full'
+      assign width_class_promotion = 'w-full'
+      assign width_class_summary = 'w-full'
+      if section.settings.summary_layout == 'vertical'
+        if section.blocks.size > 0
+          if enable_desktop_slider
+            assign width_class_content = 'w-full md:w-1/2 lg:w-1/2'
+            assign width_class_promotion = 'w-full md:w-1/4 lg:w-1/4'
+            assign width_class_summary = 'w-full md:w-1/4 lg:w-1/4'  
+          else
+            assign width_class_content = 'w-full md:w-2/3 lg:w-3/4'
+            assign width_class_summary = 'w-full md:w-1/3 lg:w-1/4'  
+          endif
+        else 
+          assign width_class_content = 'w-full md:w-2/3 lg:w-3/4'
+          assign width_class_summary = 'w-full md:w-1/3 lg:w-1/4'  
+        endif
+      else
+        if section.blocks.size > 0 and enable_desktop_slider
+          assign width_class_content = 'w-full md:w-3/4'
+          assign width_class_promotion = 'w-full md:w-1/4'
+        endif
+      endif
+
+      assign display_class_promotion = ''
+      assign display_class_promotion_grid_item = ''
+
+      if enable_desktop_slider
+        if swiper_on_mobile
+          assign display_class_promotion = 'grid'
+          assign display_class_promotion_grid_item = 'hidden'
+        else
+          assign display_class_promotion = 'md:grid hidden'
+          assign display_class_promotion_grid_item = 'grid md:hidden'
+        endif
+      else
+        if swiper_on_mobile
+          assign display_class_promotion = 'md:hidden grid'
+          assign display_class_promotion_grid_item = 'md:grid hidden'
+        else
+          assign display_class_promotion = 'hidden'
+          assign display_class_promotion_grid_item = 'grid'
+        endif
+      endif
+    %}
+    {% capture promotion_block %}
+      {%- for block in section.blocks -%}
+        {% liquid
+          assign image = block.settings.image
+          if block.settings.image_mobile != blank
+            assign image = block.settings.image_mobile
+          endif
+        %}
+        {% if image != blank and swiper_on_mobile or swiper_on_mobile == false and section.settings.columns_mobile != '2' %}
+          {% style %}
+            @media (max-width: 767px) {
+              .bundle-promotion-{{ section.id }} {
+                height: calc((100vw - 40px) * {{ 1 | divided_by: image.aspect_ratio }});
+              }
+            }
+          {% endstyle %}
+        {% endif %}
+        {% liquid
+          assign col_span = block.settings.number_of_columns
+          unless section.settings.summary_layout == 'horizontal'
+            if col_span > 3
+              assign col_span = 3
+            endif
+          endunless
+          assign col_span_mobile = block.settings.number_of_columns_mobile
+          if col_span_mobile > section.settings.columns_mobile
+            assign col_span_mobile = section.settings.columns_mobile
+          endif
+          assign class_tall_mobile = 'col-span-' | append: col_span_mobile | append: ' row-span-' | append: block.settings.number_of_row_mobile
+          assign class_tall_desktop = 'lg:col-span-' | append: col_span | append: ' lg:row-span-' | append: block.settings.number_of_row
+          assign col_span = col_span | times: 1.0
+          assign columns_desktop = 3 | divided_by: col_span
+          assign columns_mobile = section.settings.columns_mobile | divided_by: col_span_mobile
+          if forloop.index < 3 or settings.enable_lazy_loading_image == false
+            assign loading = 'eager'
+          else
+            assign loading = 'lazy'
+          endif
+          assign ratio = 'square'
+          if block.settings.image != blank or block.settings.image_mobile != blank
+            assign ratio = 'natural'
+          endif
+        %}
+        {%- capture sizes -%}
+          (min-width: {{ settings.page_width }}px) {% unless section.settings.full_width %} calc(({{ settings.page_width| times: 75 | divided_by: 100.0 | plus: 100 }}px - ({{ section.settings.spacing }}px * {{ columns_desktop | minus: 1 }})) / {{ columns_desktop }}){% else %}calc((75vw - ({{ section.settings.spacing }}px * {{ columns_desktop | minus: 1 }})) / {{ columns_desktop }}){% endunless %},
+          {% if settings.page_width > 1024 %}(min-width: 1024px) calc((75vw - ({{ section.settings.spacing }}px * {{ columns_desktop | minus: 1 }})) / {{ columns_desktop }}),{% endif %}
+          (min-width: 768px) calc(({{ 100| times: 2 | divided_by: 3.0 }}vw - ({{ section.settings.spacing }}px * {{ columns_desktop | minus: 1 }})) / {{ columns_desktop }}),
+          calc((100vw - ({{ section.settings.spacing_mobile }}px * {{ columns_mobile | minus: 1 }})) /{{ columns_mobile }})
+        {%- endcapture -%}
+        {% render 'promotion-block',
+          blockID: block.id,
+          image_ratio: ratio,
+          columns_desktop: columns_desktop,
+          columns_mobile: columns_mobile,
+          block: block,
+          enable_desktop_slider: false,
+          image: block.settings.image,
+          button_label: block.settings.button_label,
+          button_link: block.settings.button_link,
+          open_new_window: block.settings.open_new_window,
+          content_position: block.settings.content_position,
+          alignment: block.settings.alignment,
+          heading: block.settings.heading,
+          content: block.settings.content,
+          image_overlay_opacity: block.settings.image_overlay_opacity,
+          title_size: block.settings.title_size,
+          text_size: block.settings.text_size,
+          list_layout: true,
+          show_button_style: block.settings.show_button_style,
+          color_button: block.settings.color_button,
+          color_text_button: block.settings.color_text_button,
+          color_button_hover: block.settings.color_button_hover,
+          color_text_button_hover: block.settings.color_text_button_hover,
+          color_button_secondary: block.settings.color_button_secondary,
+          secondary_button_text: block.settings.secondary_button_text,
+          colors_text_link: block.settings.colors_text_link,
+          class_tall_mobile: class_tall_mobile,
+          class_tall_desktop: class_tall_desktop,
+          loading: loading,
+          icon: 'none',
+          subheading: block.settings.subheading,
+          heading_highlight: true,
+          color_heading_highlight_dark: block.settings.color_heading_highlight_dark,
+          color_heading_highlight_light: block.settings.color_heading_highlight_light,
+          highlight_type: block.settings.highlight_type,
+          custom_sizes: sizes
+        %}
+      {%- endfor -%}
+    {% endcapture %}
+    <div class="mx-auto product-bundler-wrapper{% if section.settings.full_width %} full-width{% else %} x-pgw page-width{% endif %} pl-5 pr-5">
+      <div 
+        id="x-collection-{{ section.id }}" 
+        class="flex{% if section.settings.summary_layout == 'vertical' %} flex-col md:flex-row{% if section.settings.summary_position == "left" %} md:flex-row-reverse rtl:md:flex-row{% else %} md:flex-row rtl:md:flex-row-reverse{% endif %}{% else %} flex-col{% endif %}{% if is_rtl %} ltr{% endif %} gap-mobile-{{ section.id }} gap-{{ section.id }}"
+        x-intersect.once='$el.classList.add("is-ready-to-animate")'
+      >
+        {% if section.settings.summary_layout != 'vertical' %}
+          <div class="flex flex-col md:flex-row gap-{{ section.id }} gap-mobile-{{ section.id }}">
+        {% endif %}
+        {% if promotion_block != blank %}
+          <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} grid {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-1{% endunless %}">
+            {{ promotion_block }}
+          </div>
+        {% endif %}
+        {% if enable_desktop_slider or swiper_on_mobile %}
+          {% liquid
+            assign progress_bar = 3
+            if section.settings.products != blank
+              assign progress_bar = product_count
+            elsif section.settings.collection.products.size > 0
+              assign progress_bar = product_count
+            endif
+          %}
+          <div
+            id="x-bundle-{{ section.id }}"
+            class="x-block-products-list overflow-hidden {{ width_class_content }} x-splide visible splide{% if section.settings.full_width_mobile %} pl-5 pr-5 md:pl-0 md:pr-0{% endif %}{% if section.settings.enable_arrow_mobile %} flex flex-col{% endif %}"
+            x-data-slider="{{ section.id }}"
+            x-intersect.once.margin.200px='$store.xSplide.load($el, {
+              "speed": 1000,
+              "pagination": false, 
+              "mediaQuery": "min",
+              "updateOnMove": "true",
+              "pauseOnHover": true,
+              "pauseOnFocus": false,
+              "progressBar": {{ progress_bar }},
+              {%- if section.settings.enable_arrow_mobile %}
+                "drag": false,
+              {%- endif %}
+              {%- if settings.lang_direction contains request.locale.iso_code %} 
+                "direction": "rtl",
+              {%- endif %}
+              {%- if section.settings.auto_play -%}
+                "rewind": true,
+                "autoplay": true,
+                "interval": {{ section.settings.change_slides_speed | times: 1000 }},
+              {%- endif %}
+              "breakpoints": {
+                300: {
+                  {% if swiper_on_mobile == false %}
+                    "destroy": true,
+                  {%- endif %}
+                  "gap": "{{ section.settings.spacing_mobile }}px",
+                  "perPage": {{ section.settings.columns_mobile }},
+                  "perMove": 1
+                },
+                768: {
+                  "drag": true,
+                  {%- if enable_desktop_slider == false %}
+                    "destroy": true,
+                  {%- else %}
+                    "destroy": false,
+                  {%- endif %}
+                  "gap": "{{ section.settings.spacing }}px",
+                  "perPage": {% if section.settings.summary_layout != 'vertical' %}{% if promotion_block != blank %}3{% else %}4{% endif %}{% else %}{% if promotion_block != blank %}2{% else %}3{% endif %}{% endif %},
+                  "perMove": 1
+                }
+              },
+              "classes": {
+                "arrows" : "block"
+              },
+              "events": [
+                {
+                  "event": "ready",
+                  "callback": () => {
+                    document.dispatchEvent(new CustomEvent("eurus:{{ section.id }}:splide-ready"));
+                  }
+                }
+              ]
+            })'
+            x-intersect.once='$el.classList.add("is-ready-to-animate")'
+          >
+            <div class="splide__arrows{% if swiper_on_mobile %} flex items-center justify-center gap-3 md:gap-0 mb-1 md:mb-0 mt-5 md:mt-0{% else %} hidden md:block gap-2{% endif %} order-2">
+              <button 
+                class="splide__arrow splide__arrow--prev button-arrow p-3 rounded-full z-10 w-11 h-11 border border-solid md:border-none after:text-[20px] rtl:rotate-180 disabled:cursor-not-allowed disabled:opacity-30
+                {%- unless section.settings.enable_arrow_mobile %} hidden{% else %} block{% endunless -%}
+                {%- if section.settings.slider_style != "vertical" -%}
+                  {%- if enable_desktop_slider %} md:block md:absolute md:top-1/2 md:-mt-6 md:left-0 rtl:md:left-auto rtl:md:right-0 md:duration-200 hover:opacity-100 md:transition-all md:ease-in-out md:-translate-x-full rtl:md:translate-x-full{% else %} md:hidden{% endif -%}
+                {%- endif %}"
+                aria-label="previous slide"
+              >
+                <span class="hidden">previous slide</span>
+                {% render 'icon-labels-bags', icon: 'chevron-left' %}
+              </button>
+              <button 
+                class="splide__arrow splide__arrow--next button-arrow p-3 rounded-full z-10 w-11 h-11 border border-solid md:border-none after:text-[20px] rtl:rotate-180 disabled:cursor-not-allowed disabled:opacity-30
+                {%- unless section.settings.enable_arrow_mobile %} hidden{% else %} block{% endunless -%}
+                {%- if section.settings.slider_style != "vertical" -%}
+                  {%- if enable_desktop_slider %} md:block md:absolute md:top-1/2 md:-mt-6 md:right-0 rtl:md:right-auto rtl:md:left-0 md:duration-200 hover:opacity-100 md:transition-all md:ease-in-out md:translate-x-full rtl:md:-translate-x-full{% else %} md:hidden{% endif -%}
+                {%- endif %}"
+                aria-label="next slide"
+              >
+                <span class="hidden">next slide</span>
+                {% render 'icon-labels-bags', icon: 'chevron-right' %}
+              </button>
+            </div>
+            <div class="splide__track{% if enable_desktop_slider %} md:cursor-grab{% endif %} lg:pl-0 lg:pr-0">
+              <div class="{% if request.visual_preview_mode %}gap-4 md:gap-7 {% endif %}splide__list{% if enable_desktop_slider == false %} md:grid {% if product_count > 2 %} {% if section.settings.summary_layout != 'vertical' %}{% if promotion_block != blank or product_count > 3 %}md:grid-cols-4{% else %}md:grid-cols-3{% endif %}{% else %}md:grid-cols-3{% endif %}{% else %}{% if promotion_block != blank %}md:grid-cols-{{ product_count | plus: 1 }}{% else %}md:grid-cols-{{ product_count }}{% endif %}{% endif %}{% else %} md:grid-cols-none md:flex md:w-full md:gap-0{% endif %}{% if swiper_on_mobile %} flex w-full{% else %} grid grid-cols-{{ section.settings.columns_mobile }}{% endif %} gap-list-{{ section.id }}">
+                {% style %}
+                  {% if swiper_on_mobile %}
+                    .bundle-splide-slide-{{ section.id }} {
+                      {%- if settings.lang_direction contains request.locale.iso_code %} 
+                        margin-left: {{ section.settings.spacing_mobile }}px;
+                      {% else %}
+                        margin-right: {{ section.settings.spacing_mobile }}px;
+                      {% endif %}
+                      width: calc({{ 100 | divided_by: section.settings.columns_mobile }}% - {{ section.settings.spacing_mobile | divided_by: 2 }}px);
+                    }
+                  {% endif %}
+                  {% if enable_desktop_slider %}
+                    @media (min-width: 768px) {
+                      .bundle-splide-slide-{{ section.id }} {
+                        {%- if settings.lang_direction contains request.locale.iso_code %} 
+                          margin-left: {{ section.settings.spacing }}px;
+                        {% else %}
+                          margin-right: {{ section.settings.spacing }}px;
+                        {% endif %}
+                        {% liquid 
+                          assign preload_width = 25
+                          if section.blocks.size > 0 and section.settings.summary_layout == 'vertical'
+                            assign preload_width = 50
+                          elsif section.blocks.size > 0 or section.settings.summary_layout == 'vertical'
+                            assign preload_width = 33.33
+                          endif
+                        %}
+                        width: calc({{ preload_width }}% - {{ section.settings.spacing | divided_by: 2 }}px);
+                      }
+                    }
+                  {% else %}
+                    @media (min-width: 768px) {
+                      .bundle-splide-slide-{{ section.id }} {
+                        margin-right: 0;
+                        width: 100%;
+                      }
+                    }
+                  {% endif %}
+                {% endstyle %}
+                {% if section.settings.products != blank %}
+                  {%- for product in section.settings.products -%}
+                    {% style %}
+                      .x-slide-animation-duration-{{ forloop.index }} {
+                        --delay-time: {{ forloop.index0 | times: 100 | append: 'ms' }}
+                      }
+                    {% endstyle %}
+                    {% if section.blocks.size > 0 and forloop.index == section.blocks[0].settings.position %}
+                      {% if promotion_block != blank %}
+                        <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-{{ forloop.index }}{% endunless %}">
+                          {{ promotion_block }}
+                        </div>
+                      {% endif %}
+                    {% endif %}
+                    {% liquid 
+                      assign page_param = forloop.index | plus: 0
+                      assign section_id = section.id | append: "-" | append: forloop.index
+                      unless settings.disable_carousel_animation
+                        assign anm_class = 'x-slide-animation x-slide-animation-duration-' | append: forloop.index
+                      endunless
+                    %}
+                    {% render 'card-product-bundle',
+                      card_product: product,
+                      show_highlighted_features: section.settings.show_highlighted_features,
+                      show_vendor: section.settings.show_vendor,
+                      show_rating: section.settings.show_rating,
+                      media_aspect_ratio: section.settings.image_ratio,
+                      enable_carousel: true,
+                      section_id: section_id,
+                      block_id: forloop.index,
+                      full_width: section.settings.full_width,
+                      rounded_corner: rounded_corner,
+                      each_product_can_added_to_bundle_once: section.settings.each_product_can_added_to_bundle_once,
+                      page_param: page_param,
+                      anm_class: anm_class,
+                      swiper_on_mobile: swiper_on_mobile,
+                      summary_layout: section.settings.summary_layout,
+                      spacing_desktop: section.settings.spacing,
+                      spacing_mobile: section.settings.spacing_mobile
+                    %}
+                  {%- endfor -%}
+                  {% if section.blocks.size > 0 and section.settings.products.count < section.blocks[0].settings.position %}
+                    {% if promotion_block != blank %}
+                      <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-{{ section.settings.products.count }}{% endunless %}">
+                        {{ promotion_block }}
+                      </div>
+                    {% endif %}
+                  {% endif %}
+                {% elsif section.settings.collection.products.size > 0 %}
+                  {%- for product in section.settings.collection.products limit: section.settings.product_to_show -%}
+                    {% style %}
+                      .x-slide-animation-duration-{{ forloop.index }} {
+                        --delay-time: {{ forloop.index0 | times: 100 | append: 'ms' }}
+                      }
+                    {% endstyle %}
+                    {% if section.blocks.size > 0 and forloop.index == section.blocks[0].settings.position %}
+                      {% if promotion_block != blank %}
+                        <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-{{ forloop.index }}{% endunless %}">
+                          {{ promotion_block }}
+                        </div>
+                      {% endif %}
+                    {% endif %}
+                    {% liquid 
+                      assign page_param = forloop.index | plus: 0
+                      assign section_id = section.id | append: "-" | append: forloop.index
+                      unless settings.disable_carousel_animation
+                        assign anm_class = 'x-slide-animation x-slide-animation-duration-' | append: forloop.index
+                      endunless
+                    %}
+                    {% render 'card-product-bundle',
+                      card_product: product,
+                      show_vendor: section.settings.show_vendor,
+                      show_rating: section.settings.show_rating,
+                      show_highlighted_features: section.settings.show_highlighted_features,
+                      media_aspect_ratio: section.settings.image_ratio,
+                      enable_carousel: true,
+                      section_id: section_id,
+                      block_id: forloop.index,
+                      full_width: section.settings.full_width,
+                      rounded_corner: rounded_corner,
+                      each_product_can_added_to_bundle_once: section.settings.each_product_can_added_to_bundle_once,
+                      page_param: page_param,
+                      anm_class: anm_class,
+                      swiper_on_mobile: swiper_on_mobile,
+                      summary_layout: section.settings.summary_layout,
+                      spacing_desktop: section.settings.spacing,
+                      spacing_mobile: section.settings.spacing_mobile
+                    %}
+                  {%- endfor -%}
+                  {% if section.blocks.size > 0 and section.settings.collection.products.size < section.blocks[0].settings.position or section.settings.product_to_show < section.blocks[0].settings.position %}
+                    {% liquid
+                      assign product_count = section.settings.product_to_show
+                      if section.settings.collection.products.size < section.settings.product_to_show
+                        assign product_count = section.settings.collection.products.size
+                      endif
+                    %}
+                    {% if promotion_block != blank %}
+                      <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-{{ product_count }}{% endunless %}">
+                        {{ promotion_block }}
+                      </div>
+                    {% endif %}
+                  {% endif %}
+                {% else %}
+                  {% liquid 
+                    assign default_product_block = 3
+                    if section.settings.summary_layout != 'vertical' 
+                      assign default_product_block = 4
+                    endif
+                  %}
+                  {%- for product in (1..default_product_block) -%}
+                    {% style %}
+                      .x-slide-animation-duration-{{ forloop.index }} {
+                        --delay-time: {{ forloop.index0 | times: 100 | append: 'ms' }}
+                      }
+                    {% endstyle %}
+                    {% liquid
+                      unless settings.disable_carousel_animation
+                        assign anm_class = 'x-slide-animation x-slide-animation-duration-' | append: forloop.index
+                      endunless
+                    %}
+                    {% if section.blocks.size > 0 and forloop.index == section.blocks[0].settings.position %}
+                      {% if promotion_block != blank %}
+                        <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-{{ forloop.index }}{% endunless %}">
+                          {{ promotion_block }}
+                        </div>
+                      {% endif %}
+                    {% endif %}
+                    {% render 'card-product-bundle',
+                      show_vendor: section.settings.show_vendor,
+                      show_rating: section.settings.show_rating,
+                      show_highlighted_features: section.settings.show_highlighted_features,
+                      media_aspect_ratio: section.settings.image_ratio,
+                      enable_carousel: true,
+                      section_id: section_id,
+                      block_id: forloop.index,
+                      full_width: section.settings.full_width,
+                      each_product_can_added_to_bundle_once: section.settings.each_product_can_added_to_bundle_once,
+                      anm_class: anm_class,
+                      swiper_on_mobile: swiper_on_mobile,
+                      summary_layout: section.settings.summary_layout,
+                      spacing_desktop: section.settings.spacing,
+                      spacing_mobile: section.settings.spacing_mobile
+                    %}
+                  {%- endfor -%}
+                  {% if section.blocks.size > 0 and section.blocks[0].settings.position > 3 %}
+                    {% if promotion_block != blank %}
+                      <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-3{% endunless %}">
+                        {{ promotion_block }}
+                      </div>
+                    {% endif %}
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+            <div class="{% if enable_desktop_slider %}md:flex{% else %}md:hidden{% endif %} items-center{% if section.settings.enable_arrow_mobile or swiper_on_mobile == false %} hidden{% else %} flex w-full{% endif %} gap-5 mt-2.5 md:mt-5 mb-2.5 md:mb-5 md:w-3/4 ml-auto mr-auto">
+              <div class="splide-progress inline-block grow rounded-md">
+                {% liquid
+                  assign my_float = 0.0
+                  if section.settings.summary_layout == 'vertical'
+                    if section.blocks.size > 0
+                      assign my_float = 2.0
+                    else
+                      assign my_float = 3.0
+                    endif
+                  else
+                    if section.blocks.size > 0
+                      assign my_float = 3.0
+                    else
+                      assign my_float = 4.0
+                    endif
+                  endif
+                  assign width_bar = my_float | divided_by: progress_bar                       
+                  assign mobile_float = section.settings.columns_mobile | times: 1.0
+                  assign mobile_width_bar = mobile_float | divided_by: progress_bar 
+                %} 
+                {%- style -%}
+                  .splide-progress-bar-{{ section.id }} {
+                    width: {{ mobile_width_bar | times: 100 }}%;
+                  }
+                  @media (min-width: 768px) {
+                    .splide-progress-bar-{{ section.id }} {
+                      width: {{ width_bar | times: 100 }}%;
+                    }
+                  }
+                {%- endstyle -%}
+                <div class="splide-progress-bar-{{ section.id }} splide-progress-bar rounded-md"></div>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="x-block-products-list {% if is_rtl %}rtl {% endif %}grid grid-cols-{{ section.settings.columns_mobile }} {{ width_class_content }} {% if product_count > 2 %}{% if section.settings.summary_layout != 'vertical' %} {% if promotion_block != blank or product_count > 3 %}md:grid-cols-4{% else %}md:grid-cols-3{% endif %}{% else %} md:grid-cols-3{% endif %}{% else %} {% if promotion_block != blank %}md:grid-cols-{{ product_count | plus: 1 }}{% else %}md:grid-cols-{{ product_count }}{% endif %}{% endif %} gap-list-{{ section.id }}" x-intersect.once='$el.classList.add("is-ready-to-animate")'>
+            {% if section.settings.products != blank %}
+              {%- for product in section.settings.products -%}
+                {% liquid 
+                  assign page_param = forloop.index | plus: 0
+                  assign section_id = section.id | append: "-" | append: forloop.index
+                  unless settings.disable_carousel_animation
+                    assign anm_class = 'x-slide-animation x-slide-animation-duration-' | append: forloop.index
+                  endunless
+                %}
+                {% if section.blocks.size > 0 and forloop.index == section.blocks[0].settings.position %}
+                  {% if promotion_block != blank %}
+                    <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-{{ forloop.index }}{% endunless %}">
+                      {{ promotion_block }}
+                    </div>
+                  {% endif %}
+                {% endif %}
+                {% render 'card-product-bundle',
+                  card_product: product,
+                  show_highlighted_features: section.settings.show_highlighted_features,
+                  show_vendor: section.settings.show_vendor,
+                  show_rating: section.settings.show_rating,
+                  media_aspect_ratio: section.settings.image_ratio,
+                  section_id: section_id,
+                  block_id: forloop.index,
+                  full_width: section.settings.full_width,
+                  rounded_corner: rounded_corner,
+                  each_product_can_added_to_bundle_once: section.settings.each_product_can_added_to_bundle_once,
+                  page_param: page_param,
+                  anm_class: anm_class,
+                  swiper_on_mobile: swiper_on_mobile,
+                  summary_layout: section.settings.summary_layout,
+                  spacing_desktop: section.settings.spacing,
+                  spacing_mobile: section.settings.spacing_mobile
+                %}
+              {%- endfor -%}
+              {% if section.blocks.size > 0 and section.settings.products.count < section.blocks[0].settings.position %}
+                {% if promotion_block != blank %}
+                  <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-{{ section.settings.products.count }}{% endunless %}">
+                    {{ promotion_block }}
+                  </div>
+                {% endif %}
+              {% endif %}
+            {% elsif section.settings.collection.products.size > 0 %}
+              {%- for product in section.settings.collection.products limit: section.settings.product_to_show -%}
+                {% liquid 
+                  assign page_param = forloop.index | plus: 0
+                  assign section_id = section.id | append: "-" | append: forloop.index
+                  unless settings.disable_carousel_animation
+                    assign anm_class = 'x-slide-animation x-slide-animation-duration-' | append: forloop.index
+                  endunless
+                %}
+                {% if section.blocks.size > 0 and forloop.index == section.blocks[0].settings.position %}
+                  {% if promotion_block != blank %}
+                    <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-{{ forloop.index }}{% endunless %}">
+                      {{ promotion_block }}
+                    </div>
+                  {% endif %}
+                {% endif %}
+                {% render 'card-product-bundle',
+                  card_product: product,
+                  show_vendor: section.settings.show_vendor,
+                  show_rating: section.settings.show_rating,
+                  show_highlighted_features: section.settings.show_highlighted_features,
+                  media_aspect_ratio: section.settings.image_ratio,
+                  section_id: section_id,
+                  block_id: forloop.index,
+                  full_width: section.settings.full_width,
+                  rounded_corner: rounded_corner,
+                  each_product_can_added_to_bundle_once: section.settings.each_product_can_added_to_bundle_once,
+                  page_param: page_param,
+                  anm_class: anm_class,
+                  swiper_on_mobile: swiper_on_mobile,
+                  summary_layout: section.settings.summary_layout,
+                  spacing_desktop: section.settings.spacing,
+                  spacing_mobile: section.settings.spacing_mobile
+                %}
+              {%- endfor -%}
+              {% if section.blocks.size > 0 and section.settings.collection.products.size < section.blocks[0].settings.position or section.settings.product_to_show < section.blocks[0].settings.position %}
+                {% liquid
+                  assign product_count = section.settings.product_to_show
+                  if section.settings.collection.products.size < section.settings.product_to_show
+                    assign product_count = section.settings.collection.products.size
+                  endif
+                %}
+                {% if promotion_block != blank %}
+                  <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-{{ product_count }}{% endunless %}">
+                    {{ promotion_block }}
+                  </div>
+                {% endif %}
+              {% endif %}
+            {% else %}
+              {% liquid
+                assign item_to_render = 4
+                if section.settings.summary_layout != 'vertical' and section.blocks.size > 0
+                  assign item_to_render = 3
+                endif
+              %}
+              {%- for product in (1..item_to_render) -%}
+                {% liquid
+                  unless settings.disable_carousel_animation
+                    assign anm_class = 'x-slide-animation x-slide-animation-duration-' | append: forloop.index
+                  endunless
+                %}
+                {% if section.blocks.size > 0 and forloop.index == section.blocks[0].settings.position %}
+                  {% if promotion_block != blank %}
+                    <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-{{ forloop.index }}{% endunless %}">
+                      {{ promotion_block }}
+                    </div>
+                  {% endif %}
+                {% endif %}
+                {% render 'card-product-bundle',
+                  show_vendor: section.settings.show_vendor,
+                  show_rating: section.settings.show_rating,
+                  show_highlighted_features: section.settings.show_highlighted_features,
+                  media_aspect_ratio: section.settings.image_ratio,
+                  section_id: section_id,
+                  block_id: forloop.index,
+                  full_width: section.settings.full_width,
+                  each_product_can_added_to_bundle_once: section.settings.each_product_can_added_to_bundle_once,
+                  anm_class: anm_class,
+                  swiper_on_mobile: swiper_on_mobile,
+                  summary_layout: section.settings.summary_layout,
+                  spacing_desktop: section.settings.spacing,
+                  spacing_mobile: section.settings.spacing_mobile
+                %}
+              {%- endfor -%}
+              {% if section.blocks.size > 0 and section.blocks[0].settings.position > 3 %}
+                {% if promotion_block != blank %}
+                  <div class="x-block-bundle-promotion bundle-promotion-{{ section.id }} {{ class_tall_mobile }} {{ class_tall_desktop }} {{ width_class_promotion }} {{ display_class_promotion_grid_item }}{% unless settings.disable_carousel_animation %} x-slide-animation x-slide-animation-duration-3{% endunless %}">
+                    {{ promotion_block }}
+                  </div>
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          </div>
+        {% endif %}
+        {% if section.settings.summary_layout != 'vertical' %}
+          </div>
+        {% endif %}
+        <div class="x-block-bundle-summary {% if is_rtl %}rtl {% endif %} {{ width_class_summary }} sticky {% if section.settings.summary_layout == 'vertical' %}md:relative{% endif %}{% if template.name == "product" %} bottom-14{% else %} bottom-5{% endif %} {% if section.settings.summary_layout == 'vertical' %}md:bottom-auto{% endif %} z-40">
+          {% style %}
+            #bundler-sticky-{{ section.id }} {
+              {%- if section.settings.background_color_light.alpha != 0.0 -%}
+                {% if section.settings.summary_layout == 'vertical' %}
+                  --colors-line-and-border: {{ section.settings.background_color_light.red }}, {{ section.settings.background_color_light.green }}, {{ section.settings.background_color_light.blue }};
+                {% endif %}
+                --background-color: {{ section.settings.background_color_light.red }}, {{ section.settings.background_color_light.green }}, {{ section.settings.background_color_light.blue }};
+              {%- else -%}
+                {% if section.settings.summary_layout == 'vertical' %}
+                  --colors-line-and-border: {{ settings.colors_line_and_borders.red }}, {{ settings.colors_line_and_borders.green }}, {{ settings.colors_line_and_borders.blue }};
+                {% endif %}
+                --background-color: {{ settings.colors_background.red }}, {{ settings.colors_background.green }}, {{ settings.colors_background.blue }};
+              {%- endif -%}
+            }
+            .dark #bundler-sticky-{{ section.id }} {
+              {%- if section.settings.background_color_dark.alpha != 0.0 -%}
+                {% if section.settings.summary_layout == 'vertical' %}
+                  --colors-line-and-border: {{ section.settings.background_color_dark.red }}, {{ section.settings.background_color_dark.green }}, {{ section.settings.background_color_dark.blue }};
+                {% endif %}
+                --background-color: {{ section.settings.background_color_dark.red }}, {{ section.settings.background_color_dark.green }}, {{ section.settings.background_color_dark.blue }};
+              {%- else -%}
+                {% if section.settings.summary_layout == 'vertical' %}
+                  --colors-line-and-border: {{ settings.colors_dark_line_and_borders.red }}, {{ settings.colors_dark_line_and_borders.green }}, {{ settings.colors_dark_line_and_borders.blue }};
+                {% endif %}
+                --background-color: {{ settings.colors_dark_background.red }}, {{ settings.colors_dark_background.green }}, {{ settings.colors_dark_background.blue }};
+              {%- endif -%}
+            }
+            #bundler-sticky-{{ section.id }}, #bundler-sticky-{{ section.id }} *:before {
+              {% if section.settings.title_color.alpha != 0.0 %}
+                --colors-heading: {{ section.settings.title_color.red }}, {{ section.settings.title_color.green }}, {{ section.settings.title_color.blue }};
+              {% endif %}
+              {% if section.settings.text_light.alpha != 0.0 %}
+                --colors-text: {{ section.settings.text_light.red }}, {{ section.settings.text_light.green }}, {{ section.settings.text_light.blue }};
+              {% endif %}
+              {% if section.settings.button_light.alpha != 0.0 %}
+                --colors-button: {{ section.settings.button_light.red }}, {{ section.settings.button_light.green }}, {{ section.settings.button_light.blue }};
+              {% endif %}
+              {% if section.settings.button_text_light.alpha != 0.0 %}
+                --colors-button-text: {{ section.settings.button_text_light.red }}, {{ section.settings.button_text_light.green }}, {{ section.settings.button_text_light.blue }};
+              {% endif %}
+              {% if section.settings.button_hover_light.alpha != 0.0 %}
+                --colors-button-hover: rgb({{ section.settings.button_hover_light.red }}, {{ section.settings.button_hover_light.green }}, {{ section.settings.button_hover_light.blue }});
+              {% endif %}
+              {% if section.settings.button_text_hover_light.alpha != 0.0 %}
+                --colors-button-text-hover: {{ section.settings.button_text_hover_light.red }}, {{ section.settings.button_text_hover_light.green }}, {{ section.settings.button_text_hover_light.blue }};
+              {% endif %}
+              {% if section.settings.line_border.alpha != 0.0 %}
+                --colors-line-and-border: {{ section.settings.line_border.red }},{{ section.settings.line_border.green }},{{ section.settings.line_border.blue }};
+              {% endif %}
+              --colors-price: {{ settings.colors_price.red }}, {{ settings.colors_price.green }}, {{ settings.colors_price.blue }};
+            }
+            .dark #bundler-sticky-{{ section.id }}, .dark #bundler-sticky-{{ section.id }} *:before {
+              {% if section.settings.title_color_dark.alpha != 0.0 %}
+                --colors-heading: {{ section.settings.title_color_dark.red }}, {{ section.settings.title_color_dark.green }}, {{ section.settings.title_color_dark.blue }};
+              {% else %}        
+                --colors-heading: {{ settings.colors_dark_heading.red }}, {{ settings.colors_dark_heading.green }}, {{ settings.colors_dark_heading.blue }};
+              {% endif %}
+              {% if section.settings.text_dark.alpha != 0.0 %}
+                --colors-text: {{ section.settings.text_dark.red }}, {{ section.settings.text_dark.green }}, {{ section.settings.text_dark.blue }};
+              {% else %}        
+                --colors-text: {{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }};
+              {% endif %}
+              {% if section.settings.button_dark.alpha != 0.0 %}
+                --colors-button: {{ section.settings.button_dark.red }}, {{ section.settings.button_dark.green }}, {{ section.settings.button_dark.blue }};
+              {% else %}  
+                --colors-button: {{ settings.colors_dark_button.red }}, {{ settings.colors_dark_button.green }}, {{ settings.colors_dark_button.blue }};
+              {% endif %}
+              {% if section.settings.button_text_dark.alpha != 0.0 %}
+                --colors-button-text: {{ section.settings.button_text_dark.red }}, {{ section.settings.button_text_dark.green }}, {{ section.settings.button_text_dark.blue }};
+              {% else %} 
+                --colors-button-text: {{ settings.colors_dark_button_text.red }}, {{ settings.colors_dark_button_text.green }}, {{ settings.colors_dark_button_text.blue }}; 
+              {% endif %}
+              {% if section.settings.button_hover_dark.alpha != 0.0 %}
+                --colors-button-hover: rgb({{ section.settings.button_hover_dark.red }}, {{ section.settings.button_hover_dark.green }}, {{ section.settings.button_hover_dark.blue }});
+              {% else %}  
+                --colors-button-hover: rgb({{ settings.colors_dark_button_hover.red }}, {{ settings.colors_dark_button_hover.green }}, {{ settings.colors_dark_button_hover.blue }});
+              {% endif %}
+              {% if section.settings.button_text_hover_dark.alpha != 0.0 %}
+                --colors-button-text-hover: {{ section.settings.button_text_hover_dark.red }}, {{ section.settings.button_text_hover_dark.green }}, {{ section.settings.button_text_hover_dark.blue }};
+              {% else %}  
+                --colors-button-text-hover: {{ settings.colors_dark_button_text_hover.red }}, {{ settings.colors_dark_button_text_hover.green }}, {{ settings.colors_dark_button_text_hover.blue }};
+              {% endif %}
+              {% if section.settings.line_border_dark.alpha != 0.0 %}
+                --colors-line-and-border: {{ section.settings.line_border_dark.red }},{{ section.settings.line_border_dark.green }},{{ section.settings.line_border_dark.blue }};
+              {% else %}        
+                --colors-line-and-border: {{ settings.colors_dark_line_and_borders.red }}, {{ settings.colors_dark_line_and_borders.green }}, {{ settings.colors_dark_line_and_borders.blue }};
+              {% endif %}
+              --colors-price: {{ settings.colors_dark_price.red }}, {{ settings.colors_dark_price.green }}, {{ settings.colors_dark_price.blue }};
+            }
+            {%- assign discount_value_label_alpha = section.settings.discount_value_label.alpha | default: 0 -%}
+            {%- assign discount_value_label_text_alpha = section.settings.discount_value_label_text.alpha | default: 0 -%}
+            .label-discount-value-{{ section.id }} {
+              {%- if discount_value_label_alpha != 0.0 -%}
+                --discount-label-color: {{ section.settings.discount_value_label.red }}, {{ section.settings.discount_value_label.green }}, {{ section.settings.discount_value_label.blue }};
+              {%- else -%}
+                --discount-label-color: {{ settings.secondary_background.red }}, {{ settings.secondary_background.green }}, {{ settings.secondary_background.blue }};
+              {%- endif -%}
+              {%- if discount_value_label_text_alpha != 0.0 -%}
+                --discount-label-text-color: {{ section.settings.discount_value_label_text.red }}, {{ section.settings.discount_value_label_text.green }}, {{ section.settings.discount_value_label_text.blue }};
+              {%- else -%}
+                --discount-label-text-color: {{ settings.colors_price.red }}, {{ settings.colors_price.green }}, {{ settings.colors_price.blue }};
+              {%- endif -%}
+            }
+          {% endstyle %}
+
+          <div 
+            id="bundler-sticky-{{ section.id }}" 
+            class="bundler-sticky pb-7{% if settings.edges_type == 'rounded_corners' %} rounded-2xl{% endif %} bg-[rgba(var(--background-color))] md:sticky top-[calc(var(--height-header)+5rem)] md:pl-5 md:pr-5 md:pt-5 md:pb-5 lg:pl-8 lg:pr-8 lg:pt-8 lg:pb-8{% if section.settings.summary_layout == 'vertical' %} md:block{% else %} md:flex items-center{% endif %} border-[2px] mt-[2px] md:mt-0 border-[rgb(var(--colors-line-and-border))]"
+            :class="showBundleContent ? 'block' : 'hidden'"
+            x-data="{ showContent: true }"
+          >
+            <div class="bundler__header {% if section.settings.summary_layout == 'vertical' %}w-full md:pr-0{% else %}w-full md:max-w-[20%] md:pr-7 rtl:md:pl-7 rtl:md:pr-0{% endif %} relative grow pl-7 pr-7 pt-7 md:pl-0 md:pt-0">
+              {%- if section.settings.bundler_heading != blank -%}
+                <h3 class="heading-bundler--{{ section.id }} title">{{ section.settings.bundler_heading | escape }}</h3>
+              {%- endif -%}
+              {%- if section.settings.bundler_text != blank -%}
+                <div class="rte subheading text-medium text-[rgba(var(--colors-text))] mt-1.5">{{ section.settings.bundler_text }}</div>
+              {%- endif -%}
+              <button
+                aria-label="Toggle bundle content"
+                class="text-[rgba(var(--colors-text))] md:hidden absolute top-1/2 right-7 rtl:left-7 rtl:right-auto -translate-y-1/2 opacity-70 cursor-pointer" 
+                @click="showContent=!showContent"
+                x-cloak :class="JSON.parse(JSON.stringify(productsBundle)).length > 0 ? 'block': 'hidden'"
+              >
+                <span x-cloak :class="showContent ? 'hidden' : 'block'">
+                  {% render 'icon-alls', icon: 'icon-plus', class: "w-5" %}
+                </span>
+                <span class="block" :class="showContent ? 'block' : 'hidden'">
+                  {% render 'icon-alls', icon: 'icon-minus', class: "w-5" %}
+                </span>
+              </button>
+            </div>
+            <div 
+              x-show="showContent"
+              class="{% if section.settings.summary_layout == 'vertical' %}w-full{% else %}w-full md:max-w-[60%] pl-0 pr-0 md:pl-7 md:pr-7 border-l-0 border-r-0 md:border-l md:border-r self-stretch content-center{% endif %}"
+              x-collapse
+            >
+              <div class="pl-7 pr-7 md:pl-0 md:pr-0" :class="JSON.parse(JSON.stringify(productsBundle)).length > 0 ? 'hidden': 'block'">
+                <p class="text-[rgba(var(--colors-text))] mt-4{% if section.settings.summary_layout != 'vertical' %} md:mt-0{% endif %}">{{ 'sections.product-bundle.bundle_empty' | t }}</p>
+              </div>
+              
+              <div class="flex relative w-full mt-2 pt-3 pb-3 pr-3.5 pl-3.5 bg-[rgba(var(--color-error),0.2)]{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" x-cloak x-show="errorMessage">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3">{% render 'icon-alls', icon: 'icon-error' %}</span>
+                <span class="cart-warning text-small pl-5"></span>
+              </div>
+              <div x-cloak :class="JSON.parse(JSON.stringify(productsBundle)).length > 0 ? 'block': 'hidden'">
+                <div class="bundler-content md:mt-1 pl-7 pr-7 md:pl-0 md:pr-0">
+                  <div class="w-full overflow-hidden">
+                    <div 
+                      id="bundle-content-container-{{ section.id }}" 
+                      class="w-full visible overflow-hidden flex flex-row {% if section.settings.summary_layout == 'vertical' %}md:flex-col md:overflow-x-hidden md:overflow-y-auto{% else %}md:flex-row x-splide splide{% endif %} scrollbar-body scrollbar-visible md:max-h-[400px] pb-2"
+                      {% if section.settings.summary_layout == 'horizontal' %}
+                        x-data-slider="{{ section.id }}"
+                        x-intersect.once.margin.200px='$store.xSplide.load($el, {
+                          "speed": 1000,
+                          "focus": 0,
+                          "omitEnd": true,
+                          "pagination": false, 
+                          "mediaQuery": "min",
+                          "updateOnMove": "true",
+                          "autoWidth": true,
+                          "gap": "0px",
+                          {%- if settings.lang_direction contains request.locale.iso_code %} 
+                            "direction": "rtl",
+                          {%- endif %}
+                          "breakpoints": {
+                            300: {
+                              "destroy": true
+                            },
+                            768: {
+                              "destroy": false,
+                              "gap": "28px"
+                            }
+                          },
+                          "classes": {
+                            "arrows" : "block",
+                          },
+                          "events": [
+                            {
+                              "event": "ready",
+                              "callback": () => {
+                                document.dispatchEvent(new CustomEvent("eurus:{{ section.id }}:splide-ready"));
+                              }
+                            }
+                          ]
+                        })'
+                      {% endif %}
+                    >
+                      {% if section.settings.summary_layout == 'horizontal' %}
+                        <div class="splide__arrows hidden md:flex items-center justify-center gap-3 md:gap-0 mb-1 md:mb-0 mt-5 md:mt-0 order-2">
+                          {% style %}
+                            #bundle-content-container-{{ section.id }} .splide__arrows:has(> .splide__arrow--prev:disabled):has(> .splide__arrow--next:disabled) {
+                              display: none;
+                            }
+                          {% endstyle %}
+                          <button 
+                            class="splide__arrow splide__arrow--prev button-arrow p-3 rounded-full z-10 w-11 h-11 border border-solid md:border-none after:text-[20px] rtl:rotate-180 disabled:cursor-not-allowed disabled:opacity-30 md:block md:absolute md:top-1/2 md:-mt-6 md:left-0 rtl:md:left-auto rtl:md:right-0 md:duration-200 hover:opacity-100 md:transition-all md:ease-in-out md:-translate-x-full rtl:md:translate-x-full"
+                            aria-label="previous slide"
+                          >
+                            <span class="hidden">previous slide</span>
+                            {% render 'icon-labels-bags', icon: 'chevron-left' %}
+                          </button>
+                          <button 
+                            class="splide__arrow splide__arrow--next button-arrow p-3 rounded-full z-10 w-11 h-11 border border-solid md:border-none after:text-[20px] rtl:rotate-180 disabled:cursor-not-allowed disabled:opacity-30 md:block md:absolute md:top-1/2 md:-mt-6 md:right-0 rtl:md:right-auto rtl:md:left-0 md:duration-200 hover:opacity-100 md:transition-all md:ease-in-out md:translate-x-full rtl:md:-translate-x-full"
+                            aria-label="next slide"
+                          >
+                            <span class="hidden">next slide</span>
+                            {% render 'icon-labels-bags', icon: 'chevron-right' %}
+                          </button>
+                        </div>
+                        <div class="splide__track{% if enable_desktop_slider %} md:cursor-grab{% endif %} lg:pl-0 lg:pr-0">
+                          <div class="{% if request.visual_preview_mode %}md:gap-7 {% endif %}splide__list flex overflow-x-auto md:overflow-x-visible w-full">
+                      {% endif %}
+                        <template x-for="(item,index) in Object.values(productsBundle)" :key="index">
+                          <div 
+                            class="splide__slide x-splide-slide {% if section.settings.summary_layout == 'vertical' %}md:w-full{% else %}md:w-[248px]{% endif %} flex flex-shrink-0 bundler-product relative pt-6 pb-6 gap-5 {% if section.settings.summary_layout == 'vertical' %}md:border-b{% endif %} border-[rgba(var(--colors-line-and-border),0.8)]"
+                            x-data="{ 
+                              item: JSON.parse(JSON.stringify(item))
+                            }"
+                            :class="{ 'w-3/4': Object.values(productsBundle).length > 1, 'w-full': Object.values(productsBundle).length === 1, '{% if section.settings.summary_layout == 'vertical' %}md:border-b-0{% endif %}': index === Object.values(productsBundle).length - 1 }"
+                          >
+                            <div class="bundler-product-image w-[70px] h-[70px] relative">
+                              <a x-bind:href="item.productUrl" class="block disable-effect w-full">
+                                <div class="relative w-full overflow-hidden float-left before:h-0 before:block before:pb-[100.0%]{% if rounded_corner %} rounded-md{% endif %}">
+                                  {% # theme-check-disable ImgLazyLoading %}
+                                  <img
+                                    x-show="item.featured_image"
+                                    class="absolute top-0 right-0 left-0 bottom-0 object-cover h-full w-full image-hover" 
+                                    x-bind:src="`${ item.featured_image }`"
+                                    {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                                    width="150"
+                                    height="auto"
+                                    alt=""
+                                  >
+                                  {% # theme-check-enable ImgLazyLoading %}
+                                  <div class="bg-[#c9c9c9] absolute top-0 left-0 w-full h-full" x-show="!item.featured_image">{%- render 'icon-placeholder', icon: 'icon-product', class: 'w-full h-full' %}</div>
+                                </div>
+                              </a>
+                              <div class="bundler-button-remove cursor-pointer pl-1 pr-1 pt-1 pb-1 text-[rgba(var(--colors-text))] border border-[rgba(var(--colors-line-and-border),0.8)] bg-[rgba(var(--background-color))] rounded-full absolute rtl:-left-3 rtl:right-auto -top-3 -right-3" @click="setTimeout(() => { removeBundle($el, index) }, 0)">
+                                <span class="w-4 h-4 flex">{% render 'icon-alls', icon: 'icon-minus' %}</span>
+                              </div>
+                            </div>
+                            <div class="bundler-product-text flex-1 pr-4 lg:pr-0">
+                              <div>
+                                <a x-bind:href="item.productUrl" class="text-[rgba(var(--colors-heading))] mr-0 duration-200 transition disable-effect hover-text-link p-break-words line-clamp-3" x-text="item.product_name"></a>
+                                <p class="text-[rgba(var(--colors-text))] text-normal mt-1 opacity-70" x-show="item.title" x-text="item.title"></p>
+                                <p class="text-[rgba(var(--colors-price))] text-normal mt-1"
+                                  x-show="item.price"
+                                  x-text="new Intl.NumberFormat('{{ shop.locale }}', { style: 'currency', currency: '{{ cart.currency.iso_code }}' }).format(item.price / 100)"
+                                ></p>
+                              </div>
+                            </div>
+                          </div>
+                        </template>
+                      {% if section.settings.summary_layout == 'horizontal' %}
+                          </div>
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% if section.settings.collection.products_count != 0 or section.settings.products != blank %}
+              <div x-cloak :class="JSON.parse(JSON.stringify(productsBundle)).length > 0 ? 'block': 'hidden'" class="{% if section.settings.summary_layout != 'vertical' %}md:max-w-[20%] grow{% endif %}">
+                <div class="bundler-footer {% if section.settings.summary_layout == 'vertical' %}w-full md:pl-0{% else %}w-full md:pl-7 rtl:md:pr-7 rtl:md:pl-0{% endif %} grow pl-7 pr-7 md:pr-0 mt-1">
+                  <div class="relative mt-1 pt-5 pb-5 pr-5 pl-5{% if section.settings.summary_layout != 'vertical' %} md:pt-0 md:pb-0 md:pl-0 md:pr-0 mb-4{% else %} mb-5{% endif %} flex flex-wrap justify-between items-center text-medium border{% if section.settings.summary_layout != 'vertical' %} md:border-0 md:flex-nowrap{% endif %} border-[rgba(var(--colors-line-and-border),0.8)] break-words{% if rounded_corner %} rounded-xl{% endif %}" role="status">
+                    <span class="absolute {% if section.settings.summary_layout != 'vertical' %}md:static{% endif %} -top-2.5 left-5 rtl:left-auto rtl:right-5 bg-[rgba(var(--background-color))] pl-1 pr-1 text-[rgba(var(--colors-heading))] text-sm">{{ 'sections.cart.headings.total' | t }}</span>
+                    <div class="flex flex-wrap items-center w-full justify-between{% if section.settings.summary_layout != 'vertical' %} md:justify-end{% endif %}">
+                      <p x-show="totalDiscount == 0" class="text-[rgba(var(--colors-heading))] text-medium font-semibold" id="total-price" x-html="totalPrice"></p>
+                      <div class="flex flex-wrap items-center justify-start {% if section.settings.summary_layout == 'vertical' %}md:justify-center{% else %}md:justify-end{% endif %} w-full md:w-auto" x-show="totalDiscount != 0">
+                        <p class="text-medium font-semibold {% if section.settings.summary_layout != 'vertical' %}md:border-0 rtl:md:border-0{% else %}pr-3 rtl:pl-3 rtl:pr-0{% endif %} border-r rtl:border-l rtl:border-r-0" id="total-price-discount" x-html="totalDiscount"></p>
+                        <span class="{% if section.settings.summary_layout != 'vertical' %}ml-2 rtl:mr-2 rtl:ml-0{% else %}ml-3 rtl:mr-3 rtl:ml-0{% endif %} pl-2 pr-2 pt-0.5 pb-0.5 label-discount-value-{{ section.id }} bg-[rgba(var(--discount-label-color))] text-[rgba(var(--discount-label-text-color))] text-sm {{ small_label_radius }}">
+                          {{ 'sections.product-bundle.save' | t }} <span class="font-semibold text-[rgba(var(--discount-label-text-color))]" x-html="amountPrice"></span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    class="button-atc button button-solid block w-full pl-7 pr-7 pt-3 pb-3 disable-action-btn-animation disabled:cursor-not-allowed disabled:opacity-60"
+                    @click="handleAddToCart($el)"
+                    disabled
+                  >
+                    {% assign button_label = 'products.product.add_all_to_cart' | t %}
+                    <span :class="{ 'lg:block opacity-0 is-focus-button' : loading }">
+                      <span class="flex items-center justify-center">
+                        {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+                      </span>
+                    </span>
+                    <div class="lg:inline-block animate-spin w-4 h-4 md:w-5 md:h-5 absolute top-[calc(50%-8px)] left-[calc(50%-8px)] md:top-[calc(50%-10px)] md:left-[calc(50%-10px)]" x-show="loading" x-cloak>
+                      {% render 'icon-alls', icon: 'icon-loading' %}
+                    </div>
+                  </button>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+<script src="{{ 'product-bundle.js' | asset_url }}" defer></script>  
+{% schema %}
+{
+  "name": "t:sections.products-bundle.name",
+  "tag": "section",
+  "class": "section section-products-bundle x-section",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer",
+      "aside"
+    ]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.section_and_blocks.product_bundle"
+    },
+    {
+      "type": "textarea",
+      "id": "heading",
+      "default": "Product bundles",
+      "label": "t:sections.all.text.heading",
+      "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+    },
+    {
+      "type": "select",
+      "id": "highlight_type",
+      "default": "underline",
+      "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+      "options": [
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        },
+        {
+          "value": "font_highlight",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 50,
+      "max": 200,
+      "step": 10,
+      "unit": "%",
+      "default": 100,
+      "label": "t:sections.all.text.heading_size"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "default": "h2",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "p",
+          "label": "p"
+        }
+      ]
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "default": "Create a bundle and save up to 30%!",
+      "label": "t:sections.all.text.text"
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "default": "center",
+      "label": "t:sections.all.text.heading_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "show_discount_value_label",
+      "label": "t:sections.products-bundle.settings.header.show_discount_value_label"
+    },
+    {
+      "type": "select",
+      "id": "label_type",
+      "default": "rounded",
+      "label": "t:sections.product-labels-and-badges.blocks.type.label",
+      "options": [
+        {
+          "value": "rounded",
+          "label": "t:settings_schema.buttons.rounded"
+        },
+        {
+          "value": "rounded_corners",
+          "label": "t:settings_schema.buttons.rounded_corners"
+        },
+        {
+          "value": "mixed",
+          "label": "t:settings_schema.buttons.mixed"
+        },
+        {
+          "value": "square",
+          "label": "t:settings_schema.products.square"
+        }
+      ],
+      "visible_if": "{{ section.settings.show_discount_value_label }}"
+    },
+    {
+      "type": "color",
+      "id": "discount_value_label",
+      "label": "t:sections.products-bundle.settings.header.discount_value_label",
+      "visible_if": "{{ section.settings.show_discount_value_label }}"
+    },
+    {
+      "type": "color",
+      "id": "discount_value_label_text",
+      "label": "t:sections.products-bundle.settings.header.discount_value_label_text",
+      "visible_if": "{{ section.settings.show_discount_value_label }}"
+    },
+    {
+      "type": "text",
+      "id": "button_atb_label",
+      "default": "ADD TO BUNDLE",
+      "label": "t:sections.products-bundle.settings.add_to_bundle_button_label.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.products-bundle.settings.header.content"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "t:sections.products-bundle.settings.select_collection.label"
+    },
+    {
+      "type": "range",
+      "id": "product_to_show",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 3,
+      "info": "t:sections.products-bundle.settings.select_collection.info",
+      "label": "t:sections.products-bundle.settings.products_to_show.label"
+    },
+    {
+      "type": "product_list",
+      "id": "products",
+      "limit": 12,
+      "label": "t:sections.main-product.blocks.frequently_bought_together.settings.list_products",
+      "info": "t:sections.products-bundle.settings.select_products.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_highlighted_features",
+      "default": false,
+      "label": "t:sections.product-recommendations.settings.show_highlighted_features.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "each_product_can_added_to_bundle_once",
+      "default": true,
+      "label": "t:sections.products-bundle.settings.each_product_can_added_to_bundle_once.label",
+      "info": "t:sections.products-bundle.settings.each_product_can_added_to_bundle_once.info"
+    },
+    {
+      "type": "range",
+      "id": "minimum_items",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 3,
+      "label": "t:sections.products-bundle.settings.minimum_items.label"
+    },
+    {
+      "type": "select",
+      "id": "discount_type",
+      "default": "percentage",
+      "label": "t:sections.products-bundle.settings.discount_type.label",
+      "info": "t:sections.products-bundle.settings.discount_type.info",
+      "options": [
+        {
+          "value": "percentage",
+          "label": "t:sections.products-bundle.settings.discount_type.options__1.label"
+        },
+        {
+          "value": "amount",
+          "label": "t:sections.products-bundle.settings.discount_type.options__2.label"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "discount_value",
+      "label": "t:sections.products-bundle.settings.discount_value.label",
+      "info": "t:sections.products-bundle.settings.discount_value.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "apply_discount_once_per_order",
+      "default": false,
+      "label": "t:sections.products-bundle.settings.apply_discount_once_per_order.label",
+      "info": "t:sections.products-bundle.settings.apply_discount_once_per_order.info"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.announcement-bar.settings.carousel.name"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_desktop_slider",
+      "default": false,
+      "label": "t:sections.announcement-bar.settings.enable_carousel_on_desktop.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "swiper_on_mobile",
+      "default": true,
+      "label": "t:sections.collection-list.settings.swipe_on_mobile.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_arrow_mobile",
+      "default": false,
+      "label": "t:sections.collection-list.settings.swipe_on_mobile.enable_arrow_mobile",
+      "visible_if": "{{ section.settings.swiper_on_mobile }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "auto_play",
+      "label": "t:sections.slideshow.settings.auto_play.label",
+      "default": false,
+      "visible_if": "{{ section.settings.enable_desktop_slider or section.settings.swiper_on_mobile }}"
+    },
+    {
+      "type": "range",
+      "id": "change_slides_speed",
+      "min": 3,
+      "max": 10,
+      "step": 1,
+      "unit": "s",
+      "label": "t:sections.slideshow.settings.change_slides_speed.label",
+      "default": 5,
+      "visible_if": "{{ section.settings.auto_play and section.settings.enable_desktop_slider or section.settings.swiper_on_mobile }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.products-bundle.settings.bundle_summary.label"
+    },
+    {
+      "type": "select",
+      "id": "summary_layout",
+      "default": "vertical",
+      "label": "t:sections.products-bundle.settings.bundle_layout.label",
+      "options": [
+        {
+          "value": "vertical",
+          "label": "t:sections.featured-collection.settings.slider_style.options__2"
+        },
+        {
+          "value": "horizontal",
+          "label": "t:sections.featured-collection.settings.slider_style.options__1"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "summary_position",
+      "default": "right",
+      "label": "t:sections.products-bundle.settings.bundle_position.label",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ],
+      "visible_if": "{{ section.settings.summary_layout != 'horizontal' }}"
+    },
+    {
+      "type": "text",
+      "id": "bundler_heading",
+      "default": "Bundle Contents",
+      "label": "t:sections.products-bundle.settings.bundle_heading.label"
+    },
+    {
+      "type": "richtext",
+      "id": "bundler_text",
+      "default": "<p>Add at least 3 items to get 33% Off</p>",
+      "label": "t:sections.products-bundle.settings.bundle_text.label"
+    },
+    {
+      "type": "color",
+      "id": "background_color_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_light"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.text.colors_title_light"
+    },
+    {
+      "type": "color",
+      "id": "text_light",
+      "label": "t:sections.all.text.color",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_light",
+      "label": "t:sections.all.button.primary_button_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_text_light",
+      "label": "t:sections.all.button.primary_button_text_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_light",
+      "label": "t:sections.all.button.primary_button_hover_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_text_hover_light",
+      "label": "t:sections.all.button.primary_button_hover_text_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "line_border",
+      "label": "t:sections.all.text.line_border",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_dark"
+    },
+    {
+      "type": "color",
+      "id": "title_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.text.colors_title_dark"
+    },
+    {
+      "type": "color",
+      "id": "text_dark",
+      "label": "t:sections.all.text.color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_dark",
+      "label": "t:sections.all.button.primary_button_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_text_dark",
+      "label": "t:sections.all.button.primary_button_text_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_dark",
+      "label": "t:sections.all.button.primary_button_hover_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "button_text_hover_dark",
+      "label": "t:sections.all.button.primary_button_hover_text_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "line_border_dark",
+      "label": "t:sections.all.text.line_border_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "spacing",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 4,
+      "label": "t:sections.all.spacing.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "default": false,
+      "label": "t:sections.all.full_width.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_bottom"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "default": "1",
+      "label": "t:sections.featured-collection.settings.columns_mobile.label",
+      "options": [
+        {
+          "value": "1",
+          "label": "1"
+        },
+        {
+          "value": "2",
+          "label": "2"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "spacing_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 4,
+      "label": "t:sections.all.spacing.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider_mobile",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "min": 0,
+      "max": 100,
+      "unit": "px",
+      "step": 4,
+      "default": 28,
+      "label": "t:sections.all.padding.padding_bottom"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "promotion_block",
+      "name": "t:sections.collection-list.blocks.promotion_block.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "subheading",
+          "label": "t:sections.all.text.subheading"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Promotion block",
+          "label": "t:sections.all.text.heading",
+          "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+        },
+        {
+          "type": "select",
+          "id": "highlight_type",
+          "default": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+          "options": [
+            {
+              "value": "underline",
+              "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+            },
+            {
+              "value": "font_highlight",
+              "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+            }
+          ]
+        },
+        {
+          "type": "range",
+          "id": "title_size",
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "default": 80,
+          "unit": "%",
+          "label": "t:sections.all.text.heading_size"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "default": "<p>Describe a promotion, make announcements, or welcome customers to your store.</p>",
+          "label": "t:sections.collection-list.blocks.promotion_block.settings.content.label"
+        },
+        {
+          "type": "range",
+          "id": "text_size",
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "unit": "%",
+          "default": 100,
+          "label": "t:sections.all.text.text_size"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.collection-list.blocks.promotion_block.settings.desktop_image.label",
+          "info": "t:sections.all.image.note_image_size"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "t:sections.promotion-banner.settings.image_mobile.label",
+          "info": "t:sections.all.image.note_image_size"
+        },
+        {
+          "type": "video",
+          "id": "video",
+          "label": "t:sections.video.name"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_sound_control",
+          "label": "t:sections.video.settings.show_sound_control.label",
+          "info": "t:sections.video.settings.show_sound_control.info",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "t:sections.video.settings.header_video_url.content"
+        },
+        {
+          "type": "paragraph",
+          "content": "t:sections.video.settings.header_video_url.label"
+        },
+        {
+          "type": "video_url",
+          "id": "video_url",
+          "accept": [
+            "youtube",
+            "vimeo"
+          ],
+          "label": "t:sections.video.settings.video_url.label",
+          "info": "t:sections.video.settings.video_url.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_video_autoplay",
+          "default": false,
+          "label": "t:sections.featured-product.settings.enable_video_autoplay.label",
+          "info": "t:sections.featured-product.settings.enable_video_autoplay.info"
+        },
+        {
+          "type": "text",
+          "id": "video_alt_text",
+          "label": "t:sections.video.settings.video_alt_text.label"
+        },
+        {
+          "type": "range",
+          "id": "image_overlay_opacity",
+          "min": 0,
+          "max": 100,
+          "step": 10,
+          "unit": "%",
+          "label": "t:sections.all.overlay_opacity.label",
+          "default": 10
+        },
+        {
+          "type": "range",
+          "id": "position",
+          "min": 1,
+          "max": 13,
+          "step": 1,
+          "label": "t:sections.slideshow.blocks.slide.settings.content_alignment.label",
+          "info": "Only applied when carousel is disabled.",
+          "default": 1
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "t:sections.all.button.label"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "t:sections.all.button.link"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_new_window",
+          "default": false,
+          "label": "t:sections.all.open_new_window.label"
+        },
+        {
+          "type": "select",
+          "id": "show_button_style",
+          "options": [
+            {
+              "value": "primary",
+              "label": "t:sections.all.button.button_style.primary"
+            },
+            {
+              "value": "secondary",
+              "label": "t:sections.all.button.button_style.secondary"
+            },
+            {
+              "value": "text-link",
+              "label": "t:settings_schema.colors.colors_text_link"
+            }
+          ],
+          "label": "t:sections.all.button.button_style.label",
+          "default": "primary"
+        },
+        {
+          "type": "select",
+          "id": "alignment",
+          "options": [
+            {
+              "value": "left",
+              "label": "t:sections.all.content_alignment.options__1.label"
+            },
+            {
+              "value": "center",
+              "label": "t:sections.all.content_alignment.options__2.label"
+            },
+            {
+              "value": "right",
+              "label": "t:sections.all.content_alignment.options__3.label"
+            }
+          ],
+          "default": "center",
+          "label": "t:sections.all.alignment.label"
+        },
+        {
+          "type": "select",
+          "id": "content_position",
+          "options": [
+            {
+              "value": "start",
+              "label": "t:sections.all.content_position.options__11.label"
+            },
+            {
+              "value": "center",
+              "label": "t:sections.all.content_alignment.options__2.label"
+            },
+            {
+              "value": "end",
+              "label": "t:sections.all.content_position.options__12.label"
+            }
+          ],
+          "label": "t:sections.all.content_position.label",
+          "default": "center"
+        },
+        {
+          "type": "color",
+          "id": "background_color_light",
+          "default": "#F6F6F6",
+          "label": "t:sections.all.background.background_color_light"
+        },
+        {
+          "type": "color",
+          "id": "text_color_light",
+          "default": "#000000",
+          "label": "t:sections.all.text.color"
+        },
+        {
+          "type": "color",
+          "id": "color_heading_highlight_light",
+          "label": "t:sections.all.text.color_text_highlight_light",
+          "default": "rgba(0,0,0,0)"
+        },
+        {
+          "type": "color",
+          "id": "background_color_dark",
+          "default": "#2A2A2A",
+          "label": "t:sections.all.background.background_color_dark"
+        },
+        {
+          "type": "color",
+          "id": "text_color_dark",
+          "default": "#FFFFFF",
+          "label": "t:sections.all.text.color_dark"
+        },
+        {
+          "type": "color",
+          "id": "color_heading_highlight_dark",
+          "label": "t:sections.all.text.color_text_highlight_dark",
+          "default": "rgba(0,0,0,0)"
+        },
+        {
+          "type": "color",
+          "id": "color_button",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.color_button"
+        },
+        {
+          "type": "color",
+          "id": "color_text_button",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.color_text_button"
+        },
+        {
+          "type": "color",
+          "id": "color_button_hover",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.color_button_hover"
+        },
+        {
+          "type": "color",
+          "id": "color_text_button_hover",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.color_text_button_hover"
+        },
+        {
+          "type": "color",
+          "id": "color_button_secondary",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.colors_button_secondary"
+        },
+        {
+          "type": "color",
+          "id": "secondary_button_text",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:sections.all.button.secondary_button_text"
+        },
+        {
+          "type": "color",
+          "id": "colors_text_link",
+          "default": "rgba(0,0,0,0)",
+          "label": "t:settings_schema.colors.colors_text_link"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.all.padding.section_padding_heading"
+        },
+        {
+          "type": "range",
+          "id": "number_of_columns",
+          "min": 1,
+          "max": 4,
+          "step": 1,
+          "default": 3,
+          "label": "t:sections.promotion-grid.blocks.promotion.settings.number_of_columns.label",
+          "info": "t:sections.products-bundle.blocks.settings.number_of_columns_desktop.info"
+        },
+        {
+          "type": "range",
+          "id": "number_of_row",
+          "min": 1,
+          "max": 3,
+          "step": 1,
+          "default": 1,
+          "label": "t:sections.promotion-grid.blocks.promotion.settings.number_of_row.label",
+          "info": "t:sections.products-bundle.blocks.settings.number_of_row.info"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.all.padding.section_layout_mobile"
+        },
+        {
+          "type": "select",
+          "id": "number_of_columns_mobile",
+          "options": [
+            {
+              "value": "1",
+              "label": "t:sections.main-collection-product-grid.settings.products_per_row_on_mobile.options__1.label"
+            },
+            {
+              "value": "2",
+              "label": "t:sections.main-collection-product-grid.settings.products_per_row_on_mobile.options__2.label"
+            }
+          ],
+          "default": "1",
+          "label": "t:sections.promotion-grid.blocks.promotion.settings.number_of_columns.label",
+          "info": "t:sections.products-bundle.blocks.settings.number_of_columns.info"
+        },
+        {
+          "type": "select",
+          "id": "number_of_row_mobile",
+          "options": [
+            {
+              "value": "1",
+              "label": "t:sections.main-collection-product-grid.settings.products_per_row_on_mobile.options__1.label"
+            },
+            {
+              "value": "2",
+              "label": "t:sections.main-collection-product-grid.settings.products_per_row_on_mobile.options__2.label"
+            }
+          ],
+          "default": "1",
+          "label": "t:sections.promotion-grid.blocks.promotion.settings.number_of_row.label",
+          "info": "t:sections.products-bundle.blocks.settings.number_of_row_mobile.info"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.products-bundle.name",
+      "category": "t:categories.products"
+    }
+  ]
+}
+{% endschema %}
+

@@ -1,0 +1,59 @@
+<div class="gift-card-logo x-pgw page-width text-center mx-auto pl-5 pr-5 p-break-words md:pl-20 md:pr-20 mb-8 lg:mb-12">
+  {%- if section.settings.logo != blank -%}
+    {%- assign logo_alt = section.settings.logo.alt | default: shop.name | escape -%}
+    {% # theme-check-disable ImgLazyLoading %}
+    <img
+      src="{{ section.settings.logo | image_url: width: section.settings.logo.width }}"
+      alt="{{ logo_alt }}"
+      sizes="{{ section.settings.logo_width }}px"
+      srcset="{{ section.settings.logo | image_url: width: 50 }} 50w,
+        {{ section.settings.logo | image_url: width: 100 }} 100w,
+        {{ section.settings.logo | image_url: width: 150 }} 150w,
+        {{ section.settings.logo | image_url: width: 200 }} 200w,
+        {{ section.settings.logo | image_url: width: 250 }} 250w,
+        {{ section.settings.logo | image_url: width: 300 }} 300w,
+        {{ section.settings.logo | image_url: width: 400 }} 400w,
+        {{ section.settings.logo | image_url: width: 500 }} 500w,
+        {{ section.settings.logo | image_url: width: 600 }} 600w"
+      width="{{ section.settings.logo.width }}"
+      height="{{ section.settings.logo.height }}"
+      class="inline-block w-[{{ section.settings.logo_width_mobile }}px] md:w-[{{ section.settings.logo_width }}px]"
+    />
+    {% # theme-check-enable ImgLazyLoading %}
+  {%- else -%}
+    <h1>{{ shop.name }}</h1>
+  {%- endif -%}
+</div>
+{% schema %}
+{
+  "name": "t:sections.header.name",
+  "class": "section-gift-card-header",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "t:sections.main-password-header.settings.logo.label"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "min": 50,
+      "max": 200,
+      "step": 10,
+      "default": 120,
+      "unit": "t:sections.header.settings.logo_width.unit",
+      "label": "t:sections.header.settings.logo_width.label"
+    },
+    {
+      "type": "range",
+      "id": "logo_width_mobile",
+      "min": 40,
+      "max": 150,
+      "step": 10,
+      "default": 100,
+      "unit": "t:sections.header.settings.logo_width.unit",
+      "label": "t:sections.header.settings.logo_width_mobile.label"
+    }
+  ]
+}
+{% endschema %}

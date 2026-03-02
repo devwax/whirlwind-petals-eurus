@@ -1,0 +1,13 @@
+{% liquid
+  assign list_of_new_icons = "||icon-transition-arrow||icon-tick-table||icon-account||icon-arrow||icon-close||icon-copy||icon-dark||icon-filter||icon-hamburger||icon-light||icon-minus||icon-plus||icon-search||icon-grid||icon-list||icon-up-right||icon-discount||icon-home-mobile-dock||icon-caret||"
+  assign item = '||' | append: icon | append: '||'
+  if settings.icon_options == "modern" or icon_modern
+    if list_of_new_icons contains item
+      render 'icon-alls-new', icon: icon, class: class, enable_blog_detail: enable_blog_detail, enable_customer_page: enable_customer_page, enable_email_footer: enable_email_footer, animation_class: animation_class
+    else
+      render 'icon-alls-old', icon: icon, class: class, enable_blog_detail: enable_blog_detail, enable_customer_page: enable_customer_page, enable_email_footer: enable_email_footer, animation_class: animation_class
+    endif
+  else
+    render 'icon-alls-old', icon: icon, class: class, enable_blog_detail: enable_blog_detail, enable_customer_page: enable_customer_page, enable_email_footer: enable_email_footer, animation_class: animation_class
+  endif
+%}

@@ -1,0 +1,199 @@
+<div x-show="show" class="x-container-sidebar-popup fixed z-[70] left-0 top-0 right-0 bottom-0 flex justify-end" x-cloak>
+  <div x-show="show" x-cloak class="x-overlay absolute top-0 left-0 right-0 bottom-0 bg-[#acacac] bg-opacity-30"></div>
+  <div class="x-container-sidebar-popup-content w-full md:w-[450px] flex flex-col relative bg-[rgba(var(--background-color))]{% if settings.edges_type == 'rounded_corners' %} md:m-2.5 md:rounded-[10px]{% endif %}"
+    x-show="show" x-cloak
+    x-transition:enter="transition-all ease-in-out duration-500"
+    x-transition:enter-start="opacity-0 transform translate-y-1/3{% if settings.lang_direction contains request.locale.iso_code %} md:-translate-x-1/3{% else %} md:translate-x-1/3{% endif %} md:translate-y-0"
+    x-transition:enter-end="opacity-100 transform translate-y-0 md:translate-x-0 md:translate-y-0"
+    x-transition:leave="transition-all ease-in-out duration-500"
+    x-transition:leave-end="opacity-0 transform translate-y-1/3{% if settings.lang_direction contains request.locale.iso_code %} md:-translate-x-1/3{% else %} md:translate-x-1/3{% endif %} md:translate-y-0"
+    @click.away="show = false"
+  >
+    <div class="x-container-sidebar-popup-header pl-5 pr-5 pt-5 pb-5 flex items-center justify-between">
+      <h3 class="text-[150%] leading-tight p-break-words w-[calc(100%-40px)]">{{ section.settings.sidebar_heading | escape }}</h3>
+      <button aria-label="Close sidebar" class="icon-close-container rounded-full absolute top-2 right-2 rtl:right-auto rtl:left-2 group-close-btn cursor-pointer" @click.prevent="show = false">
+        {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+      </button>
+    </div>
+    <div class="x-container-sidebar-popup-content pl-5 pr-5 flex flex-col overflow-y-auto scrollbar-body" role="list">
+      {% for block in section.blocks %}
+        {% case block.type %}
+          {% when 'sidebar_content' %}
+            {% style %}  
+              .button--{{ block.id }}.button-solid,
+              .button--{{ block.id }}.button-solid:before { 
+                {% unless block.settings.color_button.alpha == 0.0 -%}
+                  --colors-line-and-border: {{ block.settings.color_button.red }}, {{ block.settings.color_button.green }}, {{ block.settings.color_button.blue }};
+                  --colors-button: {{ block.settings.color_button.red }}, {{ block.settings.color_button.green }}, {{ block.settings.color_button.blue }};
+                {%- else -%}
+                  --colors-line-and-border: var(--colors-button);
+                {%- endunless %}
+                {% unless block.settings.color_button_hover.alpha == 0.0 -%}
+                  --colors-button-hover: rgb({{ block.settings.color_button_hover.red }}, {{ block.settings.color_button_hover.green }}, {{ block.settings.color_button_hover.blue }});
+                {%- endunless %}
+                {% unless block.settings.color_text_button.alpha == 0.0 -%}
+                  --colors-button-text: {{ block.settings.color_text_button.red }}, {{ block.settings.color_text_button.green }}, {{ block.settings.color_text_button.blue }};
+                {%- endunless %}
+                {% unless block.settings.color_text_button_hover.alpha == 0.0 -%}
+                  --colors-button-text-hover: {{ block.settings.color_text_button_hover.red }}, {{ block.settings.color_text_button_hover.green }}, {{ block.settings.color_text_button_hover.blue }};
+                {%- endunless %}
+              }
+              .button--{{ block.id }}.button.button-outline {
+                {% if block.settings.secondary_button_text.alpha != 0.0 -%}
+                  --colors-secondary-button: {{ block.settings.secondary_button_text.red }}, {{ block.settings.secondary_button_text.green }}, {{ block.settings.secondary_button_text.blue }};
+                  --colors-line-secondary-button: {{ block.settings.secondary_button_text.red }}, {{ block.settings.secondary_button_text.green }}, {{ block.settings.secondary_button_text.blue }};
+                  --background-secondary-button: transparent;
+                {%- endif %}
+                {% if block.settings.color_button_secondary.alpha != 0.0 -%}
+                  --background-secondary-button: {{ block.settings.color_button_secondary.red }}, {{ block.settings.color_button_secondary.green }}, {{ block.settings.color_button_secondary.blue }};
+                  --colors-line-secondary-button: {{ block.settings.color_button_secondary.red }}, {{ block.settings.color_button_secondary.green }}, {{ block.settings.color_button_secondary.blue }};
+                {%- endif %}
+              }
+              .button--{{ block.id }}.button.button-text-link, 
+              .button--{{ block.id }}.button.button-text-link:before {
+                {% if block.settings.colors_text_link.alpha != 0.0 -%}
+                  --colors-text-link: {{ block.settings.colors_text_link.red }}, {{ block.settings.colors_text_link.green }}, {{ block.settings.colors_text_link.blue }};
+                {%- endif %}
+              }
+              .content-bg-{{ block.id }} {
+                {% if block.settings.content_background_color.alpha != 0.0 -%}
+                  background-color: {{ block.settings.content_background_color }};
+                  --image-treatment-overlay: {{ block.settings.content_background_color.red }}, {{ block.settings.content_background_color.green }}, {{ block.settings.content_background_color.blue }};
+                {%- endif %}
+              }
+              .text-content-{{ block.id }} {
+                {% if block.settings.color_heading.alpha != 0.0 -%}
+                  --colors-heading: {{ block.settings.color_heading.red }}, {{ block.settings.color_heading.green }}, {{ block.settings.color_heading.blue }};
+                {%- endif %}
+                {% if block.settings.color_text.alpha != 0.0 -%}
+                  --colors-text: {{ block.settings.color_text.red }}, {{ block.settings.color_text.green }}, {{ block.settings.color_text.blue }};
+                {%- endif %}
+                }
+            {% endstyle %}
+            {% liquid
+              assign container_class = ''
+              if block.settings.content_layout == 'top-image'
+                assign container_class = 'flex flex-col-reverse'
+              elsif block.settings.content_layout == 'bottom-image'
+                assign container_class = 'flex flex-col'
+              elsif block.settings.content_layout == 'left-image'
+                assign container_class = 'flex flex-row-reverse'
+              elsif block.settings.content_layout == 'right-image'
+                assign container_class = 'flex flex-row'
+              else
+                assign container_class = 'relative'
+              endif
+            %}
+            <div class="x-seasonal-deal-container pb-5">     
+              <div class="overflow-hidden {{ container_class }}{% unless content_layout == 'overlay' %} content-bg-{{ block.id }}{% endunless %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">     
+                {% if block.settings.image != blank %}
+                  {% liquid
+                    assign ratio = 100 
+                    if block.settings.image_ratio == 'portrait'
+                      assign ratio = 150 
+                    endif
+                    if block.settings.image_ratio == 'landscape'
+                      assign ratio = 75 
+                    endif
+                    if block.settings.image_ratio == 'wide'
+                      assign ratio = 56 
+                    endif
+                    if block.settings.image_ratio == '3/4'
+                      assign ratio = 133 
+                    endif
+                  %}
+                  <div class="relative flex-1 x-seasonal-deal-image{% unless block.settings.image_ratio == "natural" %} pb-[{{ ratio }}%]{% endunless %}"
+                    style="{% if block.settings.image_ratio == "natural" %}padding-bottom: {{ 100 | divided_by: block.settings.image.aspect_ratio }}%{% endif %}"
+                  >
+                    <picture>
+                      {% # theme-check-disable ImgLazyLoading %}
+                      <img class="w-full h-full absolute top-0 object-cover animate-Xpulse skeleton-image{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+                        srcset="{{ block.settings.image | image_url: width: 375 }} 375w,
+                          {{ block.settings.image | image_url: width: 450 }} 450w,
+                          {{ block.settings.image | image_url: width: 750 }} 750w,"
+                        src="{{ block.settings.image | image_url: width: 750 }}"
+                        alt="{{ block.settings.image.alt | escape }}"
+                        {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                        onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image')"
+                        sizes="(min-width: 768px) 700px, 100vw"
+                        width="{{ block.settings.image.width }}"
+                        height="{{ block.settings.image.height }}"
+                        style="object-position: {{ block.settings.image.presentation.focal_point }};"
+                      >
+                      {% # theme-check-enable ImgLazyLoading %}
+                    </picture>
+                  </div>
+                  {% if block.settings.content_layout == 'overlay-with-opacity' %}
+                    <div class="{% if settings.edges_type == 'rounded_corners' %}rounded-[10px]{% endif %} content-bg-{{ block.id }} absolute top-0 left-0 bottom-0 right-0 z-10 image-treatment-overlay pointer-events-none opacity-{{ block.settings.overlay_opacity }}"></div>
+                  {% endif %}
+                {% else %}
+                  {% liquid
+                    assign placeholder_class = 'absolute w-full h-full bg-[#C9C9C9] text-[#acacac]'
+                    if settings.edges_type == 'rounded_corners'
+                      assign placeholder_class = placeholder_class | append: ' rounded-[10px]'
+                    endif
+                  %}
+                  <div class="relative flex-1 x-placeholder-image pb-[100%]">
+                    {{ 'image' | placeholder_svg_tag: placeholder_class }}
+                  </div>
+                {% endif %}
+                {% if block.settings.promotion_heading != blank or block.settings.promotion_subheading != blank or block.settings.promotion_des != blank %}
+                  {% liquid
+                    assign content_layout = ''
+                    if block.settings.content_layout == 'overlay-with-opacity'
+                      assign content_layout = 'overlay'
+                    endif
+
+                    assign overlay_container_class = ''
+                    if content_layout == 'overlay'
+                      if block.settings.content_position == 'top-left'
+                        assign overlay_container_class = 'justify-start items-start'
+                      elsif block.settings.content_position == 'top-center'
+                        assign overlay_container_class = 'justify-center items-start'
+                      elsif block.settings.content_position == 'top-right'
+                        assign overlay_container_class = 'justify-end items-start'
+                      elsif block.settings.content_position == 'middle-left'
+                        assign overlay_container_class = 'justify-start items-center'
+                      elsif block.settings.content_position == 'middle-center'
+                        assign overlay_container_class = 'justify-center items-center'
+                      elsif block.settings.content_position == 'middle-right'
+                        assign overlay_container_class = 'justify-end items-center'
+                      elsif block.settings.content_position == 'bottom-left'
+                        assign overlay_container_class = 'justify-start items-end'
+                      elsif block.settings.content_position == 'bottom-center'
+                        assign overlay_container_class = 'justify-center items-end'
+                      elsif block.settings.content_position == 'bottom-right'
+                        assign overlay_container_class = 'justify-end items-end'
+                      endif
+                    endif
+                  %}
+                  {% if content_layout == 'overlay' %}
+                    <div class="top-0 left-0 right-0 bottom-0 absolute flex z-20 {{ overlay_container_class }}">
+                  {% endif %}
+                    <div class="x-seasonal-deal-text-content text-content-{{ block.id }} flex-1{% if content_layout == 'overlay' %} absolute w-[80%]{% endif %}">
+                      <div class="pr-4 pl-4 pb-4 pt-4 flex flex-col gap-5 text-{% if block.settings.content_alignment == 'left' %}start{% elsif block.settings.content_alignment == 'right' %}end{% else %}center{% endif %} {% if block.settings.content_alignment == 'left' %}items-start{% elsif block.settings.content_alignment == 'right' %}items-end{% else %}items-center{% endif %}">
+                        <p class="text-[rgb(var(--colors-text))]">{{ block.settings.promotion_subheading }}</p>
+                        <h3>{{ block.settings.promotion_heading }}</h3>
+                        <div class="rte text-[rgb(var(--colors-text))]">{{ block.settings.promotion_des}}</div>
+                        {% if block.settings.button_link == blank %}
+                          <div class="w-fit button--{{ block.id }} button{% if block.settings.show_button_style == 'secondary' %} button-outline{% elsif block.settings.show_button_style == 'text-link' %} button-text-link{% else %} button-solid{% endif %} leading-normal empty:hidden text-center pl-7 pr-7 pt-2.5 pb-2.5 md:pl-8 md:pr-8 md:pt-3 md:pb-3 opacity-70 disable-btn-animation hover:cursor-not-allowed">
+                            {% render 'button-label', button_label: block.settings.button_label, show_button_style: block.settings.show_button_style %}
+                          </div>
+                        {% else %}
+                          <a class="w-fit button--{{ block.id }} button{% if block.settings.show_button_style == 'secondary' %} button-outline{% elsif block.settings.show_button_style == 'text-link' %} button-text-link{% else %} button-solid{% endif %} leading-normal empty:hidden text-center pl-7 pr-7 pt-2.5 pb-2.5 md:pl-8 md:pr-8 md:pt-3 md:pb-3" href="{{ block.settings.button_link }}"{% if block.settings.open_new_window_button %} target="_blank"{% endif %}>
+                            {% render 'button-label', button_label: block.settings.button_label, show_button_style: block.settings.show_button_style %}
+                          </a>
+                        {% endif %}
+                      </div>
+                    </div>
+                  {% if content_layout == 'overlay' %}
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div> 
+            </div> 
+        {% endcase %}
+      {% endfor %}
+    </div>
+  </div>
+</div>

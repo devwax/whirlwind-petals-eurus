@@ -1,0 +1,60 @@
+<div id="list-country">
+  <ul role="list">
+    {% if settings.stack_currency_enable %}
+      {% liquid
+        assign list_contains = ''
+        assign market_already_shown = ''
+        assign displayed_countries = '||'
+        for country in localization.available_countries
+          assign market_currency = '||' | append: country.market.id | append: country.currency.iso_code | append: country.currency.symbol | append: "||"
+          if displayed_countries contains market_currency
+            assign list_contains = list_contains | append: market_currency 
+          endif
+          assign displayed_countries = displayed_countries | append: country.market.id | append: country.currency.iso_code | append: country.currency.symbol | append: "||"
+        endfor
+      %}
+      {% for country in localization.available_countries %}
+        {% assign market_currency_combo = '||' | append: country.market.id | append: country.currency.iso_code | append: country.currency.symbol | append: "||" %}
+        {% if list_contains contains market_currency_combo %}
+          {% unless market_already_shown contains market_currency_combo %}
+            <li class="cursor-pointer py-1 duration-200 transition">
+              <a
+                class="nav-link hover-text-link relative{% if country.iso_code == localization.country.iso_code %} border-b underline-color effect-inline{% endif %} options-text-color"
+                href="#"
+                data-no-instant
+                @click="submit('{{ country.iso_code }}', 'currency_selector')"
+              >
+                <span>{{ country.market.handle }} &#x200E;({{ country.currency.iso_code }} {{ country.currency.symbol }})&#x200E;</span>
+              </a>
+            </li>
+            {% assign market_already_shown = market_already_shown | append: market_currency_combo %}
+          {% endunless %}
+        {% else %}
+            <li class="cursor-pointer py-1 duration-200 transition">
+              <a
+                class="nav-link hover-text-link relative{% if country.iso_code == localization.country.iso_code %} border-b underline-color effect-inline{% endif %} options-text-color"
+                href="#"
+                data-no-instant
+                @click="submit('{{ country.iso_code }}', 'currency_selector')"
+              >
+                <span>{{ country.name }} &#x200E;({{ country.currency.iso_code }} {{ country.currency.symbol }})&#x200E;</span>
+              </a>
+            </li>
+        {% endif %}
+      {%- endfor -%}
+    {% else %}
+      {% for country in localization.available_countries %}
+        <li class="cursor-pointer py-1 duration-200 transition">
+          <a
+            class="nav-link hover-text-link relative{% if country.iso_code == localization.country.iso_code %} border-b underline-color effect-inline{% endif %} options-text-color"
+            href="#"
+            data-no-instant
+            @click="submit('{{ country.iso_code }}', 'currency_selector')"
+          >
+            <span>{{ country.name }} &#x200E;({{ country.currency.iso_code }} {{ country.currency.symbol }})&#x200E;</span>
+          </a>
+        </li>
+      {%- endfor -%}
+    {% endif %}
+  </ul>
+</div>

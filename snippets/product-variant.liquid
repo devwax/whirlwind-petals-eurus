@@ -1,0 +1,108 @@
+{% liquid 
+  if picker_type == 'adapt'
+    assign picker_type = settings.quick_add_picker_type
+    assign max_swatch = settings.max_swatch
+  endif
+%}
+<div
+  id="variant-update-{{ section.id }}"
+  class="variant-update-{{ section.id }} {% if picker_type == 'button' %}block{% else %}grid grid-cols-2 md:gap-x-5 gap-x-2.5 mt-2 mb-2{% endif %}"
+  x-init="initFirstAvailableVariant($el)"
+>
+  <script type="application/json" data-selected-variant>{{ product.selected_or_first_available_variant | json }}</script>
+  {%- for option in product.options_with_values -%}
+    {%- assign option_index = forloop.index | minus: 1 -%}
+    {%- if picker_type == 'button' and option.values.size <= max_swatch or max_swatch == 0 -%}
+      <fieldset
+        id="Option-{{ section.id }}-{{ forloop.index0 }}"
+        class="product-form__input pl-0 flex flex-wrap{% unless section.settings.quick_view_type == 'drawer' and block.settings.show_variant_option and block.settings.show_option_in_tab %} quick-view:pb-2 pb-5{% endunless %} eurus gap-x-2.5{% if show_content_center %} text-center justify-center{% endif %}"
+        data-option-name="{{ option.name | handle }}"
+        data-option-index="{{ forloop.index | minus: 1 }}"
+      >
+        {% if section.settings.quick_view_type == 'drawer' and block.settings.show_variant_option and block.settings.show_option_in_tab %}
+          <div x-data="{open: true}" class="w-full border-t">
+            <button class="flex relative items-center gap-x-[10px] w-full pt-4 pb-3 pl-2 pr-2 cursor-pointer{% if show_content_center %} justify-center{% endif %}" @click="open = !open">
+              <p class="pr-6 rtl:pr-0 rtl:pl-6 font-medium p-break-words{% unless block.settings.show_variant_option %} invisible{% endunless %}">{{ option.name }}</p>
+              <span class="w-2.5 inline-block absolute right-2 rtl:left-2 rtl:right-auto top-1/2 -translate-y-1/2 duration-500{% if block.settings.open_by_default %} rotate-180{% endif %}" :class="open ? 'rotate-180' : 'rotate-0'">
+                {% render 'icon-alls', icon: 'icon-caret' %}
+              </span>
+            </button>
+            <div x-collapse x-cloak x-show="open" class="w-full">
+              <div class="w-full flex flex-wrap gap-x-2.5 pb-4{% if show_content_center %} text-center justify-center{% endif %}{% if block.settings.enable_color_swatches and settings.color_option_name contains option.name %} pl-0.5 rtl:pr-0.5 rtl:pl-0{% endif %}">
+                {% render 'product-variant-options',
+                  product: product,
+                  block: block,
+                  option: option,
+                  option_index: option_index,
+                  product_form_id: product_form_id,
+                  input_type: 'radio',
+                  enable_color_swatches: enable_color_swatches,
+                  rounded_corner_option: rounded_corner_image,
+                  show_media_with_variant_selected: show_media_with_variant_selected,
+                  media_with_option: media_with_option,
+                  swatch_size: swatch_size
+                %}
+              </div>
+            </div>
+          </div>
+        {% else %}
+          {% if block.settings.show_variant_option %}
+            <legend class="font-medium">
+              {{ option.name }}{% if block.settings.enable_color_swatches and settings.color_option_name contains option.name and product.selected_variant or settings.default_select_available_variant %}:
+                <span>{{- option.selected_value -}}</span>
+              {% endif %}
+            </legend> 
+          {% endif %}
+          {% render 'product-variant-options',
+            product: product,
+            block: block,
+            option: option,
+            option_index: option_index,
+            product_form_id: product_form_id,
+            input_type: 'radio',
+            enable_color_swatches: enable_color_swatches,
+            rounded_corner_option: rounded_corner_image,
+            show_media_with_variant_selected: show_media_with_variant_selected,
+            media_with_option: media_with_option,
+            swatch_size: swatch_size
+          %}
+        {% endif %}
+      </fieldset>
+    {%- else -%}
+      <div 
+        data-option-name="{{ option.name | handle }}"
+        data-option-index="{{ forloop.index | minus: 1 }}"
+      >
+        {%- if block.settings.show_variant_option -%}
+          <label class="mt-1 mb-1 font-medium" for="Option-{{ section.id }}-{{ forloop.index0 }}">
+            {{ option.name }}
+          </label>
+        {%- endif -%}
+        <div class="select relative outline-none eurus">
+          <select
+            id="Option-{{ section.id }}-{{ forloop.index0 }}"
+            class="product-form__input w-full pt-2.5 pb-2.5 pl-5 pr-8 rtl:pr-5 rtl:pl-8 mt-2 mb-2 bg-transparent focus:border-current border appearance-none outline-none border-solid focus-visible:outline-none cursor-pointer{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+            name="{{ option.name }}"
+            form="{{ product_form_id }}"
+          > 
+            {% render 'product-variant-options',
+              product: product,
+              option: option,
+              option_index: option_index,
+              product_form_id: product_form_id,
+              input_type: 'select',
+              enable_color_swatches: block.settings.enable_color_swatches,
+              swatch_size: swatch_size
+            %}
+          </select>
+          <div x-cloak x-show="loadingEls === 'Option-{{ section.id }}-{{ forloop.index0 }}'" class="w-4 h-4 absolute top-1/2 right-3 rtl:right-auto rtl:left-3 -translate-y-1/2">
+            <div class="animate-spin w-4 h-4 border-loading border-[rgba(var(--colors-text))]"></div>
+          </div>
+          <span x-cloak x-show="loadingEls !== 'Option-{{ section.id }}-{{ forloop.index0 }}'" class="absolute top-1/2 right-4 rtl:right-auto rtl:left-4 -translate-y-1/2 w-2.5 inline-block pointer-events-none">
+            {% render 'icon-alls', icon: 'icon-caret' %}
+          </span>
+        </div>
+      </div>
+    {% endif %}
+  {%- endfor -%}
+</div>

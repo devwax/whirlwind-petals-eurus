@@ -1,0 +1,430 @@
+{% comment %}
+  Renders block coupon code
+
+  Accepts:
+    - 
+
+  Usage:
+    {% render 'block-product-coupon' %}
+{% endcomment %}
+
+{% liquid 
+  assign show_block = true
+
+  assign end_behavior = block.settings.end_behavior
+  if block.settings.countdown_type == 'evergreen'
+    assign end_behavior = 'show_zero'
+  endif
+
+  if block.settings.countdown_type != 'none' and end_behavior != 'show_zero' and block.settings.countdown_type == 'standard'
+    assign end_month = block.settings.end_month | plus: 0
+    assign end_day = block.settings.end_day | plus: 0
+    assign end_hour = block.settings.end_hour | plus: 0
+    assign end_minute = block.settings.end_minute | plus: 0
+    if end_month < 10
+      assign end_month = '0' | append: end_month
+    endif
+    if end_day < 10
+      assign end_day = '0' | append: end_day
+    endif
+    if end_hour < 10
+      assign end_hour = '0' | append: end_hour
+    endif
+    if end_minute < 10
+      assign end_minute = '0' | append: end_minute
+    endif
+      
+    assign time_zone = block.settings.timezone | plus: 0
+    assign time_zone_sign = '+'
+    if time_zone < 0
+      assign time_zone_sign = ''
+    endif
+    assign time_zone_minute = '00'
+    if time_zone contains '.5'
+      assign time_zone = time_zone | split: '.' | first
+      assign time_zone_minute = '30'
+    endif
+
+    assign end_date = block.settings.end_year | append: "-" | append: end_month | append: "-" | append: end_day | append: " " | append: end_hour | append: ":" | append: end_minute | append: ":00" | append: " " | append: time_zone_sign | append: time_zone | append: ":" | append: time_zone_minute
+    assign end_date = end_date | date: "%s" | plus: 0
+    assign current_date = "now" | date: "%s" | plus: 0
+
+    if end_date > current_date 
+      assign show_block = true
+    else
+      assign show_block = false
+    endif
+  endif
+%}
+{% if show_block or show_block == false and end_behavior != 'hide' %}
+  {% style %}
+    .block-edges-{{ block.id }} {
+      {% if block.settings.block_edges == "rounded_corners" %}
+        border-radius: 10px;
+      {% elsif block.settings.block_edges == "mixed" %}
+        border-radius: 10px 0 10px 0;
+      {% else %}
+        border-radius: 0;
+      {% endif %}
+    }
+
+    .coupon-edges-{{ block.id }} {
+      {% if block.settings.coupon_box_edges == "rounded" %}
+        border-radius: 9999px;
+      {% elsif block.settings.coupon_box_edges == "rounded_corners" %}
+        border-radius: 10px;
+      {% else %}
+        border-radius: 0;
+      {% endif %}
+    }
+
+    .block-bg-{{ block.id }} {
+      {% if block.settings.background_color_light.alpha != 0.0 %}
+        background-color: {{ block.settings.background_color_light }};
+      {% else %}
+        background: rgb(var(--colors-background-secondary));
+      {% endif %}
+    }
+    .dark .block-bg-{{ block.id }} {
+      {% if block.settings.background_color_dark.alpha != 0.0 %}
+        background-color: {{ block.settings.background_color_dark }};
+      {% else %}
+        background: rgb(var(--colors-background-secondary));
+      {% endif %}
+    }
+
+    .coupon-bg-{{ block.id }} {
+      {% if block.settings.coupon_box_color_light.alpha != 0.0 %}
+        background-color: {{ block.settings.coupon_box_color_light }};
+      {% else %}
+        background: rgb(var(--colors-background));
+      {% endif %}
+    }
+    .dark .coupon-bg-{{ block.id }} {
+      {% if block.settings.coupon_box_color_dark.alpha != 0.0 %}
+        background-color: {{ block.settings.coupon_box_color_dark }};
+      {% else %}
+        background: rgb(var(--colors-background));
+      {% endif %}
+    }
+
+    .color-heading-{{ block.id }} {
+      {% if block.settings.heading_color_light.alpha != 0.0 %}
+        color: {{ block.settings.heading_color_light }};
+      {% else %}
+        color: rgb(var(--colors-heading));
+      {% endif %}
+    }
+    .dark .color-heading-{{ block.id }} {
+      {% if block.settings.heading_color_dark.alpha != 0.0 %}
+        color: {{ block.settings.heading_color_dark }};
+      {% else %}
+        color: rgb(var(--colors-heading));
+      {% endif %}
+    }
+
+    .color-text-{{ block.id }} {
+      {% if block.settings.text_color_light.alpha != 0.0 %}
+        color: {{ block.settings.text_color_light }};
+      {% else %}
+        color: rgb(var(--colors-text));
+      {% endif %}
+    }
+    .dark .color-text-{{ block.id }} {
+      {% if block.settings.text_color_dark.alpha != 0.0 %}
+        color: {{ block.settings.text_color_dark }};
+      {% else %}
+        color: rgb(var(--colors-text));
+      {% endif %}
+    }
+
+    .coupon-border-{{ block.id }} {
+      {% if block.settings.coupon_color_light.alpha != 0.0 %}
+        color: {{ block.settings.coupon_color_light }};
+        border-color: {{ block.settings.coupon_color_light }};
+      {% else %}
+        color: rgb(var(--colors-price-sale));
+        border-color: rgb(var(--colors-price-sale));
+      {% endif %}
+    }
+    .dark .coupon-border-{{ block.id }} {
+      {% if block.settings.coupon_color_dark.alpha != 0.0 %}
+        color: {{ block.settings.coupon_color_dark }};
+        border-color: {{ block.settings.coupon_color_dark }};
+      {% else %}
+        color: rgb(var(--colors-price-sale));
+        border-color: rgb(var(--colors-price-sale));
+      {% endif %}
+    }
+
+    .border-color--{{ block.id }}, .line-{{ block.id }}:after {
+      {% unless block.settings.line_border_color_light.alpha == 0.0 %}
+        border-color: {{ block.settings.line_border_color_light }};
+      {% endunless %}
+    }
+    .dark .border-color--{{ block.id }}, .dark .line-{{ block.id }}:after {
+      {% unless block.settings.line_border_color_dark.alpha == 0.0 %}
+        border-color: {{ block.settings.line_border_color_dark }};
+      {% else %}
+        border-color: {{ settings.colors_dark_line_and_borders }};
+      {% endunless %}
+    }
+
+    .x-coupon-code-block .base-link a {
+      color: rgb(var(--colors-text-link));
+    }
+  {% endstyle %}
+  <div class="x-coupon-code-block block-edges-{{ block.id }}{% if block.settings.show_border or block.settings.show_background %} pl-4 pr-4 pt-4 pb-4{% endif %}{% if block.settings.show_border and block.settings.show_background == false %} border border-solid border-color--{{ block.id }}{% endif %}{% if block.settings.show_background %} block-bg-{{ block.id }}{% else %} bg-transparent{% endif %} w-full mb-4 md:mb-5 flex flex-col gap-4" {{ block.shopify_attributes }}>
+    <div class="x-coupon-code-block-header w-full flex gap-2 items-center">
+      <div class="x-block-header-icon">
+        {% if block.settings.icon != 'none' %}
+          {% unless block.settings.custom_image == blank and block.settings.custom_icon == blank and block.settings.another_icon == blank and block.settings.icon == 'another_icon' %}
+            {% style %}
+              .size-icon-{{ block.id }} {
+                width: {{ block.settings.icon_size }}px;
+                height: {{ block.settings.icon_size }}px;
+                min-width: {{ block.settings.icon_size }}px;
+              }
+            {% endstyle %}
+            <span class="inline-block relative size-icon-{{ block.id }} color-heading-{{ block.id }}">
+              {% if block.settings.custom_image != blank %}
+                {% # theme-check-disable ImgLazyLoading %}
+                <img 
+                  src="{{ block.settings.custom_image | image_url: width: block.settings.icon_size }}"
+                  alt="{{ block.settings.custom_image.alt | escape }}"
+                  {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
+                  width="{{ block.settings.custom_image.width }}"
+                  height="{{ block.settings.custom_image.height }}"
+                  style="object-position: {{ block.settings.custom_image.presentation.focal_point }}"
+                  class="object-cover absolute top-0 left-0 w-full h-full"
+                >
+                {% # theme-check-enable ImgLazyLoading %}
+              {% else %}
+                {% if block.settings.custom_icon == blank %}
+                  {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                    {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                  {% else %}
+                    {% render 'icon-labels-bags', icon: block.settings.icon %}
+                  {% endif %}
+                {% else %}
+                  {{ block.settings.custom_icon }}
+                {% endif %}
+              {% endif %}
+            </span>
+          {% endunless %}
+        {% endif %}
+      </div>
+      {% if block.settings.heading_text != blank %}
+        <div class="x-block-header h3 color-heading-{{ block.id }}">{{ block.settings.heading_text }}</div>
+      {% endif %}
+    </div>
+    {% if block.settings.countdown_type != 'none' %}
+      {%- style -%}
+        .timer--{{ block.id }} {
+          font-size: {{ settings.heading_base_size | times: 0.01013 }}rem;
+          {% unless block.settings.timer_color_light.alpha == 0.0 %}
+            color: {{ block.settings.timer_color_light }};
+          {% else %}
+            color: {{ settings.colors_heading }};
+          {% endunless %}
+        }
+        .dark .timer--{{ block.id }} {
+          {% unless block.settings.timer_color_dark.alpha == 0.0 %}
+            color: {{ block.settings.timer_color_dark }};
+          {% else %}
+            color: {{ settings.colors_dark_heading }};
+          {% endunless %}
+        }
+        @media screen and (min-width: 768px) {
+          .timer--{{ block.id }} {
+            font-size: {{ settings.heading_base_size | times: 0.01125 }}rem;
+            {% unless block.settings.timer_color_light.alpha == 0.0 %}
+              color: {{ block.settings.timer_color_light }};
+            {% endunless %}
+          }
+        }
+        
+        .countdown--{{ block.id }} {
+          {% unless block.settings.timer_color_light.alpha == 0.0 %}
+            color: {{ block.settings.timer_color_light }};
+          {% endunless %}
+        }
+        .dark .countdown--{{ block.id }} {
+          {% unless block.settings.timer_color_dark.alpha == 0.0 %}
+            color: {{ block.settings.timer_color_dark }};
+          {% else %}
+            color: {{ settings.colors_dark_text }};
+          {% endunless %}
+        }
+      {%- endstyle -%}
+      <div 
+        id="x-countdown-banner"
+        class="block-promotion-banner anm-fade-element{% if block.settings.timer_style == 'rounded' %} lg:grow{% endif %}"
+        x-data="{ loading: true, textLoad: '-', days: 0, hours: 0, minutes: 0, seconds: 0, show: true }"
+        x-intersect.once="$el.classList.add('is-visible')"
+        x-intersect.once.margin.200px='$nextTick(() => {
+          $store.xHelper.countdown({
+            "id": "{{ block.id }}",
+            "timezone": {{ block.settings.timezone | default: 0 }},
+            "start_year": {{ block.settings.start_year | default: 0 }},
+            "start_month": {{ block.settings.start_month | default: 0 }},
+            "start_day": {{ block.settings.start_day | default: 0 }},
+            "start_hour": {{ block.settings.start_hour | default: 0 }},
+            "start_minute": {{ block.settings.start_minute | default: 0 }},
+            "end_year": {{ block.settings.end_year | default: 0 }},
+            "end_month": {{ block.settings.end_month | default: 0 }},
+            "end_day": {{ block.settings.end_day | default: 0 }},
+            "end_hour": {{ block.settings.end_hour | default: 0 }},
+            "end_minute": {{ block.settings.end_minute | default: 0 }},
+            "reset": {% if block.settings.countdown_type == 'evergreen' %}true{% else %}false{% endif %},
+            "duration": {% if block.settings.interval_unit == 'day' %}{{ block.settings.countdown_interval | times: 86400000 }}{% else %}{{ block.settings.countdown_interval | times: 3600000 }}{% endif %}
+          }, (canShow, s, m, h, d) => {
+            show = canShow;
+            {% if end_behavior == 'show_message' -%}
+              if (!show) {
+                $el.querySelector(".x-countdown-msg-{{ block.id }}").classList.remove("hidden");
+                $el.querySelector(".x-countdown-{{ block.id }}").classList.add("hidden");
+              }
+            {%- endif %}
+            {% if end_behavior == 'hide' -%}
+              if (!show) {
+                $el.closest(".x-coupon-code-block").classList.add("hidden");
+              }
+            {%- endif %}
+            days = d;
+            hours = h;
+            minutes = m;
+            seconds = s;
+            loading = false;
+          })
+        })'
+        {{ block.shopify_attributes }}
+      >
+        {% if end_behavior == 'show_message' %}
+          <div class="{% if show_block %}hidden {% endif %}x-countdown-msg-{{ block.id }} coupon-bg-{{ block.id }} {% if settings.edges_type == 'rounded_corners' %} rounded{% endif %} flex pl-2 pr-2 pb-2 pt-2 justify-center w-full text-[rgba(var(--color-error))]">
+            <div class="rte p-break-words">
+              {{ block.settings.expiration_message }}
+            </div>
+          </div>
+        {% endif %}
+        <div class="{% unless show_block %}hidden {% endunless %}x-countdown-promo-banner x-countdown-{{ block.id }} flex rtl:flex-row-reverse justify-center mb-1 gap-2">
+          <div class="countdown--{{ block.id }} relative w-full min-h-[64px] max-w-[64px]
+            {%- if block.settings.border_style == 'none' %} coupon-bg-{{ block.id }}{% endif -%}
+            {%- if block.settings.border_style == 'border' %} border border-dashed border-color--{{ block.id }}{% endif -%}
+            {%- if block.settings.timer_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded{% endif -%}
+              {%- else %} flex-1 rounded-full before:block before:h-0 before:pb-[100%]
+            {%- endif %}"
+          >
+            <div class="flex{% if block.settings.text_position == 'aside' and block.settings.border_style == 'none' %} flex-row{% else %} flex-col{% endif %} items-center justify-center{% if block.settings.timer_style == 'rounded' %} absolute top-0 left-0{% endif %} h-full w-full">
+              <span x-html="loading?textLoad:days" class="h2 timer--{{ block.id }}"></span>
+              <span class="color-text-{{ block.id }}{% if block.settings.text_position == 'aside' and block.settings.border_style == 'none' %} -translate-y-2 ml-0.5{% endif %}">
+                {{ 'sections.flash-sale.days' | t }}
+              </span>
+            </div>
+          </div>
+          {%- if block.settings.border_style == "line_vertical"%}
+            <div class="line-{{ block.id }} relative after:absolute after:right-0 after:top-1/2 after:-translate-y-1/2 after:w-0 after:border-solid after:h-[50%] after:border-l"></div>
+          {% endif -%}
+          <div class="countdown--{{ block.id }} relative w-full min-h-[64px] max-w-[64px]
+            {%- if block.settings.border_style == 'none' %} coupon-bg-{{ block.id }}{% endif -%}
+            {%- if block.settings.border_style == 'border' %} border border-dashed border-color--{{ block.id }}{% endif -%}
+            {%- if block.settings.timer_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded{% endif -%}
+              {%- else %} flex-1 rounded-full before:block before:h-0 before:pb-[100%]
+            {%- endif %}"
+          >
+            <div class="flex{% if block.settings.text_position == 'aside' and block.settings.border_style == 'none' %} flex-row{% else %} flex-col{% endif %} items-center justify-center{% if block.settings.timer_style == 'rounded' %} absolute top-0 left-0{% endif %} h-full w-full">
+              <span x-html="loading?textLoad:hours" class="h2 timer--{{ block.id }}"></span>
+              <span class="color-text-{{ block.id }}{% if block.settings.text_position == 'aside' and block.settings.border_style == 'none' %} -translate-y-2 ml-0.5{% endif %}">
+                {{ 'sections.flash-sale.hours' | t }}
+              </span>
+            </div>
+          </div>
+          {%- if block.settings.border_style == "line_vertical"%}
+            <div class="line-{{ block.id }} relative after:absolute after:right-0 after:top-1/2 after:-translate-y-1/2 after:w-0 after:border-solid after:h-[50%] after:border-l"></div>
+          {% endif -%}
+          <div class="countdown--{{ block.id }} relative w-full min-h-[64px] max-w-[64px]
+            {%- if block.settings.border_style == 'none' %} coupon-bg-{{ block.id }}{% endif -%}
+            {%- if block.settings.border_style == 'border' %} border border-dashed border-color--{{ block.id }}{% endif -%}
+            {%- if block.settings.timer_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded{% endif -%}
+              {%- else %} flex-1 rounded-full before:block before:h-0 before:pb-[100%]
+            {%- endif %}"
+          >
+            <div class="flex{% if block.settings.text_position == 'aside' and block.settings.border_style == 'none' %} flex-row{% else %} flex-col{% endif %} items-center justify-center{% if block.settings.timer_style == 'rounded' %} absolute top-0 left-0{% endif %} h-full w-full">
+              <span x-html="loading?textLoad:minutes" class="h2 timer--{{ block.id }}"></span>
+              <span class="color-text-{{ block.id }}{% if block.settings.text_position == 'aside' and block.settings.border_style == 'none' %} -translate-y-2 ml-0.5{% endif %}">
+                {{ 'sections.flash-sale.mins' | t }}
+              </span>
+            </div>
+          </div>
+          {%- if block.settings.border_style == "line_vertical"%}
+            <div class="line-{{ block.id }} relative after:absolute after:right-0 after:top-1/2 after:-translate-y-1/2 after:w-0 after:border-solid after:h-[50%] after:border-l"></div>
+          {% endif -%}
+          <div class="countdown--{{ block.id }} relative w-full min-h-[64px] max-w-[64px]
+            {%- if block.settings.border_style == 'none' %} coupon-bg-{{ block.id }}{% endif -%}
+            {%- if block.settings.border_style == 'border' %} border border-dashed border-color--{{ block.id }}{% endif -%}
+            {%- if block.settings.timer_style == 'square' %}{% if settings.edges_type == 'rounded_corners' %} rounded{% endif -%}
+              {%- else %} flex-1 rounded-full before:block before:h-0 before:pb-[100%]
+            {%- endif %}"
+          >
+            <div class="flex{% if block.settings.text_position == 'aside' and block.settings.border_style == 'none' %} flex-row{% else %} flex-col{% endif %} items-center justify-center{% if block.settings.timer_style == 'rounded' %} absolute top-0 left-0{% endif %} h-full w-full">
+              <span x-html="loading?textLoad:seconds" class="h2 timer--{{ block.id }}"></span>
+              <span class="color-text-{{ block.id }}{% if block.settings.text_position == 'aside' and block.settings.border_style == 'none' %} -translate-y-2 ml-0.5{% endif %}">
+                {{ 'sections.flash-sale.secs' | t }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    {% if show_block %}
+      <div class="x-coupon-code-block-content w-full flex gap-3 flex-col">
+        {% capture icon_copy %}
+          <div class="flex items-center h-fit">
+            <span class="w-4 h-4 min-w-4 min-h-4 inline-block" x-show="!copySuccess"
+              x-transition:enter="transition-all absolute ease-in-out duration-300"
+              x-transition:enter-start="opacity-0 absolute transform translate-y-full"
+              x-transition:enter-end="opacity-100 absolute transform translate-y-0"
+              x-transition:leave="transition-all absolute ease-in-out duration-300"
+              x-transition:leave-end="opacity-0 transform absolute -translate-y-full">
+            {% render 'icon-alls', icon: 'icon-copy' %}
+            </span>
+            <span class="w-4 h-4 min-w-4 min-h-4 inline-block" x-show="copySuccess" x-cloak
+              x-transition:enter="transition-all ease-in-out duration-300"
+              x-transition:enter-start="opacity-0 transform translate-y-full"
+              x-transition:enter-end="opacity-100 transform translate-y-0"
+              x-transition:leave="transition-all ease-in-out duration-300"
+              x-transition:leave-end="opacity-0 transform -translate-y-full">
+              {% render 'icon-alls', icon: 'icon-check' %}
+            </span>
+          </div>
+        {% endcapture %}
+        <div class="x-coupon-1-container empty:hidden w-full pt-2 pb-2 pl-4 pr-2 rtl:pl-2 rtl:pr-4 flex flex-wrap items-center gap-3 md:gap-4 coupon-bg-{{ block.id }}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+          {%- if block.settings.coupon_text_1 != blank -%}
+            <div class="base-link color-text-{{ block.id }} grow w-fit">{{ block.settings.coupon_text_1 }}</div>
+          {%- endif -%}
+          {%- if block.settings.coupon_code_1 != blank -%}
+            <div class="w-fit">
+              <div :title="copySuccess?'{{ 'general.global.copied' | t }}':'{{ 'general.global.copy_code' | t }}'" x-data='xCouponCode' x-on:click="copyCode()" class="justify-center pl-3 pr-3 pt-2 pb-2 flex items-center gap-4 cursor-pointer coupon-edges-{{ block.id }} coupon-border-{{ block.id }} block-bg-{{ block.id }} border-dashed border">
+                <span class="leading-none inline-block max-w-fit break-all" x-ref="code_value">{{ block.settings.coupon_code_1 }}</span>
+                {{ icon_copy }}
+              </div>
+            </div>
+          {%- endif -%}
+        </div>
+        <div class="x-coupon-2-container empty:hidden w-full pt-2 pb-2 pl-4 pr-2 rtl:pl-2 rtl:pr-4 flex flex-wrap items-center gap-3 md:gap-4 coupon-bg-{{ block.id }}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}">
+          {%- if block.settings.coupon_text_2 != blank -%}
+            <div class="base-link color-text-{{ block.id }} grow w-fit">{{ block.settings.coupon_text_2 }}</div>
+          {%- endif -%}
+          {%- if block.settings.coupon_code_2 != blank -%}
+            <div class="w-fit">
+              <div :title="copySuccess?'{{ 'general.global.copied' | t }}':'{{ 'general.global.copy_code' | t }}'" x-data='xCouponCode' x-on:click="copyCode()" class="justify-center pl-3 pr-3 pt-2 pb-2 flex items-center gap-4 cursor-pointer coupon-edges-{{ block.id }} coupon-border-{{ block.id }} block-bg-{{ block.id }} border-dashed border">
+                <span class="leading-none inline-block max-w-fit break-all" x-ref="code_value">{{ block.settings.coupon_code_2 }}</span>
+                {{ icon_copy }}
+              </div>
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endif %}

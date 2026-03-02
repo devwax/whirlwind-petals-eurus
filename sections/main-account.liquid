@@ -1,0 +1,172 @@
+{% liquid 
+if settings.lang_direction contains request.locale.iso_code
+  assign is_rtl = true
+else
+  assign is_rtl = false
+endif
+%}
+<div class="customer account pt-[{{ section.settings.top_padding_mobile }}px] md:pt-[{{ section.settings.top_padding }}px] pb-[{{ section.settings.bottom_padding_mobile }}px] md:pb-[{{ section.settings.bottom_padding }}px]">
+  <div class="x-pgw page-width mx-auto">
+    <div class="flex items-center justify-between border-b pb-3 md:pb-4">
+      <h1 class="h2">{{ 'customer.account.title' | t }}</h1>
+      <a
+        class="flex transition px-1.5 h-fit duration-200 disable-effect items-end justify-center"
+        href="{{ routes.account_logout_url }}"
+      >
+        <span class="w-6{% if is_rtl %} ml-1.5{% else %} mr-1.5{% endif %}">
+          {% render 'icon-alls', icon: 'icon-account' %}
+        </span>
+        {{ 'customer.log_out' | t }}
+      </a>
+    </div>
+    <div class="flex flex-col md:flex-row">
+      <div class="w-full md:w-3/4">
+        <h2 class="text-large mt-9 pb-3.5 md:mt-12 md:pb-6 border-b md:border-none anm-fade-element" x-intersect.once="$el.classList.add('is-visible')">{{ 'customer.orders.title' | t }}</h2>
+        {% paginate customer.orders by 10 %}
+          {%- if customer.orders.size > 0 -%}
+            <table role="table" class="block order-history w-full">
+              <thead class="hidden md:block py-4 border-y w-full text-[rgba(var(--colors-heading))] anm-fade-element" x-intersect.once="$el.classList.add('is-visible')" role="rowgroup">
+                <tr class="flex justify-between w-full uppercase" role="row">
+                  <th id="ColumnOrder" class="w-1/5{% if is_rtl %} text-right md:pl-3.5{% else %} text-left md:pr-3.5{% endif %} text-normal font-semibold" scope="col" role="columnheader">{{ 'customer.orders.order_number' | t }}</th>
+                  <th id="ColumnDate" class="w-1/5 {% if is_rtl %} text-right md:pl-3.5{% else %} text-left md:pr-3.5{% endif %} text-normal font-semibold" scope="col" role="columnheader">{{ 'customer.orders.date' | t }}</th>
+                  <th id="ColumnPayment" class="w-1/5{% if is_rtl %} text-right md:pl-3.5{% else %} text-left md:pr-3.5{% endif %} text-normal font-semibold" scope="col" role="columnheader">{{ 'customer.orders.payment_status' | t }}</th>
+                  <th id="ColumnFulfillment" class="w-1/5{% if is_rtl %} text-right md:pl-3.5{% else %} text-left md:pr-3.5{% endif %} text-normal font-semibold" scope="col" role="columnheader">{{ 'customer.orders.fulfillment_status' | t }}</th>
+                  <th id="ColumnTotal" class="w-1/5{% if is_rtl %} text-right md:pl-3.5{% else %} text-left md:pr-3.5{% endif %} text-normal font-semibold" scope="col" role="columnheader">{{ 'customer.orders.total' | t }}</th>
+                  {%- unless settings.hide_cart -%} 
+                    <th class="pl-5 pr-5 opacity-0 h-0" scope="col" role="columnheader">{{ 'customer.orders.reorder' | t }}</th>
+                  {%- endunless -%} 
+                </tr>
+              </thead>
+              <tbody class="block w-full" role="rowgroup">
+                {%- for order in customer.orders -%}
+                  <tr class="block md:flex w-full border-b mt-5 pb-5 md:pb-0 md:mt-0 anm-fade-element" x-intersect.once="$el.classList.add('is-visible')" role="row">
+                    <td
+                      id="RowOrder"
+                      class="w-full{% if is_rtl %} md:pl-3.5 rtl:before:text-right{% else %} md:pr-3.5{% endif %} md:w-1/5 mb-3.5 md:mt-3 md:mb-3 md:text-left flex items-center before:uppercase before:content-[attr(data-label)] md:before:content-none before:float-left before:w-1/3 before:text-left before:pr-2.5"
+                      role="cell"
+                      headers="ColumnOrder"
+                      data-label="{{ 'customer.orders.order_number' | t }}"
+                    >
+                      <a class="inline-block text-center md:border md:pt-3 md:pb-3 md:pl-5 md:pr-5 disable-effect{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}" href="{{ order.customer_url }}" aria-label="{{ 'customer.orders.order_number_link' | t: number: order.name }}">
+                        {{ order.name }}
+                      </a>
+                    </td>
+                    <td class="w-full{% if is_rtl %} md:pl-3.5 rtl:before:text-right{% else %} md:pr-3.5{% endif %} md:w-1/5 mb-3.5 md:mb-0 md:text-left flex items-center before:uppercase before:content-[attr(data-label)] md:before:content-none before:float-left before:w-1/3 before:text-left before:pr-2.5" headers="RowOrder ColumnDate" role="cell" data-label="{{ 'customer.orders.date' | t }}">
+                      {{ order.created_at | time_tag: format: 'date' }}
+                    </td>
+                    <td class="w-full{% if is_rtl %} md:pl-3.5 rtl:before:text-right{% else %} md:pr-3.5{% endif %} md:w-1/5 mb-3.5 md:mb-0 md:text-left flex items-center before:uppercase before:content-[attr(data-label)] md:before:content-none before:float-left before:w-1/3 before:text-left before:pr-2.5" headers="RowOrder ColumnPayment" role="cell" data-label="{{ 'customer.orders.payment_status' | t }}">
+                      {{ order.financial_status_label }}
+                    </td>
+                    <td class="w-full{% if is_rtl %} md:pl-3.5 rtl:before:text-right{% else %} md:pr-3.5{% endif %} md:w-1/5 mb-3.5 md:mb-0 md:text-left flex items-center before:uppercase before:content-[attr(data-label)] md:before:content-none before:float-left before:w-1/3 before:text-left before:pr-2.5" headers="RowOrder ColumnFulfillment" role="cell" data-label="{{ 'customer.orders.fulfillment_status' | t }}">
+                      {{ order.fulfillment_status_label }}
+                    </td>
+                    <td class="w-full{% if is_rtl %} md:pl-3.5 rtl:before:text-right{% else %} md:pr-3.5{% endif %} md:w-1/5 mb-3.5 md:mb-0 md:text-left flex items-center before:uppercase before:content-[attr(data-label)] md:before:content-none before:float-left before:w-1/3 before:text-left before:pr-2.5" headers="RowOrder ColumnTotal" role="cell" data-label="{{ 'customer.orders.total' | t }}">
+                      {{ order.total_price | money_with_currency }}
+                    </td>
+                    {{ order.image }}
+                    {%- unless settings.hide_cart -%} 
+                      {% if settings.enable_reorder %}
+                        <td class="flex items-center" data-label="Action">
+                          {%- render 're-order', itemOrder: order -%}
+                        </td>
+                      {% endif %}
+                    {%- endunless -%} 
+                  </tr>
+                {%- endfor -%}
+              </tbody>
+            </table>
+          {%- else -%}
+            <p class="mt-4 md:mt-0">{{ 'customer.orders.none' | t }}</p>
+          {%- endif -%}
+          {%- if paginate.pages > 1 -%}
+            <div class="flex justify-center mt-4 md:mt-5">
+              {% render 'pagination', paginate: paginate, paginate_type: section.settings.paginate_type %}
+            </div>
+          {%- endif -%}
+        {% endpaginate %}
+      </div>
+
+      <div class="{% if is_rtl %} md:pr-8{% else %} md:pl-8{% endif %}">
+        <div class="anm-fade-element" x-intersect.once="$el.classList.add('is-visible')">
+          <h2 class="text-large mt-16 md:mt-12 mb-4">{{ 'customer.account.details' | t }}</h2>
+          <div>{{ customer.default_address | format_address }}</div>
+          <a class="nav-link effect-inline relative block mt-7 w-fit lg:hover:text-[rgb(var(--colors-text-link))]" href="{{ routes.account_addresses_url }}">
+            {{ 'customer.account.view_addresses' | t }} ({{ customer.addresses_count }})
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{%- render 're-order-popup' -%}
+{% schema %}
+{
+  "name": "t:sections.main-account.name",
+  "settings": [
+    {
+      "type": "select",
+      "id": "paginate_type",
+      "options": [
+        {
+          "value": "circle",
+          "label": "t:sections.header.settings.highlight.style.option__2"
+        },
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        }
+      ],
+      "default": "circle",
+      "label": "t:sections.main-collection-product-grid.settings.paginate_type.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "top_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 52
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 52
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "range",
+      "id": "top_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "bottom_padding_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 36
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,525 @@
+{% liquid
+  assign heading_base_size = settings.heading_base_size | times: 0.0225
+  assign heading_size = section.settings.heading_size | times: 0.01 | times: heading_base_size
+  assign external_item_labels = section.settings.external_item_labels | newline_to_br | strip_newlines | split: '<br />'
+  assign number_of_columns = external_item_labels.size
+  if number_of_columns > 4
+    assign number_of_columns = 4
+  endif
+%}
+{%- style -%}
+  .heading-{{ section.id }} {
+    font-size: {{ heading_size | times: 0.6 }}rem;
+  }
+  @media (min-width: 767px) {
+    .heading-{{ section.id }} {
+      font-size: {{ heading_size }}rem;
+    }
+  }
+  #shopify-section-{{ section.id }} {
+    {% if section.settings.background_color_light.alpha != 0.0 %}
+      background: {{ section.settings.background_color_light }};
+      --background-color: {{ section.settings.background_color_light.red }}, {{ section.settings.background_color_light.green }}, {{ section.settings.background_color_light.blue }};
+    {% else %}
+      --background-color: {{ settings.colors_background.red }},{{ settings.colors_background.green }},{{ settings.colors_background.blue }};
+      background: {{ settings.colors_background }};
+    {% endif %}
+    {% if section.settings.line_border.alpha != 0.0 %}
+      --colors-line-and-border: {{ section.settings.line_border.red }},{{ section.settings.line_border.green }},{{ section.settings.line_border.blue }};
+    {% endif %}
+    {% if section.settings.text_light.alpha != 0.0 %}
+      --colors-text: {{ section.settings.text_light.red }},{{ section.settings.text_light.green }},{{ section.settings.text_light.blue }};
+    {% endif %}
+    {% if section.settings.heading_light.alpha != 0.0 %}
+      --colors-heading: {{ section.settings.heading_light.red }},{{ section.settings.heading_light.green }},{{ section.settings.heading_light.blue }};
+    {% endif %}
+  }
+  .dark #shopify-section-{{ section.id }} {
+    {%- if section.settings.background_color_dark.alpha != 0.0 -%}
+      background: {{ section.settings.background_color_dark }};
+      --background-color: {{ section.settings.background_color_dark.red }}, {{ section.settings.background_color_dark.green }}, {{ section.settings.background_color_dark.blue }};
+    {%- else -%}
+      background: {{ settings.colors_dark_background }};
+      --background-color:  {{ settings.colors_dark_background.red }},{{ settings.colors_dark_background.green }},{{ settings.colors_dark_background.blue }};
+    {%- endif -%}
+    {% if section.settings.line_border_dark.alpha != 0.0 %}
+      --colors-line-and-border: {{ section.settings.line_border_dark.red }},{{ section.settings.line_border_dark.green }},{{ section.settings.line_border_dark.blue }};
+    {% else %}        
+      --colors-line-and-border: {{ settings.colors_dark_line_and_borders.red }}, {{ settings.colors_dark_line_and_borders.green }}, {{ settings.colors_dark_line_and_borders.blue }};
+    {% endif %}
+    {% if section.settings.text_dark.alpha != 0.0 %}
+      --colors-text: {{ section.settings.text_dark.red }},{{ section.settings.text_dark.green }},{{ section.settings.text_dark.blue }};
+    {% else %}        
+      --colors-text: {{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }};
+    {% endif %}
+    {% if section.settings.heading_dark.alpha != 0.0 %}
+      --colors-heading: {{ section.settings.heading_dark.red }},{{ section.settings.heading_dark.green }},{{ section.settings.heading_dark.blue }};
+    {% else %}        
+      --colors-heading: {{ settings.colors_dark_heading.red }}, {{ settings.colors_dark_heading.green }}, {{ settings.colors_dark_heading.blue }};
+    {% endif %}
+  }
+  .table-highlight-{{ section.id }}:after,
+  .table-highlight-{{ section.id }} {
+    {% if section.settings.column_highlight_light.alpha != 0.0 %}
+      background: {{ section.settings.column_highlight_light }};
+    {% else %}
+      background: {{ settings.secondary_background }};
+    {% endif %}
+  }
+  .dark .table-highlight-{{ section.id }}:after,
+  .dark .table-highlight-{{ section.id }} {
+    {% if section.settings.column_highlight_dark.alpha != 0.0 %}
+      background: {{ section.settings.column_highlight_dark }};
+    {% else %}
+      background: {{ settings.secondary_background_dark }};
+    {% endif %}
+  }
+{%- endstyle -%}
+
+{% render 'section-divider' %}
+<div class="section--{{ section.id }} comparision-table-container ml-auto mr-auto relative {% if section.settings.full_width %} full-width{% else %} x-pgw page-width{% endif %} mx-auto pb-[{{ section.settings.padding_bottom_mobile }}px] pt-[{{ section.settings.padding_top_mobile }}px] md:pb-[{{ section.settings.padding_bottom }}px] md:pt-[{{ section.settings.padding_top }}px]">
+  <div class="x-block-conparison-table-header mb-5 lg:mb-8 empty:hidden text-{{ section.settings.heading_alignment }} rtl:text-{% if section.settings.heading_alignment == 'center' %}center{% elsif section.settings.heading_alignment == 'left' %}right{% else %}left{% endif %}">
+    {%- if section.settings.heading != blank -%}
+      {% render 'heading-highlight',
+        headingId: section.id,
+        heading: section.settings.heading,
+        highlight_type: section.settings.highlight_type,
+        color_heading_highlight_dark: section.settings.color_heading_highlight_dark,
+        color_heading_highlight_light: section.settings.color_heading_highlight_light,
+        class: 'h2 block leading-tight flex-auto p-break-words',
+        heading_tag: section.settings.heading_tag,
+        animation_heading: true
+      %}
+    {%- endif -%}
+    {%- if section.settings.description != blank -%}
+      <div class="comparision-table-description mb-5 md:mb-8 rte text-[rgb(var(--colors-text))]">
+        {{ section.settings.description }}
+      </div>
+    {%- endif -%}
+  </div>
+  {% if number_of_columns > 0 %}
+    <div class="table-content flex md:block">
+      <div class="overflow-x-auto lg:overflow-x-hidden scrollbar-horizontal scrollbar-body pt-3 md:pt-5 pb-5">
+        <div class="x-block-table-header flex w-full flex-row min-h-[60px] md:min-h-[82px]">
+          <div class="min-w-[130px] md:flex pt-2 pb-2 pr-2 pl-2 basis-32 lg:basis-52 xl:min-w-[20rem] xl:basis-[0] grow border-solid border-b"></div>
+          <div class="table-header pt-2 pb-2 pr-2 pl-2 w-[86px] min-w-[86px] md:w-auto md:min-w-none table-product opacity-90 table-highlight-{{ section.id }} relative min-h-[55px] flex p-break-words md:grow md:basis-[0] justify-center items-center text-center mt-0.5 md:mt-0 after:absolute after:w-full after:h-full after:-translate-y-2.5 after:md:-translate-y-5{% if settings.edges_type == 'rounded_corners' %} after:rounded-[10px]  after:md:rounded-[20px]{% endif %}">
+            {% if section.settings.alternative_text != blank %}
+              <span class="text-center pb-2 pt-2 pl-1 pr-1 md:pt-1 md:pb-1 z-10 font-semibold text-[rgba(var(--colors-text))] text-[120%]">{{ section.settings.alternative_text | escape }}</span>
+            {% elsif section.settings.product != blank %}
+              <span class="text-center pb-2 pt-2 pl-1 pr-1 md:pt-1 md:pb-1 z-10 font-semibold text-[rgba(var(--colors-text))] text-[120%]">{{ section.settings.product.title }}</span>
+            {% else %}
+              <span class="w-1/2 h-3 bg-[#c9c9c9] z-10"></span>
+            {% endif %}
+          </div>
+          {% if external_item_labels.size > 0 %}
+          {%- for column in external_item_labels limit: number_of_columns -%}
+            <div class="table-header pt-2 pb-2 pr-2 pl-2 w-[86px] min-w-[86px] md:w-auto md:min-w-none min-h-[55px] border-solid border-b flex p-break-words md:grow md:basis-[0] justify-center items-center text-center mt-0.5 md:mt-0">
+              {% if column != '' %}
+                <span class="text-center pb-2 pt-2 pl-1 pr-1 md:pt-1 md:pb-1 font-semibold text-[rgba(var(--colors-text))] text-[120%]">{{ column }}</span>
+                {% else %}
+                <span class="w-1/2 h-3 text-center bg-[#c9c9c9] z-10"></span>
+              {% endif %}
+            </div>
+          {% endfor %}
+          {% endif %}
+        </div>
+        {% if section.blocks.size > 0 %}
+          {% for block in section.blocks %}
+            {% # theme-check-disable %}
+            <div class="x-block-table-row-{{ forloop.index }} criterion-row min-h-[60px] md:min-h-[82px] flex w-full">
+              <div class="criterion-detail-heading flex min-w-[130px] pt-2 pb-2 pr-2 pl-2 p-break-words border-solid border-b grow items-center justify-center text-center basis-32 lg:basis-52 xl:min-w-[20rem] xl:basis-[0] mt-0.5 {% if first %} md:mt-0.5{% else %} md:mt-[1px]{% endif %}">
+                {% if block.settings.heading != blank %}
+                  <span class="pl-1 pr-1 pt-2 pb-2 font-semibold text-[rgba(var(--colors-text))] text-[120%]">
+                    {{ block.settings.heading }}
+                  </span>
+                {% else %}
+                  <span class="w-1/2 h-3 bg-[#c9c9c9]"></span>
+                {% endif %}
+              </div>
+              <div class="criterion-detail-product pt-2 pb-2 pr-2 pl-2 opacity-90 table-highlight-{{ section.id }} text-center text-[rgb(var(--colors-text))] w-[86px] min-w-[86px] max-w-[86px] md:max-w-none md:w-auto md:min-w-none z-10 relative flex grow basis-[0] justify-center items-center p-break-words{% if forloop.last %} after:absolute after:w-full after:h-full after:translate-y-2.5 after:md:translate-y-5{% if settings.edges_type == 'rounded_corners' %} after:rounded-[10px] after:md:rounded-[20px]{% endif %}{% endif %}">
+                {% if block.settings.criterion_detail_product != blank %}
+                {%- assign criterion_detail_product = block.settings.criterion_detail_product | downcase -%}
+                {%- case criterion_detail_product -%}
+                  {%- when 'yes' -%}
+                  <span class="inline-block w-[30px] h-[30px] md:w-9 md:h-9 icon-tick z-10">{% render 'icon-alls', icon: 'icon-check-circle' %}</span>
+                  {%- when 'no' -%}
+                    <span class="inline-block w-4 h-4 md:w-[18px] md:h-[18px] icon-cross z-10">{% render 'icon-alls', icon: 'icon-cross-table' %}</span>
+                  {%- else -%}
+                    <span class="z-10 pl-2 pr-2">{{ block.settings.criterion_detail_product | escape }}</span>
+                {%- endcase -%}
+                {% else %}
+                  <span class="w-1/2 h-3 bg-[#c9c9c9] z-10"></span>
+                {% endif %}
+              </div>
+              {% liquid
+                assign criterion_detail_externals = block.settings.criterion_detail_externals | newline_to_br | strip_newlines | split: '<br />'
+              %}
+              {% if criterion_detail_externals.size > 0 %}
+                {% for column_external in criterion_detail_externals limit: number_of_columns %}
+                  <div class="criterion-detail-external p-break-words text-center pt-2 pb-2 pr-2 pl-2 w-[86px] min-w-[86px] max-w-[86px] md:max-w-none md:w-auto md:min-w-none flex grow basis-[0] text-[rgb(var(--colors-text))] justify-center items-center border-solid border-b{% if first %} border-t mt-0.5{% endif %}">
+                    {% if column_external != '' and number_of_columns >= forloop.index %}
+                      {%- assign criterion_detail_external = column_external | downcase -%}
+                      {%- case criterion_detail_external -%}
+                        {%- when 'yes' -%}
+                        <span class="inline-block w-[30px] h-[30px] md:w-9 md:h-9 icon-tick">{% render 'icon-alls', icon: 'icon-check-circle' %}</span>
+                        {%- when 'no' -%}
+                          <span class="inline-block w-4 h-4 md:w-[18px] md:h-[18px] icon-cross">{% render 'icon-alls', icon: 'icon-cross-table' %}</span>
+                        {%- else -%}
+                          {{ column_external | escape }}
+                      {%- endcase -%}
+                      {% else %}
+                        <span class="w-1/2 h-3 bg-[#c9c9c9] z-10"></span>
+                      {% endif %}
+                    </div>
+                {% endfor %}
+                {% if criterion_detail_externals.size < number_of_columns and number_of_columns > 0 %}
+                  {% assign missing_block_number = number_of_columns | minus: criterion_detail_externals.size %}
+                  {% for column_external in (1..missing_block_number) %}
+                  <div class="criterion-detail-external pt-2 pb-2 pr-2 pl-2 w-[86px] min-w-[86px] max-w-[86px] md:max-w-none md:w-auto md:min-w-none flex grow basis-[0] text-[rgb(var(--colors-text))] justify-center items-center border-solid border-b{% if first %} border-t mt-0.5{% endif %}">
+                    <span class="w-1/2 h-3 bg-[#c9c9c9] z-10"></span>
+                  </div>
+                  {% endfor %}
+                {% endif %}
+              {% else %}
+                {% for column_external in (1..number_of_columns) %}
+                  <div class="criterion-detail-external pt-2 pb-2 pr-2 pl-2 w-[86px] min-w-[86px] max-w-[86px] md:max-w-none md:w-auto md:min-w-none flex grow basis-[0] text-[rgb(var(--colors-text))] justify-center items-center border-solid border-b{% if first %} border-t mt-0.5{% endif %}">
+                    <span class="w-1/2 h-3 bg-[#c9c9c9] z-10"></span>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+            {% # theme-check-enable %}
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% schema %}
+{
+  "name": "t:sections.comparision-table.name",
+  "tag": "section",
+  "class": "section section-comparision-table x-section",
+  "disabled_on": {
+    "groups": ["header", "footer", "aside"]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.user_guide_link.section_and_blocks.comparison_table"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:sections.all.text.heading",
+      "default": "Us vs Them",
+      "info": "t:settings_schema.typography.settings.heading_highlight_type.info"
+    },
+    {
+      "type": "select",
+      "id": "highlight_type",
+      "default": "underline",
+      "label": "t:settings_schema.typography.settings.heading_highlight_type.label",
+      "options": [
+        {
+          "value": "underline",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__1.label"
+        },
+        {
+          "value": "font_highlight",
+          "label": "t:settings_schema.typography.settings.heading_highlight_type.option__3.label"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 50,
+      "max": 200,
+      "unit": "%",
+      "step": 10,
+      "default": 100,
+      "label": "t:sections.all.text.heading_size"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "default": "h2",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "p",
+          "label": "p"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "default": "center",
+      "label": "t:sections.all.text.heading_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        }
+      ]
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "default": "<p>Add further details to describe your comparison table</p>",
+      "label": "t:sections.all.text.text"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.comparision-table.settings.comparing_items.label"
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "t:settings_schema.cart.product"
+    },
+    {
+      "type": "text",
+      "id": "alternative_text",
+      "label": "t:sections.comparision-table.settings.alternative_text.label",
+      "info": "t:sections.comparision-table.settings.alternative_text.info"
+    },
+    {
+      "type": "textarea",
+      "id": "external_item_labels",
+      "default": "First item\nSecond item\nThird item\nFourth item",
+      "label": "t:sections.comparision-table.settings.external_item_labels.label",
+      "info": "t:sections.comparision-table.settings.external_item_labels.info"
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.colors.name"
+    },
+    {
+      "type": "color",
+      "id": "background_color_light",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_light"
+    },
+    {
+      "type": "color",
+      "id": "heading_light",
+      "label": "t:sections.all.text.color_heading_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_heading_highlight_light",
+      "label": "t:sections.all.text.color_heading_highlight_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "text_light",
+      "label": "t:sections.all.text.color",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "column_highlight_light",
+      "label": "t:sections.comparision-table.settings.column_highlight.light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "line_border",
+      "label": "t:sections.all.text.line_border",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_dark"
+    },
+    {
+      "type": "color",
+      "id": "heading_dark",
+      "label": "t:sections.all.text.color_heading_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_heading_highlight_dark",
+      "label": "t:sections.all.text.color_heading_highlight_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "text_dark",
+      "label": "t:sections.all.text.color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "column_highlight_dark",
+      "label": "t:sections.comparision-table.settings.column_highlight.dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "line_border_dark",
+      "label": "t:sections.all.text.line_border_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "label": "t:sections.all.full_width.label",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 28
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider_mobile",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 28
+    }
+  ],
+  "blocks": [
+    {
+      "type": "criterion",
+      "name": "t:sections.comparision-table.blocks.name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Criterion label",
+          "label": "t:sections.comparision-table.blocks.criterion_label.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.comparision-table.blocks.store_item.label"
+        },
+        {
+          "type": "text",
+          "id": "criterion_detail_product",
+          "default": "Yes",
+          "label": "t:sections.comparision-table.blocks.criterion_detail.label",
+          "info": "t:sections.comparision-table.blocks.store_item.info"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.comparision-table.blocks.external_items.label"
+        },
+        {
+          "type": "textarea",
+          "id": "criterion_detail_externals",
+          "default": "No\nNo\nNo\nNo",
+          "label": "t:sections.comparision-table.blocks.criterion_detail.label_2",
+          "info": "t:sections.comparision-table.blocks.external_items.info"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.comparision-table.name",
+      "category": "t:categories.products",
+      "blocks": [
+        {
+          "type": "criterion"
+        },
+        {
+          "type": "criterion"
+        },
+        {
+          "type": "criterion"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

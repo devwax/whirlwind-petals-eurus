@@ -1,0 +1,1139 @@
+{% liquid
+  assign desktop_width = block.settings.desktop_width
+  assign mobile_width = block.settings.mobile_width
+  if desktop_width != 'fit'
+    assign desktop_width = desktop_width | times: 1
+  endif
+  if mobile_width != 'fit'
+    assign mobile_width = mobile_width | times: 1
+  endif
+%}
+{%- style -%}
+  .background-countdown-{{ block.id }} {
+    font-size: var(--font-size-normal);
+    {%- if block.settings.background_color.alpha != 0 -%}
+      background: {{ block.settings.background_color }};
+    {%- endif -%}
+    {%- if block.settings.text_color.alpha != 0 -%}
+      color: {{ block.settings.text_color }};
+      border-color: {{ block.settings.text_color }};
+    {%- endif -%}
+  }
+  .dark .background-countdown-{{ block.id }} {
+    {%- if block.settings.background_color_dark.alpha != 0 -%}
+      background: {{ block.settings.background_color_dark }};
+    {%- else -%}
+      background: transparent;
+    {%- endif -%}
+    {%- if block.settings.text_color_dark.alpha != 0 -%}
+      color: {{ block.settings.text_color_dark }};
+      border-color: {{ block.settings.text_color_dark }};
+    {%- else -%}
+      color: rgba(var(--colors-text));
+      border-color: rgba(var(--colors-text));
+    {%- endif -%}
+  }
+  .splide__list > .flexible-area-countdown-timer:has(.width-{{ block.id }}) {
+    max-width: unset;
+    width: 100%;
+  }
+  .flexible-area-countdown-timer:has(.width-{{ block.id }}) {
+    {% if mobile_width == 'fit' %}
+      width: fit-content;
+      max-width: unset;
+    {% elsif mobile_width < 100 %}
+      width: calc({{ mobile_width }}% - 100px);
+      flex-grow: 1;
+      max-width: {{ mobile_width }}%;
+    {% else %}
+      width: 100%;
+      max-width: 100%;
+    {% endif %}
+  }
+  .timer-countdown-{{ block.id }} {
+    font-size: var(--font-size-large);
+    {%- if block.settings.time_color.alpha != 0 -%}
+      color: {{ block.settings.time_color }}
+    {%- else -%}
+      color: var(--colors-button-hover);
+    {%- endif -%}
+  }
+  .dark .timer-countdown-{{ block.id }} {
+    {%- if block.settings.time_color_dark.alpha != 0 -%}
+      color: {{ block.settings.time_color_dark }}
+    {%- else -%}
+      color: var(--colors-button-hover);
+    {%- endif -%}
+  }
+  .flexible-area-group .flexible-area-block:has(.content-alignment-{{ block.id }}) {
+    {% if block.settings.mobile_content_alignment == 'center' %}
+      margin-left: auto;
+      margin-right: auto;
+    {% elsif block.settings.mobile_content_alignment == 'left' or block.settings.mobile_content_alignment == 'adapt' %}
+    {% else %}
+      margin-left: auto;
+      margin-right: unset
+    {% endif %}
+  }
+  @media screen and (min-width: 768px) {
+    .flexible-area-countdown-timer:has(.width-{{ block.id }}) {
+      {% if desktop_width == 'fit' %}
+        width: fit-content;
+        max-width: unset;
+      {% elsif desktop_width < 100 %}
+        width: calc({{ desktop_width }}% - 100px);
+        flex-grow: 1;
+        max-width: {{ desktop_width }}%;
+      {% else %}
+        width: 100%;
+        max-width: 100%;
+      {% endif %}
+    }
+    .flexible-area-group .flexible-area-block:has(.content-alignment-{{ block.id }}) {
+      {% if block.settings.content_alignment == 'center' %}
+        margin-left: auto;
+        margin-right: auto;
+      {% elsif block.settings.content_alignment == 'left' or block.settings.content_alignment == 'adapt' %}
+      {% else %}
+        margin-left: auto;
+        margin-right: unset
+      {% endif %}
+    }
+  }
+{%- endstyle -%}
+{%- capture count_down_flexible_area -%}
+  {
+    "blockId": "{{ block.id }}",
+    "timezone": {{ block.settings.timezone | default: 0 }},
+    "start_year": {{ block.settings.start_year | default: 0 }},
+    "start_month": {{ block.settings.start_month | default: 0 }},
+    "start_day": {{ block.settings.start_day | default: 0 }},
+    "start_hour": {{ block.settings.start_hour | default: 0 }},
+    "start_minute": {{ block.settings.start_minute | default: 0 }},
+    "end_year": {{ block.settings.end_year | default: 0 }},
+    "end_month": {{ block.settings.end_month | default: 0 }},
+    "end_day": {{ block.settings.end_day | default: 0 }},
+    "end_hour": {{ block.settings.end_hour | default: 0 }},
+    "end_minute": {{ block.settings.end_minute | default: 0 }},
+    "reset": {% if block.settings.countdown_type == 'evergreen' %}true{% else %}false{% endif %},
+    "duration": {% if block.settings.interval_unit == 'day' %}{{ block.settings.countdown_interval | times: 86400000 }}{% else %}{{ block.settings.countdown_interval | times: 3600000 }}{% endif %}
+  }
+{%- endcapture -%}
+<div id="x-countdown-flexible-area-{{ block.id }}"
+  data-width="{{ desktop_width }}" data-width-mobile="{{ mobile_width }}"
+  class="block-{{ block.id }} item-block width-{{ block.id }} x-countdown w-full inline-block md:block {% if block.settings.mobile_content_alignment == 'adapt' %}item-group-content-alignment-mobile{% endif %} {% if block.settings.content_alignment == 'adapt' %}item-group-content-alignment{% endif %} content-alignment-{{ block.id }}"
+  x-data="{ loading: true, textLoad: '-', days: 0, hours: 0, minutes: 0, seconds: 0 }"
+  x-countdown-data='{{ count_down_flexible_area }}'
+  x-intersect='$nextTick(() => {
+    $store.xHelper.countdown({{ count_down_flexible_area }}, (canShow, s, m, h, d) => {
+      days = d;
+      hours = h;
+      minutes = m;
+      seconds = s;
+      loading = false;
+    })
+  })' 
+  {{ block.shopify_attributes }}
+>
+  <div id="x-flexible-area-countdown-{{ block.id }}" class="x-content-flexible-area-countdown {% if mobile_width == "fit" %}w-max{% else %}w-full{% endif %} {% if desktop_width == 'fit' %}md:w-max{% else %}md:w-full{% endif %} grid grid-cols-4 justify-center gap-3 md:gap-2.5">
+    <div class="flex flex-col items-center background-countdown-{{ block.id }} border pl-1 pr-1 pt-2.5 pb-2.5 md:min-w-[70px] lg:min-w-[74px]{% if settings.edges_type == 'rounded_corners' %} rounded{% endif %}"><span class="timer-countdown-{{ block.id }} font-bold h4" x-html="loading?textLoad:days"></span><span class="p-break-words">{{ 'sections.popup.days' | t }}</span></div>
+    <div class="flex flex-col items-center background-countdown-{{ block.id }} border pl-1 pr-1 pt-2.5 pb-2.5 md:min-w-[70px] lg:min-w-[74px]{% if settings.edges_type == 'rounded_corners' %} rounded{% endif %}"><span class="timer-countdown-{{ block.id }} font-bold h4" x-html="loading?textLoad:hours"></span><span class="p-break-words">{{ 'sections.popup.hours' | t }}</span></div>
+    <div class="flex flex-col items-center background-countdown-{{ block.id }} border pl-1 pr-1 pt-2.5 pb-2.5 md:min-w-[70px] lg:min-w-[74px]{% if settings.edges_type == 'rounded_corners' %} rounded{% endif %}"><span class="timer-countdown-{{ block.id }} font-bold h4" x-html="loading?textLoad:minutes"></span><span class="p-break-words">{{ 'sections.popup.mins' | t }}</span></div>
+    <div class="flex flex-col items-center background-countdown-{{ block.id }} border pl-1 pr-1 pt-2.5 pb-2.5 md:min-w-[70px] lg:min-w-[74px]{% if settings.edges_type == 'rounded_corners' %} rounded{% endif %}"><span class="timer-countdown-{{ block.id }} font-bold h4" x-html="loading?textLoad:seconds"></span><span class="p-break-words">{{ 'sections.popup.secs' | t }}</span></div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "t:sections.announcement-bar.blocks.announcement.countdown-timer.name",
+  "class": "flexible-area-countdown-timer flexible-area-block splide__slide x-splide-slide",
+  "settings": [
+    {
+      "type": "select",
+      "id": "desktop_width",
+      "label": "t:sections.flexible-area.blocks.item-group.settings.desktop_width",
+      "options": [
+        {
+          "label": "t:sections.highlight-text-with-image.settings.section_height.options__1.label",
+          "value": "fit"
+        },
+        {
+          "label": "25%",
+          "value": "25"
+        },
+        {
+          "label": "30%",
+          "value": "30"
+        },
+        {
+          "label": "50%",
+          "value": "50"
+        },
+        {
+          "label": "66%",
+          "value": "66"
+        },
+        {
+          "label": "70%",
+          "value": "70"
+        },
+        {
+          "label": "75%",
+          "value": "75"
+        },
+        {
+          "label": "80%",
+          "value": "80"
+        },
+        {
+          "label": "83%",
+          "value": "83"
+        },
+        {
+          "label": "100%",
+          "value": "100"
+        }
+      ],
+      "default": "fit"
+    },
+    {
+      "type": "select",
+      "id": "mobile_width",
+      "label": "t:sections.flexible-area.blocks.item-group.settings.mobile_width",
+      "options": [
+        {
+          "label": "t:sections.highlight-text-with-image.settings.section_height.options__1.label",
+          "value": "fit"
+        },
+        {
+          "label": "100%",
+          "value": "100"
+        }
+      ],
+      "default": "100"
+    },
+    {
+      "type": "select",
+      "id": "countdown_type",
+      "options": [
+        {
+          "value": "standard",
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.countdown_type.standard"
+        },
+        {
+          "value": "evergreen",
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.countdown_type.evergreen"
+        }
+      ],
+      "default": "standard",
+      "label": "t:sections.promotion-banner.blocks.countdown.settings.countdown_type.label",
+      "info": "t:sections.promotion-banner.blocks.countdown.settings.countdown_type.info"
+    },
+    {
+      "type": "range",
+      "id": "countdown_interval",
+      "label": "t:sections.promotion-banner.blocks.countdown.settings.countdown_interval.label",
+      "default": 7,
+      "max": 30,
+      "min": 1,
+      "step": 1,
+      "visible_if": "{{ block.settings.countdown_type == 'evergreen' }}"
+    },
+    {
+      "type": "select",
+      "id": "interval_unit",
+      "label": "t:sections.promotion-banner.blocks.countdown.settings.interval_unit.label",
+      "options": [
+        {
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.interval_unit.options.days",
+          "value": "day"
+        },
+        {
+          "label": "t:sections.promotion-banner.blocks.countdown.settings.interval_unit.options.hours",
+          "value": "hour"
+        }
+      ],
+      "default": "day",
+      "visible_if": "{{ block.settings.countdown_type == 'evergreen' }}"
+    },
+    {
+      "type": "select",
+      "id": "timezone",
+      "options": [
+        {
+          "value": "-12",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-12.label"
+        },
+        {
+          "value": "-11",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-11.label"
+        },
+        {
+          "value": "-10",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-10.label"
+        },
+        {
+          "value": "-9",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-9.label"
+        },
+        {
+          "value": "-8",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-8.label"
+        },
+        {
+          "value": "-7",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-7.label"
+        },
+        {
+          "value": "-6",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-6.label"
+        },
+        {
+          "value": "-5",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-5.label"
+        },
+        {
+          "value": "-4",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-4.label"
+        },
+        {
+          "value": "-3",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-3.label"
+        },
+        {
+          "value": "-2",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-2.label"
+        },
+        {
+          "value": "-1",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__-1.label"
+        },
+        {
+          "value": "0",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__0.label"
+        },
+        {
+          "value": "1",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__1.label"
+        },
+        {
+          "value": "2",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__2.label"
+        },
+        {
+          "value": "3",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__3.label"
+        },
+        {
+          "value": "4",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__4.label"
+        },
+        {
+          "value": "5",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__5.label"
+        },
+        {
+          "value": "5.5",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__15.label"
+        },
+        {
+          "value": "6",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__6.label"
+        },
+        {
+          "value": "7",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__7.label"
+        },
+        {
+          "value": "8",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__8.label"
+        },
+        {
+          "value": "9",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__9.label"
+        },
+        {
+          "value": "10",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__10.label"
+        },
+        {
+          "value": "11",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__11.label"
+        },
+        {
+          "value": "12",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__12.label"
+        },
+        {
+          "value": "13",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__13.label"
+        },
+        {
+          "value": "14",
+          "label": "t:sections.announcement-bar.blocks.timezone.options__14.label"
+        }
+      ],
+      "default": "-4",
+      "label": "t:sections.announcement-bar.blocks.timezone.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.event-calendar.blocks.event.settings.start_date.content",
+      "info": "t:sections.promotion-popup.blocks.countdown_timer.settings.schedule_start_time.info"
+    },
+    {
+      "type": "number",
+      "id": "start_year",
+      "default": 2024,
+      "label": "t:sections.product-labels-and-badges.blocks.start_year.label"
+    },
+    {
+      "type": "select",
+      "id": "start_month",
+      "options": [
+        {
+          "value": "1",
+          "label": "t:sections.announcement-bar.blocks.month.options__1.label"
+        },
+        {
+          "value": "2",
+          "label": "t:sections.announcement-bar.blocks.month.options__2.label"
+        },
+        {
+          "value": "3",
+          "label": "t:sections.announcement-bar.blocks.month.options__3.label"
+        },
+        {
+          "value": "4",
+          "label": "t:sections.announcement-bar.blocks.month.options__4.label"
+        },
+        {
+          "value": "5",
+          "label": "t:sections.announcement-bar.blocks.month.options__5.label"
+        },
+        {
+          "value": "6",
+          "label": "t:sections.announcement-bar.blocks.month.options__6.label"
+        },
+        {
+          "value": "7",
+          "label": "t:sections.announcement-bar.blocks.month.options__7.label"
+        },
+        {
+          "value": "8",
+          "label": "t:sections.announcement-bar.blocks.month.options__8.label"
+        },
+        {
+          "value": "9",
+          "label": "t:sections.announcement-bar.blocks.month.options__9.label"
+        },
+        {
+          "value": "10",
+          "label": "t:sections.announcement-bar.blocks.month.options__10.label"
+        },
+        {
+          "value": "11",
+          "label": "t:sections.announcement-bar.blocks.month.options__11.label"
+        },
+        {
+          "value": "12",
+          "label": "t:sections.announcement-bar.blocks.month.options__12.label"
+        }
+      ],
+      "default": "1",
+      "label": "t:sections.product-labels-and-badges.blocks.start_month.label"
+    },
+    {
+      "type": "select",
+      "id": "start_day",
+      "options": [
+        {
+          "value": "1",
+          "label": "1"
+        },
+        {
+          "value": "2",
+          "label": "2"
+        },
+        {
+          "value": "3",
+          "label": "3"
+        },
+        {
+          "value": "4",
+          "label": "4"
+        },
+        {
+          "value": "5",
+          "label": "5"
+        },
+        {
+          "value": "6",
+          "label": "6"
+        },
+        {
+          "value": "7",
+          "label": "7"
+        },
+        {
+          "value": "8",
+          "label": "8"
+        },
+        {
+          "value": "9",
+          "label": "9"
+        },
+        {
+          "value": "10",
+          "label": "10"
+        },
+        {
+          "value": "11",
+          "label": "11"
+        },
+        {
+          "value": "12",
+          "label": "12"
+        },
+        {
+          "value": "13",
+          "label": "13"
+        },
+        {
+          "value": "14",
+          "label": "14"
+        },
+        {
+          "value": "15",
+          "label": "15"
+        },
+        {
+          "value": "16",
+          "label": "16"
+        },
+        {
+          "value": "17",
+          "label": "17"
+        },
+        {
+          "value": "18",
+          "label": "18"
+        },
+        {
+          "value": "19",
+          "label": "19"
+        },
+        {
+          "value": "20",
+          "label": "20"
+        },
+        {
+          "value": "21",
+          "label": "21"
+        },
+        {
+          "value": "22",
+          "label": "22"
+        },
+        {
+          "value": "23",
+          "label": "23"
+        },
+        {
+          "value": "24",
+          "label": "24"
+        },
+        {
+          "value": "25",
+          "label": "25"
+        },
+        {
+          "value": "26",
+          "label": "26"
+        },
+        {
+          "value": "27",
+          "label": "27"
+        },
+        {
+          "value": "28",
+          "label": "28"
+        },
+        {
+          "value": "29",
+          "label": "29"
+        },
+        {
+          "value": "30",
+          "label": "30"
+        },
+        {
+          "value": "31",
+          "label": "31"
+        }
+      ],
+      "default": "1",
+      "label": "t:sections.product-labels-and-badges.blocks.start_day.label"
+    },
+    {
+      "type": "select",
+      "id": "start_hour",
+      "options": [
+        {
+          "value": "0",
+          "label": "12 AM"
+        },
+        {
+          "value": "1",
+          "label": "01 AM"
+        },
+        {
+          "value": "2",
+          "label": "02 AM"
+        },
+        {
+          "value": "3",
+          "label": "03 AM"
+        },
+        {
+          "value": "4",
+          "label": "04 AM"
+        },
+        {
+          "value": "5",
+          "label": "05 AM"
+        },
+        {
+          "value": "6",
+          "label": "06 AM"
+        },
+        {
+          "value": "7",
+          "label": "07 AM"
+        },
+        {
+          "value": "8",
+          "label": "08 AM"
+        },
+        {
+          "value": "9",
+          "label": "09 AM"
+        },
+        {
+          "value": "10",
+          "label": "10 AM"
+        },
+        {
+          "value": "11",
+          "label": "11 AM"
+        },
+        {
+          "value": "12",
+          "label": "12 PM"
+        },
+        {
+          "value": "13",
+          "label": "01 PM"
+        },
+        {
+          "value": "14",
+          "label": "02 PM"
+        },
+        {
+          "value": "15",
+          "label": "03 PM"
+        },
+        {
+          "value": "16",
+          "label": "04 PM"
+        },
+        {
+          "value": "17",
+          "label": "05 PM"
+        },
+        {
+          "value": "18",
+          "label": "06 PM"
+        },
+        {
+          "value": "19",
+          "label": "07 PM"
+        },
+        {
+          "value": "20",
+          "label": "08 PM"
+        },
+        {
+          "value": "21",
+          "label": "09 PM"
+        },
+        {
+          "value": "22",
+          "label": "10 PM"
+        },
+        {
+          "value": "23",
+          "label": "11 PM"
+        }
+      ],
+      "default": "0",
+      "label": "t:sections.product-labels-and-badges.blocks.start_hour.label"
+    },
+    {
+      "type": "select",
+      "id": "start_minute",
+      "options": [
+        {
+          "value": "0",
+          "label": "00"
+        },
+        {
+          "value": "15",
+          "label": "15"
+        },
+        {
+          "value": "30",
+          "label": "30"
+        },
+        {
+          "value": "45",
+          "label": "45"
+        }
+      ],
+      "default": "0",
+      "label": "t:sections.product-labels-and-badges.blocks.start_minute.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.event-calendar.blocks.event.settings.end_date.content",
+      "info": "t:sections.promotion-popup.blocks.countdown_timer.settings.schedule_end_time.info",
+      "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+    },
+    {
+      "type": "number",
+      "id": "end_year",
+      "default": 2024,
+      "label": "t:sections.product-labels-and-badges.blocks.end_year.label",
+      "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+    },
+    {
+      "type": "select",
+      "id": "end_month",
+      "options": [
+        {
+          "value": "1",
+          "label": "t:sections.announcement-bar.blocks.month.options__1.label"
+        },
+        {
+          "value": "2",
+          "label": "t:sections.announcement-bar.blocks.month.options__2.label"
+        },
+        {
+          "value": "3",
+          "label": "t:sections.announcement-bar.blocks.month.options__3.label"
+        },
+        {
+          "value": "4",
+          "label": "t:sections.announcement-bar.blocks.month.options__4.label"
+        },
+        {
+          "value": "5",
+          "label": "t:sections.announcement-bar.blocks.month.options__5.label"
+        },
+        {
+          "value": "6",
+          "label": "t:sections.announcement-bar.blocks.month.options__6.label"
+        },
+        {
+          "value": "7",
+          "label": "t:sections.announcement-bar.blocks.month.options__7.label"
+        },
+        {
+          "value": "8",
+          "label": "t:sections.announcement-bar.blocks.month.options__8.label"
+        },
+        {
+          "value": "9",
+          "label": "t:sections.announcement-bar.blocks.month.options__9.label"
+        },
+        {
+          "value": "10",
+          "label": "t:sections.announcement-bar.blocks.month.options__10.label"
+        },
+        {
+          "value": "11",
+          "label": "t:sections.announcement-bar.blocks.month.options__11.label"
+        },
+        {
+          "value": "12",
+          "label": "t:sections.announcement-bar.blocks.month.options__12.label"
+        }
+      ],
+      "default": "1",
+      "label": "t:sections.product-labels-and-badges.blocks.end_month.label",
+      "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+    },
+    {
+      "type": "select",
+      "id": "end_day",
+      "options": [
+        {
+          "value": "1",
+          "label": "1"
+        },
+        {
+          "value": "2",
+          "label": "2"
+        },
+        {
+          "value": "3",
+          "label": "3"
+        },
+        {
+          "value": "4",
+          "label": "4"
+        },
+        {
+          "value": "5",
+          "label": "5"
+        },
+        {
+          "value": "6",
+          "label": "6"
+        },
+        {
+          "value": "7",
+          "label": "7"
+        },
+        {
+          "value": "8",
+          "label": "8"
+        },
+        {
+          "value": "9",
+          "label": "9"
+        },
+        {
+          "value": "10",
+          "label": "10"
+        },
+        {
+          "value": "11",
+          "label": "11"
+        },
+        {
+          "value": "12",
+          "label": "12"
+        },
+        {
+          "value": "13",
+          "label": "13"
+        },
+        {
+          "value": "14",
+          "label": "14"
+        },
+        {
+          "value": "15",
+          "label": "15"
+        },
+        {
+          "value": "16",
+          "label": "16"
+        },
+        {
+          "value": "17",
+          "label": "17"
+        },
+        {
+          "value": "18",
+          "label": "18"
+        },
+        {
+          "value": "19",
+          "label": "19"
+        },
+        {
+          "value": "20",
+          "label": "20"
+        },
+        {
+          "value": "21",
+          "label": "21"
+        },
+        {
+          "value": "22",
+          "label": "22"
+        },
+        {
+          "value": "23",
+          "label": "23"
+        },
+        {
+          "value": "24",
+          "label": "24"
+        },
+        {
+          "value": "25",
+          "label": "25"
+        },
+        {
+          "value": "26",
+          "label": "26"
+        },
+        {
+          "value": "27",
+          "label": "27"
+        },
+        {
+          "value": "28",
+          "label": "28"
+        },
+        {
+          "value": "29",
+          "label": "29"
+        },
+        {
+          "value": "30",
+          "label": "30"
+        },
+        {
+          "value": "31",
+          "label": "31"
+        }
+      ],
+      "default": "1",
+      "label": "t:sections.product-labels-and-badges.blocks.end_day.label",
+      "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+    },
+    {
+      "type": "select",
+      "id": "end_hour",
+      "options": [
+        {
+          "value": "0",
+          "label": "12 AM"
+        },
+        {
+          "value": "1",
+          "label": "01 AM"
+        },
+        {
+          "value": "2",
+          "label": "02 AM"
+        },
+        {
+          "value": "3",
+          "label": "03 AM"
+        },
+        {
+          "value": "4",
+          "label": "04 AM"
+        },
+        {
+          "value": "5",
+          "label": "05 AM"
+        },
+        {
+          "value": "6",
+          "label": "06 AM"
+        },
+        {
+          "value": "7",
+          "label": "07 AM"
+        },
+        {
+          "value": "8",
+          "label": "08 AM"
+        },
+        {
+          "value": "9",
+          "label": "09 AM"
+        },
+        {
+          "value": "10",
+          "label": "10 AM"
+        },
+        {
+          "value": "11",
+          "label": "11 AM"
+        },
+        {
+          "value": "12",
+          "label": "12 PM"
+        },
+        {
+          "value": "13",
+          "label": "01 PM"
+        },
+        {
+          "value": "14",
+          "label": "02 PM"
+        },
+        {
+          "value": "15",
+          "label": "03 PM"
+        },
+        {
+          "value": "16",
+          "label": "04 PM"
+        },
+        {
+          "value": "17",
+          "label": "05 PM"
+        },
+        {
+          "value": "18",
+          "label": "06 PM"
+        },
+        {
+          "value": "19",
+          "label": "07 PM"
+        },
+        {
+          "value": "20",
+          "label": "08 PM"
+        },
+        {
+          "value": "21",
+          "label": "09 PM"
+        },
+        {
+          "value": "22",
+          "label": "10 PM"
+        },
+        {
+          "value": "23",
+          "label": "11 PM"
+        }
+      ],
+      "default": "0",
+      "label": "t:sections.product-labels-and-badges.blocks.end_hour.label",
+      "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+    },
+    {
+      "type": "select",
+      "id": "end_minute",
+      "options": [
+        {
+          "value": "0",
+          "label": "00"
+        },
+        {
+          "value": "15",
+          "label": "15"
+        },
+        {
+          "value": "30",
+          "label": "30"
+        },
+        {
+          "value": "45",
+          "label": "45"
+        }
+      ],
+      "default": "0",
+      "label": "t:sections.product-labels-and-badges.blocks.end_minute.label",
+      "visible_if": "{{ block.settings.countdown_type != 'evergreen' and section.settings.schedule_enabled }}"
+    },
+    {
+      "type": "header",
+      "info": "t:sections.flexible-area.blocks.item-group.settings.adapt_item_group_alignment_info_1",
+      "content": "t:sections.flexible-area.blocks.item-group.settings.alignment_item_group"
+    },
+    {
+      "type": "select",
+      "id": "content_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        },
+        {
+          "value": "adapt",
+          "label": "t:sections.flexible-area.blocks.item-group.settings.adapt_item_group_alignment"
+        }
+      ],
+      "default": "adapt",
+      "label": "t:sections.quick-links.settings.alignment.label"
+    },
+    {
+      "type": "select",
+      "id": "mobile_content_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.content_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.content_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.content_alignment.options__3.label"
+        },
+        {
+          "value": "adapt",
+          "label": "t:sections.flexible-area.blocks.item-group.settings.adapt_item_group_alignment"
+        }
+      ],
+      "default": "adapt",
+      "label": "t:sections.quick-links.settings.mobile_alignment.label"
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.colors.name"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_light"
+    },
+    {
+      "type": "color",
+      "id": "time_color",
+      "default": "#FB8500",
+      "label": "t:sections.promotion-popup.blocks.countdown_timer.settings.time_color.label"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "default": "#999999",
+      "label": "t:sections.all.text.color"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "default": "rgba(0,0,0,0)",
+      "label": "t:sections.all.background.background_color_dark"
+    },
+    {
+      "type": "color",
+      "id": "time_color_dark",
+      "default": "#FB8500",
+      "label": "t:sections.promotion-popup.blocks.countdown_timer.settings.time_color_dark.label"
+    },
+    {
+      "type": "color",
+      "id": "text_color_dark",
+      "default": "#FFFFFF",
+      "label": "t:sections.all.text.color_dark"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.announcement-bar.blocks.announcement.countdown-timer.name",
+      "category": "t:categories.basics"
+    }
+  ]
+}
+{% endschema %}

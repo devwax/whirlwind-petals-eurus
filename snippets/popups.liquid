@@ -1,0 +1,194 @@
+{% if request.design_mode %}
+  {% liquid 
+    if settings.lang_direction contains request.locale.iso_code
+      assign is_rtl = true
+    else
+      assign is_rtl = false
+    endif
+  %}
+  {% style %}
+    #eurus-new-update-popup .icon-close-animation {
+      width: 12px;
+      height: 12px;
+    }
+
+    #eurus-new-update-popup .icon-close-container {
+      padding: 10px;
+      background-color: rgba(69, 70, 69, 0.3);
+      color: rgba(69, 70, 69, 1);
+    }
+    #eurus-new-update-popup {
+      background-color: #F3F6EF;
+      color: #454645;
+      --color-success: 96, 107, 87;
+    }
+    #update-popup-form {
+      border-color: #E1E3E1;
+    }
+    #update-popup-submit {
+      color: #FFFFFF;
+      background-color: #282928;
+    }
+    #update-popup-submit:hover {
+      transition-duration: 0.2s;
+      transition-property: background-color;
+      color: #FFFFFF;
+      background-color: #101010;
+    }
+    
+    .dark #eurus-new-update-popup .icon-close-container {
+      background-color: rgba(225, 227, 225, 0.3);
+      color: rgba(225, 227, 225, 1);
+    }
+    .dark #eurus-new-update-popup {
+      background-color: #2F302F;
+      color: #E1E3E1;
+      --color-success: 145, 180, 116;
+    }
+    .dark #update-popup-form {
+      border-color: #313131;
+    }
+    .dark #update-popup-submit {
+      color: #282928;
+      background-color: #FFFFFF;
+    }
+    .dark #update-popup-submit:hover {
+      color: #282928;
+      background-color: #FFFFFF;
+    }
+  {% endstyle %}
+  <div 
+    id="eurus-new-update-popup"
+    x-data="{show: false}"
+    x-init="() => {
+      const savedVersion = localStorage.getItem('eurus_current_version');
+      if (savedVersion === null || savedVersion !== Shopify.theme.schema_version) {
+        document.querySelectorAll('.section-promotion-popup, .popup-minimal, .promo-popup').forEach(el => {
+          el.style.display = 'none';
+        });
+        const agePopups = document.querySelectorAll('.section-age-verification-popup');
+        if (agePopups.length > 0) {
+          window.requestAnimationFrame(() => {
+            document.body.classList.remove('overflow-hidden');
+          })
+          agePopups.forEach(el => {
+            el.style.display = 'none';
+          });
+        }
+        setTimeout(() => { show = true; }, 500);
+      }
+    }"
+    x-cloak
+    x-show="show"
+    x-transition:enter="transition-all ease-in-out duration-500" 
+    x-transition:enter-start="opacity-0 transform translate-y-1/3 md:translate-y-0 md:translate-x-1/3" 
+    x-transition:enter-end="opacity-100 transform translate-y-0 md:translate-x-0" 
+    x-transition:leave="transition-all ease-in-out duration-500" 
+    x-transition:leave-end="opacity-0 transform translate-y-1/3 md:translate-y-0 md:translate-x-1/3"
+    class="z-[9999] md:promotion-alignment--bottom-right w-fit h-fit rounded-[10px] hidden md:block fixed"
+  >
+    <div>
+      <button 
+        class="icon-close-container w-fit rounded-full group-close-btn absolute right-2 rtl:left-2 rtl:right-auto top-2 cursor-pointer" 
+        @click.prevent="() => {
+          localStorage.setItem('eurus_current_version', Shopify.theme.schema_version);
+          document.querySelectorAll('.section-promotion-popup, .popup-minimal').forEach(el => {
+            el.style.display = 'block';
+          });
+          const agePopups = document.querySelectorAll('.section-age-verification-popup');
+          if (agePopups.length > 0) {
+            window.requestAnimationFrame(() => {
+              document.body.classList.add('overflow-hidden');
+            })
+            agePopups.forEach(el => {
+              el.style.display = 'block';
+            });
+          }
+          show = false;
+        }"
+      >
+        {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+      </button>
+      <div class="flex rounded-[10px]">
+        <div style="width: 265px; height: 265px;">
+          <img
+            class="w-full h-full animate-Xpulse skeleton-image"
+            srcset="https://cdn.shopify.com/s/files/1/0851/0475/5006/files/IMPORTANT-NEVER_DELETE.png?v=1767751609&width=300 300w,
+            https://cdn.shopify.com/s/files/1/0851/0475/5006/files/IMPORTANT-NEVER_DELETE.png?v=1767751609&width=450 450w,
+            https://cdn.shopify.com/s/files/1/0851/0475/5006/files/IMPORTANT-NEVER_DELETE.png?v=1767751609&width=750 750w,
+            https://cdn.shopify.com/s/files/1/0851/0475/5006/files/IMPORTANT-NEVER_DELETE.png?v=1767751609&width=900 900w,
+            https://cdn.shopify.com/s/files/1/0851/0475/5006/files/IMPORTANT-NEVER_DELETE.png?v=1767751609&width=1100 1100w,
+            https://cdn.shopify.com/s/files/1/0851/0475/5006/files/IMPORTANT-NEVER_DELETE.png?v=1767751609&width=1500 1500w"
+            src="https://cdn.shopify.com/s/files/1/0851/0475/5006/files/IMPORTANT-NEVER_DELETE.png?v=1767751609&width=1500"
+            loading="lazy"
+            onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');"
+            sizes="(min-width: 1024px) 35vw, (min-width: 768px) 50vw, 100vw"
+            width="350"
+            height="350"
+            style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;"
+          >
+        </div>
+        <div id="eurus-new-update-popup-content" class="flex flex-col justify-center pt-4 pb-4 pl-4 pr-4" style="font-size: 14px; width: 460px;">
+          <span class="mb-2 font-bold" style="font-size: 24px;">NEED HELP WITH EURUS?</span>
+          <div>
+            📘 <a href="https://support.omnithemes.com/blogs/themes/eurus-theme?utm_source=popup&utm_medium=in-theme" class="underline">User Guide</a> - Quick setup & usage instructions.
+          </div>
+          <div>
+            💬 <a href="https://omnithemes.com/contact/?product=eurus&utm_source=popup&utm_medium=in-theme" class="underline">Contact Support</a> - Get help from our support team.
+          </div>
+          <div>
+            ✨ New Update: <a href="https://themes.shopify.com/themes/eurus/presets/eurus#ReleaseNotes" class="underline">Version <span x-text="Shopify.theme.schema_version"></span></a> is live!
+          </div>
+          <form x-cloak x-show="!$store.xCc.success" @submit.prevent class="relative mt-2 mb-1">
+            <input
+              type="email"
+              id="update-popup-form"
+              class="w-full px-5 lg:pl-6 lg:pr-6 pt-5 pb-1 md:pt-5 md:pb-2 border focus:outline-none focus:border-current input bg-transparent placeholder:opacity-0{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+              name="Email"
+              placeholder="Email"
+              @keydown.enter="$store.xCc.sub('{{ shop.url }}','{{ shop.email }}','{{ settings.preset }}', $el.value)"
+            >
+            <label class="duration-150 leading-tight absolute top-1/2{% if is_rtl %} right-5 lg:right-6{% else %} left-5 lg:left-6{% endif %} -translate-y-1/2 input_focus:text-xs input_focus:top-3 input_not_empty:top-3 input_not_empty:text-xs" for="update-popup-form">
+              Email
+            </label>
+            <button id="update-popup-submit" @click.prevent="$store.xCc.sub('{{ shop.url }}','{{ shop.email }}','{{ settings.preset }}', $el.closest('form').querySelector('input').value)" class="button p-1.5 absolute top-1/2{% if is_rtl %} left-3{% else %} right-3{% endif %} -translate-y-1/2 w-10 h-8">
+              <span x-cloak x-show="!$store.xCc.loading">
+                {% if is_rtl %}
+                  {% render 'icon-labels-bags', icon: 'arrow-left' %}
+                {% else %}
+                  {% render 'icon-labels-bags', icon: 'arrow-right' %}
+                {% endif %}
+              </span>
+              <span class="relative inline-block animate-spin w-5 h-5" x-cloak x-show="$store.xCc.loading">
+                {% render 'icon-alls', icon: 'icon-loading' %}
+              </span>
+            </button>
+          </form>
+          <div x-cloak x-show="$store.xCc.success" class="mt-2 mb-1 font-semibold text-[rgba(var(--color-success))]" style="font-size: 16px;">
+            <span>Thank you for subscribing!</span>
+          </div>
+          <div x-cloak x-show="!$store.xCc.success" class="mb-2">
+            <span>Subscribe to our newsletter and be the first to receive our product updates and exclusive offers.</span>
+          </div>
+          <div class="font-semibold" style="font-size: 16px;">
+            <span>Note: this popup will not appear in your store.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+<div id="eurus-popup" class="fixed duration-500 inset-0 z-[100] pointer-events-none md:block flex flex-col-reverse h-fit top-[unset] md:h-full md:top-0" x-cloak></div>
+{% liquid
+  assign position = settings.position_minimal
+  if settings.lang_direction contains request.locale.iso_code
+    if position == 'left'
+      assign position = 'right'
+    else
+      assign position = 'left'
+    endif
+  endif
+%}
+<div id="popup-minimal-{{ settings.position_minimal }}"
+  class="popup-minimal fixed z-50 bottom-4 md:bottom-8 {{ position }}-4 md:{{ position }}-8 pointer-events-auto {% if position == 'right' %}pl-4 md:pl-8 flex flex-col items-end{% else %}pr-4 md:pr-8{% endif %}"
+></div>
