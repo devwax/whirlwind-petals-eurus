@@ -1,0 +1,309 @@
+/* Container Picker Component
+   Matches the look and feel of the original BigCommerce picklist selector.
+   -------------------------------------------------------------------------
+   States:
+     .container-picker__trigger[aria-expanded="false"]  → collapsed (pre-selection or selected)
+     .container-picker__trigger[aria-expanded="true"]   → dropdown open
+     .container-picker--has-selection                   → a container has been chosen
+   -------------------------------------------------------------------------
+   CSS variables: Uses --color-foreground, --color-background (Dawn). Eurus
+   uses --colors-heading, --background-color; fallbacks applied below.
+*/
+
+container-picker {
+  --color-foreground: var(--color-foreground, var(--colors-heading, 0 0 0));
+  --color-background: var(--color-background, var(--background-color, 255 255 255));
+  display: block;
+  margin-top: 1.6rem;
+  margin-bottom: 1.6rem;
+}
+
+/* ── Header label ─────────────────────────────────────────────────── */
+
+.container-picker__header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.container-picker__label {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: rgb(var(--color-foreground));
+}
+
+.container-picker__required {
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: rgb(var(--color-foreground) / 0.65);
+}
+
+/* ── Collapsed trigger button ─────────────────────────────────────── */
+/* Scoped to container-picker to override theme button resets */
+
+container-picker .container-picker__trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 1rem 1.4rem;
+  border: 0.2rem solid rgba(var(--color-foreground), 0.4);
+  background-color: rgb(var(--color-background));
+  color: rgb(var(--color-foreground));
+  cursor: pointer;
+  text-align: left;
+  font-size: 1.4rem;
+  line-height: 1.4;
+  transition: border-color 0.15s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+container-picker .container-picker__trigger:hover {
+  border-color: rgba(var(--color-foreground), 0.55);
+}
+
+container-picker .container-picker__trigger[aria-expanded="true"] {
+  border-bottom-color: transparent;
+}
+
+container-picker .container-picker__trigger[aria-expanded="true"] .container-picker__caret {
+  transform: rotate(180deg);
+}
+
+.container-picker__caret {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  color: rgb(var(--color-foreground) / 0.6);
+}
+
+.container-picker__trigger-placeholder {
+  flex: 1;
+  color: rgb(var(--color-foreground) / 0.5);
+}
+
+.container-picker__trigger-selection {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.container-picker__trigger-selection-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.container-picker__trigger-selection-price {
+  font-size: 1.3rem;
+  color: rgb(var(--color-foreground) / 0.65);
+  white-space: nowrap;
+}
+
+/* ── Error message ────────────────────────────────────────────────── */
+
+.container-picker__error {
+  margin: 0.4rem 0 0;
+  padding: 0.6rem 1rem;
+  font-size: 1.2rem;
+  color: rgb(var(--color-error, 176 0 32));
+  background-color: rgb(var(--color-error, 176 0 32) / 0.08);
+  border: 0.1rem solid rgb(var(--color-error, 176 0 32) / 0.3);
+}
+
+/* ── Availability hint (shown when no selection made) ───────────────── */
+
+.container-picker__availability-hint {
+  margin: 0.6rem 0 0;
+  font-size: 1.3rem;
+  color: #c44b31;
+}
+
+.container-picker__availability-hint[hidden] {
+  display: none;
+}
+
+/* ── Dropdown / open list ─────────────────────────────────────────── */
+
+container-picker .container-picker__dropdown {
+  border: 0.2rem solid rgba(var(--color-foreground), 0.4);
+  border-top: none;
+  background-color: rgb(var(--color-background));
+  max-height: 42rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Subtle shadow to lift the list above the page */
+  box-shadow: 0 0.4rem 1.2rem rgb(0 0 0 / 0.08);
+}
+
+.container-picker__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Individual container item ────────────────────────────────────── */
+
+.container-picker__item {
+  display: grid;
+  grid-template-columns: 7.2rem 1fr auto;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.2rem;
+  /* Clear divider between options */
+  border-bottom: 0.15rem solid rgba(var(--color-foreground), 0.25);
+  transition: background-color 0.1s ease;
+}
+
+.container-picker__item:last-child {
+  border-bottom: none;
+}
+
+.container-picker__item:hover {
+  background-color: rgb(var(--color-foreground) / 0.03);
+}
+
+/* Unselected items: pointer cursor on hover (link-like affordance) */
+.container-picker__item:not([aria-selected="true"]) {
+  cursor: pointer;
+}
+
+.container-picker__item[aria-selected="true"] {
+  background-color: rgb(var(--color-foreground) / 0.05);
+  cursor: default;
+}
+
+/* Product image */
+
+.container-picker__item-image {
+  width: 7.2rem;
+  height: 7.2rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.container-picker__item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.container-picker__item-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background-color: rgb(var(--color-foreground) / 0.06);
+}
+
+/* Text details */
+
+.container-picker__item-details {
+  min-width: 0;
+}
+
+.container-picker__item-title {
+  font-size: 1.3rem;
+  font-weight: 500;
+  line-height: 1.35;
+  margin: 0 0 0.3rem;
+  color: rgb(var(--color-foreground));
+}
+
+.container-picker__item-price {
+  font-size: 1.3rem;
+  margin: 0 0 0.3rem;
+  color: rgb(var(--color-foreground));
+}
+
+.container-picker__item-availability {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 0 0 0.3rem;
+}
+
+.container-picker__item-availability--in-stock {
+  /* Matching BC site's orange-red availability colour */
+  color: #c44b31;
+}
+
+.container-picker__item-availability--out-of-stock {
+  color: rgb(var(--color-foreground) / 0.45);
+}
+
+.container-picker__item-detail-link {
+  display: inline-block;
+  font-size: 1.2rem;
+  color: rgb(var(--color-foreground) / 0.6);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.container-picker__item-detail-link:hover {
+  color: rgb(var(--color-foreground));
+}
+
+/* SELECT button — pointer cursor for active/unselected options */
+
+.container-picker__item-select-btn {
+  padding: 0.8rem 1.4rem;
+  background-color: #5a8a46;
+  color: #fff;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+  align-self: center;
+}
+
+.container-picker__item-select-btn:hover {
+  background-color: #4a7538;
+}
+
+/* Dim the SELECT button on the already-selected item — no pointer cursor */
+
+.container-picker__item[aria-selected="true"] .container-picker__item-select-btn {
+  background-color: #aaa;
+  cursor: default;
+}
+
+/* Unavailable containers: grayed-out button, no pointer cursor on row */
+
+.container-picker__item-select-btn--unavailable,
+.container-picker__item-select-btn:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+.container-picker__item:has(.container-picker__item-select-btn--unavailable),
+.container-picker__item:has(.container-picker__item-select-btn:disabled) {
+  cursor: default;
+}
+
+/* ── Change button ────────────────────────────────────────────────── */
+
+.container-picker__change-btn {
+  margin-top: 0.6rem;
+  padding: 0.5rem 1.2rem;
+  background: transparent;
+  border: 0.1rem solid rgb(var(--color-foreground) / 0.3);
+  color: rgb(var(--color-foreground));
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.container-picker__change-btn:hover {
+  border-color: rgb(var(--color-foreground) / 0.6);
+  background-color: rgb(var(--color-foreground) / 0.04);
+}

@@ -39,6 +39,24 @@
       <p class="mb-2 text-normal uppercase p-break-words">{{ item.product.vendor }}</p>
     {%- endif -%}
     <div>
+      {%- liquid
+        assign is_container_item = false
+        assign container_for_title = ''
+        assign container_parent_url = ''
+        if item.properties._is_container == 'true' and item.parent_relationship.parent != blank
+          assign is_container_item = true
+          assign container_for_title = item.parent_relationship.parent.product.title
+          assign container_parent_url = item.parent_relationship.parent.product.url
+        endif
+      -%}
+      {%- if is_container_item -%}
+        <p class="cart-item__container-label text-small opacity-70 mb-1">
+          Container for: {{ container_for_title | escape }}
+          {%- if container_parent_url != blank -%}
+            &nbsp;·&nbsp;<a href="{{ container_parent_url }}" class="cart-item__container-change-link hover-text-link underline">Change</a>
+          {%- endif -%}
+        </p>
+      {%- endif -%}
       <a href="{{ item.url }}" class="text-[rgba(var(--colors-heading))] table mb-3 disable-effect hover-text-link p-break-words">
         {{ item.product.title | escape }}
       </a>

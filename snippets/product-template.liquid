@@ -1315,6 +1315,13 @@
                       {%- endif -%}
                     </div>
                   {%- endif -%}
+                {%- when 'container_picker' -%}
+                  {%- render 'container-picker',
+                    product: product,
+                    section_id: section.id,
+                    product_form_id: product_form_id,
+                    only_available: block.settings.only_available
+                  -%}
                 {%- when 'inventory_status' -%}
                   {% liquid
                     assign low_stock_threshold = settings.low_stock_threshold | round
@@ -3164,6 +3171,13 @@
                   </span>
                 </div>
               </div>
+            {%- when 'container_picker' -%}
+              {%- render 'container-picker',
+                product: product,
+                section_id: section.id,
+                product_form_id: product_form_id,
+                only_available: block.settings.only_available
+              -%}
             {%- when 'buy_buttons' -%}
               <div class="w-full mb-5"{{ block.shopify_attributes }}>
                 {% if block.settings.show_atc_quantity %}

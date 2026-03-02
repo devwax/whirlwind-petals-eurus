@@ -1,0 +1,168 @@
+{% comment %}
+  Container Picker - POC
+  ----------------------
+  Renders a 3-state container selector for products that have a container
+  collection assigned via metafield.
+
+  Prerequisites (Shopify Admin setup):
+    1. Create a metafield definition on Products:
+       - Namespace & key: custom.container_collection
+       - Type: collection_reference
+    2. On the test product, set this metafield to the desired container collection.
+
+  The 3 states:
+    1. Pre-selection  — collapsed, shows "Choose Option"
+    2. Open/Selection — expanded scrollable list with image, name, price, availability, SELECT button
+    3. Selected       — collapsed, shows selected container name + price + "Change" button
+
+  Cart behavior:
+    - Main product is added with line item property "Selected Container" for order clarity.
+    - Container product is added as a separate line item with property "_container_for"
+      linking it to the main product title (for fulfillment grouping).
+
+  Usage:
+    {% render 'container-picker', product: product, section_id: section.id, product_form_id: product_form_id, only_available: block.settings.only_available %}
+{% endcomment %}
+
+{%- assign container_collection = product.metafields.custom.container_collection.value -%}
+
+{%- if container_collection != blank -%}
+  {{- 'component-container-picker.css' | asset_url | stylesheet_tag -}}
+
+  <container-picker
+    class="container-picker"
+    id="ContainerPicker-{{ section_id }}"
+    data-section-id="{{ section_id }}"
+    data-product-id="{{ product.id }}"
+    data-product-title="{{ product.title | escape }}"
+    data-product-form-id="{{ product_form_id }}"
+  >
+    <div class="container-picker__header">
+      <span class="container-picker__label">Container:</span>
+      <span class="container-picker__required">(Required)</span>
+    </div>
+
+    {%- comment -%} Collapsed trigger button — shows "Choose Option" or selected container {%- endcomment -%}
+    <button
+      type="button"
+      class="container-picker__trigger"
+      aria-expanded="false"
+      aria-controls="ContainerPickerList-{{ section_id }}"
+      aria-label="Select container option"
+    >
+      <span class="container-picker__trigger-placeholder">Choose Option</span>
+      <span class="container-picker__trigger-selection" aria-hidden="true" hidden>
+        <span class="container-picker__trigger-selection-name"></span>
+        <span class="container-picker__trigger-selection-price"></span>
+      </span>
+      <svg class="container-picker__caret" width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+        <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <p class="container-picker__error" role="alert" aria-live="polite" hidden></p>
+
+    {%- comment -%} Dropdown list {%- endcomment -%}
+    <div
+      class="container-picker__dropdown"
+      id="ContainerPickerList-{{ section_id }}"
+      hidden
+    >
+      <ul class="container-picker__list" role="listbox" aria-label="Container options">
+        {%- for container in container_collection.products limit: 50 -%}
+          {%- assign container_variant = container.selected_or_first_available_variant -%}
+          {%- assign show_item = true -%}
+          {%- if only_available -%}
+            {%- if container_variant.available == false or container.available == false -%}
+              {%- assign show_item = false -%}
+            {%- endif -%}
+          {%- endif -%}
+          {%- if show_item -%}
+          <li
+            class="container-picker__item"
+            role="option"
+            aria-selected="false"
+            data-variant-id="{{ container_variant.id }}"
+            data-product-handle="{{ container.handle }}"
+            data-product-title="{{ container.title | escape }}"
+            data-price="{{ container_variant.price }}"
+            data-price-formatted="{% if container_variant.price == 0 %}FREE{% else %}+ {{ container_variant.price | money }}{% endif %}"
+            data-available="{{ container_variant.available }}"
+          >
+            <div class="container-picker__item-image">
+              {%- if container.featured_image -%}
+                <img
+                  src="{{ container.featured_image | image_url: width: 80, height: 80, crop: 'center' }}"
+                  alt="{{ container.featured_image.alt | default: container.title | escape }}"
+                  width="80"
+                  height="80"
+                  loading="lazy"
+                >
+              {%- else -%}
+                <div class="container-picker__item-image-placeholder"></div>
+              {%- endif -%}
+            </div>
+
+            <div class="container-picker__item-details">
+              <p class="container-picker__item-title">{{ container.title }}</p>
+              <p class="container-picker__item-price">
+                {%- if container_variant.price == 0 -%}
+                  FREE + $0.00
+                {%- else -%}
+                  + {{ container_variant.price | money }}
+                {%- endif -%}
+              </p>
+              {%- if container_variant.available -%}
+                <p class="container-picker__item-availability container-picker__item-availability--in-stock">
+                  Available - Est Delivery 5-10 Days
+                </p>
+              {%- else -%}
+                <p class="container-picker__item-availability container-picker__item-availability--out-of-stock">
+                  Currently Unavailable
+                </p>
+              {%- endif -%}
+              <a
+                href="{{ container.url }}"
+                class="container-picker__item-detail-link"
+                target="_blank"
+                rel="noopener"
+                tabindex="-1"
+              >Detail</a>
+            </div>
+
+            <button
+              type="button"
+              class="container-picker__item-select-btn{% unless container_variant.available %} container-picker__item-select-btn--unavailable{% endunless %}"
+              aria-label="Select {{ container.title | escape }}"
+              {% unless container_variant.available %}disabled{% endunless %}
+            >
+              SELECT
+            </button>
+          </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    </div>
+
+    <p class="container-picker__availability-hint" id="ContainerPickerHint-{{ section_id }}">
+      Select an option to check availability
+    </p>
+
+    {%- comment -%} Change button — shown only after a selection is made {%- endcomment -%}
+    <button
+      type="button"
+      class="container-picker__change-btn"
+      hidden
+    >
+      Change Selection
+    </button>
+
+    {%- comment -%}
+      Hidden inputs injected into the parent product form via JS.
+      These carry line item properties for order fulfillment clarity.
+    {%- endcomment -%}
+
+  </container-picker>
+
+  <script src="{{ 'container-picker.js' | asset_url }}" defer="defer"></script>
+{%- endif -%}
