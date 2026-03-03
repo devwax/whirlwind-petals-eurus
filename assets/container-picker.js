@@ -114,8 +114,10 @@ class ContainerPicker extends HTMLElement {
    *   2. Use the Cart AJAX API to add both the main product and the container
    *      as linked line items instead of just the main product.
    *
-   * Eurus uses @click on the Add to Cart button (not form submit), so we must
-   * intercept the button click with capture: true to run before Alpine's addToCart.
+   * The container-picker block is rendered outside the <form> in Eurus's block
+   * system, so we locate the form via data-product-form-id rather than DOM
+   * containment. Eurus uses @click on the Add to Cart button (not form submit),
+   * so we intercept the button click with capture: true to run before Alpine.
    */
   _interceptProductForm() {
     const formId = this.dataset.productFormId;
@@ -125,10 +127,8 @@ class ContainerPicker extends HTMLElement {
       const form = document.getElementById(formId);
       if (!form) return;
 
-      // Submit listener: fallback for Enter key, etc.
       form.addEventListener('submit', (e) => this._onFormSubmit(e, form), { capture: true });
 
-      // Click listener: primary — Eurus uses @click on the button, not form submit.
       const submitBtns = form.querySelectorAll('button[name="add"]');
       submitBtns.forEach((btn) => {
         btn.addEventListener('click', (e) => this._onAddToCartClick(e, form), { capture: true });
@@ -143,9 +143,6 @@ class ContainerPicker extends HTMLElement {
   }
 
   _onAddToCartClick(e, form) {
-    // Only handle when we have a container picker (this element is in the form).
-    if (!form.contains(this)) return;
-
     e.preventDefault();
     e.stopImmediatePropagation();
     this._onFormSubmit(e, form);
