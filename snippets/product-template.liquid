@@ -1322,6 +1322,12 @@
                     product_form_id: product_form_id,
                     only_available: block.settings.only_available
                   -%}
+                {%- when 'tree_size_picker' -%}
+                  {%- render 'tree-size-picker',
+                    product: product,
+                    section_id: section.id,
+                    block: block
+                  -%}
                 {%- when 'inventory_status' -%}
                   {% liquid
                     assign low_stock_threshold = settings.low_stock_threshold | round
@@ -3177,6 +3183,12 @@
                 section_id: section.id,
                 product_form_id: product_form_id,
                 only_available: block.settings.only_available
+              -%}
+            {%- when 'tree_size_picker' -%}
+              {%- render 'tree-size-picker',
+                product: product,
+                section_id: section.id,
+                block: block
               -%}
             {%- when 'buy_buttons' -%}
               <div class="w-full mb-5"{{ block.shopify_attributes }}>

@@ -1,0 +1,58 @@
+{% comment %}
+  Tree Size Picker - POC
+  -----------------------
+  Renders a horizontal grid of size selector buttons for products that have
+  related size products assigned via metafield. Each button links to a
+  product page; the current product is highlighted as selected.
+
+  Prerequisites (Shopify Admin setup):
+    1. Create a metafield definition on Products:
+       - Namespace & key: custom.tree_size_products
+       - Type: list.product_reference
+    2. On each tree product (e.g. 5 ft, 6 ft, 7 ft bamboo), set this metafield
+       to the list of all size variants (the product itself plus siblings).
+       Example: On "5' Silk Bamboo Tree", set to [5ft product, 6ft product, 7ft product].
+
+  Usage:
+    {% render 'tree-size-picker', product: product, section_id: section.id, block: block %}
+{% endcomment %}
+
+{%- assign size_products = product.metafields.custom.tree_size_products.value -%}
+
+{%- if size_products != blank and size_products.size > 0 -%}
+  {{- 'component-tree-size-picker.css' | asset_url | stylesheet_tag -}}
+
+  <div
+    class="tree-size-picker"
+    id="TreeSizePicker-{{ section_id }}"
+    data-section-id="{{ section_id }}"
+    {% if block %}{{ block.shopify_attributes }}{% endif %}
+  >
+    <div class="tree-size-picker__grid" role="group" aria-label="Tree size options">
+      {%- for size_product in size_products -%}
+        {%- assign is_current = false -%}
+        {%- if size_product.id == product.id -%}
+          {%- assign is_current = true -%}
+        {%- endif -%}
+
+        {%- if is_current -%}
+          <span
+            class="tree-size-picker__btn tree-size-picker__btn--selected"
+            aria-current="true"
+            aria-disabled="true"
+          >
+            {{ size_product.title }}
+          </span>
+        {%- else -%}
+          <a
+            href="{{ size_product.url }}"
+            class="tree-size-picker__btn tree-size-picker__btn--link"
+            aria-label="View {{ size_product.title | escape }}"
+          >
+            {{ size_product.title }}
+          </a>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+  </div>
+{%- endif -%}
