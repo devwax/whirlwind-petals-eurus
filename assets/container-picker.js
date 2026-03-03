@@ -37,7 +37,7 @@ class ContainerPicker extends HTMLElement {
     this.items = this.querySelectorAll('.container-picker__item');
 
     // ── State ─────────────────────────────────────────────────────────
-    this.selected = null; // { variantId, productHandle, productTitle, priceFormatted, available }
+    this.selected = null; // { variantId, productHandle, productTitle, priceFormatted, price, available }
 
     this._boundCloseOnOutsideClick = this._closeOnOutsideClick.bind(this);
   }
@@ -47,6 +47,7 @@ class ContainerPicker extends HTMLElement {
     this._bindItems();
     this._bindChangeBtn();
     this._interceptProductForm();
+    this._bindQuantityChange();
   }
 
   disconnectedCallback() {
@@ -277,9 +278,9 @@ class ContainerPicker extends HTMLElement {
   _selectItem(item) {
     if (item.dataset.available === 'false') return; // Don't allow selecting unavailable containers
 
-    const { variantId, productHandle, productTitle, priceFormatted, available } = item.dataset;
+    const { variantId, productHandle, productTitle, priceFormatted, price, available } = item.dataset;
 
-    this.selected = { variantId, productHandle, productTitle, priceFormatted, available };
+    this.selected = { variantId, productHandle, productTitle, priceFormatted, price: parseInt(price || '0', 10), available };
 
     // Update aria-selected on all items
     this.items.forEach((i) => i.setAttribute('aria-selected', i === item ? 'true' : 'false'));
@@ -298,13 +299,64 @@ class ContainerPicker extends HTMLElement {
 
     if (this.availabilityHint) this.availabilityHint.hidden = true;
 
+    this._updateAddToCartPrice();
+
     // Let other components know (e.g. for price display updates)
     this.dispatchEvent(
       new CustomEvent('container-picker:selected', {
         bubbles: true,
-        detail: { variantId, productTitle, priceFormatted, productHandle },
+        detail: { variantId, productTitle, priceFormatted, productHandle, price: this.selected.price },
       })
     );
+  }
+
+  /**
+   * Listens for quantity and variant changes so we can re-apply the combined
+   * price (product + container) when the user changes quantity or variant.
+   */
+  _bindQuantityChange() {
+    const sectionId = this.dataset.sectionId;
+    if (!sectionId) return;
+    const reapply = () => { if (this.hasSelection) this._updateAddToCartPrice(); };
+    document.addEventListener(`eurus:product:quantity-changed-${sectionId}`, reapply);
+    document.addEventListener(`eurus:product-page-variant-select:updated:${sectionId}`, () => {
+      setTimeout(reapply, 50);
+    });
+  }
+
+  /**
+   * Updates the Add to Cart button's displayed price to show combined total:
+   * (product price × quantity) + container price.
+   */
+  _updateAddToCartPrice() {
+    if (!this.hasSelection) return;
+
+    const productId = this.dataset.productId;
+    const sectionId = this.dataset.sectionId;
+    const moneyFormat = this.dataset.moneyFormat;
+    if (!productId || !sectionId || !moneyFormat) return;
+
+    const productTemplate = document.getElementById(`x-product-template-${productId}-${sectionId}`);
+    if (!productTemplate) return;
+
+    const targetPriceEl = productTemplate.querySelector('.add_to_cart_button .main-product-price .target-price');
+    const qtyInput = productTemplate.querySelector(`#Quantity-atc-${sectionId}`) || productTemplate.querySelector('[name="quantity"]');
+    const priceEls = productTemplate.querySelectorAll('.add_to_cart_button .main-product-price .price, .add_to_cart_button .main-product-price .price-sale');
+    if (!targetPriceEl || !priceEls.length) return;
+
+    const productPrice = parseInt(targetPriceEl.textContent || '0', 10);
+    const qty = parseInt(qtyInput?.value || '1', 10);
+    const containerPrice = this.selected.price || 0;
+    const totalCents = productPrice * qty + containerPrice;
+
+    let formatted;
+    if (typeof Alpine !== 'undefined' && Alpine.store('xHelper')?.formatMoney) {
+      formatted = Alpine.store('xHelper').formatMoney(totalCents, moneyFormat);
+    } else {
+      formatted = `$${(totalCents / 100).toFixed(2)}`;
+    }
+
+    priceEls.forEach((el) => { el.innerHTML = formatted; });
   }
 
   // ── UI helpers ─────────────────────────────────────────────────────
