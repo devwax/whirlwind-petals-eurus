@@ -1,0 +1,73 @@
+{%- comment -%}
+  Petals – Cart-level checkout extras (Eurus)
+  Stores values as cart attributes via xCartHelper.updateCart (primary) and form="cart" (fallback).
+  - attributes[Catalog Source Code]
+  - attributes[Is Gift]
+  - attributes[Gift Message]
+{%- endcomment -%}
+
+{{ 'petals-cart-extras.css' | asset_url | stylesheet_tag }}
+
+<div class="petals-cart-extras mb-5" data-petals-cart-extras>
+  <div class="petals-cart-field petals-cart-field--catalog">
+    <label for="cart-attribute-catalog-code" class="petals-cart-label block h4 text-medium mb-2 md:mb-3">
+      Catalog Source Code
+      <span class="petals-cart-label__hint font-normal opacity-70 text-sm ml-1">(From back cover of catalog)</span>
+    </label>
+    <input
+      id="cart-attribute-catalog-code"
+      type="text"
+      name="attributes[Catalog Source Code]"
+      form="cart"
+      class="petals-cart-input w-full pr-4 pl-4 pt-3.5 pb-3.5 border border-solid bg-transparent focus-within:outline-none placeholder:text-current placeholder:opacity-60{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"
+      value="{{ cart.attributes['Catalog Source Code'] | escape }}"
+      data-petals-attr="Catalog Source Code"
+      placeholder=""
+      aria-label="Catalog Source Code"
+    >
+  </div>
+
+  <div class="petals-cart-field petals-cart-field--gift mt-4 md:mt-5">
+    <label class="petals-cart-checkbox-label flex items-start gap-2 font-medium cursor-pointer">
+      <input
+        id="cart-attribute-is-gift"
+        type="checkbox"
+        name="attributes[Is Gift]"
+        form="cart"
+        value="Yes"
+        class="mt-1"
+        {% if cart.attributes['Is Gift'] == 'Yes' %}checked{% endif %}
+        data-petals-attr="Is Gift"
+        data-petals-attr-checkbox
+      >
+      <span>
+        <span class="petals-cart-checkbox-label__title">Add a Gift Message</span>
+        <span class="petals-cart-checkbox-label__hint block font-normal opacity-70 text-sm">(Optional)</span>
+      </span>
+    </label>
+
+    <div
+      id="petals-gift-message-wrapper"
+      class="petals-cart-gift-message-wrapper mt-3{% unless cart.attributes['Is Gift'] == 'Yes' %} petals-cart-gift-message-wrapper--hidden{% endunless %}"
+    >
+      <label for="cart-attribute-gift-message" class="petals-cart-label block h4 text-medium mb-2">
+        Gift Message
+        <span class="petals-cart-label__hint font-normal opacity-70 text-sm ml-1">
+          Up to 6 lines with 25 characters per line (approximate).
+        </span>
+      </label>
+      <textarea
+        id="cart-attribute-gift-message"
+        name="attributes[Gift Message]"
+        form="cart"
+        class="petals-cart-textarea w-full pr-4 pl-4 pt-3.5 pb-3.5 border border-solid bg-transparent focus-within:outline-none placeholder:text-current placeholder:opacity-60 resize-y{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"
+        rows="4"
+        data-petals-attr="Gift Message"
+        placeholder=""
+        aria-label="Gift Message"
+      >{{ cart.attributes['Gift Message'] }}</textarea>
+    </div>
+  </div>
+</div>
+
+<script src="{{ 'petals-cart-extras.js' | asset_url }}" defer></script>
