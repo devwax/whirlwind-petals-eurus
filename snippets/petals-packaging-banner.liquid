@@ -1,0 +1,23 @@
+{%- comment -%} Petals – Perfect Packaging Banner {%- endcomment -%}
+
+<div class="petals-packaging-banner mt-4 md:mt-5" {{ block.shopify_attributes }}>
+  <div class="petals-packaging-banner__image flex-shrink-0">
+    {%- if block.settings.image != blank -%}
+      <img
+        src="{{ block.settings.image | image_url: width: 192 }}"
+        alt="{{ block.settings.image.alt | default: 'Our Perfect Packaging and Shipping Rates' }}"
+        loading="lazy"
+        width="96"
+        height="96"
+      >
+    {%- endif -%}
+  </div>
+  <div class="petals-packaging-banner__content">
+    <h3 class="petals-packaging-banner__title m-0 mb-1 text-base font-medium">
+      {{ block.settings.title | default: 'Our Perfect Packaging and Shipping Rates' }}
+    </h3>
+    <p class="petals-packaging-banner__text m-0 text-sm leading-relaxed">
+      {{ block.settings.text | default: "We pledge to bring you the highest quality packaging. Our shipping rates include our customized packaging, ensuring that your items arrive in perfect condition, safely secured in a sturdy quality box, and ready to display upon arrival." }}
+    </p>
+  </div>
+</div>

@@ -5,7 +5,7 @@
     else
       assign is_rtl = false
     endif
-    
+    assign show_native_cart_note = false
     if settings.free_shipping_code != blank
       assign free_shipping_codes = settings.free_shipping_code | newline_to_br | strip_newlines | split: '<br />'
     endif
@@ -41,8 +41,8 @@
             </div>
           {%- endif -%}
           <div class="w-full{% if settings.enable_estimate_shipping %} mt-4 md:mt-7{% endif %}">
-            {% comment %} Cart note {% endcomment %}
-            {%- if settings.show_cart_note and settings.cart_page_layout == 'above' -%}
+            {% comment %} Cart note (hidden when Petals cart extras present) {% endcomment %}
+            {%- if settings.show_cart_note and settings.cart_page_layout == 'above' and show_native_cart_note -%}
               <p for="x-cart-note" class="block h4 text-medium md:mb-2">{{ 'sections.cart.note' | t }}</p>
               <textarea
                 id="x-cart-note"
@@ -116,6 +116,8 @@
             {%- endif -%}
           </div>
         {% endif %}
+        {%- comment -%} Petals cart extras (above layout) {%- endcomment -%}
+        {% render 'petals-cart-extras' %}
       </div>
       <div class="lg:col-span-1 block md:flex justify-end{% if settings.enable_estimate_shipping %} lg:gap-x-14{% endif %}">
         <div class="flex flex-col gap-4 w-full{% if is_rtl %} md:text-left{% else %} md:text-right{% endif %}{% if settings.show_cart_note %}{% if is_rtl %} md:pr-2.5 lg:pr-0{% else %} md:pl-2.5 lg:pl-0{% endif %}{% endif %}{% if is_rtl %} xl:pr-1{% else %} xl:pl-1{% endif %}">
@@ -123,6 +125,8 @@
             {%- case block.type -%}
               {%- when '@app' -%}
                 {% render block %}
+              {%- when 'petals_packaging_banner' -%}
+                {% render 'petals-packaging-banner', block: block %}
               {%- when 'subtotal' -%}
                 <div {{ block.shopify_attributes }}>
                   {%- if settings.enable_featured_discount -%}
@@ -557,6 +561,30 @@
     }
   ],
   "blocks": [
+    {
+      "type": "petals_packaging_banner",
+      "name": "Petals Packaging Banner",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Our Perfect Packaging and Shipping Rates"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text",
+          "default": "We pledge to bring you the highest quality packaging. Our shipping rates include our customized packaging, ensuring that your items arrive in perfect condition, safely secured in a sturdy quality box, and ready to display upon arrival."
+        }
+      ]
+    },
     {
       "type": "subtotal",
       "name": "t:sections.main-cart-footer.blocks.subtotal.name",

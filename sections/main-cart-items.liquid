@@ -23,9 +23,18 @@
     assign is_rtl = false
   endif
   assign show_side_bar = false
-  if settings.cart_page_layout == 'side' and settings.show_cart_note or section.blocks.size > 0 or settings.show_cart_custom_field
-    assign show_side_bar = true
+  if settings.cart_page_layout == 'side'
+    if settings.show_cart_note or section.blocks.size > 0 or settings.show_cart_custom_field
+      assign show_side_bar = true
+    endif
   endif
+  assign show_native_cart_note = true
+  for block in section.blocks
+    if block.type == 'petals_cart_extras'
+      assign show_native_cart_note = false
+      break
+    endif
+  endfor
   if settings.free_shipping_code != blank
     assign free_shipping_codes = settings.free_shipping_code | newline_to_br | strip_newlines | split: '<br />'
   endif
@@ -1300,6 +1309,12 @@
           <div class="absolute top-0 bottom-0 left-0 h-full w-full z-20" x-cloak x-show="loading">
           </div>
         </form>
+        {%- comment -%} Petals cart extras fallback: show in main area when side layout but sidebar doesn't render {%- endcomment -%}
+        {%- if settings.cart_page_layout == 'side' and show_side_bar == false -%}
+          <div class="mt-6 mb-6">
+            {% render 'petals-cart-extras' %}
+          </div>
+        {%- endif -%}
         {%- if settings.cart_page_layout == 'side' -%}
           <div>
             {% if settings.enable_estimate_shipping %}
@@ -1328,7 +1343,7 @@
 
       {%- if show_side_bar -%}
         <div class="form-checkout bg-theme-secondary mt-10 md:mt-7 lg:mt-0 w-full lg:w-1/4 pt-5 pb-5 pl-5 pr-5 lg:pl-7 lg:pr-7 lg:pt-7 lg:pb-7{% if settings.edges_type == 'rounded_corners' %} rounded-xl{% endif %}">
-          {%- if settings.show_cart_note -%}
+          {%- if settings.show_cart_note and show_native_cart_note -%}
             <div class="mb-5">
               <p for="x-cart-note" class="block h4 text-medium md:mb-1">{{ 'sections.cart.note' | t }}</p>
               <textarea
@@ -1392,6 +1407,12 @@
             {%- case block.type -%}
               {%- when '@app' -%}
                 {% render block %}
+              {%- when 'petals_cart_extras' -%}
+                <div class="mb-5" {{ block.shopify_attributes }}>
+                  {% render 'petals-cart-extras' %}
+                </div>
+              {%- when 'petals_packaging_banner' -%}
+                {% render 'petals-packaging-banner', block: block %}
               {%- when 'subtotal' -%}
                 <div class="{% if forloop.last %} mt-3{% endif %}" {{ block.shopify_attributes }}>
                   {%- if settings.enable_featured_discount -%}
@@ -1883,6 +1904,36 @@
     }
   ],
   "blocks": [
+    {
+      "type": "petals_cart_extras",
+      "name": "Petals Cart Extras",
+      "limit": 1,
+      "settings": []
+    },
+    {
+      "type": "petals_packaging_banner",
+      "name": "Petals Packaging Banner",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Our Perfect Packaging and Shipping Rates"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text",
+          "default": "We pledge to bring you the highest quality packaging. Our shipping rates include our customized packaging, ensuring that your items arrive in perfect condition, safely secured in a sturdy quality box, and ready to display upon arrival."
+        }
+      ]
+    },
     {
       "type": "subtotal",
       "name": "t:sections.main-cart-footer.blocks.subtotal.name",

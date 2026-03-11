@@ -32,21 +32,14 @@
         "price": {
           "type": "price",
           "settings": {
+            "adapt_custom_price_format": false,
             "show_tax_and_shipping": false,
             "text_size_price": 70
           }
         },
-        "inventory_status_LrbyC8": {
-          "type": "inventory_status",
-          "settings": {
-            "incoming": false,
-            "message_incoming": "",
-            "message_backorder": "",
-            "hide_preorder": false
-          }
-        },
         "ffacb41b-c15e-41ee-864a-cfbf155d407d": {
           "type": "estimate_delivery",
+          "disabled": true,
           "settings": {
             "hide_when_pre_order": false,
             "box_type": "round",
@@ -72,6 +65,7 @@
         },
         "gift_wrapping_EK3NQn": {
           "type": "gift_wrapping",
+          "disabled": true,
           "settings": {
             "text_gift": "",
             "show_border": true,
@@ -81,19 +75,35 @@
             "border_color_dark": "rgba(0,0,0,0)"
           }
         },
+        "tree_size_picker": {
+          "type": "tree_size_picker",
+          "settings": {}
+        },
         "variant_picker": {
           "type": "variant_picker",
           "settings": {
             "picker_type": "button",
+            "max_swatch": 20,
             "show_variant_option": true,
             "enable_color_swatches": true,
             "swatch_size": "small"
           }
         },
-        "quantity_selector": {
-          "type": "quantity_selector",
+        "html_KMKGQe": {
+          "type": "html",
+          "name": "Backorder Message",
           "settings": {
-            "style": "rounded-full"
+            "custom_html": "{%if product.selected_or_first_available_variant.metafields.custom.backorder_message != blank%}Availability: {{product.selected_or_first_available_variant.metafields.custom.backorder_message}}{%endif%}"
+          }
+        },
+        "inventory_status_LrbyC8": {
+          "type": "inventory_status",
+          "disabled": true,
+          "settings": {
+            "incoming": false,
+            "message_incoming": "",
+            "message_backorder": "",
+            "hide_preorder": false
           }
         },
         "container_picker": {
@@ -102,17 +112,22 @@
             "only_available": false
           }
         },
-        "tree_size_picker": {
-          "type": "tree_size_picker",
-          "settings": {}
+        "quantity_selector": {
+          "type": "quantity_selector",
+          "disabled": true,
+          "settings": {
+            "style": "rounded-full"
+          }
         },
         "buy_buttons": {
           "type": "buy_buttons",
           "settings": {
             "show_button_style": "secondary",
             "show_dynamic_checkout": true,
+            "show_atc_quantity": true,
             "show_add_to_cart": true,
             "show_price": true,
+            "hide_sale_price": true,
             "show_gift_card_recipient": true,
             "pickup_availability": true,
             "hide_when_pre_order": false,
@@ -143,6 +158,8 @@
           "type": "coupon_code",
           "settings": {
             "block_edges": "rounded_corners",
+            "show_border": false,
+            "show_background": true,
             "coupon_box_edges": "rounded_corners",
             "icon": "hot-sale",
             "another_icon": "",
@@ -153,15 +170,38 @@
             "coupon_code_1": "SALEM30",
             "coupon_text_2": "Flat 10% discount on every single order!",
             "coupon_code_2": "SALEP10",
+            "countdown_type": "none",
+            "timezone": "-4",
+            "end_year": 2024,
+            "end_month": "1",
+            "end_day": "1",
+            "end_hour": "0",
+            "end_minute": "0",
+            "end_behavior": "show_zero",
+            "expiration_message": "<p>This offer is no longer available.</p>",
+            "countdown_interval": 7,
+            "interval_unit": "day",
+            "start_year": 2024,
+            "start_month": "1",
+            "start_day": "1",
+            "start_hour": "0",
+            "start_minute": "0",
+            "text_position": "below",
+            "timer_style": "square",
+            "border_style": "none",
             "background_color_light": "rgba(0,0,0,0)",
             "heading_color_light": "rgba(0,0,0,0)",
             "coupon_box_color_light": "rgba(0,0,0,0)",
             "text_color_light": "rgba(0,0,0,0)",
+            "timer_color_light": "rgba(0,0,0,0)",
+            "line_border_color_light": "rgba(0,0,0,0)",
             "coupon_color_light": "rgba(0,0,0,0)",
             "background_color_dark": "rgba(0,0,0,0)",
             "heading_color_dark": "rgba(0,0,0,0)",
             "coupon_box_color_dark": "rgba(0,0,0,0)",
             "text_color_dark": "rgba(0,0,0,0)",
+            "timer_color_dark": "rgba(0,0,0,0)",
+            "line_border_color_dark": "rgba(0,0,0,0)",
             "coupon_color_dark": "rgba(0,0,0,0)"
           }
         },
@@ -308,13 +348,14 @@
         "badges_fCnAXm",
         "rating_AeRdFJ",
         "price",
-        "inventory_status_LrbyC8",
         "ffacb41b-c15e-41ee-864a-cfbf155d407d",
         "gift_wrapping_EK3NQn",
-        "variant_picker",
-        "quantity_selector",
-        "container_picker",
         "tree_size_picker",
+        "variant_picker",
+        "html_KMKGQe",
+        "inventory_status_LrbyC8",
+        "container_picker",
+        "quantity_selector",
         "buy_buttons",
         "coupon_code_d4T8zk",
         "frequently_bought_pGGTM8",
@@ -522,6 +563,12 @@
         "discount_type": "percentage",
         "discount_value": "33",
         "apply_discount_once_per_order": true,
+        "enable_desktop_slider": false,
+        "swiper_on_mobile": true,
+        "enable_arrow_mobile": false,
+        "auto_play": false,
+        "change_slides_speed": 5,
+        "summary_layout": "vertical",
         "summary_position": "right",
         "bundler_heading": "Radiance Bundle",
         "bundler_text": "<p>Add at least 3 items to get 30% Off</p>",
@@ -546,6 +593,7 @@
         "full_width": false,
         "padding_top": 100,
         "padding_bottom": 0,
+        "columns_mobile": "1",
         "spacing_mobile": 16,
         "show_section_divider_mobile": false,
         "padding_top_mobile": 0,
@@ -711,7 +759,7 @@
           "type": "heading",
           "settings": {
             "subheading": "OUR SUSTAINABILITY PROMISE",
-            "heading": "Your regimen in 4 minutes. Instant hydration.",
+            "heading": "Your regimen in 4 minutes.Instant hydration.",
             "highlight_type": "underline",
             "heading_base_size": 100,
             "heading_tag": "h2",
@@ -1005,6 +1053,8 @@
             "height_image": 55,
             "image_style": "rounded",
             "image_ratio": "aspect-16/9",
+            "image_link": "",
+            "open_new_window": false,
             "spacing_left": 0,
             "spacing_right": 0,
             "spacing_left_mobile": 0,
@@ -1030,6 +1080,8 @@
             "height_image": 55,
             "image_style": "rounded",
             "image_ratio": "aspect-16/9",
+            "image_link": "",
+            "open_new_window": false,
             "spacing_left": 0,
             "spacing_right": 0,
             "spacing_left_mobile": 0,
@@ -1055,6 +1107,8 @@
             "height_image": 55,
             "image_style": "rounded",
             "image_ratio": "aspect-16/9",
+            "image_link": "",
+            "open_new_window": false,
             "spacing_left": 0,
             "spacing_right": 0,
             "spacing_left_mobile": 0,
@@ -1080,6 +1134,8 @@
             "height_image": 55,
             "image_style": "rounded",
             "image_ratio": "aspect-16/9",
+            "image_link": "",
+            "open_new_window": false,
             "spacing_left": 0,
             "spacing_right": 0,
             "spacing_left_mobile": 0,
