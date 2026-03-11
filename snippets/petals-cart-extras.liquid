@@ -1,9 +1,7 @@
 {%- comment -%}
   Petals – Cart-level checkout extras (Eurus)
-  Stores values as cart attributes via xCartHelper.updateCart (primary) and form="cart" (fallback).
-  - attributes[Catalog Source Code]
-  - attributes[Is Gift]
-  - attributes[Gift Message]
+  - attributes[Catalog Source Code], attributes[Is Gift] via xCartHelper.updateCart
+  - Gift Message stored only in cart.note (not attributes)
 {%- endcomment -%}
 
 {{ 'petals-cart-extras.css' | asset_url | stylesheet_tag }}
@@ -58,14 +56,13 @@
       </label>
       <textarea
         id="cart-attribute-gift-message"
-        name="attributes[Gift Message]"
         form="cart"
         class="petals-cart-textarea w-full pr-4 pl-4 pt-3.5 pb-3.5 border border-solid bg-transparent focus-within:outline-none placeholder:text-current placeholder:opacity-60 resize-y{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"
         rows="4"
         data-petals-attr="Gift Message"
         placeholder=""
         aria-label="Gift Message"
-      >{{ cart.attributes['Gift Message'] }}</textarea>
+      >{{ cart.note }}</textarea>
     </div>
   </div>
 </div>

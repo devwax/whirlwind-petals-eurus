@@ -44,15 +44,11 @@
 
         const attributes = {
           'Catalog Source Code': catalogValue,
-          'Is Gift': isGift ? 'Yes' : '',
-          'Gift Message': giftMessageValue
+          'Is Gift': isGift ? 'Yes' : ''
         };
 
-        // Build formatted note for checkout display (cart note becomes order note)
-        const noteLines = [];
-        if (catalogValue) noteLines.push('Catalog Source Code: ' + catalogValue);
-        if (isGift && giftMessageValue) noteLines.push('Gift Message: ' + giftMessageValue);
-        const formattedNote = noteLines.join('\n');
+        // Gift Message stored only in note (checkout display, packing slip); not in attributes
+        const formattedNote = isGift && giftMessageValue ? giftMessageValue : '';
 
         Alpine.store('xCartHelper').updateCart({ attributes: attributes, note: formattedNote }, true);
       }, 200);
