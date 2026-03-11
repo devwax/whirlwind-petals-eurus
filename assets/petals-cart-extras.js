@@ -38,13 +38,23 @@
       debounceTimer = setTimeout(function () {
         if (typeof Alpine === 'undefined' || !Alpine.store || !Alpine.store('xCartHelper')) return;
 
+        const catalogValue = catalogInput ? catalogInput.value.trim() : '';
+        const isGift = giftCheckbox && giftCheckbox.checked;
+        const giftMessageValue = giftTextarea ? giftTextarea.value.trim() : '';
+
         const attributes = {
-          'Catalog Source Code': catalogInput ? catalogInput.value : '',
-          'Is Gift': giftCheckbox && giftCheckbox.checked ? 'Yes' : '',
-          'Gift Message': giftTextarea ? giftTextarea.value : ''
+          'Catalog Source Code': catalogValue,
+          'Is Gift': isGift ? 'Yes' : '',
+          'Gift Message': giftMessageValue
         };
 
-        Alpine.store('xCartHelper').updateCart({ attributes: attributes }, true);
+        // Build formatted note for checkout display (cart note becomes order note)
+        const noteLines = [];
+        if (catalogValue) noteLines.push('Catalog Source Code: ' + catalogValue);
+        if (isGift && giftMessageValue) noteLines.push('Gift Message: ' + giftMessageValue);
+        const formattedNote = noteLines.join('\n');
+
+        Alpine.store('xCartHelper').updateCart({ attributes: attributes, note: formattedNote }, true);
       }, 200);
     }
 
@@ -59,6 +69,9 @@
       giftTextarea.addEventListener('input', syncToCart);
       giftTextarea.addEventListener('change', syncToCart);
     }
+
+    // Sync on init so note is set from existing attribute values (e.g. after section refresh or return visit)
+    syncToCart();
   }
 
   if (document.readyState === 'loading') {

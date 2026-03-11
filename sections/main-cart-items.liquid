@@ -28,6 +28,13 @@
       assign show_side_bar = true
     endif
   endif
+  assign show_native_cart_note = true
+  for block in section.blocks
+    if block.type == 'petals_cart_extras'
+      assign show_native_cart_note = false
+      break
+    endif
+  endfor
   if settings.free_shipping_code != blank
     assign free_shipping_codes = settings.free_shipping_code | newline_to_br | strip_newlines | split: '<br />'
   endif
@@ -1336,7 +1343,7 @@
 
       {%- if show_side_bar -%}
         <div class="form-checkout bg-theme-secondary mt-10 md:mt-7 lg:mt-0 w-full lg:w-1/4 pt-5 pb-5 pl-5 pr-5 lg:pl-7 lg:pr-7 lg:pt-7 lg:pb-7{% if settings.edges_type == 'rounded_corners' %} rounded-xl{% endif %}">
-          {%- if settings.show_cart_note -%}
+          {%- if settings.show_cart_note and show_native_cart_note -%}
             <div class="mb-5">
               <p for="x-cart-note" class="block h4 text-medium md:mb-1">{{ 'sections.cart.note' | t }}</p>
               <textarea

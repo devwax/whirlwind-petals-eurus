@@ -5,7 +5,7 @@
     else
       assign is_rtl = false
     endif
-    
+    assign show_native_cart_note = false
     if settings.free_shipping_code != blank
       assign free_shipping_codes = settings.free_shipping_code | newline_to_br | strip_newlines | split: '<br />'
     endif
@@ -41,8 +41,8 @@
             </div>
           {%- endif -%}
           <div class="w-full{% if settings.enable_estimate_shipping %} mt-4 md:mt-7{% endif %}">
-            {% comment %} Cart note {% endcomment %}
-            {%- if settings.show_cart_note and settings.cart_page_layout == 'above' -%}
+            {% comment %} Cart note (hidden when Petals cart extras present) {% endcomment %}
+            {%- if settings.show_cart_note and settings.cart_page_layout == 'above' and show_native_cart_note -%}
               <p for="x-cart-note" class="block h4 text-medium md:mb-2">{{ 'sections.cart.note' | t }}</p>
               <textarea
                 id="x-cart-note"
