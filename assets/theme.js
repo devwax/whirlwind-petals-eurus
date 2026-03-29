@@ -466,6 +466,7 @@ requestAnimationFrame(() => {
             } else {
               parsedState.items.forEach(item => { productIds.push(item.product_id) });
               this.updateCartUI(parsedState, itemId, line, qty);
+              this._syncContainerQty(parsedState, itemId, qty);
               document.dispatchEvent(new CustomEvent("eurus:cart:items-changed"));
             }
           })
@@ -520,6 +521,42 @@ requestAnimationFrame(() => {
           loadingEl.classList.add('hidden');
         }
         this.loading = false;
+      },
+      async _syncContainerQty(parsedState, parentKey, newQty) {
+        // Deletion of parent cascades to child automatically via Shopify nested lines.
+        if (newQty <= 0) return;
+
+        const parentItem = parsedState.items.find(item => item.key === parentKey);
+        if (!parentItem) return;
+
+        const containerItem = parsedState.items.find(item => {
+          const props = item.properties || {};
+          return props._is_container === 'true' &&
+            String(props._parent_variant_id) === String(parentItem.variant_id);
+        });
+
+        if (!containerItem || containerItem.quantity === newQty) return;
+
+        try {
+          const sections = Alpine.store('xCartHelper').getSectionsToRender().map(s => s.id);
+          const response = await fetch(`${Shopify.routes.root}cart/change.js`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: containerItem.key,
+              quantity: newQty,
+              sections,
+              sections_url: window.location.pathname
+            })
+          });
+          if (!response.ok) return;
+          const updatedState = await response.json();
+          if (!updatedState.errors && updatedState.sections) {
+            Alpine.store('xCartHelper').reRenderSections(updatedState.sections);
+          }
+        } catch (err) {
+          console.error('[ContainerPicker] Container quantity sync failed:', err);
+        }
       },
       updateCart(line, itemId) {
         let url = ''

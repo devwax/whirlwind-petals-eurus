@@ -196,10 +196,11 @@ class ContainerPicker extends HTMLElement {
           },
           {
             id: parseInt(this.selected.variantId, 10),
-            quantity: 1,
+            quantity: parseInt(form.querySelector('[name="quantity"]')?.value || '1', 10),
             parent_id: parseInt(mainVariantId, 10),
             properties: {
               _is_container: 'true',
+              _parent_variant_id: mainVariantId,
             },
           },
         ],
