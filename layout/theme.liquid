@@ -11,11 +11,11 @@
     {% else %}
       <link rel="canonical" href="{{ canonical_url }}">
     {% endif %}
-    
+
     {%- if settings.favicon != blank -%}
       <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 32, height: 32 }}">
     {%- endif -%}
-    
+
     {%- unless settings.type_header_font.system? and settings.type_body_font.system? -%}
       <link rel="preconnect" href="https://fonts.shopifycdn.com" crossorigin>
     {%- endunless -%}
@@ -26,9 +26,9 @@
       {%- if current_page != 1 %} &ndash; Page {{ current_page }}{% endif -%}
       {%- unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless -%}
     </title>
-    
+
     {%- if settings.enable_organization_schema and template.name == 'index' -%}
-      {% liquid 
+      {% liquid
         if settings.business_address_1 != nil
           assign first_business_addr = settings.business_address_1 | split: ","
         endif
@@ -93,7 +93,7 @@
       <link rel="preload" href="{{ settings.type_body_font | font_url }}" as="font" type="font/woff2" crossorigin="anonymous" />
     {% endunless %}
     {% # theme-check-enable AssetPreload %}
-    {% liquid 
+    {% liquid
       render 'meta-tags'
       render 'font-face'
       render 'css-variables'
@@ -117,16 +117,16 @@
       {{ menu_font_400 | font_face: font_display: 'swap' }}
     {% endstyle %}
   </head>
-  <body 
-    class="gradient scrollbar-body overflow-x-hidden text-[{{ settings.text_base_size | times: 0.007875 }}rem] md:text-[{{ settings.text_base_size | times: 0.00875 }}rem]{% if settings.lang_direction contains request.locale.iso_code %} rtl{% endif %}" 
+  <body
+    class="gradient scrollbar-body overflow-x-hidden text-[{{ settings.text_base_size | times: 0.007875 }}rem] md:text-[{{ settings.text_base_size | times: 0.00875 }}rem]{% if settings.lang_direction contains request.locale.iso_code %} rtl{% endif %}"
     x-data="{ runDispatch: true }"
-    :class="($store.xPopup.open || $store.xPopup.openVideoShopping) && 'overflow-hidden padding-scrollbar'" 
+    :class="($store.xPopup.open || $store.xPopup.openVideoShopping) && 'overflow-hidden padding-scrollbar'"
     x-init="$store.xPopup.setWidthScrollbar();{% if request.design_mode %} document.addEventListener('shopify:section:load', ()=>{ runDispatch = true }); $store.xCc.load('{{ shop.url }}','{{ shop.email }}','{{ settings.preset }}'){% endif %}"
     x-on:mouseover="if (runDispatch) { $dispatch('init-run'); runDispatch = false; }"
-    x-on:touchstart="if (runDispatch) { 
-      if (event.target.parentNode.parentNode.id == 'SearchOpen' || event.target.parentNode.id == 'SearchOpen') { setTimeout(() => {  document.querySelector('#SearchOpen').click() }, 200) 
-      } else if (event.target.parentNode.parentNode.id == 'cart-icon' || event.target.parentNode.id == 'cart-icon') { setTimeout(() => {  document.querySelector('#cart-icon').click() }, 200) 
-      }  else if (event.target.parentNode.id == 'mobile-navigation' || event.target.id == 'mobile-navigation') { setTimeout(() => {  document.querySelector('#mobile-navigation').click() }, 200) 
+    x-on:touchstart="if (runDispatch) {
+      if (event.target.parentNode.parentNode.id == 'SearchOpen' || event.target.parentNode.id == 'SearchOpen') { setTimeout(() => {  document.querySelector('#SearchOpen').click() }, 200)
+      } else if (event.target.parentNode.parentNode.id == 'cart-icon' || event.target.parentNode.id == 'cart-icon') { setTimeout(() => {  document.querySelector('#cart-icon').click() }, 200)
+      }  else if (event.target.parentNode.id == 'mobile-navigation' || event.target.id == 'mobile-navigation') { setTimeout(() => {  document.querySelector('#mobile-navigation').click() }, 200)
       }
       $dispatch('init-run'); runDispatch = false;
     }"
@@ -134,10 +134,10 @@
     {%- if settings.enable_tab_attention -%}
       {%- if settings.message_1 != blank or settings.message_2 != blank -%}
         <div
-          class="hidden" 
+          class="hidden"
           x-data='xTabAttention({
-            message1: {{ settings.message_1 | json | replace: "'", "\\u0027" }}, 
-            message2: {{ settings.message_2 | json | replace: "'", "\\u0027" }}, 
+            message1: {{ settings.message_1 | json | replace: "'", "\\u0027" }},
+            message2: {{ settings.message_2 | json | replace: "'", "\\u0027" }},
             delay: {{ settings.message_delay }}
           })'
         >
@@ -152,7 +152,7 @@
           transitionEl.style.opacity = '0';
           setTimeout(() => {
             transitionEl.remove();
-          }, 1000); 
+          }, 1000);
         });
       </script>
       <div id="x-page-transition" class="transition-all ease-in-out duration-1000 opacity-100 fixed top-0 left-0 w-full h-full bg-black z-[9999]"></div>
@@ -161,7 +161,7 @@
       <a class="skip-to-content absolute -z-10 button button-solid hidden lg:block pt-2.5 pb-2.5 pl-6 pr-6 lg:pt-3 lg:pb-3 mt-0.5 ml-0.5 leading-normal justify-center cursor-pointer focus-visible:z-60" href="#MainContent">
         {{ 'accessibility.skip_to_text' | t }}
       </a>
-      
+
       {% case settings.selected_preset %}
         {% when "breath" %}
           {% sections 'header-group-breath' %}
