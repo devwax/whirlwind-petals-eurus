@@ -1196,6 +1196,118 @@
                 {%- endif -%}
               </li>
             {%- endif -%}
+          {%- when 'column_menu' -%}
+            {%- if block.settings.heading != blank -%}
+              {%- liquid
+                assign link = false
+                assign is_link = false
+                assign is_active = false
+                if block.settings.menu_item_link
+                  assign link = block.settings.menu_item_link
+                endif
+                if block.settings.menu.links != blank
+                  assign is_link = true
+                  for link_Child in block.settings.menu.links
+                    if link_Child.current or link_Child.child_active
+                     assign is_active = true
+                    endif
+                  endfor
+                endif 
+              -%} 
+              <li x-data='{ active: false }' 
+                class="{% if will_animate %}flip-container{% endif %} column_menu{% if logo_center %} mr-5{% else %} {% if will_animate %}pl-0{% endif %}{% endif %}{% if is_link %} has-dropdown{% endif %}" 
+                @mouseover.once="$store.xHeaderMenu.initToggleMenuHeight($el)"
+                {% if select_motion == "hover" %}
+                  x-on:mouseover="$store.xHeaderMenu.selectItem($el); $el.classList.add('is-focus'); selectedMenu = true"
+                  @mouseleave="$el.classList.remove('is-focus')"
+                  @focusin="$store.xHeaderMenu.selectItem($el); $el.classList.add('is-focus'); selectedMenu = true"
+                  @focusout="$el.classList.remove('is-focus')"
+                {% else %}
+                  {% if is_link == false and link and block.settings.open_new_window == false %}
+                    @click="window.location.replace($el.querySelector('a').getAttribute('href'));"
+                  {% endif %}
+                  x-on:mouseover="$el.classList.add('is-focus');"
+                  @mouseleave="$el.classList.remove('is-focus');"
+                  @focusin="$el.classList.add('is-focus');"
+                  @focusout="$el.classList.remove('is-focus');"
+                {% endif %}
+              >
+                <div class="column_menu_item relative cursor-pointer flex items-center p-break-words justify-center pt-1 pb-1 hover-text-link is-focus:link-active{% if is_active or request.path == link %} link-active{% endif %}"
+                  {% if is_link %}
+                    {% if select_motion == 'click' %}
+                      @click="$store.xHeaderMenu.clickItem($el, $event, false, false, {{ block.settings.open_new_window }})"
+                    {% else %}
+                      x-init="$store.xHeaderMenu.isTouch && $store.xHeaderMenu.touchItem($el)"
+                    {% endif %}
+                  {% endif %}
+                >
+                  <div class="{% if will_animate %}overflow-hidden pb-[1px] mg-blink{% endif %} flex items-center">
+                    <div class="relative x-anm">
+                      <a href="{% if link %}{{ link }}{% else %}#{% endif %}"{% if block.settings.open_new_window and link %} target="_blank"{% endif %}
+                        class="{% if will_animate %}front{% endif %} cursor-pointer flex items-center p-break-words justify-center pt-1 pb-1 hover-text-link is-focus:link-active{% if is_active or request.path == link %} link-active{% endif %}" 
+                      >
+                        {{ menu_title }}
+                      </a>
+                      {% if will_animate %}
+                        <a href="{% if link %}{{ link }}{% else %}#{% endif %}"{% if block.settings.open_new_window and link %} target="_blank"{% endif %}
+                          tabindex="-1"
+                          class="back cursor-pointer flex items-center p-break-words justify-center pt-1 pb-1 hover-text-link is-focus:link-active{% if is_active or request.path == link %} link-active{% endif %}" 
+                        >
+                          {{ menu_title }}
+                        </a>
+                      {% endif %}
+                    </div>
+                    {%- if is_link -%}
+                      <span class="x-icon-caret w-5{% if is_rtl %} pr-2{% else %} pl-2{% endif %}">{% render 'icon-alls', icon: 'icon-caret' %}</span>
+                    {%- endif -%}
+                    {%- if block.settings.label != blank -%}
+                      {%- style -%}
+                        .color-label-{{ block.id }} {
+                          background: {{ block.settings.label_color }};
+                          color: {{ block.settings.label_text_color_light }};
+                          {% if block.settings.label_position != "above" %}
+                            line-height: normal
+                          {% endif %}
+                        }
+                        .color-label-{{ block.id }}:before{
+                          border-top-color: {{ block.settings.label_color }}; 
+                        }
+                        .dark .color-label-{{ block.id }} {
+                          background: {{ block.settings.label_color_dark }};
+                          color: {{ block.settings.label_text_color_dark }}
+                        }
+                        .dark .color-label-{{ block.id }}:before {
+                          border-top-color: {{ block.settings.label_color_dark }};
+                        }
+                      {%- endstyle -%}    
+                      <div class="color-label-{{ block.id }} flex z-10 items-center -right-1.5 bottom-[85%]{% if settings.edges_type == "rounded_corners" %} rounded-[4px]{% endif %} shadow-md pl-2 pr-2 pt-0.5 pb-0.5 text-[10px] {% if block.settings.label_position == "above" %}absolute before:absolute before:w-0 before:h-0 before:border-b-8 before:border-b-transparent before:border-r-transparent before:border-r-8 before:border-t-8 before:-bottom-3.5 before:left-2 {% else %} rtl:mr-2 ml-2{% endif %}">
+                        {% if block.settings.icon != 'none' %}
+                          <span class="w-3 h-3{% if is_rtl %} ml-1{% else %} mr-1{% endif %}">
+                            {% if block.settings.custom_icon == blank %}
+                              {% if block.settings.another_icon != blank and block.settings.icon == 'another_icon' %}
+                                {% render 'icon-new-alls', icon: block.settings.another_icon %}
+                              {% else %}
+                                {% render 'icon-labels-bags', icon: block.settings.icon %}
+                              {% endif %}
+                            {% else %}
+                              {{ block.settings.custom_icon }}
+                            {% endif %}
+                          </span>
+                        {%- endif -%}                
+                        <span>{{ block.settings.label }}</span>
+                      </div>
+                    {%- endif -%} 
+                  </div>
+                </div>
+                {%- if is_link -%}
+                  <div id="menu-{{ forloop.index }}">
+                    {%- if request.design_mode -%}
+                      {%- render 'header-block-item', type_menu: block.type, block: block, select_motion: select_motion -%}
+                    {%- endif -%}
+                  </div>
+                {%- endif -%}
+              </li>
+            {%- endif -%}
           {%- when 'button' -%}
             {% if block.settings.button_label != blank %}
               <li class="block-button" 
@@ -1297,7 +1409,7 @@
         {%- for block in section.blocks -%}
           {%- if block.settings.heading != blank -%}
             {% case block.type %}
-              {% when 'product_menu' or 'simple_menu' or 'tabbed_menu' %}
+              {% when 'product_menu' or 'simple_menu' or 'tabbed_menu' or 'column_menu' %}
                 {%- if block.settings.menu.links != blank -%}
                   <template x-teleport="#menu-{{ forloop.index }}">
                     {%- render 'header-block-item', type_menu: block.type, block: block, select_motion: select_motion -%}
