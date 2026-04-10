@@ -116,6 +116,18 @@
       {%- if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
   >
 {%- endunless -%}
+  {%- liquid
+    assign open_image_link_new_tab = open_new_window
+    if image_link_new_window == true
+      assign open_image_link_new_tab = true
+    elsif image_link_new_window == false
+      assign open_image_link_new_tab = false
+    endif
+    assign wrap_promotion_copy_with_image_link = true
+    if link_promotion_text_with_image_link == false
+      assign wrap_promotion_copy_with_image_link = false
+    endif
+  -%}
   {% if image != blank %}
     {% if sizes == blank %}
       {%- capture sizes -%}
@@ -130,7 +142,7 @@
       <a 
         aria-label="{{ 'accessibility.image_link' | t }}"
         href="{{ image_link }}" 
-        {% if open_new_window %} target="_blank"{% endif %}
+        {% if open_image_link_new_tab %} target="_blank"{% endif %}
         class="animate_transition_card__image animate-Xpulse skeleton-image w-full h-full top-0 left-0 overflow-hidden{% unless enable_text_overlay %} absolute{% endunless %}{% unless collage %} md:absolute{% endunless %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
       >
     {% else %}
@@ -162,7 +174,7 @@
         width="{{ image.width }}"
         height="{{ image.width | divided_by: image.aspect_ratio }}"
         style="object-position: {{ image.presentation.focal_point }};"
-        class="w-full h-full {% if use_original_ratio %}object-scale-down{% else %}object-cover{% endif %} z-10 image-hover{% if animation_loading %} animate_transition_image{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+        class="w-full h-full {% if image_fit == 'contain' %}object-contain{% elsif image_fit == 'cover' %}object-cover{% elsif use_original_ratio %}object-scale-down{% else %}object-cover{% endif %} z-10 image-hover{% if animation_loading %} animate_transition_image{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
         onload="this?.classList.add('active'); 
           this.closest('.animate_transition_card__image')?.classList.remove('animate-Xpulse', 'skeleton-image');
           setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);
@@ -183,11 +195,11 @@
   </div>
 {%- endunless -%}
 {%- if heading != blank or content != blank or button_label != blank -%}
-  {% if image_link %}
+  {% if image_link and wrap_promotion_copy_with_image_link %}
     <a 
       aria-label="{{ 'accessibility.image_link' | t }}"
       href="{{ image_link }}" 
-      {% if open_new_window %} target="_blank"{% endif %}
+      {% if open_image_link_new_tab %} target="_blank"{% endif %}
     >
   {% endif %}
   <div class="promotion-content background-color-{{ blockID }} text-{{ content_alignment }} rtl:text-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif -%}
@@ -229,7 +241,7 @@
       </a>
     {% endif %}
   </div>
-  {% if image_link %}
+  {% if image_link and wrap_promotion_copy_with_image_link %}
     </a> 
   {% endif  %}
 {% endif %}
