@@ -1,0 +1,38 @@
+{% comment %}
+  Subcollection links from collection.metafields.custom.sub_collections.
+  Use when the main collection product grid section is disabled (e.g. Searchanise handles the grid).
+{% endcomment %}
+{%- if collection != blank -%}
+  <div
+    class="{% if section.settings.full_width %}full-width{% else %}x-pgw page-width mx-auto{% endif %} px-5 md:px-0"
+  >
+    {% render 'collection-subcollections-aside', collection: collection, section: section %}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.collection-subcollections-nav.name",
+  "tag": "section",
+  "class": "section collection-subcollections-nav-section",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "expand_filter",
+      "default": true,
+      "label": "t:sections.collection-subcollections-nav.settings.expand_filter.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "default": false,
+      "label": "t:sections.main-collection-product-grid.settings.full_width.label"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.collection-subcollections-nav.name"
+    }
+  ]
+}
+{% endschema %}
