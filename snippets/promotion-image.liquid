@@ -19,6 +19,13 @@
   if section.index != 1 or section.location != 'template' or settings.enable_lazy_loading_image == false
     assign loading = 'loading="eager" fetchpriority="high" decoding="sync"'
   endif
+  assign heading_clean = heading | default: '' | strip
+  assign content_clean = content | default: '' | strip
+  assign subheading_clean = subheading | default: '' | strip
+  assign has_title_copy = false
+  if subheading_clean != blank or heading_clean != blank or content_clean != blank
+    assign has_title_copy = true
+  endif
 -%}
 {%- style -%}
   {%- unless color_text.alpha == 0.0 -%}
@@ -173,8 +180,8 @@
         alt="{{ image.alt | escape }}"
         width="{{ image.width }}"
         height="{{ image.width | divided_by: image.aspect_ratio }}"
-        style="object-position: {{ image.presentation.focal_point }};"
-        class="w-full h-full {% if image_fit == 'contain' %}object-contain{% elsif image_fit == 'cover' %}object-cover{% elsif use_original_ratio %}object-scale-down{% else %}object-cover{% endif %} z-10 image-hover{% if animation_loading %} animate_transition_image{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+        style="{% if show_in_header and image_fit == 'contain' %}object-position: top center;{% else %}object-position: {{ image.presentation.focal_point }};{% endif %}"
+        class="w-full h-full {% if image_fit == 'contain' %}object-contain{% if show_in_header %} object-top{% endif %}{% elsif image_fit == 'cover' %}object-cover{% elsif use_original_ratio %}object-scale-down{% else %}object-cover{% endif %} z-10 image-hover{% if animation_loading %} animate_transition_image{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
         onload="this?.classList.add('active'); 
           this.closest('.animate_transition_card__image')?.classList.remove('animate-Xpulse', 'skeleton-image');
           setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);
@@ -194,7 +201,7 @@
 {%- unless enable_text_overlay -%}
   </div>
 {%- endunless -%}
-{%- if heading != blank or content != blank or button_label != blank -%}
+{%- if subheading_clean != blank or heading_clean != blank or content_clean != blank or button_label != blank -%}
   {% if image_link and wrap_promotion_copy_with_image_link %}
     <a 
       aria-label="{{ 'accessibility.image_link' | t }}"
@@ -203,18 +210,18 @@
     >
   {% endif %}
   <div class="promotion-content background-color-{{ blockID }} text-{{ content_alignment }} rtl:text-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif -%}
-    {%- if show_in_header %} pt-3 pb-3 pr-4 pl-4{% else %} pt-5 pb-5 pr-7 pl-7{% endif -%}
+    {%- if show_in_header %}{% if has_title_copy %} pt-3 pb-3{% else %} pt-2 pb-2{% endif %} pr-4 pl-4{% else %} pt-5 pb-5 pr-7 pl-7{% endif -%}
     {%- if collage %} lg:pt-7 lg:pb-7{% endif %}{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif -%}
-    {%- if enable_text_overlay %} mt-2 absolute right-0 promotion-content-{{ content_alignment }} rtl:promotion-content-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif -%} mb-2 pointer-events-none text-overlay ml-2 mr-2
+    {%- if enable_text_overlay %}{% if has_title_copy %} mt-2{% else %} mt-0{% endif %} absolute right-0 promotion-content-{{ content_alignment }} rtl:promotion-content-{% if content_alignment == 'center' %}center{% elsif content_alignment == 'left' %}right{% else %}left{% endif -%}{% if has_title_copy %} mb-2{% else %} mb-0{% endif %} pointer-events-none text-overlay ml-2 mr-2
       {%- if columns_desktop < 2 and content_alignment == 'center' %} left-1/2 -translate-x-1/2{% else %} left-0{% endif -%}
       {%- if content_position == 'top' %} top-0{% elsif content_position == 'center' %} top-1/2 -translate-y-1/2{% else %} bottom-0{% endif -%}
-    {%- else %} left-0 right-0 grow{% endif -%}
+    {%- else %} left-0 right-0{% unless show_in_header %} grow{% endunless %}{% endif -%}
     {%- if background_color.alpha != 0.0 %} text-overlay{% endif %}"
   >
-    {%- if subheading != blank -%}
+    {%- if subheading_clean != blank -%}
       <div class="sub-heading-{{ blockID }} text-color-{{ blockID }} promotion-header:mb-0 mb-2 leading-tight rte p-break-words pointer-events-auto">{{ subheading }}</div>
     {%- endif -%}
-    {%- if heading != blank -%}
+    {%- if heading_clean != blank -%}
       {% if show_in_header %}
         {% assign heading_tag = 'p' %}
       {% else %}
@@ -223,7 +230,7 @@
       <div class="{% if title_color == blank or title_color.alpha == 0.0 %} text-color-{{ blockID }}{% else %} title-color-{{ blockID }}{% endif %}">
         {% render 'heading-highlight',
           headingId: blockID,
-          heading: heading,
+          heading: heading_clean,
           highlight_type: highlight_type,
           color_heading_highlight_dark: color_heading_highlight_dark,
           color_heading_highlight_light: color_heading_highlight_light,
@@ -232,11 +239,11 @@
         %}
       </div>
     {%- endif -%}
-    {%- if content != blank -%}
+    {%- if content_clean != blank -%}
       <div class="mb-1 leading-tight rte text-color-{{ blockID }} text-{{ blockID }} p-break-words pointer-events-auto">{{ content }}</div>
     {%- endif -%}
     {%- if button_label != blank -%}
-      <a{% if button_link != blank %} href="{{ button_link }}"{% if open_new_window %} target="_blank"{% endif %}{% else %} role="link" aria-disabled="true"{% endif %} class="button{% if show_button_style == 'secondary' %} button-outline mt-2 lg:mt-2.5{% elsif show_button_style == 'text-link' %} button-text-link {% else %} button-solid mt-2 lg:mt-2.5{% endif %} button--{{ blockID }} pointer-events-auto inline-block empty:hidden pl-4 pr-4 lg:pl-6 lg:pr-6 pt-2.5 pb-2.5 leading-normal md:pt-3 md:pb-3 cursor-pointer p-break-words{% if button_link == blank %} hover:cursor-not-allowed disable-btn-animation opacity-70{%- endif -%}">
+      <a{% if button_link != blank %} href="{{ button_link }}"{% if open_new_window %} target="_blank"{% endif %}{% else %} role="link" aria-disabled="true"{% endif %} class="button{% if show_button_style == 'secondary' %} button-outline{% if show_in_header and has_title_copy == false %} mt-1 lg:mt-1{% else %} mt-2 lg:mt-2.5{% endif %}{% elsif show_button_style == 'text-link' %} button-text-link {% else %} button-solid{% if show_in_header and has_title_copy == false %} mt-1 lg:mt-1{% else %} mt-2 lg:mt-2.5{% endif %}{% endif %} button--{{ blockID }} pointer-events-auto inline-block empty:hidden pl-4 pr-4 lg:pl-6 lg:pr-6 pt-2.5 pb-2.5 leading-normal md:pt-3 md:pb-3 cursor-pointer p-break-words{% if button_link == blank %} hover:cursor-not-allowed disable-btn-animation opacity-70{%- endif -%}">
         {% render 'button-label', button_label: button_label, show_button_style: show_button_style %}
       </a>
     {% endif %}
