@@ -141,6 +141,7 @@
         endif 
       %}
       <div class="col-span-1{% if section.settings.default_hide_filtering %}{% if section.settings.filter_type != 'drawer' %} md:hidden{% endif %} filter-aside:md:block{% else %} filter-aside:md:hidden{% endif %}{% if section.settings.sticky_filtering and section.settings.filter_type == 'above' %} md:sticky duration-300 top-[calc(var(--height-header)+var(--height-sticky-filter))] z-[19] bg-[rgba(var(--colors-background),1)]{% endif %}{% if section.settings.filter_type == 'above' and show_filter %} md:pt-4{% endif %}">
+        {% render 'collection-subcollections-aside', collection: collection, section: section %}
         {% render 'facets',
           results: collection,
           enable_filtering: section.settings.enable_filtering,

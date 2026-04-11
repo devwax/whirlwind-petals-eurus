@@ -1,0 +1,56 @@
+{% comment %}
+  Renders parent collection sub-navigation from metafield custom.sub_collections (list of collection references).
+  Accepts: collection, section
+{% endcomment %}
+{%- liquid
+  assign sub_collections = collection.metafields.custom.sub_collections.value
+-%}
+{%- if sub_collections != blank and sub_collections.size > 0 and section.settings.filter_type == 'aside' -%}
+  <div
+    class="collection-subcollections-aside hidden md:block pl-2.5 pr-2.5 mb-5 border-b border-solid pb-1"
+    data-subcollections-nav
+  >
+    <div x-data="{ open: {{ section.settings.expand_filter }} }" class="js-filter relative">
+      <button
+        type="button"
+        @click.prevent="open = !open"
+        class="facets__summary w-full relative cursor-pointer flex pt-3 pb-3 border-solid items-center border-b justify-between"
+        aria-expanded="{% if section.settings.expand_filter %}true{% else %}false{% endif %}"
+        aria-controls="SubcollectionsList-{{ section.id }}"
+      >
+        <span class="text-medium text-[rgba(var(--colors-heading))] text-left">{{ collection.title | escape }}</span>
+        <span
+          class="h-2.5 w-2.5 inline-block duration-300{% if section.settings.expand_filter %} rotate-180{% endif %}"
+          :class="open ? 'rotate-180' : 'rotate-0'"
+        >
+          {%- render 'icon-alls', icon: 'icon-caret' -%}
+        </span>
+      </button>
+      <div
+        id="SubcollectionsList-{{ section.id }}"
+        class="border-b md:border-0 border-solid"
+        x-collapse
+        x-show="open"
+        {% unless section.settings.expand_filter %}
+          x-cloak
+        {% endunless %}
+      >
+        <ul class="pt-1 pb-4 md:pb-5 space-y-2 list-none p-0 m-0" role="list">
+          {%- for sub in sub_collections -%}
+            <li>
+              <a
+                href="{{ sub.url }}"
+                class="hover-text-link nav-link block text-[rgba(var(--colors-text))]{% if sub.handle == collection.handle %} font-semibold text-[rgb(var(--colors-text-link))]{% endif %}"
+                {% if sub.handle == collection.handle %}
+                  aria-current="page"
+                {% endif %}
+              >
+                {{- sub.title | escape -}}
+              </a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      </div>
+    </div>
+  </div>
+{%- endif -%}
