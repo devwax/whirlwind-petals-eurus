@@ -142,13 +142,14 @@
                       </div>
                     {%- endif -%}
                     {%- if block.settings.menu != blank -%}
-                      <ul class="mt-6 hidden md:block">
+                      <ul class="mt-6 hidden md:block list-none p-0 m-0">
                         {%- for link in block.settings.menu.links -%}
-                          <li class="mb-1 first:pt-0 pt-2">
-                            <a href="{{ link.url }}" class="hover-text-link nav-link relative block lg:inline-block">
-                              {{ link.title }}
-                            </a>
-                          </li>
+                          {% render 'footer-menu-link',
+                            link: link,
+                            show_collection_images: block.settings.show_collection_images,
+                            image_position: block.settings.collection_image_position,
+                            li_classes: 'mb-1 first:pt-0 pt-2'
+                          %}
                         {%- endfor -%}
                         {%- if block.settings.show_social_icons -%}
                           <div class="mt-2">
@@ -158,13 +159,20 @@
                       </ul>
                     {%- endif -%}
                     {%- if block.settings.menu != blank -%}
-                      <ul class="md:hidden"{% if block.settings.heading_menu != blank %} x-show="open" x-collapse x-cloak{% endif %}>
+                      <ul class="md:hidden list-none p-0 m-0"{% if block.settings.heading_menu != blank %} x-show="open" x-collapse x-cloak{% endif %}>
                         {%- for link in block.settings.menu.links -%}
-                          <li class="mb-1 {% if forloop.index == 1 %}mt-6{% endif %} first:pt-0 pt-2">
-                            <a href="{{ link.url }}" class="hover-text-link nav-link relative block lg:inline-block">
-                              {{ link.title }}
-                            </a>
-                          </li>
+                          {% liquid
+                            assign li_mobile = 'mb-1 first:pt-0 pt-2'
+                            if forloop.index == 1
+                              assign li_mobile = 'mb-1 mt-6 first:pt-0 pt-2'
+                            endif
+                          %}
+                          {% render 'footer-menu-link',
+                            link: link,
+                            show_collection_images: block.settings.show_collection_images,
+                            image_position: block.settings.collection_image_position,
+                            li_classes: li_mobile
+                          %}
                         {%- endfor -%}
                         {%- if block.settings.show_social_icons -%}
                           <div class="mt-2">
@@ -172,6 +180,39 @@
                           </div>
                         {%- endif -%}
                       </ul>
+                    {%- endif -%}
+                    {%- if block.settings.bottom_image_left != blank or block.settings.bottom_image_right != blank -%}
+                      {% liquid
+                        if settings.enable_lazy_loading_image
+                          assign img_loading = 'lazy'
+                        else
+                          assign img_loading = 'eager'
+                        endif
+                      %}
+                      <div class="mt-6 flex flex-row flex-wrap gap-4 justify-start items-start footer-link-list__bottom-badges">
+                        {%- if block.settings.bottom_image_left != blank -%}
+                          <div class="flex-1 min-w-0 max-w-[9rem]">
+                            {%- if block.settings.bottom_image_left_link != blank -%}
+                              <a href="{{ block.settings.bottom_image_left_link }}" class="block">
+                            {%- endif -%}
+                            {{ block.settings.bottom_image_left | image_url: width: 360 | image_tag: loading: img_loading, class: 'w-full h-auto object-contain', alt: block.settings.bottom_image_left.alt | escape }}
+                            {%- if block.settings.bottom_image_left_link != blank -%}
+                              </a>
+                            {%- endif -%}
+                          </div>
+                        {%- endif -%}
+                        {%- if block.settings.bottom_image_right != blank -%}
+                          <div class="flex-1 min-w-0 max-w-[9rem]">
+                            {%- if block.settings.bottom_image_right_link != blank -%}
+                              <a href="{{ block.settings.bottom_image_right_link }}" class="block">
+                            {%- endif -%}
+                            {{ block.settings.bottom_image_right | image_url: width: 360 | image_tag: loading: img_loading, class: 'w-full h-auto object-contain', alt: block.settings.bottom_image_right.alt | escape }}
+                            {%- if block.settings.bottom_image_right_link != blank -%}
+                              </a>
+                            {%- endif -%}
+                          </div>
+                        {%- endif -%}
+                      </div>
                     {%- endif -%}
                   </div>
                 {%- when 'image' -%}
@@ -681,6 +722,58 @@
           "default": false,
           "label": "t:sections.footer.settings.show_social_icons.label",
           "info": "t:sections.footer.settings.show_social_icons.info"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.blocks.link_list.settings.header_collection_images.content"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_collection_images",
+          "default": false,
+          "label": "t:sections.footer.blocks.link_list.settings.show_collection_images.label",
+          "info": "t:sections.footer.blocks.link_list.settings.show_collection_images.info"
+        },
+        {
+          "type": "select",
+          "id": "collection_image_position",
+          "label": "t:sections.footer.blocks.link_list.settings.collection_image_position.label",
+          "options": [
+            {
+              "value": "above",
+              "label": "t:sections.footer.blocks.link_list.settings.collection_image_position.option_above"
+            },
+            {
+              "value": "below",
+              "label": "t:sections.footer.blocks.link_list.settings.collection_image_position.option_below"
+            }
+          ],
+          "default": "below",
+          "visible_if": "{{ block.settings.show_collection_images }}"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.blocks.link_list.settings.header_bottom_images.content"
+        },
+        {
+          "type": "image_picker",
+          "id": "bottom_image_left",
+          "label": "t:sections.footer.blocks.link_list.settings.bottom_image_left.label"
+        },
+        {
+          "type": "url",
+          "id": "bottom_image_left_link",
+          "label": "t:sections.footer.blocks.link_list.settings.bottom_image_left_link.label"
+        },
+        {
+          "type": "image_picker",
+          "id": "bottom_image_right",
+          "label": "t:sections.footer.blocks.link_list.settings.bottom_image_right.label"
+        },
+        {
+          "type": "url",
+          "id": "bottom_image_right_link",
+          "label": "t:sections.footer.blocks.link_list.settings.bottom_image_right_link.label"
         }
       ]
     },

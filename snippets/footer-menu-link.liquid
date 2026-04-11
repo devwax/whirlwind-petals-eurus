@@ -1,0 +1,58 @@
+{% comment %}
+  Single footer menu link with optional collection/product thumbnail.
+  Accepts: link, show_collection_images (bool), image_position ('above' | 'below'), li_classes (string)
+{% endcomment %}
+{%- liquid
+  assign link_thumb = blank
+  if show_collection_images
+    if link.type == 'collection_link' and link.object
+      if link.object.image != blank
+        assign link_thumb = link.object.image
+      elsif link.object.featured_image != blank
+        assign link_thumb = link.object.featured_image
+      endif
+    elsif link.type == 'product_link' and link.object and link.object.featured_media
+      assign link_thumb = link.object.featured_media.preview_image
+    endif
+  endif
+-%}
+<li class="{{ li_classes }}">
+  {%- if link_thumb == blank -%}
+    <a href="{{ link.url }}" class="hover-text-link nav-link relative block lg:inline-block">
+      {{- link.title -}}
+    </a>
+  {%- else -%}
+    <a
+      href="{{ link.url }}"
+      class="hover-text-link nav-link relative flex flex-col gap-2 items-start text-left w-full lg:inline-flex lg:w-auto"
+    >
+      {%- if image_position == 'above' -%}
+        <span class="block w-12 max-w-[3rem] overflow-hidden shrink-0 pointer-events-none" aria-hidden="true">
+          <img
+            src="{{ link_thumb | image_url: width: 120 }}"
+            alt=""
+            class="w-full h-auto object-contain"
+            width="48"
+            height="48"
+            loading="lazy"
+            decoding="async"
+          >
+        </span>
+      {%- endif -%}
+      <span class="inline-block">{{- link.title -}}</span>
+      {%- if image_position == 'below' -%}
+        <span class="block w-12 max-w-[3rem] overflow-hidden shrink-0 pointer-events-none" aria-hidden="true">
+          <img
+            src="{{ link_thumb | image_url: width: 120 }}"
+            alt=""
+            class="w-full h-auto object-contain"
+            width="48"
+            height="48"
+            loading="lazy"
+            decoding="async"
+          >
+        </span>
+      {%- endif -%}
+    </a>
+  {%- endif -%}
+</li>
