@@ -1,13 +1,39 @@
 {% comment %}
   Subcollection links from collection.metafields.custom.sub_collections.
-  Use when the main collection product grid section is disabled (e.g. Searchanise handles the grid).
+  - inject_into_searchanise: prepend into Searchanise filter sidebar (details-based markup; no Alpine).
+  - else: visible block above the grid/apps (Alpine accordion via collection-subcollections-aside).
 {% endcomment %}
-{%- if collection != blank -%}
-  <div
-    class="{% if section.settings.full_width %}full-width{% else %}x-pgw page-width mx-auto{% endif %} px-5 md:px-0"
-  >
-    {% render 'collection-subcollections-aside', collection: collection, section: section %}
-  </div>
+{%- liquid
+  assign sub_collections = collection.metafields.custom.sub_collections.value
+  # nil checkbox (older section data) defaults to inject; only explicit false opts out
+  assign inject_into_searchanise = true
+  if section.settings.inject_into_searchanise == false
+    assign inject_into_searchanise = false
+  endif
+-%}
+{%- if collection != blank and sub_collections != blank and sub_collections.size > 0 -%}
+  {%- if inject_into_searchanise -%}
+    {%- capture petals_subcollections_html -%}
+      {%- render 'collection-subcollections-markup',
+        collection: collection,
+        expand_open: section.settings.expand_filter,
+        id_suffix: section.id
+      -%}
+    {%- endcapture -%}
+    {%- if petals_subcollections_html != blank -%}
+      <script>
+        window.PetalsSubcollections = window.PetalsSubcollections || {};
+        window.PetalsSubcollections.html = {{ petals_subcollections_html | json }};
+      </script>
+      <script src="{{ 'collection-subcollections-searchanise.js' | asset_url }}" defer></script>
+    {%- endif -%}
+  {%- else -%}
+    <div
+      class="{% if section.settings.full_width %}full-width{% else %}x-pgw page-width mx-auto{% endif %} px-5 md:px-0"
+    >
+      {% render 'collection-subcollections-aside', collection: collection, section: section %}
+    </div>
+  {%- endif -%}
 {%- endif -%}
 
 {% schema %}
@@ -18,6 +44,13 @@
   "settings": [
     {
       "type": "checkbox",
+      "id": "inject_into_searchanise",
+      "default": true,
+      "label": "t:sections.collection-subcollections-nav.settings.inject_into_searchanise.label",
+      "info": "t:sections.collection-subcollections-nav.settings.inject_into_searchanise.info"
+    },
+    {
+      "type": "checkbox",
       "id": "expand_filter",
       "default": true,
       "label": "t:sections.collection-subcollections-nav.settings.expand_filter.label"
@@ -26,7 +59,8 @@
       "type": "checkbox",
       "id": "full_width",
       "default": false,
-      "label": "t:sections.main-collection-product-grid.settings.full_width.label"
+      "label": "t:sections.collection-subcollections-nav.settings.full_width.label",
+      "info": "t:sections.collection-subcollections-nav.settings.full_width.info"
     }
   ],
   "presets": [

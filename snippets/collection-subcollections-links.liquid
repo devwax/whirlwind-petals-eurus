@@ -1,0 +1,17 @@
+{% comment %}
+  Renders <li> items for subcollection links.
+  Accepts: sub_collections, collection (current page collection for active state)
+{% endcomment %}
+{%- for sub in sub_collections -%}
+  <li>
+    <a
+      href="{{ sub.url }}"
+      class="hover-text-link nav-link block text-[rgba(var(--colors-text))]{% if sub.handle == collection.handle %} font-semibold text-[rgb(var(--colors-text-link))]{% endif %}"
+      {% if sub.handle == collection.handle %}
+        aria-current="page"
+      {% endif %}
+    >
+      {{- sub.title | escape -}}
+    </a>
+  </li>
+{%- endfor -%}
