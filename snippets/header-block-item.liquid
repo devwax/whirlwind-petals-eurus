@@ -2430,6 +2430,16 @@
         endif
       endif
       assign class_menu_width = class_menu_width | replace: ' grid-cols-3', '' | replace: ' grid-cols-2', ''
+      assign promo_width_style = false
+      assign links_width_style = false
+      if image_count > 0 and block.settings.promo_image_width_pct > 0
+        assign promo_pct = block.settings.promo_image_width_pct
+        assign links_pct = 100 | minus: promo_pct
+        assign promo_width_style = 'width: ' | append: promo_pct | append: '%;'
+        assign links_width_style = 'width: ' | append: links_pct | append: '%;'
+        assign class_image_width = ''
+        assign class_menu_width = ''
+      endif
     -%}
     <template x-if="!runDispatch">  
       <div class="toggle-menu toggle-menu-hidden top-full text-[rgba(var(--colors-text))] mega-menu-horizontal{% if image_count > 0 %} main-nav-child-{{ promotion_position }}{% endif %} is-focus:text-[rgba(var(--colors-text))] absolute w-full background-header left-0 z-50 shadow-md ltr overflow-hidden h-fit max-h-[80vh]">
@@ -2438,7 +2448,7 @@
             {%- if block.settings.menu != blank -%}
               <ul
                 class="column-menu-nav order-2 scrollbar-body scrollbar-visible relative z-50 left-0 right-0 {{ class_menu_width }} top-full mt-7 mb-8{% if is_rtl %} rtl{% endif %}{% if block.settings.menu_content_alignment == 'center' %} text-center{% else %} text-left{% endif %}"
-                style="--column-menu-count: {{ block.settings.column_count | default: 3 }};"
+                style="--column-menu-count: {{ block.settings.column_count | default: 3 }};{% if links_width_style %} {{ links_width_style }}{% endif %}"
               >
                 {%- style -%}
                   {%- if block.settings.sub_label != blank -%}
@@ -2663,9 +2673,10 @@
               </div>
             {%- endif -%}
             {%- if total_block > 0 -%}
-              <div class="relative float-right md:right-5 lg:right-0 pt-8 pb-8 {{ class_image_width -}}
+              <div class="relative float-right md:right-5 lg:right-0 pt-8 self-start {{ class_image_width -}}
                 {%- if block.settings.promotion_position == 'right' %}{% unless is_rtl %} order-4{% endunless %}{% endif -%}
                 {%- if block.settings.promotion_position == 'left' %}{% if is_rtl %} order-4{% endif %}{% endif %}"
+                {%- if promo_width_style %} style="{{ promo_width_style }}"{% endif %}
               > 
                 <div class="mega-nav-promotions scrollbar-body scrollbar-visible overflow-y-auto{% if block.settings.promotion_layout == 'horizontal' %} flex gap-5{% else %} flex flex-col gap-3{% endif %}">
                   {%- if block.settings.image_1 -%}
