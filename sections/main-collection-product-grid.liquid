@@ -14,7 +14,7 @@
       row-gap: {{ section.settings.spacing_row }}px;
     }
   }
-{% endstyle %} 
+{% endstyle %}
 {% liquid
   assign show_filter = true
   if collection.filters.size < 1
@@ -36,14 +36,14 @@
 {% if product and settings.enable_combined %}
   {%- paginate pages by 1 -%}
     {% liquid
-      assign index_param = section.index | plus: 0 
+      assign index_param = section.index | plus: 0
       assign product_card_id = paginate.current_page | plus: 0
       assign column_mobile = section.settings.products_per_row_on_mobile | plus: 0
-      
+
       assign disable_quickview = true
       if section.settings.show_quickview
         assign disable_quickview = false
-      endif 
+      endif
     %}
     <div id="card-product-clone-{{ section.id }}" class="hidden product-card-cbl-clone">
       {% render 'card-product',
@@ -75,7 +75,7 @@
 <div {% if section.settings.enable_filtering or section.settings.enable_sorting or section.settings.enable_advanced_filter %}x-data="xFiltersAndSortby('{{ section.id }}')" :class="!showFilterAside && 'filter-aside'"{% endif %} class="pb-[{{ section.settings.padding_bottom_mobile }}px] pt-[{{ section.settings.padding_top_mobile }}px] md:pb-[{{ section.settings.padding_bottom }}px] md:pt-[{{ section.settings.padding_top }}px]">
   <div class="{% if section.settings.full_width %}full-width{% else %}x-pgw page-width mx-auto{% endif %}{% if section.settings.sticky_filtering %} sticky top-[var(--height-header)] duration-300 z-[19] bg-[rgba(var(--colors-background),1)]{% endif %} empty:min-h-[50px]{% if section.settings.enable_filtering == false and section.settings.enable_sorting == false %} invisible h-0{% endif %}{% if section.settings.enable_filtering == false and section.settings.enable_sorting == false and section.settings.enable_advanced_filter == false %} hidden{% endif %}" id="header-filter"></div>
   {% if section.settings.enable_advanced_filter and section.settings.key_value != blank %}
-    {% liquid 
+    {% liquid
       assign key_value = section.settings.key_value | newline_to_br | strip_newlines | split: '<br />'
       assign filter_advanced_count = 0
       for filter_label in key_value
@@ -89,7 +89,7 @@
           endif
           for filter in collection.filters
             assign sorted_values = filter.values
-            
+
             assign filter_index = forloop.index
             unless filter_label != filter.label or filter_used contains filter.label
               assign filter_advanced_count = filter_advanced_count | plus: 1
@@ -99,7 +99,7 @@
           endfor
         endif
       endfor
-      
+
       assign only_show_advanded_filter = false
       if collection.filters.size == filter_advanced_count
         assign only_show_advanded_filter = true
@@ -109,7 +109,7 @@
       endif
     %}
   {% endif %}
-  <div 
+  <div
     class="{% if section.settings.full_width %}full-width{% else %}x-pgw page-width mx-auto{% endif %}{% if section.settings.filter_type == 'aside' and section.settings.enable_filtering and show_filter %} grid {% if section.settings.default_hide_filtering %} md:grid-cols-2 filter-aside:md:grid-cols-3 filter-aside:lg:grid-cols-4{% else %} md:grid-cols-3{% endif %} lg:grid-cols-4 md:gap-7 md:pt-7{% endif %}"
     {% if section.settings.filter_type == 'above' %} :class="showFilterAside ? 'md:pt-0' : 'md:pt-3'"{% endif %}
   >
@@ -126,7 +126,7 @@
           if check == ''
             assign number_products = number_products | append: column | append: ";"
           endif
-        endfor 
+        endfor
         if number_products != blank
           assign number_products = number_products | split: ";"
           assign products_per_page = number_products[0]
@@ -138,7 +138,7 @@
         assign disable_quickview = true
         if section.settings.show_quickview
           assign disable_quickview = false
-        endif 
+        endif
       %}
       <div class="col-span-1{% if section.settings.default_hide_filtering %}{% if section.settings.filter_type != 'drawer' %} md:hidden{% endif %} filter-aside:md:block{% else %} filter-aside:md:hidden{% endif %}{% if section.settings.sticky_filtering and section.settings.filter_type == 'above' %} md:sticky duration-300 top-[calc(var(--height-header)+var(--height-sticky-filter))] z-[19] bg-[rgba(var(--colors-background),1)]{% endif %}{% if section.settings.filter_type == 'above' and show_filter %} md:pt-4{% endif %}">
         {% render 'collection-subcollections-aside', collection: collection, section: section %}
@@ -163,7 +163,7 @@
         x-intersect.once='$store.xCustomerEvent.fire("list_product_viewed", $el, {
           "list": {
             "id": "collection",
-            "title": "{{ collection.title | escape }}" 
+            "title": "{{ collection.title | escape }}"
           }
         })'
         {% if request.design_mode and section.settings.pagination != "pagination" %}
@@ -190,7 +190,7 @@
             }
           {%- endstyle %}
           <p id="ProductCount_header" class="mb-10">
-            {% liquid               
+            {% liquid
               assign product_count = collection.products_count
               assign all_products_count = collection.all_products_count
             %}
@@ -222,12 +222,12 @@
               </div>
             {%- else -%}
               <div id="items-grid" class="grid grid-cols-{{ section.settings.products_per_row_on_mobile }} md:grid-cols-2 lg:grid-cols-{{ section.settings.products_per_row_on_desktop }} gap-{{ section.id }} md:list-layout:grid-cols-1{% if section.settings.pagination == 'pagination' %} pb-10 border-b border-solid{% endif %}{% if request.design_mode and section.settings.pagination != 'pagination' %} opacity-0{% endif %}" {% if request.design_mode and section.settings.pagination != 'pagination' %} :class="loading ? 'opacity-0' : 'opacity-100'"{% endif %}>
-                  {% liquid 
+                  {% liquid
                     assign curent_page = paginate.current_page | minus: 1
                     assign total_product = products_per_page | times: curent_page
                   %}
                   {%- for product in collection.products -%}
-                    {% liquid 
+                    {% liquid
                       assign index = forloop.index | plus: total_product
                       if forloop.index < 3 or settings.enable_lazy_loading_image == false
                         assign loading = 'eager'
@@ -294,7 +294,7 @@
                       {% endif %}
                     {% endfor %}
                     {% liquid
-                      assign index_param = section.index | append: forloop.index | plus: 0 
+                      assign index_param = section.index | append: forloop.index | plus: 0
                       assign product_card_id = paginate.current_page | append: forloop.index | plus: 0
                     %}
                     <div class="grid-item">
@@ -766,7 +766,7 @@
     {
       "type": "header",
       "content": "SEO"
-    }, 
+    },
     {
       "type": "checkbox",
       "id": "enable_micro_schema",
