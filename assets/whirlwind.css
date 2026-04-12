@@ -8,7 +8,7 @@
 }
 
 /*
- * Petals “Arrangements” block: spacing + one rule before Searchanise (Availability).
+ * Petals "Arrangements" block: spacing + one rule before Searchanise (Availability).
  * Done here (not only Tailwind on injected markup) so utilities are always present.
  */
 #snize_results .snize-filters-sidebar .sidebar-petals-subcollections {
@@ -46,13 +46,12 @@
 }
 
 /*
- * Searchanise filters — align with Eurus facet column + legacy “faceted search” sidebar
- * (scoped to #snize_results so instant-search UI is not affected)
+ * Searchanise filters — visual styling only; no layout overrides.
+ * Snize handles its own sidebar/main float layout — we must not touch width, float, or display
+ * on #snize_results or its direct children, as that breaks the native two-column layout.
  */
 #snize_results .snize-filters-sidebar,
 #snize_results .snize-modal-content .snize-filters-sidebar {
-  box-sizing: border-box;
-  min-width: 258px;
   padding-left: 0.625rem;
   padding-right: 0.625rem;
   padding-bottom: 1.25rem;
@@ -177,7 +176,7 @@
   opacity: 0.45;
 }
 
-/* Count badges — subtle, like “(12)” in native facets */
+/* Count badges — subtle, like "(12)" in native facets */
 #snize_results .snize-filters-sidebar .snize-filter-variant-count {
   font-size: var(--font-size-small-mobile);
   color: rgba(var(--colors-text), 0.75);
