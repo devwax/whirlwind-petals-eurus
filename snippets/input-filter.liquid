@@ -11,7 +11,7 @@
   Usage:
   {% render 'facets', results: collection, enable_filtering: true, enable_sorting: true %}
 {% endcomment %}
-{% liquid 
+{% liquid
   assign total_active_values = total_active_values | plus: filter.active_values.size
   case filter.presentation
     when 'swatch'
@@ -26,7 +26,7 @@
   else
     assign is_rtl = false
   endif
-    
+
   assign rounded_filter = 'square'
   if section.settings.filter_edge_style == 'rounded'
     assign rounded_filter = 'rounded'
@@ -41,16 +41,10 @@
 {% case filter.type %}
   {% when 'boolean' or 'list' %}
     <div @click="getPopupPosition($el)" x-data="{open: {{ expand_filter }}}" class="js-filter relative" data-index="{{ filter_type }}-{{ index }}"{% if filter_type == 'above' %} x-intersect.once="setPositionOptionFilter($el)"{% endif %}>
-      <button 
-        @click.prevent="open=!open" 
-        {% if filter_type == 'above' %}:class="open && 'md:shadow-[rgba(0,0,0,0.16)_0px_0px_0px,rgb(var(--colors-heading))_0px_0px_0px_1px] md:border-[rgb(var(--colors-heading))]'"{% endif %} 
-        class="facets__summary w-full relative cursor-pointer flex pt-3 pb-3 border-solid items-center border-b justify-between
-          {%- if filter_type == 'above' %} md:border md:py-3 md:px-4
-            {%- if rounded_filter == 'rounded' %} rounded-full{% elsif rounded_filter == 'rounded_corners' %} rounded{% endif -%}
-          {%- else -%}
-            !rounded-none
-          {%- endif -%}
-        "
+      <button
+        @click.prevent="open=!open"
+        {% if filter_type == 'above' %}:class="open && 'md:shadow-[rgba(0,0,0,0.16)_0px_0px_0px,rgb(var(--colors-heading))_0px_0px_0px_1px] md:border-[rgb(var(--colors-heading))]'"{% endif %}
+        class="facets__summary w-full relative cursor-pointer flex pt-3 pb-3 border-solid items-center border-b justify-between{% if filter_type == 'above' %} md:border md:py-3 md:px-4{% if rounded_filter == 'rounded' %} rounded-full{% elsif rounded_filter == 'rounded_corners' %} rounded{% endif %}{% else %} !rounded-none{% endif %}"
         aria-label="{{ filter.label }} ({{ 'products.facets.filters_selected.one' | t: count: filter.active_values.size }})"
       >
         <span class="text-medium text-[rgba(var(--colors-heading))]{% if filter_type == 'above' %}{% if is_rtl %} md:ml-7{% else %} md:mr-7{% endif %}{% endif %}">{{ filter.label | escape }}<span class="{% if filter.active_values.size == 0 %} hidden{% endif %}"> ({{ filter.active_values.size }})</span></span>
@@ -129,7 +123,7 @@
                         assign color_value = option_value
                         break
                       endif
-                    endfor  
+                    endfor
                 -%}
                 {% if color_custom != blank %}
                   {%- style %}
@@ -176,7 +170,7 @@
                       aria-label="{{ value.label | escape }}"></span>
                     <span class="p-break-words">{{ value.label | escape }} ({{ value.count }})</span>
                   </label>
-                </li> 
+                </li>
               {%- endfor -%}
             </ul>
           {% else %}
@@ -201,7 +195,7 @@
                   </label>
                 </li>
               {%- endfor -%}
-            </ul> 
+            </ul>
           {% endif %}
         </div>
       </div>
@@ -215,16 +209,10 @@
       endif
     %}
     <div x-data="{open: {{ expand_filter }}}" class="js-filter relative" data-index="{{ filter_type }}-{{ index }}"{% if filter_type == 'above' %}  x-intersect.once="setPositionOptionFilter($el)"{% endif %}>
-      <button 
+      <button
         @click.prevent="open=!open"
-        {% if filter_type == 'above' %}:class="open && 'md:shadow-[rgba(0,0,0,0.16)_0px_0px_0px,rgb(var(--colors-heading))_0px_0px_0px_1px] md:border-[rgb(var(--colors-heading))]'"{% endif %} 
-        class="facets__summary w-full relative cursor-pointer flex pt-3 pb-3 border-solid items-center border-b justify-between
-          {%- if filter_type == 'above' %} md:border md:py-3 md:px-4
-            {%- if rounded_filter == 'rounded' %} rounded-full{% elsif rounded_filter == 'rounded_corners' %} rounded{% endif -%}
-          {%- else -%}
-            !rounded-none
-          {%- endif -%}
-        "
+        {% if filter_type == 'above' %}:class="open && 'md:shadow-[rgba(0,0,0,0.16)_0px_0px_0px,rgb(var(--colors-heading))_0px_0px_0px_1px] md:border-[rgb(var(--colors-heading))]'"{% endif %}
+        class="facets__summary w-full relative cursor-pointer flex pt-3 pb-3 border-solid items-center border-b justify-between{% if filter_type == 'above' %} md:border md:py-3 md:px-4{% if rounded_filter == 'rounded' %} rounded-full{% elsif rounded_filter == 'rounded_corners' %} rounded{% endif %}{% else %} !rounded-none{% endif %}"
       >
         <span class="text-medium text-[rgba(var(--colors-heading))]{% if filter_type == 'above' %}{% if is_rtl %} md:ml-7{% else %} md:mr-7{% endif %}{% endif %}">{{ filter.label | escape }}</span>
         <span class="h-2.5 w-2.5 inline-block duration-300{% if expand_filter %} rotate-180{% endif %}" :class="open ? 'rotate-180':'rotate-0'">{% render 'icon-alls', icon: 'icon-caret' %}</span>
@@ -242,7 +230,7 @@
                 <div style="{% if is_rtl %}left: var(--right_range); right: var(--left_range);{% else %}left: var(--left_range); right: var(--right_range);{% endif %}" class="progress h-full absolute bg-[rgb(var(--colors-text-link))] left-0 right-0"></div>
               </div>
               <div class="range-input relative">
-                <input 
+                <input
                   @change="onSubmit()"
                   aria-label="Filter range min"
                   class="absolute -translate-x-1 rtl:translate-x-1 range-min w-full bg-none h-1.5 -top-1.5 pointer-events-none appearance-none
@@ -264,7 +252,7 @@
                   form="ranger-price"
                   id="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}-range-min"
                 >
-                <input 
+                <input
                   @change="onSubmit()"
                   aria-label="Filter range max"
                   class="absolute translate-x-1 rtl:-translate-x-1 range-max w-full bg-none h-1.5 -top-1.5 pointer-events-none appearance-none
@@ -307,7 +295,7 @@
                 step=".01"
                 id="Filter-{{ filter_type }}-{{ filter.label | escape }}-{{ forloop.index }}-min"
               >
-              <input @change="onSubmit()" class="price-input absolute opacity-0 -z-10{% if filter.operator == 'AND' %} filter-and{% endif %}" name="{{ filter.max_value.param_name }}" 
+              <input @change="onSubmit()" class="price-input absolute opacity-0 -z-10{% if filter.operator == 'AND' %} filter-and{% endif %}" name="{{ filter.max_value.param_name }}"
                 aria-label="Filter price max"
                 x-ref="filter_price_lte" type="number" min="0"
                 {%- if filter.max_value.value -%}
