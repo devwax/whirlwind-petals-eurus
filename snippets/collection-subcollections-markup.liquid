@@ -8,7 +8,7 @@
 -%}
 {%- if sub_collections != blank and sub_collections.size > 0 -%}
 <div
-  class="collection-subcollections-searchanise-inner pl-2.5 pr-2.5 mb-5 border-b border-solid pb-1"
+  class="collection-subcollections-searchanise-inner pl-2.5 pr-2.5"
   data-subcollections-nav
   data-petals-subcollections
 >
@@ -19,17 +19,17 @@
     {% endif %}
   >
     <summary
-      class="facets__summary w-full relative cursor-pointer flex pt-3 pb-3 border-solid items-center border-b justify-between list-none [&::-webkit-details-marker]:hidden"
+      class="facets__summary w-full relative cursor-pointer flex pt-3 pb-3 items-center justify-between list-none [&::-webkit-details-marker]:hidden"
       aria-controls="{{ id_base }}"
     >
-      <span class="text-medium text-[rgba(var(--colors-heading))] text-left">{{ collection.title | escape }}</span>
+      <span class="text-left text-[rgba(var(--colors-heading))]">{{ collection.title | escape }}</span>
       <span
         class="collection-subcollections-searchanise__caret h-2.5 w-2.5 inline-block duration-300{% if expand_open %} rotate-180{% endif %}"
       >
         {%- render 'icon-alls', icon: 'icon-caret' -%}
       </span>
     </summary>
-    <div id="{{ id_base }}" class="border-b md:border-0 border-solid pt-1">
+    <div id="{{ id_base }}" class="pt-1">
       <ul class="pb-4 md:pb-5 space-y-2 list-none p-0 m-0" role="list">
         {% render 'collection-subcollections-links', sub_collections: sub_collections, collection: collection %}
       </ul>
