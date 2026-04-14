@@ -1711,77 +1711,146 @@
                 {%- endif -%}
                 
                 {%- if settings.enable_save_share_cart or settings.show_cart_note or settings.enable_estimate_shipping or settings.enable_featured_discount -%}
-                  <div :class="show && 'lg:w-[calc((100%/12)*7)]'">
-                    {% style %}
-                      {% if is_rtl %}
-                        .x-cart-interact-group .x-cart-interact-item {
-                          border-left-width: 1px;
-                        }
-                        .x-cart-interact-group .x-cart-interact-item:nth-last-child(1) {
-                          border-left-width: 0px;
-                        }
-                      {% else %}
-                        .x-cart-interact-group .x-cart-interact-item {
-                          border-right-width: 1px;
-                        }
-                        .x-cart-interact-group .x-cart-interact-item:nth-last-child(1) {
-                          border-right-width: 0px;
-                        }
-                      {% endif %}
-                    {% endstyle %}
-                    <div class="x-cart-interact-group border-solid border-t flex md:flex-wrap justify-between">
-                      {% comment %} share cart {% endcomment %}
-                      {% if settings.enable_save_share_cart %}
-                        <button @click="$store.xCartShare.openShareCart = true;" class="x-cart-interact-item pl-2 pr-2 flex items-center gap-2 pt-3 border-solid pb-3 cursor-pointer w-1/4 justify-center flex-1" x-intersect.once.margin.200px="$store.xCartShare.generateUrl()">
-                          <span class="w-4 h-4 hidden md:block">
-                            {%- render 'icon-alls', icon: 'icon-share' -%}
-                          </span>
-                          <p>
-                            {{ 'general.cart.share_cart' | t }}
-                          </p>
-                        </button>
-                      {% endif %}
-                      {% comment %} Cart note {% endcomment %}
-                      {%- if settings.show_cart_note -%}
-                        <button
-                          x-data="{ cart_note_data: '{{ cart.note }}'}"
-                          x-intersect.once="document.addEventListener('eurus:cart-drawer:order-note:update', (event) => {cart_note_data = event.detail.message; document.getElementById('x-cart-note').value = cart_note_data} )"
-                          class="x-cart-interact-item pl-2 pr-2 flex items-center gap-2 pt-3 pb-3 cursor-pointer border-solid justify-center w-1/4 flex-1{% if is_rtl %}{% unless settings.enable_estimate_shipping %} text-left{% endunless %} md:text-right{% else %}{% unless settings.enable_estimate_shipping %} text-right{% endunless %} md:text-left{% endif %}"
-                          @click.prevent="$store.xCartHelper.openField = ($store.xCartHelper.openField == 'note') ? false : 'note'; cart_note_data ? (document.getElementById('x-cart-note').value = cart_note_data) : (document.getElementById('x-cart-note').value = '')">
-                          <span class="w-4 h-4 hidden md:block">
-                            {%- render 'icon-alls', icon: 'icon-note' -%}
-                          </span>
-                          <div class="summary__title text-center">
-                            {{ 'sections.cart.order_note' | t }}
-                          </div>
-                        </button>
-                      {%- endif -%}
-                      {% comment %} estimate shipping {% endcomment %}
-                      {% if settings.enable_estimate_shipping %}
-                        <button @click="$store.xPopupShipping.open = true; localStorage.getItem('cart_shipping_zip') ? (document.getElementById('cart-shipping-zip').value = localStorage.getItem('cart_shipping_zip')) : (document.getElementById('cart-shipping-zip').value = '')" class="x-cart-interact-item pl-2 pr-2 flex items-center gap-2 pt-3 pb-3 cursor-pointer border-solid justify-center w-1/4 flex-1{% if settings.show_cart_note and settings.enable_save_share_cart == false %} justify-end{% endif %}{% unless settings.show_cart_note %} {% if is_rtl %} md:text-right{% else %} md:text-left{% endif %}{% endunless %}">
-                          <span class="w-4 h-4 hidden md:block">
-                            {%- render 'icon-alls', icon: 'icon-24h' -%}
-                          </span>
-                          <p>{{ 'customer.order.shipping' | t }}</p>
-                        </button>
-                      {% endif %}
-                      {% comment %} Discount code {% endcomment %}
-                      {%- if settings.enable_featured_discount -%}
-                        <button
-                          class="x-cart-interact-item pl-2 pr-2 border-solid pt-3 pb-3 flex items-center gap-2 cursor-pointer justify-center w-1/4 flex-1"
-                          @click.prevent="$store.xCartHelper.openField = ($store.xCartHelper.openField == 'discount_field') ? false : 'discount_field'"
-                          x-data="xCouponCode([{% for code in free_shipping_codes %}'{{ code }}'{% unless forloop.last %},{% endunless %}{% endfor %}])"
+                  {%- if settings.show_cart_note -%}
+                  <div class="relative" x-data="petalsDrawerGiftModal">
+                    {% render 'petals-cart-drawer-catalog' %}
+                  {%- endif -%}
+                    <div :class="show && 'lg:w-[calc((100%/12)*7)]'">
+                      {% style %}
+                        {% if is_rtl %}
+                          .x-cart-interact-group .x-cart-interact-item {
+                            border-left-width: 1px;
+                          }
+                          .x-cart-interact-group .x-cart-interact-item:nth-last-child(1) {
+                            border-left-width: 0px;
+                          }
+                        {% else %}
+                          .x-cart-interact-group .x-cart-interact-item {
+                            border-right-width: 1px;
+                          }
+                          .x-cart-interact-group .x-cart-interact-item:nth-last-child(1) {
+                            border-right-width: 0px;
+                          }
+                        {% endif %}
+                      {% endstyle %}
+                      <div class="x-cart-interact-group border-solid border-t flex md:flex-wrap justify-between">
+                        {% comment %} share cart {% endcomment %}
+                        {% if settings.enable_save_share_cart %}
+                          <button @click="$store.xCartShare.openShareCart = true;" class="x-cart-interact-item pl-2 pr-2 flex items-center gap-2 pt-3 border-solid pb-3 cursor-pointer w-1/4 justify-center flex-1" x-intersect.once.margin.200px="$store.xCartShare.generateUrl()">
+                            <span class="w-4 h-4 hidden md:block">
+                              {%- render 'icon-alls', icon: 'icon-share' -%}
+                            </span>
+                            <p>
+                              {{ 'general.cart.share_cart' | t }}
+                            </p>
+                          </button>
+                        {% endif %}
+                        {% comment %} Gift message (cart note) {% endcomment %}
+                        {%- if settings.show_cart_note -%}
+                          <button
+                            type="button"
+                            class="x-cart-interact-item pl-2 pr-2 flex items-center gap-2 pt-3 pb-3 cursor-pointer border-solid justify-center w-1/4 flex-1{% if is_rtl %}{% unless settings.enable_estimate_shipping %} text-left{% endunless %} md:text-right{% else %}{% unless settings.enable_estimate_shipping %} text-right{% endunless %} md:text-left{% endif %}"
+                            @click.prevent="toggleGiftModal()"
+                          >
+                            <span class="w-4 h-4 hidden md:block">
+                              {%- render 'icon-alls', icon: 'icon-note' -%}
+                            </span>
+                            <div class="summary__title text-center">
+                              {{ 'sections.cart.gift_message' | t }}
+                            </div>
+                          </button>
+                        {%- endif -%}
+                        {% comment %} estimate shipping {% endcomment %}
+                        {% if settings.enable_estimate_shipping %}
+                          <button @click="$store.xPopupShipping.open = true; localStorage.getItem('cart_shipping_zip') ? (document.getElementById('cart-shipping-zip').value = localStorage.getItem('cart_shipping_zip')) : (document.getElementById('cart-shipping-zip').value = '')" class="x-cart-interact-item pl-2 pr-2 flex items-center gap-2 pt-3 pb-3 cursor-pointer border-solid justify-center w-1/4 flex-1{% if settings.show_cart_note and settings.enable_save_share_cart == false %} justify-end{% endif %}{% unless settings.show_cart_note %} {% if is_rtl %} md:text-right{% else %} md:text-left{% endif %}{% endunless %}">
+                            <span class="w-4 h-4 hidden md:block">
+                              {%- render 'icon-alls', icon: 'icon-24h' -%}
+                            </span>
+                            <p>{{ 'customer.order.shipping' | t }}</p>
+                          </button>
+                        {% endif %}
+                        {% comment %} Discount code {% endcomment %}
+                        {%- if settings.enable_featured_discount -%}
+                          <button
+                            class="x-cart-interact-item pl-2 pr-2 border-solid pt-3 pb-3 flex items-center gap-2 cursor-pointer justify-center w-1/4 flex-1"
+                            @click.prevent="$store.xCartHelper.openField = ($store.xCartHelper.openField == 'discount_field') ? false : 'discount_field'"
+                            x-data="xCouponCode([{% for code in free_shipping_codes %}'{{ code }}'{% unless forloop.last %},{% endunless %}{% endfor %}])"
+                          >
+                            <span class="w-4 h-4 hidden md:block">
+                              {%- render 'icon-alls', icon: 'icon-discount' -%}
+                            </span>
+                            <div class="summary__title p-break-words text-center">
+                              {{ 'general.cart.discount' | t }}<sup>({{ cart.cart_level_discount_applications.size  }})</sup>
+                            </div>
+                          </button>
+                        {%- endif -%}
+                      </div>
+                    </div>
+                  {%- if settings.show_cart_note -%}
+                    <div x-show="$store.xCartHelper.openField == 'note'" x-cloak class="absolute z-20 top-0 left-0 w-full h-full bg-black bg-opacity-20"></div>
+                    <div
+                      class="absolute bottom-0{% if is_rtl %} right-0{% else %} left-0{% endif %} w-full z-20 pt-5 pr-5 pl-5 lg:pl-7 lg:pr-7 pb-7 bg-[rgba(var(--colors-background),1)]{% if settings.edges_type == 'rounded_corners' %} rounded-t-[16px]{% endif %}"
+                      :class="show && 'lg:w-[56.15%]'"
+                      x-show="$store.xCartHelper.openField == 'note'"
+                      x-cloak
+                      @click.away="$store.xCartHelper.openField = false"
+                      x-transition:enter="transition-all ease-in-out duration-300"
+                      x-transition:enter-start="transform translate-y-full"
+                      x-transition:enter-end="transform translate-y-0"
+                      x-transition:leave="transition-all ease-in-out duration-300"
+                      x-transition:leave-end="transform translate-y-full"
+                    >
+                      <div class="w-full flex items-center justify-between mb-5">
+                        <p class="text-medium h6">{{ 'sections.cart.gift_message' | t }}</p>
+                        <span
+                          class="cursor-pointer absolute top-2 {% if is_rtl %}left-2{% else %}right-2{% endif %} icon-close-container inline-block group-close-btn rounded-full"
+                          @click="$store.xCartHelper.openField = false"
                         >
-                          <span class="w-4 h-4 hidden md:block">
-                            {%- render 'icon-alls', icon: 'icon-discount' -%}
+                          {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+                        </span>
+                      </div>
+                      <label class="petals-cart-checkbox-label flex items-start gap-2 font-medium cursor-pointer mb-3">
+                        <input
+                          type="checkbox"
+                          class="mt-1"
+                          x-model="is_gift"
+                        >
+                        <span>
+                          <span class="petals-cart-checkbox-label__title">{{ 'sections.cart.gift_message_checkbox' | t }}</span>
+                        </span>
+                      </label>
+                      <div class="w-full mb-2" x-show="is_gift" x-collapse>
+                        <p class="text-[12px] lg:text-[14px] font-medium mb-2">
+                          {{ 'sections.cart.gift_message' | t }}
+                          <span class="block font-normal opacity-70 text-xs mt-0.5">
+                            {{ 'sections.cart.gift_message_line_hint' | t }}
                           </span>
-                          <div class="summary__title p-break-words text-center">
-                            {{ 'general.cart.discount' | t }}<sup>({{ cart.cart_level_discount_applications.size  }})</sup>
-                          </div>
+                        </p>
+                        <textarea
+                          id="x-cart-drawer-gift-message"
+                          aria-label="{{ 'sections.cart.gift_message' | t }}"
+                          x-model="cart_note"
+                          rows="4"
+                          cols="50"
+                          class="w-full pl-4 pr-4 pt-4 pb-4 border border-solid bg-[rgba(var(--background-color),1)] focus-within:outline-none placeholder:text-current placeholder:opacity-60{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
+                          placeholder="{{ 'sections.cart.gift_message' | t }}"
+                        ></textarea>
+                      </div>
+                      <div class="flex mt-5">
+                        <button
+                          type="button"
+                          class="button button-solid leading-normal{% if is_rtl %} mr-1{% else %} ml-1{% endif %} w-full justify-center pt-2.5 pb-2.5 md:pt-3 md:pb-3 cursor-pointer"
+                          @click="saveGift()"
+                        >
+                          {% assign button_label = 'sections.cart.save' | t %}
+                          <span class="flex items-center justify-center">
+                            {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
+                          </span>
                         </button>
-                      {%- endif -%}
+                      </div>
                     </div>
                   </div>
+                  {%- endif -%}
                 {%- endif -%}
                 <div
                   x-data="{show_saving_amounts: false}"
@@ -1890,56 +1959,6 @@
         </div>
       </div>
 
-      {% comment %} Cart note {% endcomment %}
-      {%- if settings.show_cart_note -%}
-        <div 
-          x-data="{ cart_note: '{{ cart.note }}' }"
-        >
-          <div x-show="$store.xCartHelper.openField == 'note'" x-cloak class="absolute z-20 top-0 left-0 w-full h-full bg-black bg-opacity-20"></div>
-          <div class="absolute bottom-0{% if is_rtl %} right-0{% else %} left-0{% endif %} w-full z-20 pt-5 pr-5 pl-5 lg:pl-7 lg:pr-7 pb-7 bg-[rgba(var(--colors-background),1)]{% if settings.edges_type == 'rounded_corners' %} rounded-t-[16px]{% endif %}" 
-            :class="show && 'lg:w-[56.15%]'" 
-            x-show="$store.xCartHelper.openField == 'note'" x-cloak
-            @click.away="$store.xCartHelper.openField = false"
-            x-transition:enter="transition-all ease-in-out duration-300"
-            x-transition:enter-start="transform translate-y-full"
-            x-transition:enter-end="transform translate-y-0"
-            x-transition:leave="transition-all ease-in-out duration-300"
-            x-transition:leave-end="transform translate-y-full">
-            <div class="w-full flex items-center justify-between mb-5">
-              <p class="text-medium h6">{{ 'sections.cart.order_note' | t }}</p>
-              <span
-                class="cursor-pointer absolute top-2 {% if is_rtl %}left-2{% else %}right-2{% endif %} icon-close-container inline-block group-close-btn rounded-full"
-                @click="$store.xCartHelper.openField = false"
-              >
-                {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
-              </span>
-            </div>
-            <div class="w-full flex items-center justify-between mb-2">
-              <p class="text-[12px] lg:text-[14px] font-medium">{{ 'sections.cart.note' | t }}</p>
-            </div>
-            <textarea
-              id="x-cart-note"
-              aria-label="Cart note"
-              x-model="cart_note"
-              rows="4" 
-              cols="50" 
-              class="w-full pl-4 pr-4 pt-4 pb-4 border border-solid bg-[rgba(var(--background-color),1)] focus-within:outline-none placeholder:text-current placeholder:opacity-60{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
-              placeholder="{{ 'sections.cart.note' | t }}"
-            >{{- cart.note -}}</textarea>
-            <div class="flex mt-5">
-              <button
-                class="button button-solid leading-normal{% if is_rtl %} mr-1{% else %} ml-1{% endif %} w-full justify-center pt-2.5 pb-2.5 md:pt-3 md:pb-3 cursor-pointer" 
-                @click="$store.xCartHelper.openField = false; $store.xCartHelper.updateCart({ note: cart_note})"
-              >
-                {% assign button_label = 'sections.cart.save' | t %}
-                <span class="flex items-center justify-center">
-                  {% render 'button-label', button_label: button_label, show_button_style: 'primary' %}
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-      {%- endif -%}
       {% comment %} Discount code {% endcomment %}
       {%- if settings.enable_featured_discount -%}
         <div x-data="xCouponCode([{% for code in free_shipping_codes %}'{{ code }}'{% unless forloop.last %},{% endunless %}{% endfor %}])">

@@ -1,0 +1,37 @@
+{%- comment -%}
+  Petals – Catalog source + sync mirrors for cart drawer (pairs with petals-cart-extras.js & petalsDrawerGiftModal)
+{%- endcomment -%}
+{{ 'petals-cart-extras.css' | asset_url | stylesheet_tag }}
+<div
+  class="petals-cart-extras petals-cart-extras--drawer pr-5 pl-5 lg:pr-9 lg:pl-9 pt-3 pb-3 border-solid border-t"
+  data-petals-cart-extras
+  data-petals-cart-context="drawer"
+>
+  <input
+    type="hidden"
+    id="petals-drawer-is-gift-state"
+    value="{{ cart.attributes['Is Gift'] | default: '' | escape }}"
+  >
+  <textarea id="petals-drawer-note-state" class="hidden" aria-hidden="true" tabindex="-1">{{ cart.note }}</textarea>
+
+  <div class="petals-cart-field petals-cart-field--catalog mb-0">
+    <label for="petals-cart-drawer-catalog-code" class="petals-cart-label block text-sm font-medium mb-1.5">
+      {{ 'sections.cart.catalog_source_code' | t }}
+      <span class="petals-cart-label__hint font-normal opacity-70 text-xs ml-1">
+        {{ 'sections.cart.catalog_source_code_hint' | t }}
+      </span>
+    </label>
+    <input
+      id="petals-cart-drawer-catalog-code"
+      type="text"
+      name="attributes[Catalog Source Code]"
+      form="CartDrawer-Form"
+      class="petals-cart-input w-full pr-3 pl-3 pt-2.5 pb-2.5 border border-solid bg-transparent focus-within:outline-none placeholder:text-current placeholder:opacity-60 text-sm{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"
+      value="{{ cart.attributes['Catalog Source Code'] | escape }}"
+      data-petals-field="catalog"
+      autocomplete="off"
+      aria-label="{{ 'sections.cart.catalog_source_code' | t }}"
+    >
+  </div>
+</div>
+<script src="{{ 'petals-cart-extras.js' | asset_url }}" defer></script>

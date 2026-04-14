@@ -768,7 +768,10 @@ requestAnimationFrame(() => {
           return response.json();
         }).then((response)=>{
           document.dispatchEvent(new CustomEvent('eurus:cart-drawer:order-note:update', {
-            detail: { message: response.note }
+            detail: {
+              message: response.note,
+              attributes: response.attributes || {}
+            }
           } ));
         });
       },

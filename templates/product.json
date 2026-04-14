@@ -19,6 +19,13 @@
             "heading_tag": "h1"
           }
         },
+        "html_dwRMCC": {
+          "type": "html",
+          "name": "SKU Barcode",
+          "settings": {
+            "custom_html": "Item #: {{product.selected_or_first_available_variant.sku}} | UPC {{product.selected_or_first_available_variant.barcode}}"
+          }
+        },
         "badges_fCnAXm": {
           "type": "badges",
           "settings": {
@@ -35,6 +42,13 @@
             "adapt_custom_price_format": false,
             "show_tax_and_shipping": false,
             "text_size_price": 70
+          }
+        },
+        "html_nm3NrW": {
+          "type": "html",
+          "name": "Bullets",
+          "settings": {
+            "custom_html": "{% assign html_string = product.description %}\n\n{% if html_string contains '<ul' and html_string contains '</ul>' %}\n  {% assign after_ul_open = html_string | split: '<ul' | last %}\n  {% assign ul_inner_and_rest = after_ul_open | split: '</ul>' | first %}\n\n  {% capture extracted_ul %}\n    <ul{{ ul_inner_and_rest }}</ul>\n  {% endcapture %}\n{%assign extracted_ul = extracted_ul | replace: '[ShipShape]','<a href=\"#ship-shape-image\" data-uw-rm-brl=\"PR\" data-uw-original-href=\"#ship-shape-image\">Ship/Shape Tree - Minimal Assembly &amp; Shaping Required</a>'%}\n  {{ extracted_ul }}\n{% endif %}"
           }
         },
         "ffacb41b-c15e-41ee-864a-cfbf155d407d": {
@@ -93,7 +107,7 @@
           "type": "html",
           "name": "Backorder Message",
           "settings": {
-            "custom_html": "<div\n  id=\"VariantMetafield-{{ section.id }}\"\n  class=\"variant-backorder-message\"\n  data-variant-backorder-message\n>\n{%if product.selected_or_first_available_variant.metafields.custom.backorder_message != blank%}Availability: {{product.selected_or_first_available_variant.metafields.custom.backorder_message}}{%endif%}\n</div>\n\n<script type=\"application/json\" id=\"variantMetafieldData-{{ section.id }}\">\n[\n  {%- for variant in product.variants -%}\n    {\n      \"id\": {{ variant.id | json }},\n      \"options\": {{ variant.options | json }},\n      \"metafield\": {{ variant.metafields.custom.backorder_message.value | json }}\n    }{%- unless forloop.last -%},{%- endunless -%}\n  {%- endfor -%}\n]\n</script>\n<script>\ndocument.addEventListener('DOMContentLoaded', function () {\nconsole.log('loaded');\n  //var formId = 'product-form-{{ section.id }}';\n  var metafieldEl = document.getElementById('VariantMetafield-{{ section.id }}');\n  var dataEl = document.getElementById('variantMetafieldData-{{ section.id }}');\n\n  if (!metafieldEl || !dataEl) return;\n\n  var variants = JSON.parse(dataEl.textContent);\n\n  function getSelectedOptionValues() {\nconsole.log('getSelectedOptionValues');\n    var values = [];\n    var inputs = document.querySelectorAll('[data-option-value-id]');\n\n    var grouped = {};\n\n    inputs.forEach(function (input) {\n      var name = input.getAttribute('name');\n      if (!grouped[name]) grouped[name] = [];\n      grouped[name].push(input);\n    });\n\n    Object.keys(grouped).sort().forEach(function (name) {\n      var group = grouped[name];\n      var selected = group.find(function (input) {\n        if (input.type === 'radio') return input.checked;\n        if (input.tagName === 'SELECT') return true;\n        return input.checked;\n      });\n\n      if (selected) {\n        values.push(selected.value);\n      }\n    });\n\n    return values;\n  }\n\n  function findMatchingVariant(selectedOptions) {\nconsole.log('findMatchingVariant');\n    return variants.find(function (variant) {\n      if (!variant.options || variant.options.length !== selectedOptions.length) {\n        return false;\n      }\n\n      for (var i = 0; i < selectedOptions.length; i++) {\n        if (variant.options[i] !== selectedOptions[i]) {\n          return false;\n        }\n      }\n\n      return true;\n    });\n  }\n\n  function updateMetafield() {\nconsole.log('updateMetafield');\nvar form = document.querySelector('form:has(input[name=\"product-id\"][value=\"{{product.id}}\"])')\nconsole.log(form);\n    var selectedOptions = getSelectedOptionValues();\n    var matchedVariant = findMatchingVariant(selectedOptions);\nvar prop = form.querySelector('input[name=\"properties[Backorder Message]\"]');\n    if (matchedVariant && matchedVariant.metafield !== null && matchedVariant.metafield !== undefined) {\n      metafieldEl.textContent = matchedVariant.metafield;\n\nif(!prop) {\nvar prop = document.createElement(\"input\");\nprop.name= 'properties[Backorder Message]';\n};\nprop.value = matchedVariant.metafield;\nprop.setAttribute(\"value\",matchedVariant.metafield);\nform.append(prop);\nconsole.log(matchedVariant.metafield);\nconsole.log(prop.value);\nconsole.log(prop);\nconsole.log(form);\n    } else {\n      metafieldEl.textContent = '';\nif(prop) prop.remove();\n    }\n  }\n\n  document.addEventListener('change', function (event) {\nconsole.log('change');\n    var target = event.target;\n    if (target && target.matches('.button-product-buy_buttons form input[name=id]')) {\n      updateMetafield();\n    }\n  });\n\n  updateMetafield();\n});\n</script>"
+            "custom_html": "<div\n  id=\"VariantMetafield-{{ section.id }}\"\n  class=\"variant-backorder-message\"\n  data-variant-backorder-message\n>\n{%if product.selected_or_first_available_variant.metafields.big.mpn != blank%}Availability: {{product.selected_or_first_available_variant.metafields.big.mpn}}{%endif%}\n</div>\n\n<script type=\"application/json\" id=\"variantMetafieldData-{{ section.id }}\">\n[\n  {%- for variant in product.variants -%}\n    {\n      \"id\": {{ variant.id | json }},\n      \"options\": {{ variant.options | json }},\n      \"metafield\": {{ variant.metafields.big.mpn.value | json }}\n    }{%- unless forloop.last -%},{%- endunless -%}\n  {%- endfor -%}\n]\n</script>\n<script>\ndocument.addEventListener('DOMContentLoaded', function () {\n\t{%if product.has_only_default_variant%}return;{%endif%}\n  //var formId = 'product-form-{{ section.id }}';\n  var metafieldEl = document.getElementById('VariantMetafield-{{ section.id }}');\n  var dataEl = document.getElementById('variantMetafieldData-{{ section.id }}');\n\n  if (!metafieldEl || !dataEl) return;\n\n  var variants = JSON.parse(dataEl.textContent);\n\n  function getSelectedOptionValues() {\n    var values = [];\n    var inputs = document.querySelectorAll('[data-option-value-id]');\n\n    var grouped = {};\n\n    inputs.forEach(function (input) {\n      var name = input.getAttribute('name');\n      if (!grouped[name]) grouped[name] = [];\n      grouped[name].push(input);\n    });\n\n    Object.keys(grouped).sort().forEach(function (name) {\n      var group = grouped[name];\n      var selected = group.find(function (input) {\n        if (input.type === 'radio') return input.checked;\n        if (input.tagName === 'SELECT') return true;\n        return input.checked;\n      });\n\n      if (selected) {\n        values.push(selected.value);\n      }\n    });\n\n    return values;\n  }\n\n  function findMatchingVariant(selectedOptions) {\n    return variants.find(function (variant) {\n      if (!variant.options || variant.options.length !== selectedOptions.length) {\n        return false;\n      }\n\n      for (var i = 0; i < selectedOptions.length; i++) {\n        if (variant.options[i] !== selectedOptions[i]) {\n          return false;\n        }\n      }\n\n      return true;\n    });\n  }\n\n  function updateMetafield() {\nconsole.log('updateMetafield');\nvar form = document.querySelector('form:has(input[name=\"product-id\"][value=\"{{product.id}}\"])')\n    var selectedOptions = getSelectedOptionValues();\n    var matchedVariant = findMatchingVariant(selectedOptions);\nvar prop = form.querySelector('input[name=\"properties[Backorder Message]\"]');\nconsole.log(form,selectedOptions,matchedVariant,prop);\n    if (matchedVariant && matchedVariant.metafield !== null && matchedVariant.metafield !== undefined) {\n      metafieldEl.textContent = matchedVariant.metafield;\n\nif(!prop) {\nvar prop = document.createElement(\"input\");\nprop.name= 'properties[Backorder Message]';\n};\nprop.value = matchedVariant.metafield;\nprop.setAttribute(\"value\",matchedVariant.metafield);\nform.append(prop);\n    } else {\n      metafieldEl.textContent = '';\nif(prop) prop.remove();\n    }\n  }\n  document.addEventListener('change', function (event) {\n    var target = event.target;\n    if (target && target.matches('.button-product-buy_buttons form input[name=id]')) {\n      updateMetafield();\n    }\n  });\n\n  updateMetafield();\n});\n</script>"
           }
         },
         "inventory_status_LrbyC8": {
@@ -123,7 +137,7 @@
           "type": "buy_buttons",
           "settings": {
             "show_button_style": "secondary",
-            "show_dynamic_checkout": true,
+            "show_dynamic_checkout": false,
             "show_atc_quantity": true,
             "show_add_to_cart": true,
             "show_price": true,
@@ -154,8 +168,23 @@
             "secondary_button_text_dark": "rgba(0,0,0,0)"
           }
         },
+        "html_r6fGYG": {
+          "type": "html",
+          "name": "Ship Banners",
+          "settings": {
+            "custom_html": "{%liquid\n\nassign bsku = product.selected_or_first_available_variant.sku | slice: 0,2 \n\nassign bsku = product.selected_or_first_available_variant.sku | slice: 0,2 \n\nassign showPackaging = false\n\nif product.description contains \"[ShipShape]\" or bsku == \"TR\" or bsku == \"PL\" or bsku == \"FL\"\n \nassign showPackaging = true\n\nendif\n\n%}\n{%if showPackaging %}\n\n <div class=\"package_section\">\n                <div class=\"package_text\">\n\t\t\t\t\t\t{% if product.description contains \"[ShipShape]\"%}\n\t\t\t\t\t\t\n\t\t\t\t\t\t<img src=\"{{images['ship-shape-popup-shapes.jpg'] | image_url: width: 100}}\" style=\"float:right; width: 100px;\" >\n\t\t\t\t\t\t<img src=\"{{images['ship-shape-popup-box.jpg'] | image_url: width: 100}}\" style=\"float: right; width:100px;\" >\n\t\t\t\t\t\t\n\t\t\t\t\t\t{%else%}\n\t\t\t\t\t\t\t{%if bsku ==\"TR\" %}\n\t\t\t\t\t\t\t<img src=\"{{images['perfect-packaging-trees-image.jpg'] | image_url: width: 130}}\" class=\"package_img\">\n\t\t\t\t\t\t\t{%endif%}\n\t\t\t\t\t\t\t{%if bsku == \"FL\" %}\n\t\t\t\t\t\t\t<img src=\"{{images['perfect-packaging-arrangement-image.jpg'] | image_url: width: 130}}\" class=\"package_img\">\n\t\t\t\t\t\t\t{%endif%}\n\t\t\t\t\t\t\t{%if bsku ==\"PL\" %}\n\t\t\t\t\t\t\t<img src=\"{{images['perfect-packaging-arrangement-image.jpg'] | image_url: width: 130}}\" class=\"package_img\">\n\t\t\t\t\t\t\t{%endif%}\n\t\t\t\t\t\t{%endif%}\n\n\n                        \n                        <div class=\"package_title h2\">PERFECT PACKAGING</div>\n                     \n\t\t\t\t\t    <p class=\"package_desc\">\n\n{%if product.description contains \"[ShipShape]\"\n%}\n\t\t\t\t\t\t\t<strong>SHIP-SHAPE TREES</strong><br>\n\t\t\t\t\t\t\tOur Ship/Shape trees offer the same high-quality and natural beauty as our handcrafted trees. \n\t\t\t\t\t\t\tThey SHIP economically via ground service because the branches are efficiently packed, reducing the carton size and shipping cost.\n\t\t\t\t\t\t\t<br><strong><a href=\"#ship-shape-image\">See full details &gt;</a></strong>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t{%else%}\n\t\t\t\t\t\t\t{%if bsku == \"TR\" %}\n\t\t\t\t\t\t\t\t<strong>TREES</strong><br>Our trees are secured to the bottom of a premium quality corrugated box, while the container has been wrapped with thick protective sheet foam\n\t\t\t\t\t\t\t{%endif%}\n\t\t\t\t\t\t\t{%if bsku == \"FL\" %}\n\t\t\t\t\t\t\t\t<strong>ARRANGEMENTS</strong><br>Our arrangements are strapped into a foam cushion then secured to the bottom of a premium quality corrugated box, preventing shifting and breakage. Easy removal instructions are enclosed.\n\t\t\t\t\t\t\t{%endif%}\n\t\t\t\t\t\t\t{%if bsku == \"PL\"%}\n\t\t\t\t\t\t\t\t<strong>ARRANGEMENTS</strong><br>Our arrangements are strapped into a foam cushion then secured to the bottom of a premium quality corrugated box, preventing shifting and breakage. Easy removal instructions are enclosed.\n\t\t\t\t\t\t\t{%endif%}\n\t\t\t\t\t\t{%endif%}\n   </p>\n                </div>\n            </div>\n{%endif%}"
+          }
+        },
+        "html_yKmWCe": {
+          "type": "html",
+          "name": "Guarantee Banner",
+          "settings": {
+            "custom_html": "<div class=\"guarantee_section\">\n\n             <div class=\"guarantee_title h2\">30-Day Money Back Guarantee</div>\n          \n            <p class=\"guarantee_desc\"><strong></strong>30-Day Money Back Guarantee\n                <br>Seeing is Believing.</strong>\n                <br>If you don’t love your purchase for any reason, return it for a full merchandise refund within 30 days!</p>\n        </div>"
+          }
+        },
         "coupon_code_d4T8zk": {
           "type": "coupon_code",
+          "disabled": true,
           "settings": {
             "block_edges": "rounded_corners",
             "show_border": false,
@@ -224,82 +253,6 @@
             "border_color_dark": "rgba(0,0,0,0)"
           }
         },
-        "nutrition_fact_tEqfWX": {
-          "type": "nutrition_fact",
-          "settings": {
-            "show_in_tab": true,
-            "open_by_default": false,
-            "icon": "none",
-            "another_icon": "",
-            "custom_icon": "",
-            "heading": "Ingredient Count",
-            "enable_background": false,
-            "metafield_key_list": "",
-            "nutrition_details": "<p>Hyaluronic Acid: 5% <br/>Niacinamide: 100% <br/>Aloe Vera Extract: 5%<br/>Jojoba Oil: 5%</p>",
-            "extra_detail": "This kind of \"ingredient bar\" focuses on highlighting the benefits of the active ingredients in a way that's familiar to consumers",
-            "content_background_color": "rgba(0,0,0,0)",
-            "content_background_color_dark": "rgba(0,0,0,0)",
-            "loading_bar_color": "rgba(0,0,0,0)"
-          }
-        },
-        "collapsible_tab_MgjKqH": {
-          "type": "collapsible_tab",
-          "settings": {
-            "open_by_default": false,
-            "icon": "none",
-            "another_icon": "",
-            "custom_icon": "",
-            "use_secondary_background": false,
-            "heading": "Testing Shows",
-            "tab_content": "<p><strong>Instantly<br/></strong>Skin is hydrated, barrier is supported.</p><p><strong>After 1 week<br/></strong>Skin feels smoother and softer. Hydration levels increase continually week over week.</p><p><strong>After 2 weeks<br/></strong>Lines and wrinkles look smoothed, nasolabial folds look plumper. Skin's elasticity and suppleness are improved.*<br/><br/>*Clinical testing in 32 people, 2 x per day.</p>"
-          }
-        },
-        "collapsible-row-1": {
-          "type": "collapsible_tab",
-          "settings": {
-            "open_by_default": false,
-            "icon": "none",
-            "another_icon": "",
-            "custom_icon": "",
-            "use_secondary_background": false,
-            "heading": "Returns + Exchanges",
-            "tab_content": "<p>Share information about your brand with your customers. Describe a product, make announcements, or welcome customers to your store.</p>"
-          }
-        },
-        "collapsible-row-0": {
-          "type": "collapsible_tab",
-          "settings": {
-            "open_by_default": false,
-            "icon": "none",
-            "another_icon": "",
-            "custom_icon": "",
-            "use_secondary_background": false,
-            "heading": "Giving Back",
-            "tab_content": "<p>Share information about your brand with your customers. Describe a product, make announcements, or welcome customers to your store.</p>"
-          }
-        },
-        "payment_methods_kHWDBf": {
-          "type": "payment_methods",
-          "settings": {
-            "heading": "Pay with",
-            "text": "Your transaction is protected with advanced security measures to keep your information confidential",
-            "custom_payment": "",
-            "show_secondary_background": false,
-            "show_border": false,
-            "background_color_light": "rgba(0,0,0,0)",
-            "heading_color_light": "rgba(0,0,0,0)",
-            "text_color_light": "rgba(0,0,0,0)",
-            "border_color_light": "rgba(0,0,0,0)",
-            "background_color_dark": "rgba(0,0,0,0)",
-            "heading_color_dark": "rgba(0,0,0,0)",
-            "text_color_dark": "rgba(0,0,0,0)",
-            "border_color_dark": "rgba(0,0,0,0)"
-          }
-        },
-        "social-sharing": {
-          "type": "social_sharing",
-          "settings": {}
-        },
         "complementary_XCwmDV": {
           "type": "complementary",
           "disabled": true,
@@ -345,9 +298,11 @@
       },
       "block_order": [
         "product_name_xkPbAa",
+        "html_dwRMCC",
         "badges_fCnAXm",
         "rating_AeRdFJ",
         "price",
+        "html_nm3NrW",
         "ffacb41b-c15e-41ee-864a-cfbf155d407d",
         "gift_wrapping_EK3NQn",
         "tree_size_picker",
@@ -357,14 +312,10 @@
         "container_picker",
         "quantity_selector",
         "buy_buttons",
+        "html_r6fGYG",
+        "html_yKmWCe",
         "coupon_code_d4T8zk",
         "frequently_bought_pGGTM8",
-        "nutrition_fact_tEqfWX",
-        "collapsible_tab_MgjKqH",
-        "collapsible-row-1",
-        "collapsible-row-0",
-        "payment_methods_kHWDBf",
-        "social-sharing",
         "complementary_XCwmDV",
         "sticky-atc",
         "product_sibling_9zde9d"
@@ -378,11 +329,11 @@
         "link_vendor": false,
         "make_content_center": false,
         "desktop_layout": "left",
-        "desktop_media_layout": "stacked",
+        "desktop_media_layout": "thumbnail_slider",
         "show_arrow_button": true,
         "mobile_media_size": "full_width",
         "show_thumnail_mobile": false,
-        "transition_style": "fade",
+        "transition_style": "default",
         "image_ratio": "natural",
         "thumbnail_position": "vertical",
         "enable_image_zoom": false,
@@ -412,16 +363,45 @@
         "padding_bottom_mobile": 48
       }
     },
+    "custom_liquid_K8UJ3e": {
+      "type": "custom-liquid",
+      "name": "Product Description",
+      "settings": {
+        "custom_liquid": "{{ product.description | replace: '[ShipShape]','Ship/Shape Tree - Minimal Assembly &amp; Shaping Required'}}",
+        "full_width": false,
+        "show_section_divider": false,
+        "padding_top": 28,
+        "padding_bottom": 28,
+        "full_width_mobile": false,
+        "show_section_divider_mobile": false,
+        "padding_top_mobile": 28,
+        "padding_bottom_mobile": 28
+      }
+    },
+    "custom_liquid_8LmJBy": {
+      "type": "custom-liquid",
+      "name": "Ship/Shape Banner",
+      "settings": {
+        "custom_liquid": "{%if product.description contains \"[ShipShape]\"%}<img src=\"https://cdn.shopify.com/s/files/1/0626/3681/8505/files/ship-shape-popup-v4.jpg?v=1776168758\" name=\"ship-shape-image\" id=\"ship-shape-image\">{%endif%}",
+        "full_width": false,
+        "show_section_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0,
+        "full_width_mobile": false,
+        "show_section_divider_mobile": false,
+        "padding_top_mobile": 0,
+        "padding_bottom_mobile": 0
+      }
+    },
     "product-recommendations": {
       "type": "product-recommendations",
-      "disabled": true,
       "settings": {
         "heading": "You May Also Like...",
         "highlight_type": "underline",
         "heading_size": 100,
         "heading_tag": "h2",
         "heading_alignment": "center",
-        "products_to_show": 5,
+        "products_to_show": 8,
         "background_color_light": "",
         "background_color_dark": "",
         "show_vendor": false,
@@ -429,11 +409,11 @@
         "show_highlighted_features": true,
         "show_highlighted_attributes": true,
         "show_quickview": true,
-        "enable_carousel_desktop": false,
+        "enable_carousel_desktop": true,
         "enable_swiper_mobile": true,
-        "enable_arrow_mobile": false,
-        "columns_desktop": 5,
-        "full_width": true,
+        "enable_arrow_mobile": true,
+        "columns_desktop": 4,
+        "full_width": false,
         "show_section_divider": false,
         "spacing": 28,
         "padding_top": 56,
@@ -1299,6 +1279,8 @@
   },
   "order": [
     "main",
+    "custom_liquid_K8UJ3e",
+    "custom_liquid_8LmJBy",
     "product-recommendations",
     "331e6fca-2947-4a19-89c5-9396be0d666a",
     "products_bundle_8bV8CB",
