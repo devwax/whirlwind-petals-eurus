@@ -2,78 +2,84 @@
  * Petals – Cart extras (Eurus)
  * - Gift message toggle (show/hide) on /cart
  * - Sync Catalog Source Code, Is Gift, Gift Message to cart via xCartHelper.updateCart
- * - Cart drawer catalog field + Alpine component petalsDrawerGiftModal (cart-drawer.liquid)
+ * - Cart drawer gift panel: window.petalsDrawerToggleGift / petalsDrawerSaveGift (cart-drawer.liquid)
  */
 (function () {
   if (!window.Eurus) window.Eurus = {};
   if (!window.Eurus.loadedScript) window.Eurus.loadedScript = new Set();
 
-  if (!window.Eurus.petalsCartExtrasAlpineRegistered) {
-    window.Eurus.petalsCartExtrasAlpineRegistered = true;
-    document.addEventListener('alpine:init', function () {
-      if (typeof Alpine === 'undefined' || !Alpine.data) return;
-      Alpine.data('petalsDrawerGiftModal', function () {
-        return {
-          cart_note: '',
-          is_gift: false,
-          init: function () {
-            var self = this;
-            this.pullFromCartState();
-            document.addEventListener('eurus:cart-drawer:order-note:update', function () {
-              self.pullFromCartState();
-            });
-          },
-          pullFromCartState: function () {
-            var noteEl = document.getElementById('petals-drawer-note-state');
-            var giftEl = document.getElementById('petals-drawer-is-gift-state');
-            this.cart_note = noteEl ? noteEl.value : '';
-            this.is_gift = giftEl ? giftEl.value === 'Yes' : false;
-          },
-          toggleGiftModal: function () {
-            this.pullFromCartState();
-            var store = Alpine.store('xCartHelper');
-            store.openField = store.openField === 'note' ? false : 'note';
-          },
-          saveGift: function () {
-            var catalogEl = document.getElementById('petals-cart-drawer-catalog-code');
-            var catalogVal = catalogEl ? catalogEl.value.trim() : '';
-            var rawNote = this.cart_note != null ? String(this.cart_note) : '';
-            var noteVal = this.is_gift && rawNote.trim() ? rawNote.trim() : '';
-            var store = Alpine.store('xCartHelper');
-            store.openField = false;
-            store.updateCart(
-              {
-                attributes: {
-                  'Catalog Source Code': catalogVal,
-                  'Is Gift': this.is_gift ? 'Yes' : ''
-                },
-                note: noteVal
-              },
-              true
-            );
-            var hidGift = document.getElementById('petals-drawer-is-gift-state');
-            var hidNote = document.getElementById('petals-drawer-note-state');
-            if (hidGift) hidGift.value = this.is_gift ? 'Yes' : '';
-            if (hidNote) hidNote.value = noteVal;
-          }
-        };
-      });
-    });
-  }
+  /**
+   * Cart drawer gift UI — must work even when Alpine.data() registered late.
+   * Called from cart-drawer.liquid via @click (Alpine evaluates on window).
+   */
+  window.petalsDrawerToggleGift = function () {
+    var A = window.Alpine;
+    if (!A || !A.store) return;
+    var ta = document.getElementById('x-cart-drawer-gift-message');
+    var cb = document.getElementById('petals-drawer-gift-checkbox');
+    var noteEl = document.getElementById('petals-drawer-note-state');
+    var giftEl = document.getElementById('petals-drawer-is-gift-state');
+    if (ta && noteEl) ta.value = noteEl.value;
+    if (cb && giftEl) cb.checked = giftEl.value === 'Yes';
+    var wrap = document.getElementById('petals-drawer-gift-msg-wrap');
+    if (wrap && cb) wrap.classList.toggle('hidden', !cb.checked);
+    var store = A.store('xCartHelper');
+    if (!store) return;
+    store.openField = store.openField === 'note' ? false : 'note';
+  };
 
-  document.addEventListener(
-    'eurus:cart-drawer:order-note:update',
-    function (e) {
-      if (!e.detail) return;
-      var noteEl = document.getElementById('petals-drawer-note-state');
-      var giftEl = document.getElementById('petals-drawer-is-gift-state');
-      if (noteEl && e.detail.message !== undefined) noteEl.value = e.detail.message || '';
-      if (giftEl && e.detail.attributes && e.detail.attributes['Is Gift'] !== undefined) {
-        giftEl.value = e.detail.attributes['Is Gift'] || '';
-      }
-    },
-    false
-  );
+  window.petalsDrawerSaveGift = function () {
+    var A = window.Alpine;
+    if (!A || !A.store) return;
+    var ta = document.getElementById('x-cart-drawer-gift-message');
+    var cb = document.getElementById('petals-drawer-gift-checkbox');
+    var cat = document.getElementById('petals-cart-drawer-catalog-code');
+    var isGift = cb && cb.checked;
+    var raw = ta ? String(ta.value).trim() : '';
+    var noteVal = isGift && raw ? raw : '';
+    var catalogVal = cat ? cat.value.trim() : '';
+    var store = A.store('xCartHelper');
+    store.openField = false;
+    store.updateCart(
+      {
+        attributes: {
+          'Catalog Source Code': catalogVal,
+          'Is Gift': isGift ? 'Yes' : ''
+        },
+        note: noteVal
+      },
+      true
+    );
+    var hidGift = document.getElementById('petals-drawer-is-gift-state');
+    var hidNote = document.getElementById('petals-drawer-note-state');
+    if (hidGift) hidGift.value = isGift ? 'Yes' : '';
+    if (hidNote) hidNote.value = noteVal;
+  };
+
+  if (!window.Eurus.petalsDrawerCartNoteListenerAdded) {
+    window.Eurus.petalsDrawerCartNoteListenerAdded = true;
+    document.addEventListener(
+      'eurus:cart-drawer:order-note:update',
+      function (e) {
+        if (!e.detail) return;
+        var noteEl = document.getElementById('petals-drawer-note-state');
+        var giftEl = document.getElementById('petals-drawer-is-gift-state');
+        var ta = document.getElementById('x-cart-drawer-gift-message');
+        var cb = document.getElementById('petals-drawer-gift-checkbox');
+        if (noteEl && e.detail.message !== undefined) noteEl.value = e.detail.message || '';
+        if (giftEl && e.detail.attributes && e.detail.attributes['Is Gift'] !== undefined) {
+          giftEl.value = e.detail.attributes['Is Gift'] || '';
+        }
+        if (ta && e.detail.message !== undefined) ta.value = e.detail.message || '';
+        if (cb && e.detail.attributes && e.detail.attributes['Is Gift'] !== undefined) {
+          cb.checked = e.detail.attributes['Is Gift'] === 'Yes';
+          var wrap = document.getElementById('petals-drawer-gift-msg-wrap');
+          if (wrap) wrap.classList.toggle('hidden', !cb.checked);
+        }
+      },
+      false
+    );
+  }
 
   if (window.Eurus.loadedScript.has('petals-cart-extras.js')) return;
   window.Eurus.loadedScript.add('petals-cart-extras.js');

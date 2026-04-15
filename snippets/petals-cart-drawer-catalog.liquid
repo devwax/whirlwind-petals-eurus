@@ -14,24 +14,23 @@
   >
   <textarea id="petals-drawer-note-state" class="hidden" aria-hidden="true" tabindex="-1">{{ cart.note }}</textarea>
 
-  <div class="petals-cart-field petals-cart-field--catalog mb-0">
-    <label for="petals-cart-drawer-catalog-code" class="petals-cart-label block text-sm font-medium mb-1.5">
+  <div class="petals-cart-field petals-cart-field--catalog mb-0 pl-3 md:pl-4">
+    <label for="petals-cart-drawer-catalog-code" class="petals-cart-label block text-sm font-medium mb-2">
       {{ 'sections.cart.catalog_source_code' | t }}
       <span class="petals-cart-label__hint font-normal opacity-70 text-xs ml-1">
         {{ 'sections.cart.catalog_source_code_hint' | t }}
       </span>
     </label>
-    <input
+    <textarea
       id="petals-cart-drawer-catalog-code"
-      type="text"
       name="attributes[Catalog Source Code]"
       form="CartDrawer-Form"
-      class="petals-cart-input w-full pr-3 pl-3 pt-2.5 pb-2.5 border border-solid bg-transparent focus-within:outline-none placeholder:text-current placeholder:opacity-60 text-sm{% if settings.edges_type == 'rounded_corners' %} rounded-md{% endif %}"
-      value="{{ cart.attributes['Catalog Source Code'] | escape }}"
+      rows="1"
+      class="petals-cart-textarea petals-cart-textarea--drawer-catalog px-3 py-2 text-sm border border-solid border-[rgba(var(--colors-text),0.15)] bg-[rgba(var(--background-color),1)] text-[rgba(var(--colors-text))] focus:outline-none focus:ring-1 focus:ring-[rgba(var(--colors-text),0.2)] placeholder:text-current placeholder:opacity-60"
       data-petals-field="catalog"
       autocomplete="off"
       aria-label="{{ 'sections.cart.catalog_source_code' | t }}"
-    >
+      placeholder=""
+    >{{- cart.attributes['Catalog Source Code'] | escape -}}</textarea>
   </div>
 </div>
-<script src="{{ 'petals-cart-extras.js' | asset_url }}" defer></script>

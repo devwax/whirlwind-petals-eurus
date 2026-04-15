@@ -1,0 +1,52 @@
+{%- comment -%}
+  Synchronous bridge: runs while HTML parses so click handlers always resolve.
+  (petals-cart-extras.js also assigns these after vendors.js — same behavior.)
+{%- endcomment -%}
+<script>
+  (function () {
+    function toggle() {
+      var A = window.Alpine;
+      if (!A || !A.store) return;
+      var ta = document.getElementById('x-cart-drawer-gift-message');
+      var cb = document.getElementById('petals-drawer-gift-checkbox');
+      var noteEl = document.getElementById('petals-drawer-note-state');
+      var giftEl = document.getElementById('petals-drawer-is-gift-state');
+      if (ta && noteEl) ta.value = noteEl.value;
+      if (cb && giftEl) cb.checked = giftEl.value === 'Yes';
+      var wrap = document.getElementById('petals-drawer-gift-msg-wrap');
+      if (wrap && cb) wrap.classList.toggle('hidden', !cb.checked);
+      var store = A.store('xCartHelper');
+      if (!store) return;
+      store.openField = store.openField === 'note' ? false : 'note';
+    }
+    function save() {
+      var A = window.Alpine;
+      if (!A || !A.store) return;
+      var ta = document.getElementById('x-cart-drawer-gift-message');
+      var cb = document.getElementById('petals-drawer-gift-checkbox');
+      var cat = document.getElementById('petals-cart-drawer-catalog-code');
+      var isGift = cb && cb.checked;
+      var raw = ta ? String(ta.value).trim() : '';
+      var noteVal = isGift && raw ? raw : '';
+      var catalogVal = cat ? cat.value.trim() : '';
+      var store = A.store('xCartHelper');
+      store.openField = false;
+      store.updateCart(
+        {
+          attributes: {
+            'Catalog Source Code': catalogVal,
+            'Is Gift': isGift ? 'Yes' : ''
+          },
+          note: noteVal
+        },
+        true
+      );
+      var hidGift = document.getElementById('petals-drawer-is-gift-state');
+      var hidNote = document.getElementById('petals-drawer-note-state');
+      if (hidGift) hidGift.value = isGift ? 'Yes' : '';
+      if (hidNote) hidNote.value = noteVal;
+    }
+    window.petalsDrawerToggleGift = toggle;
+    window.petalsDrawerSaveGift = save;
+  })();
+</script>
