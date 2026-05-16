@@ -1,0 +1,148 @@
+{% comment %}
+  Petals product row tile — editorial card for landing pages.
+
+  Accepts:
+  - block: {Object} Section block
+  - section: {Object} Parent section
+  - index: {Number} Loop index for price snippet ids
+  - loading: {String} Image loading attribute
+{% endcomment %}
+{%- liquid
+  assign product = block.settings.product
+  assign align = block.settings.content_alignment
+  if settings.lang_direction contains request.locale.iso_code
+    if align == 'left'
+      assign align = 'right'
+    elsif align == 'right'
+      assign align = 'left'
+    endif
+  endif
+  assign ratio_mode = section.settings.image_ratio
+  assign ratio_pb = ''
+  case ratio_mode
+    when 'square'
+      assign ratio_pb = '100%'
+    when 'portrait'
+      assign ratio_pb = '150%'
+    when 'wide'
+      assign ratio_pb = '56.25%'
+    when 'landscape'
+      assign ratio_pb = '75%'
+  endcase
+  assign price_id = section.id | append: '-' | append: index
+  assign product_url = ''
+  if product != blank
+    assign product_url = product.url
+    if block.settings.cta_link != blank
+      assign product_url = block.settings.cta_link
+    endif
+    assign natural_ratio_media = product.featured_media
+    if block.settings.image != blank
+      assign natural_ratio_media = block.settings.image
+    endif
+  endif
+-%}
+{%- if product != blank -%}
+  <article
+    class="petals-product-row-tile flex flex-col h-full"
+    {{ block.shopify_attributes }}
+  >
+    <a
+      href="{{ product.url }}"
+      class="group block{% if settings.edges_type == 'rounded_corners' %} overflow-hidden md:rounded-[10px]{% endif %} w-full"
+      aria-label="{{ product.title | escape }}"
+    >
+      <div
+        class="relative w-full bg-[rgba(var(--colors-text),0.06)]{% if ratio_pb != '' %} pt-[{{ ratio_pb }}]{% endif %}"
+        {% if ratio_mode == 'natural' or ratio_mode == blank %}
+          {% if natural_ratio_media %}
+            style="padding-bottom: {{ 1 | divided_by: natural_ratio_media.aspect_ratio | times: 100 }}%;"
+          {% else %}
+            style="padding-bottom: 100%;"
+          {% endif %}
+        {% endif %}
+      >
+        {%- liquid
+          assign tile_image = block.settings.image
+          if tile_image == blank and product.featured_media
+            assign tile_image = product.featured_media
+          endif
+        -%}
+        {%- if tile_image != blank -%}
+          {%- assign img_alt = tile_image.alt | default: product.title | escape -%}
+          <div class="absolute inset-0 w-full h-full">
+            {{
+              tile_image
+              | image_url: width: 1200
+              | image_tag:
+                loading: loading,
+                sizes: '(min-width: 990px) 25vw, (min-width: 750px) 33vw, 50vw',
+                widths: '200, 350, 450, 600, 750, 900, 1200',
+                alt: img_alt,
+                class: 'w-full h-full object-cover object-center'
+            }}
+          </div>
+        {%- endif -%}
+      </div>
+    </a>
+    <div
+      class="flex flex-col flex-grow pt-4 md:pt-5 text-{{ align }} rtl:text-{% if align == 'center' %}center{% elsif align == 'left' %}right{% else %}left{% endif %}"
+    >
+      {%- if block.settings.show_rating -%}
+        {% render 'review-product',
+          product: product,
+          content_alignment: block.settings.content_alignment,
+          card_product: true
+        %}
+      {%- endif -%}
+      <h3 class="h5 leading-tight mt-2 mb-2">
+        <a
+          href="{{ product.url }}"
+          class="x-card-title full-unstyled-link text-[rgba(var(--colors-heading))] hover:text-[rgba(var(--colors-text-link))] duration-200 p-break-words"
+        >
+          {{ product.title | escape }}
+        </a>
+      </h3>
+      {%- if block.settings.caption != blank -%}
+        <p class="text-[rgb(var(--colors-text))] opacity-90 text-sm md:text-base leading-snug mb-2 p-break-words">
+          {{ block.settings.caption | escape }}
+        </p>
+      {%- endif -%}
+      <div class="x-card-price mb-3 flex flex-wrap items-center gap-1 justify-{{ align }}">
+        {% if settings.default_select_available_variant %}
+          {% render 'price', priceID: price_id, product: product, show_price_range: true, price_range_once: true %}
+        {% else %}
+          {% render 'price', priceID: price_id, product: product, show_price_range: true %}
+        {% endif %}
+      </div>
+      {%- if block.settings.cta_label != blank -%}
+        <div class="mt-auto pt-1">
+          <a
+            href="{{ product_url }}"
+            class="button button-solid py-2.5 px-7 md:px-9 md:py-3 text-center inline-block border leading-normal"
+          >
+            {{ block.settings.cta_label | escape }}
+          </a>
+        </div>
+      {%- endif -%}
+    </div>
+  </article>
+{%- else -%}
+  <article class="petals-product-row-tile flex flex-col h-full opacity-80" {{ block.shopify_attributes }}>
+    <div class="relative w-full pt-[100%] bg-[rgba(var(--colors-text),0.08)]{% if settings.edges_type == 'rounded_corners' %} overflow-hidden md:rounded-[10px]{% endif %}">
+      {% render 'icon-placeholder', icon: 'icon-product', class: 'bg-[#c9c9c9] absolute inset-0 w-full h-full' %}
+    </div>
+    <div class="pt-4 text-{{ align }}">
+      <p class="h5 text-[rgba(var(--colors-heading))]">
+        {{ 'sections.featured_collection.product_title' | t }}
+      </p>
+      <p class="x-card-price price mt-2">
+        {% if settings.currency_code_enable %}
+          {{ 1999 | money_with_currency }}
+        {% else %}
+          {{ 1999 | money }}
+        {% endif %}
+      </p>
+    </div>
+  </article>
+{%- endif -%}
