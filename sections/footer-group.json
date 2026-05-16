@@ -11,6 +11,21 @@
   "name": "t:sections.footer.name",
   "type": "footer",
   "sections": {
+    "custom_liquid_aCRT9k": {
+      "type": "custom-liquid",
+      "name": "Klaviyo BIS Pop Up",
+      "settings": {
+        "custom_liquid": "<style>\n\n.klaviyo-bis-modal.hide {display: none;}\n\n.klaviyo-bis-modal.show {display: block;} \n\n.klaviyo-bis-modal .submit-success a {\ntext-decoration: underline;\n}\n\n.klaviyo-bis-modal {background: rgba(0,0,0,.25); position: fixed; width:100vw; height: 100vh; top: 0; left: 0; z-index:10000;}\n\n.klaviyo-bis-modal-inner {width: 460px; max-width: calc(100% - 40px); margin: auto; background-color: #FFF; position: relative; display: block; margin-top: 100px; padding: 40px;}\n\n.klaviyo-bis-modal-inner .close {position: absolute; top: 0; right: 10px; color: #BBB; font-size: 24px; font-weight: bold;}\n\n.klaviyo-bis-modal-inner input[type=text] {border: 1px solid #bbb; width: 100%; padding: 10px; border-radius: 3px;\nmargin-top: 25px; margin-bottom: 15px;}\n\n.klaviyo-bis-modal-inner h3 {font-size: 24px; text-align: center; margin-bottom: 15px;}\n.klaviyo-bis-modal-inner input[type=button] {width: 100%; background-color: rgb(60,75,60); color: #FFF; text-align: center; padding: 15px; border-radius: 3px; font-weight: bold;}\n</style>\n\n<div class=\"klaviyo-bis-modal hide\">\n<div class=\"klaviyo-bis-modal-inner\">\n<a class=\"close\" href=\"javascript:void(null);\" onClick=\"klaviyoBISclose();\">X</a>\n<h3></h3>\n<p>Enter your email address to be notified when this item is back in stock. We'll also email you a coupon code you can use in the meantime for the inconvenience!</p>\n<form name=\"klaviyoBISform\">\n<input type=\"hidden\" name=\"id\" value=\"\">\n<input name=\"email\" placeholder=\"email@domain.com\" value=\"\" type=\"text\">\n<input type=\"button\" value=\"NOTIFY ME WHEN AVAILABLE\" onClick=\"klaviyoBISgo();\" class=\"submit-button\">\n<div class=\"submit-success\">\n<strong>You're in! We'll let you know when it's back.</strong><br>\nYou'll receive a confirmation email shortly, along with a coupon code to use on your next purchase. <a href=\"javascipt:void(null);\" onClick=\"klaviyoBISclose();\">Close</a>\n</div>\n<div class=\"submit-error\">\nThe email address you entered is invalid. Please check it and try again.\n</div>\n</form>\n</div>\n</div>\n\n<script>\nvar klaviyoBISmodal = document.querySelector('.klaviyo-bis-modal');\nklaviyoBISmodal.addEventListener('click', (e) => {\n    if (e.target === klaviyoBISmodal) {\n        klaviyoBISmodal.classList.add('hide')\nklaviyoBISmodal.classList.remove('show');\n    }\n});\n\nfunction klaviyoBISclose(){\nvar pop = document.querySelector('.klaviyo-bis-modal');\npop.classList.add('hide');\npop.classList.remove('show');\n};\nfunction klaviyoBISpop(id,title){\nconsole.log('klaviyoBISpop');\nvar pop = document.querySelector('.klaviyo-bis-modal');\nvar h3 = pop.querySelector('h3');\nh3.innerHTML = title;\ndocument.klaviyoBISform.id.value=id;\npop.classList.add('show');\npop.classList.remove('hide');\npop.querySelector('.submit-button').style.display='block';\npop.querySelector('.submit-success').style.display='none';\npop.querySelector('.submit-error').style.display='none';\n};\nfunction klaviyoBISgo(){\nvar id = document.klaviyoBISform.id.value;\nconst payload = {\n  data: {\n    type: \"back-in-stock-subscription\",\n    attributes: {\n      profile: {\n        data: { type: \"profile\", attributes: { email: document.klaviyoBISform.email.value } }\n      },\n      channels: [\"EMAIL\"]\n    },\n    relationships: {\n      variant: {\n        data: {\n          type: \"catalog-variant\",\n          id: \"$shopify:::$default:::\"+id \n        }\n      }\n    }\n  }\n};\nfetch(\"https://a.klaviyo.com/client/back-in-stock-subscriptions/?company_id=UNMQg3\", {\n  method: \"POST\",\n  headers: {\n    \"Content-Type\": \"application/json\",\n    \"revision\": \"2024-06-15\"\n  },\n  body: JSON.stringify(payload)\n})\n .then(function (response) {\nif(response.ok){\ndocument.querySelector('.klaviyo-bis-modal .submit-button').style.display='none';\ndocument.querySelector('.klaviyo-bis-modal .submit-success').style.display='block';\ndocument.querySelector('.klaviyo-bis-modal .submit-error').style.display='none';\n} else {\ndocument.querySelector('.klaviyo-bis-modal .submit-button').style.display='block';\ndocument.querySelector('.klaviyo-bis-modal .submit-success').style.display='none';\ndocument.querySelector('.klaviyo-bis-modal .submit-error').style.display='block';\n};\n\n     \n    });\n\n};\n</script>",
+        "full_width": false,
+        "show_section_divider": false,
+        "padding_top": 28,
+        "padding_bottom": 28,
+        "full_width_mobile": false,
+        "show_section_divider_mobile": false,
+        "padding_top_mobile": 28,
+        "padding_bottom_mobile": 28
+      }
+    },
     "custom_liquid_qirUKT": {
       "type": "custom-liquid",
       "custom_css": [
@@ -235,6 +250,7 @@
     }
   },
   "order": [
+    "custom_liquid_aCRT9k",
     "custom_liquid_qirUKT",
     "footer",
     "media_gallery_AGU8KF"

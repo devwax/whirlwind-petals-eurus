@@ -168,6 +168,13 @@
             "secondary_button_text_dark": "rgba(0,0,0,0)"
           }
         },
+        "html_CiVKDc": {
+          "type": "html",
+          "name": "Klaviyo BIS",
+          "settings": {
+            "custom_html": "{% if product.selected_or_first_available_variant.available == false and product.selected_or_first_available_variant.metafields.custom.discontinued.value <> true%}\n<style>\n.button-product-buy_buttons {display: none;}\n.klaviyo-bis-banner {\n    width: 100%;\n    display: block;\n    background: #F2EEEA;\n    color: #af2a00;\n    border: solid 1px #e6e0d7;\n    padding: 30px;\n    text-align: center;\n    margin-top: 20px;\n    margin-bottom: 20px;\n}\n.klaviyo-bis-banner a {\ndisplay: block;\n    width: 100%;\n   background-color: #85aa65;\n    color: #FFF;\n    padding: 10px;\n    border-radius: 30px;\n    max-width: 400px;\n    margin: auto;\n    margin-top: 25px;\n    font-family: Rufina, serif;\n    font-size: 24px;\n    border-radius: 4px;\n}\n.product-info__buy-buttons {display: none;}\n</style>\n\n<div class=\"klaviyo-bis-banner\">\n<h3>We're Sorry! This Item Is Sold Out</h3>\n<a href=\"javascript:void(null);\" onClick=\"klaviyoBISpop('{{product.selected_or_first_available_variant.id}}','{{product.title | replace: \"'\",\"`\" | escape}}');\">NOTIFY ME WHEN AVAILABLE</a>\n</div>\n{% endif %}"
+          }
+        },
         "html_r6fGYG": {
           "type": "html",
           "name": "Ship Banners",
@@ -312,6 +319,7 @@
         "container_picker",
         "quantity_selector",
         "buy_buttons",
+        "html_CiVKDc",
         "html_r6fGYG",
         "html_yKmWCe",
         "coupon_code_d4T8zk",
@@ -378,7 +386,7 @@
       "custom_css": [
         ".description-title {font-family: \"Cormorant Garamond\", serif; font-size: 27px; border-bottom: 1px solid #e5e5e5; margin-bottom: 35px;}",
         "h5 {text-transform: uppercase; font-size: 15px; font-weight: 400; margin-bottom: 11px;}",
-        "ul,p {margin: 15px 0;font-size:14px}",
+        "ul,p {margin: 15px 0; font-size: 14px;}",
         "li {line-height: 23px; margin-left: 15px;}",
         ".description {max-width: 85%; margin: 0 auto;}",
         "a {text-decoration: underline;}"
