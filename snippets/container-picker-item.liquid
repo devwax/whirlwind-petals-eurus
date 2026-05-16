@@ -1,0 +1,74 @@
+{%- comment -%}
+  One selectable row in the container picker list.
+  Expects: container (product), only_available (boolean, optional)
+{%- endcomment -%}
+{%- assign container_variant = container.selected_or_first_available_variant -%}
+{%- assign show_item = true -%}
+{%- if only_available -%}
+  {%- if container_variant.available == false or container.available == false -%}
+    {%- assign show_item = false -%}
+  {%- endif -%}
+{%- endif -%}
+{%- if show_item -%}
+<li
+  class="container-picker__item"
+  role="option"
+  aria-selected="false"
+  data-variant-id="{{ container_variant.id }}"
+  data-product-handle="{{ container.handle }}"
+  data-product-title="{{ container.title | escape }}"
+  data-price="{{ container_variant.price }}"
+  data-price-formatted="{% if container_variant.price == 0 %}FREE{% else %}+ {{ container_variant.price | money }}{% endif %}"
+  data-available="{{ container_variant.available }}"
+>
+  <div class="container-picker__item-image">
+    {%- if container.featured_image -%}
+      <img
+        src="{{ container.featured_image | image_url: width: 80, height: 80, crop: 'center' }}"
+        alt="{{ container.featured_image.alt | default: container.title | escape }}"
+        width="80"
+        height="80"
+        loading="lazy"
+      >
+    {%- else -%}
+      <div class="container-picker__item-image-placeholder"></div>
+    {%- endif -%}
+  </div>
+
+  <div class="container-picker__item-details">
+    <p class="container-picker__item-title">{{ container.title }}</p>
+    <p class="container-picker__item-price">
+      {%- if container_variant.price == 0 -%}
+        FREE + $0.00
+      {%- else -%}
+        + {{ container_variant.price | money }}
+      {%- endif -%}
+    </p>
+    {%- if container_variant.available -%}
+      <p class="container-picker__item-availability container-picker__item-availability--in-stock">
+        Available - Est Delivery 5-10 Days
+      </p>
+    {%- else -%}
+      <p class="container-picker__item-availability container-picker__item-availability--out-of-stock">
+        Currently Unavailable
+      </p>
+    {%- endif -%}
+    <a
+      href="{{ container.url }}"
+      class="container-picker__item-detail-link"
+      target="_blank"
+      rel="noopener"
+      tabindex="-1"
+    >Detail</a>
+  </div>
+
+  <button
+    type="button"
+    class="container-picker__item-select-btn{% unless container_variant.available %} container-picker__item-select-btn--unavailable{% endunless %}"
+    aria-label="Select {{ container.title | escape }}"
+    {% unless container_variant.available %}disabled{% endunless %}
+  >
+    SELECT
+  </button>
+</li>
+{%- endif -%}

@@ -136,11 +136,11 @@
         "buy_buttons": {
           "type": "buy_buttons",
           "settings": {
-            "show_button_style": "secondary",
+            "show_button_style": "primary",
             "show_dynamic_checkout": false,
             "show_atc_quantity": true,
             "show_add_to_cart": true,
-            "show_price": true,
+            "show_price": false,
             "hide_sale_price": true,
             "show_gift_card_recipient": true,
             "pickup_availability": true,
@@ -320,6 +320,16 @@
         "sticky-atc",
         "product_sibling_9zde9d"
       ],
+      "custom_css": [
+        ".product-title {font-size: 27px; font-family: \"Cormorant Garamond\", serif; margin-bottom: -15px;}",
+        ".x-review-product {margin-top: -20px;}",
+        ".price {font-size: 25px;}",
+        "li {font-size: 14px; line-height: 23px; margin-left: 15px;}",
+        ".container-picker__label,.container-picker__required {font-size: 14px;}",
+        ".container-picker__required {color: gray;}",
+        ".container-picker .container-picker__trigger {border: 1px solid #e5e5e5; font-size: 14px; font-weight: 400; width: 100%;}",
+        ".container-picker__availability-hint {font-size: 14px; width: 30rem;}"
+      ],
       "settings": {
         "enable_sticky_image": true,
         "show_product_name": false,
@@ -365,9 +375,17 @@
     },
     "custom_liquid_K8UJ3e": {
       "type": "custom-liquid",
+      "custom_css": [
+        ".description-title {font-family: \"Cormorant Garamond\", serif; font-size: 27px; border-bottom: 1px solid #e5e5e5; margin-bottom: 35px;}",
+        "h5 {text-transform: uppercase; font-size: 15px; font-weight: 400; margin-bottom: 11px;}",
+        "ul,p {margin: 15px 0;font-size:14px}",
+        "li {line-height: 23px; margin-left: 15px;}",
+        ".description {max-width: 85%; margin: 0 auto;}",
+        "a {text-decoration: underline;}"
+      ],
       "name": "Product Description",
       "settings": {
-        "custom_liquid": "{{ product.description | replace: '[ShipShape]','Ship/Shape Tree - Minimal Assembly &amp; Shaping Required'}}",
+        "custom_liquid": "<div class=\"description\"><h4 class=\"description-title\">Description</h4>{{ product.description | replace: '[ShipShape]','Ship/Shape Tree - Minimal Assembly &amp; Shaping Required'}}</div>",
         "full_width": false,
         "show_section_divider": false,
         "padding_top": 28,
@@ -380,10 +398,13 @@
     },
     "custom_liquid_8LmJBy": {
       "type": "custom-liquid",
+      "custom_css": [
+        "div {display: block; width: 80%;}"
+      ],
       "name": "Ship/Shape Banner",
       "settings": {
-        "custom_liquid": "{%if product.description contains \"[ShipShape]\"%}<img src=\"https://cdn.shopify.com/s/files/1/0626/3681/8505/files/ship-shape-popup-v4.jpg?v=1776168758\" name=\"ship-shape-image\" id=\"ship-shape-image\">{%endif%}",
-        "full_width": false,
+        "custom_liquid": "<div>{%if product.description contains \"[ShipShape]\"%}<img src=\"https://cdn.shopify.com/s/files/1/0626/3681/8505/files/ship-shape-popup-v4.jpg?v=1776168758\" name=\"ship-shape-image\" id=\"ship-shape-image\">{%endif%}</div>",
+        "full_width": true,
         "show_section_divider": false,
         "padding_top": 0,
         "padding_bottom": 0,
@@ -395,6 +416,9 @@
     },
     "product-recommendations": {
       "type": "product-recommendations",
+      "custom_css": [
+        "h2 {font-family: \"Cormorant Garamond\", serif; font-size: 28px; font-weight: 400 !important;}"
+      ],
       "settings": {
         "heading": "You May Also Like...",
         "highlight_type": "underline",
@@ -476,6 +500,7 @@
         "column_XbXwkj",
         "column_D4NA9Q"
       ],
+      "disabled": true,
       "settings": {
         "title": "",
         "highlight_type": "underline",
@@ -522,8 +547,9 @@
     },
     "products_bundle_8bV8CB": {
       "type": "products-bundle",
+      "disabled": true,
       "settings": {
-        "heading": "Frequently [bought together.]",
+        "heading": "Frequently bought together.",
         "highlight_type": "font_highlight",
         "heading_size": 100,
         "heading_tag": "h2",
@@ -783,6 +809,7 @@
         "heading_8nMPQf",
         "button_fYQUVB"
       ],
+      "disabled": true,
       "settings": {
         "show_hero": false,
         "desktop_height": "550px",
@@ -877,6 +904,7 @@
         "heading_MR8Rqz",
         "button_hdzP9L"
       ],
+      "disabled": true,
       "settings": {
         "show_hero": false,
         "desktop_height": "550px",
@@ -990,6 +1018,7 @@
         "rating_fPp6xH",
         "metafield_Fn6A8G"
       ],
+      "disabled": true,
       "name": "t:sections.product-comparison-table.name",
       "settings": {
         "title": "Product [comparison.]",
@@ -1146,6 +1175,7 @@
         "image_UFVag3",
         "text_QfMPrf"
       ],
+      "disabled": true,
       "name": "t:sections.scrolling_promotion.name",
       "settings": {
         "show_border": false,
@@ -1228,6 +1258,7 @@
       "block_order": [
         "collection_Hh9jii"
       ],
+      "disabled": true,
       "settings": {
         "title": "Subscribe & [save 10%.]",
         "highlight_type": "font_highlight",

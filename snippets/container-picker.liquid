@@ -1,14 +1,16 @@
 {% comment %}
   Container Picker - POC
   ----------------------
-  Renders a 3-state container selector for products that have a container
-  collection assigned via metafield.
+  Renders a 3-state container selector for products that have one or more
+  container collections assigned via metafield.
 
   Prerequisites (Shopify Admin setup):
     1. Create a metafield definition on Products:
-       - Namespace & key: custom.container_collection
-       - Type: collection_reference
-    2. On the test product, set this metafield to the desired container collection.
+       - Namespace & key: custom.container_collections
+       - Type: list of collection references
+    2. On the test product, set this metafield to zero, one, or more container
+       collections. With multiple collections, each group is labeled in the list.
+       (If the list is empty, the container picker is not shown.)
 
   The 3 states:
     1. Pre-selection  — collapsed, shows "Choose Option"
@@ -24,9 +26,9 @@
     {% render 'container-picker', product: product, section_id: section.id, product_form_id: product_form_id, only_available: block.settings.only_available %}
 {% endcomment %}
 
-{%- assign container_collection = product.metafields.custom.container_collection.value -%}
+{%- assign container_collections = product.metafields.custom.container_collections.value -%}
 
-{%- if container_collection != blank -%}
+{%- if container_collections != blank and container_collections.size > 0 -%}
   {{- 'component-container-picker.css' | asset_url | stylesheet_tag -}}
 
   <container-picker
@@ -70,77 +72,19 @@
       hidden
     >
       <ul class="container-picker__list" role="listbox" aria-label="Container options">
-        {%- for container in container_collection.products limit: 50 -%}
-          {%- assign container_variant = container.selected_or_first_available_variant -%}
-          {%- assign show_item = true -%}
-          {%- if only_available -%}
-            {%- if container_variant.available == false or container.available == false -%}
-              {%- assign show_item = false -%}
-            {%- endif -%}
-          {%- endif -%}
-          {%- if show_item -%}
-          <li
-            class="container-picker__item"
-            role="option"
-            aria-selected="false"
-            data-variant-id="{{ container_variant.id }}"
-            data-product-handle="{{ container.handle }}"
-            data-product-title="{{ container.title | escape }}"
-            data-price="{{ container_variant.price }}"
-            data-price-formatted="{% if container_variant.price == 0 %}FREE{% else %}+ {{ container_variant.price | money }}{% endif %}"
-            data-available="{{ container_variant.available }}"
-          >
-            <div class="container-picker__item-image">
-              {%- if container.featured_image -%}
-                <img
-                  src="{{ container.featured_image | image_url: width: 80, height: 80, crop: 'center' }}"
-                  alt="{{ container.featured_image.alt | default: container.title | escape }}"
-                  width="80"
-                  height="80"
-                  loading="lazy"
-                >
-              {%- else -%}
-                <div class="container-picker__item-image-placeholder"></div>
-              {%- endif -%}
-            </div>
-
-            <div class="container-picker__item-details">
-              <p class="container-picker__item-title">{{ container.title }}</p>
-              <p class="container-picker__item-price">
-                {%- if container_variant.price == 0 -%}
-                  FREE + $0.00
-                {%- else -%}
-                  + {{ container_variant.price | money }}
-                {%- endif -%}
-              </p>
-              {%- if container_variant.available -%}
-                <p class="container-picker__item-availability container-picker__item-availability--in-stock">
-                  Available - Est Delivery 5-10 Days
-                </p>
-              {%- else -%}
-                <p class="container-picker__item-availability container-picker__item-availability--out-of-stock">
-                  Currently Unavailable
-                </p>
-              {%- endif -%}
-              <a
-                href="{{ container.url }}"
-                class="container-picker__item-detail-link"
-                target="_blank"
-                rel="noopener"
-                tabindex="-1"
-              >Detail</a>
-            </div>
-
-            <button
-              type="button"
-              class="container-picker__item-select-btn{% unless container_variant.available %} container-picker__item-select-btn--unavailable{% endunless %}"
-              aria-label="Select {{ container.title | escape }}"
-              {% unless container_variant.available %}disabled{% endunless %}
+        {%- for coll in container_collections -%}
+          {% comment %} {%- if container_collections.size > 1 -%}
+            <li
+              class="container-picker__group-header"
+              role="separator"
+              aria-label="{{ coll.title | escape }}"
             >
-              SELECT
-            </button>
-          </li>
-          {%- endif -%}
+              <span class="container-picker__group-header-text">{{ coll.title | escape }}</span>
+            </li>
+          {%- endif -%} {% endcomment %}
+          {%- for container in coll.products limit: 50 -%}
+            {%- render 'container-picker-item', container: container, only_available: only_available -%}
+          {%- endfor -%}
         {%- endfor -%}
       </ul>
     </div>
