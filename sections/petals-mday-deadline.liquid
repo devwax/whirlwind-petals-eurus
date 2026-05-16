@@ -1,0 +1,471 @@
+{%- liquid
+  assign heading_tag = section.settings.heading_tag | default: 'h2'
+  assign heading_size = settings.heading_base_size | times: section.settings.heading_size | times: 0.000225
+  assign text_size = settings.text_base_size | times: section.settings.body_text_size | times: 0.0000875
+-%}
+{%- style -%}
+  #shopify-section-{{ section.id }} {
+    {% if section.settings.background_color_light.alpha != 0.0 %}
+      background: {{ section.settings.background_color_light }};
+      --background-color: {{ section.settings.background_color_light.red }}, {{ section.settings.background_color_light.green }}, {{ section.settings.background_color_light.blue }};
+    {% else %}
+      --background-color: {{ settings.colors_background.red }}, {{ settings.colors_background.green }}, {{ settings.colors_background.blue }};
+      background: {{ settings.colors_background }};
+    {% endif %}
+  }
+  .dark #shopify-section-{{ section.id }} {
+    {% if section.settings.background_color_dark.alpha != 0.0 %}
+      background: {{ section.settings.background_color_dark }};
+      --background-color: {{ section.settings.background_color_dark.red }}, {{ section.settings.background_color_dark.green }}, {{ section.settings.background_color_dark.blue }};
+    {% else %}
+      background: {{ settings.colors_dark_background }};
+      --background-color: {{ settings.colors_dark_background.red }}, {{ settings.colors_dark_background.green }}, {{ settings.colors_dark_background.blue }};
+    {% endif %}
+  }
+  .section--{{ section.id }} {
+    {% if section.settings.text_light.alpha != 0.0 %}
+      --colors-text: {{ section.settings.text_light.red }},{{ section.settings.text_light.green }},{{ section.settings.text_light.blue }};
+    {% endif %}
+    {% if section.settings.heading_light.alpha != 0.0 %}
+      --colors-heading: {{ section.settings.heading_light.red }},{{ section.settings.heading_light.green }},{{ section.settings.heading_light.blue }};
+    {% endif %}
+  }
+  .dark .section--{{ section.id }} {
+    {% if section.settings.text_dark.alpha != 0.0 %}
+      --colors-text: {{ section.settings.text_dark.red }},{{ section.settings.text_dark.green }},{{ section.settings.text_dark.blue }};
+    {% else %}
+      --colors-text: {{ settings.colors_dark_text.red }}, {{ settings.colors_dark_text.green }}, {{ settings.colors_dark_text.blue }};
+    {% endif %}
+    {% if section.settings.heading_dark.alpha != 0.0 %}
+      --colors-heading: {{ section.settings.heading_dark.red }},{{ section.settings.heading_dark.green }},{{ section.settings.heading_dark.blue }};
+    {% else %}
+      --colors-heading: {{ settings.colors_dark_heading.red }}, {{ settings.colors_dark_heading.green }}, {{ settings.colors_dark_heading.blue }};
+    {% endif %}
+  }
+  .petals-mday-deadline__title--{{ section.id }} {
+    font-family: var(--font-heading-family);
+    font-style: var(--font-heading-style);
+    font-weight: var(--font-heading-weight);
+    font-size: {{ heading_size | times: 0.65 }}rem;
+  }
+  @media screen and (min-width: 768px) {
+    .petals-mday-deadline__title--{{ section.id }} {
+      font-size: {{ heading_size }}rem;
+    }
+  }
+  .petals-mday-deadline__body--{{ section.id }} {
+    font-size: {{ text_size | times: 0.95 }}rem;
+  }
+  @media screen and (min-width: 768px) {
+    .petals-mday-deadline__body--{{ section.id }} {
+      font-size: {{ text_size }}rem;
+    }
+  }
+  {% if section.settings.overline_color_light.alpha != 0.0 %}
+    .section--{{ section.id }} .petals-mday-deadline__overline {
+      color: {{ section.settings.overline_color_light }};
+    }
+  {% endif %}
+  {% if section.settings.overline_color_dark.alpha != 0.0 %}
+    .dark .section--{{ section.id }} .petals-mday-deadline__overline {
+      color: {{ section.settings.overline_color_dark }};
+    }
+  {% endif %}
+  {% if section.settings.promo_color_light.alpha != 0.0 %}
+    .section--{{ section.id }} .petals-mday-deadline__promo {
+      color: {{ section.settings.promo_color_light }};
+    }
+  {% endif %}
+  {% if section.settings.promo_color_dark.alpha != 0.0 %}
+    .dark .section--{{ section.id }} .petals-mday-deadline__promo {
+      color: {{ section.settings.promo_color_dark }};
+    }
+  {% endif %}
+  .button--{{ section.id }}.button-solid,
+  .button--{{ section.id }}.button-solid:before {
+    {%- unless section.settings.color_button.alpha == 0.0 -%}
+      --colors-line-and-border: {{ section.settings.color_button.red }}, {{ section.settings.color_button.green }}, {{ section.settings.color_button.blue }};
+      --colors-button: {{ section.settings.color_button.red }}, {{ section.settings.color_button.green }}, {{ section.settings.color_button.blue }};
+    {%- else -%}
+      --colors-line-and-border: var(--colors-button);
+    {%- endunless -%}
+    {%- unless section.settings.color_button_hover.alpha == 0.0 -%}
+      --colors-button-hover: rgb({{ section.settings.color_button_hover.red }}, {{ section.settings.color_button_hover.green }}, {{ section.settings.color_button_hover.blue }});
+    {%- endunless -%}
+    {%- unless section.settings.color_text_button.alpha == 0.0 -%}
+      --colors-button-text: {{ section.settings.color_text_button.red }}, {{ section.settings.color_text_button.green }}, {{ section.settings.color_text_button.blue }};
+    {%- endunless -%}
+    {%- unless section.settings.color_text_button_hover.alpha == 0.0 -%}
+      --colors-button-text-hover: {{ section.settings.color_text_button_hover.red }}, {{ section.settings.color_text_button_hover.green }}, {{ section.settings.color_text_button_hover.blue }};
+    {%- endunless -%}
+  }
+  .button--{{ section.id }}.button-outline {
+    {%- if section.settings.secondary_button_text.alpha != 0.0 -%}
+      --colors-secondary-button: {{ section.settings.secondary_button_text.red }}, {{ section.settings.secondary_button_text.green }}, {{ section.settings.secondary_button_text.blue }};
+      --colors-line-secondary-button: {{ section.settings.secondary_button_text.red }}, {{ section.settings.secondary_button_text.green }}, {{ section.settings.secondary_button_text.blue }};
+      --background-secondary-button: transparent;
+    {% endif %}
+    {%- if section.settings.color_button_secondary.alpha != 0.0 -%}
+      --background-secondary-button: {{ section.settings.color_button_secondary.red }}, {{ section.settings.color_button_secondary.green }}, {{ section.settings.color_button_secondary.blue }};
+      --colors-line-secondary-button: {{ section.settings.color_button_secondary.red }}, {{ section.settings.color_button_secondary.green }}, {{ section.settings.color_button_secondary.blue }};
+    {% endif %}
+  }
+  {% if section.settings.colors_text_link.alpha != 0.0 %}
+    .button--{{ section.id }}.button-text-link, .button--{{ section.id }}.button-text-link::after, .button--{{ section.id }}.button-text-link::before {
+      --colors-text-link: {{ section.settings.colors_text_link.red }}, {{ section.settings.colors_text_link.green }}, {{ section.settings.colors_text_link.blue }};
+    }
+  {% endif %}
+{%- endstyle -%}
+
+{% render 'section-divider' %}
+
+<div
+  class="section--{{ section.id }} relative x-pgw page-width mx-auto pt-[{{ section.settings.padding_top_mobile }}px] md:pt-[{{ section.settings.padding_top }}px] pb-[{{ section.settings.padding_bottom_mobile }}px] md:pb-[{{ section.settings.padding_bottom }}px]"
+  role="region"
+  {% if section.settings.aria_label != blank %}
+    aria-label="{{ section.settings.aria_label | escape }}"
+  {% endif %}
+>
+  <div class="flex flex-col gap-6 md:gap-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+    <div class="min-w-0 flex-1 text-center lg:max-w-[min(100%,42rem)] lg:text-left rtl:lg:text-right">
+      {%- if section.settings.overline != blank -%}
+        <p class="petals-mday-deadline__overline m-0 mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.18em] opacity-80 md:mb-3">
+          {{ section.settings.overline | escape }}
+        </p>
+      {%- endif -%}
+
+      {%- if section.settings.heading != blank -%}
+        <{{ heading_tag }} class="petals-mday-deadline__title--{{ section.id }} m-0 mb-2 text-[rgba(var(--colors-heading))] md:mb-3">
+          {{ section.settings.heading | escape }}
+        </{{ heading_tag }}>
+      {%- endif -%}
+
+      {%- if section.settings.body_before != blank or section.settings.promo_code != blank or section.settings.body_after != blank -%}
+        <p class="petals-mday-deadline__body--{{ section.id }} m-0 leading-relaxed text-[rgba(var(--colors-text))] p-break-words">
+          {%- if section.settings.body_before != blank -%}
+            {{- section.settings.body_before | escape -}}
+          {%- endif -%}
+          {%- if section.settings.promo_code != blank -%}
+            <span class="petals-mday-deadline__promo font-semibold whitespace-nowrap">{{ section.settings.promo_code | escape }}</span>
+          {%- endif -%}
+          {%- if section.settings.body_after != blank -%}
+            {{- section.settings.body_after | escape -}}
+          {%- endif -%}
+        </p>
+      {%- endif -%}
+    </div>
+
+    {%- if section.settings.button_label != blank -%}
+      <div class="flex shrink-0 justify-center lg:justify-end">
+        {%- if section.settings.button_link != blank -%}
+          <a
+            href="{{ section.settings.button_link }}"
+            class="disable-effect w-full max-w-md lg:w-auto lg:max-w-none"
+            aria-label="{{ section.settings.button_label | escape }}"
+            {% if section.settings.open_new_window_button %} target="_blank" rel="noopener noreferrer"{% endif %}
+          >
+        {%- endif -%}
+        <div class="button p-break-words button--{{ section.id }}{% if section.settings.show_button_style == 'secondary' %} button-outline{% elsif section.settings.show_button_style == 'text-link' %} button-text-link{% else %} button-solid{% endif %} empty:hidden mx-auto w-full max-w-md text-center leading-normal lg:mx-0 lg:mt-0 lg:mb-0 lg:inline-flex lg:w-auto{% unless section.settings.button_link != blank %} opacity-70 disable-btn-animation hover:cursor-not-allowed{% endunless %} pl-7 pr-7 pt-2.5 pb-2.5 md:pl-9 md:pr-9 md:pt-3 md:pb-3">
+          {% render 'button-label', button_label: section.settings.button_label, show_button_style: section.settings.show_button_style %}
+        </div>
+        {%- if section.settings.button_link != blank -%}
+          </a>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.petals-mday-deadline.name",
+  "tag": "section",
+  "class": "section section-petals-mday-deadline x-section petals-mday-deadline",
+  "disabled_on": {
+    "groups": ["header", "footer", "aside"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "aria_label",
+      "label": "t:sections.petals-mday-deadline.settings.aria_label.label",
+      "default": "Mother's Day savings and delivery reminder",
+      "info": "t:sections.petals-mday-deadline.settings.aria_label.info"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.petals-mday-deadline.settings.header_content.label"
+    },
+    {
+      "type": "text",
+      "id": "overline",
+      "label": "t:sections.petals-mday-deadline.settings.overline.label",
+      "default": "Mother's Day savings"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:sections.all.text.heading",
+      "default": "Mother's Day gifts"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "default": "h2",
+      "label": "t:sections.all.text.heading_tag",
+      "options": [
+        { "value": "h2", "label": "H2" },
+        { "value": "h3", "label": "H3" },
+        { "value": "h4", "label": "H4" }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 60,
+      "max": 200,
+      "step": 5,
+      "unit": "%",
+      "label": "t:sections.all.text.heading_size",
+      "default": 110
+    },
+    {
+      "type": "textarea",
+      "id": "body_before",
+      "label": "t:sections.petals-mday-deadline.settings.body_before.label",
+      "default": "Enjoy Double Savings - $25 OFF $125 or $50 OFF $250 or more this week with code "
+    },
+    {
+      "type": "text",
+      "id": "promo_code",
+      "label": "t:sections.petals-mday-deadline.settings.promo_code.label",
+      "default": "GREEN26X",
+      "info": "t:sections.petals-mday-deadline.settings.promo_code.info"
+    },
+    {
+      "type": "textarea",
+      "id": "body_after",
+      "label": "t:sections.petals-mday-deadline.settings.body_after.label",
+      "default": ". Ends 5/17/2026."
+    },
+    {
+      "type": "range",
+      "id": "body_text_size",
+      "min": 80,
+      "max": 160,
+      "step": 5,
+      "unit": "%",
+      "label": "t:sections.petals-mday-deadline.settings.body_text_size.label",
+      "default": 100
+    },
+    {
+      "type": "header",
+      "content": "t:sections.petals-mday-deadline.settings.header_button.label"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:sections.all.button.label",
+      "default": "Shop Mother's Day Gifts →"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:sections.all.button.link"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_new_window_button",
+      "label": "t:sections.all.open_new_window.label",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "show_button_style",
+      "label": "t:sections.all.button.button_style.label",
+      "default": "primary",
+      "options": [
+        { "value": "primary", "label": "t:sections.all.button.button_style.primary" },
+        { "value": "secondary", "label": "t:sections.all.button.button_style.secondary" },
+        { "value": "text-link", "label": "t:settings_schema.colors.colors_text_link" }
+      ]
+    },
+    {
+      "type": "color",
+      "id": "color_button",
+      "label": "t:sections.all.button.color_button",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_text_button",
+      "label": "t:sections.all.button.color_text_button",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_button_hover",
+      "label": "t:sections.all.button.color_button_hover",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_text_button_hover",
+      "label": "t:sections.all.button.color_text_button_hover",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "color_button_secondary",
+      "label": "t:sections.all.button.colors_button_secondary",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_text",
+      "label": "t:sections.all.button.secondary_button_text",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "colors_text_link",
+      "label": "t:settings_schema.colors.colors_text_link",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.colors.name"
+    },
+    {
+      "type": "color",
+      "id": "background_color_light",
+      "label": "t:sections.all.background.background_color_light",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "text_light",
+      "label": "t:sections.all.text.color",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "heading_light",
+      "label": "t:sections.all.text.colors_title",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "overline_color_light",
+      "label": "t:sections.petals-mday-deadline.settings.overline_color_light.label",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "promo_color_light",
+      "label": "t:sections.petals-mday-deadline.settings.promo_color_light.label",
+      "default": "#5c2a32"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "label": "t:sections.all.background.background_color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "text_dark",
+      "label": "t:sections.all.text.color_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "heading_dark",
+      "label": "t:sections.all.text.colors_title_dark",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "overline_color_dark",
+      "label": "t:sections.petals-mday-deadline.settings.overline_color_dark.label",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "color",
+      "id": "promo_color_dark",
+      "label": "t:sections.petals-mday-deadline.settings.promo_color_dark.label",
+      "default": "rgba(0,0,0,0)"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 36
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_layout_mobile"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 28
+    },
+    {
+      "type": "header",
+      "content": "t:sections.petals-mday-deadline.settings.header_divider.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section_divider_mobile",
+      "default": false,
+      "label": "t:sections.all.show_section_divider.label"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.petals-mday-deadline.presets.name",
+      "category": "t:categories.promotions"
+    }
+  ]
+}
+{% endschema %}
