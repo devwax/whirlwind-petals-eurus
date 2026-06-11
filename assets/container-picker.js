@@ -29,6 +29,8 @@ class ContainerPicker extends HTMLElement {
     this.dropdown = this.querySelector('.container-picker__dropdown');
     this.triggerPlaceholder = this.querySelector('.container-picker__trigger-placeholder');
     this.triggerSelection = this.querySelector('.container-picker__trigger-selection');
+    this.triggerSelectionImage = this.querySelector('.container-picker__trigger-selection-image');
+    this.triggerSelectionImageEl = this.querySelector('.container-picker__trigger-selection-image-el');
     this.triggerSelectionName = this.querySelector('.container-picker__trigger-selection-name');
     this.triggerSelectionPrice = this.querySelector('.container-picker__trigger-selection-price');
     this.errorEl = this.querySelector('.container-picker__error');
@@ -37,12 +39,13 @@ class ContainerPicker extends HTMLElement {
     this.items = this.querySelectorAll('.container-picker__item');
 
     // ── State ─────────────────────────────────────────────────────────
-    this.selected = null; // { variantId, productHandle, productTitle, priceFormatted, price, available }
+    this.selected = null; // { variantId, productHandle, productTitle, priceFormatted, price, available, imageUrl, imageAlt }
 
     this._boundCloseOnOutsideClick = this._closeOnOutsideClick.bind(this);
   }
 
   connectedCallback() {
+    this._resetTriggerDisplay();
     this._bindTrigger();
     this._bindItems();
     this._bindChangeBtn();
@@ -279,9 +282,18 @@ class ContainerPicker extends HTMLElement {
   _selectItem(item) {
     if (item.dataset.available === 'false') return; // Don't allow selecting unavailable containers
 
-    const { variantId, productHandle, productTitle, priceFormatted, price, available } = item.dataset;
+    const { variantId, productHandle, productTitle, priceFormatted, price, available, imageUrl, imageAlt } = item.dataset;
 
-    this.selected = { variantId, productHandle, productTitle, priceFormatted, price: parseInt(price || '0', 10), available };
+    this.selected = {
+      variantId,
+      productHandle,
+      productTitle,
+      priceFormatted,
+      price: parseInt(price || '0', 10),
+      available,
+      imageUrl: imageUrl || '',
+      imageAlt: imageAlt || productTitle,
+    };
 
     // Update aria-selected on all items
     this.items.forEach((i) => i.setAttribute('aria-selected', i === item ? 'true' : 'false'));
@@ -289,6 +301,7 @@ class ContainerPicker extends HTMLElement {
     // Update collapsed trigger UI (State 3)
     this.triggerSelectionName.textContent = productTitle;
     this.triggerSelectionPrice.textContent = priceFormatted;
+    this._updateTriggerSelectionImage(imageUrl, imageAlt || productTitle);
     this.triggerPlaceholder.hidden = true;
     this.triggerSelection.hidden = false;
 
@@ -361,6 +374,30 @@ class ContainerPicker extends HTMLElement {
   }
 
   // ── UI helpers ─────────────────────────────────────────────────────
+
+  _updateTriggerSelectionImage(imageUrl, imageAlt) {
+    if (!this.triggerSelectionImage || !this.triggerSelectionImageEl) return;
+
+    if (imageUrl) {
+      this.triggerSelectionImageEl.src = imageUrl;
+      this.triggerSelectionImageEl.alt = imageAlt || '';
+      this.triggerSelectionImage.hidden = false;
+      return;
+    }
+
+    this.triggerSelectionImageEl.removeAttribute('src');
+    this.triggerSelectionImageEl.alt = '';
+    this.triggerSelectionImage.hidden = true;
+  }
+
+  _resetTriggerDisplay() {
+    if (this.triggerPlaceholder) this.triggerPlaceholder.hidden = false;
+    if (this.triggerSelection) this.triggerSelection.hidden = true;
+    this._updateTriggerSelectionImage('', '');
+    if (this.triggerSelectionName) this.triggerSelectionName.textContent = '';
+    if (this.triggerSelectionPrice) this.triggerSelectionPrice.textContent = '';
+    if (this.changeBtn) this.changeBtn.hidden = true;
+  }
 
   _showError(message) {
     if (!this.errorEl) return;
