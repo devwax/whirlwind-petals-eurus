@@ -23,7 +23,7 @@
           "type": "html",
           "name": "SKU Barcode",
           "settings": {
-            "custom_html": "Item #: {{product.selected_or_first_available_variant.sku}} | UPC {{product.selected_or_first_available_variant.barcode}}"
+            "custom_html": "<div id=\"sku-{{ section.id }}\">Item #: {{product.selected_or_first_available_variant.sku}} | UPC  {{product.selected_or_first_available_variant.barcode}}</div>"
           }
         },
         "badges_fCnAXm": {
@@ -133,6 +133,17 @@
             "style": "rounded-full"
           }
         },
+        "minmaxify_order_limits_product_limits_display_BeaUyU": {
+          "type": "shopify://apps/minmaxify-order-limits/blocks/product-limits-display/3acfba32-89f3-4377-ae20-cbb9abc48475",
+          "settings": {
+            "fontWeight": "normal",
+            "color": "",
+            "html1": "Minimum Purchase: <strong><span minmaxify-limit=\"min\"></span> units</strong>",
+            "html2": "Maximum quantity allowed is <span minmaxify-limit=\"max\"></span>.",
+            "html3": "The product can be bought in quantity increments of <span minmaxify-limit=\"multiple\"></span>.",
+            "skip_min_when_multiple": false
+          }
+        },
         "buy_buttons": {
           "type": "buy_buttons",
           "settings": {
@@ -140,7 +151,7 @@
             "show_dynamic_checkout": false,
             "show_atc_quantity": true,
             "show_add_to_cart": true,
-            "show_price": false,
+            "show_price": true,
             "hide_sale_price": true,
             "show_gift_card_recipient": true,
             "pickup_availability": true,
@@ -166,6 +177,14 @@
             "button_text_hover_dark": "rgba(0,0,0,0)",
             "secondary_button_dark": "rgba(0,0,0,0)",
             "secondary_button_text_dark": "rgba(0,0,0,0)"
+          }
+        },
+        "html_YzJJXW": {
+          "type": "html",
+          "name": "Subtotal",
+          "disabled": true,
+          "settings": {
+            "custom_html": "<script>\nvar form = 'product-form-template--26732815908937__main';\n</script>\n{{product.selected_or_first_available_variant.price}}"
           }
         },
         "html_CiVKDc": {
@@ -318,7 +337,9 @@
         "inventory_status_LrbyC8",
         "container_picker",
         "quantity_selector",
+        "minmaxify_order_limits_product_limits_display_BeaUyU",
         "buy_buttons",
+        "html_YzJJXW",
         "html_CiVKDc",
         "html_r6fGYG",
         "html_yKmWCe",
@@ -350,12 +371,12 @@
         "desktop_media_layout": "thumbnail_slider",
         "show_arrow_button": true,
         "mobile_media_size": "full_width",
-        "show_thumnail_mobile": false,
+        "show_thumnail_mobile": true,
         "transition_style": "default",
         "image_ratio": "natural",
         "thumbnail_position": "vertical",
-        "enable_image_zoom": false,
-        "zoom_effect": "enlarge",
+        "enable_image_zoom": true,
+        "zoom_effect": "magnifier",
         "enable_video_autoplay": false,
         "enable_video_loop": false,
         "show_first_image_avaiable": true,
@@ -450,7 +471,7 @@
         "spacing": 28,
         "padding_top": 56,
         "padding_bottom": 88,
-        "columns_mobile": "1",
+        "columns_mobile": "2",
         "show_section_divider_mobile": false,
         "spacing_mobile": 16,
         "padding_top_mobile": 0,
