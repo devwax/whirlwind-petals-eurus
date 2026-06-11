@@ -1,3 +1,27 @@
+document.addEventListener('alpine:init', () => {
+  Alpine.store('xPopupContainerDetail', {
+    open: false,
+    title: '',
+    price: '',
+    imageUrl: '',
+    imageAlt: '',
+    productUrl: '',
+    show({ title, price, imageUrl, imageAlt, productUrl }) {
+      this.title = title || '';
+      this.price = price || '';
+      this.imageUrl = imageUrl || '';
+      this.imageAlt = imageAlt || title || '';
+      this.productUrl = productUrl || '';
+      this.open = true;
+      Alpine.store('xPopup').open = true;
+    },
+    close() {
+      this.open = false;
+      Alpine.store('xPopup').close();
+    },
+  });
+});
+
 /**
  * ContainerPicker — Custom element for the Picklist POC
  * -------------------------------------------------------
@@ -48,6 +72,7 @@ class ContainerPicker extends HTMLElement {
     this._resetTriggerDisplay();
     this._bindTrigger();
     this._bindItems();
+    this._bindDetailLinks();
     this._bindChangeBtn();
     this._interceptProductForm();
     this._bindQuantityChange();
@@ -97,6 +122,36 @@ class ContainerPicker extends HTMLElement {
         if (e.target.closest('.container-picker__item-select-btn')) return;
         this._selectItem(item);
       });
+    });
+  }
+
+  _bindDetailLinks() {
+    this.querySelectorAll('.container-picker__item-detail-link').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this._openDetailPopup(btn.closest('.container-picker__item'));
+      });
+    });
+  }
+
+  _openDetailPopup(item) {
+    if (!item || typeof Alpine === 'undefined') return;
+
+    const { productTitle, priceFormatted, detailImageUrl, imageUrl, imageAlt, productUrl } = item.dataset;
+    const store = Alpine.store('xPopupContainerDetail');
+    if (!store) return;
+
+    store.show({
+      title: productTitle,
+      price: priceFormatted,
+      imageUrl: detailImageUrl || imageUrl || '',
+      imageAlt: imageAlt || productTitle,
+      productUrl: productUrl || '',
+    });
+
+    requestAnimationFrame(() => {
+      Alpine.store('xModal')?.focus?.('PopupContainerDetail', 'CloseContainerDetail');
     });
   }
 

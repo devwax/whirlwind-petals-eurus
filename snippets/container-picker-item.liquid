@@ -16,12 +16,14 @@
   aria-selected="false"
   data-variant-id="{{ container_variant.id }}"
   data-product-handle="{{ container.handle }}"
+  data-product-url="{{ container.url }}"
   data-product-title="{{ container.title | escape }}"
   data-price="{{ container_variant.price }}"
   data-price-formatted="{% if container_variant.price == 0 %}FREE{% else %}+ {{ container_variant.price | money }}{% endif %}"
   data-available="{{ container_variant.available }}"
   {% if container.featured_image %}
     data-image-url="{{ container.featured_image | image_url: width: 80, height: 80, crop: 'center' }}"
+    data-detail-image-url="{{ container.featured_image | image_url: width: 600, height: 600, crop: 'center' }}"
     data-image-alt="{{ container.featured_image.alt | default: container.title | escape }}"
   {% endif %}
 >
@@ -57,13 +59,12 @@
         Currently Unavailable
       </p>
     {%- endif -%}
-    <a
-      href="{{ container.url }}"
+    <button
+      type="button"
       class="container-picker__item-detail-link"
-      target="_blank"
-      rel="noopener"
+      aria-label="View details for {{ container.title | escape }}"
       tabindex="-1"
-    >Detail</a>
+    >Detail</button>
   </div>
 
   <button

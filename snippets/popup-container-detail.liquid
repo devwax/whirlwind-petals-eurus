@@ -1,0 +1,68 @@
+<template x-teleport="body">
+  <div
+    id="PopupContainerDetail"
+    x-show="$store.xPopupContainerDetail.open"
+    x-cloak
+    class="w-full h-full fixed top-0 left-0 z-[60] bg-[#acacac] bg-opacity-30"
+    @click.self="$store.xModal.removeFocus(); $store.xPopupContainerDetail.close()"
+  >
+    <div
+      x-show="$store.xPopupContainerDetail.open"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Container details"
+      class="container-picker-detail-modal bg-[rgba(var(--background-color))] relative max-w-lg w-[calc(100%-2rem)] md:ml-auto md:mr-auto mt-[25vh] md:mt-[15vh] pl-5 pr-5 pt-10 pb-10 md:pl-10 md:pr-10 md:pt-12 md:pb-12{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+      x-transition:enter="transition-all ease-in-out duration-500"
+      x-transition:enter-start="opacity-0 transform translate-y-1/3"
+      x-transition:enter-end="opacity-100 transform translate-y-0"
+      x-transition:leave="transition-all ease-in-out duration-500"
+      x-transition:leave-end="opacity-0 transform translate-y-1/3"
+      x-intersect.full="$store.xModal.focus('PopupContainerDetail', 'CloseContainerDetail')"
+      @click.stop
+      @keyup.escape="$store.xModal.removeFocus(); $store.xPopupContainerDetail.close()"
+    >
+      <button
+        id="CloseContainerDetail"
+        type="button"
+        aria-label="Close container details"
+        @click.prevent="$store.xModal.removeFocus(); $store.xPopupContainerDetail.close()"
+        class="cursor-pointer top-0.5 md:top-4 absolute right-3 md:right-5 rtl:right-auto rtl:left-5 icon-close-container w-fit z-10 rounded-full"
+      >
+        {%- render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' -%}
+      </button>
+
+      <div class="container-picker-detail-modal__content">
+        <div
+          class="container-picker-detail-modal__image"
+          x-show="$store.xPopupContainerDetail.imageUrl"
+        >
+          <img
+            :src="$store.xPopupContainerDetail.imageUrl"
+            :alt="$store.xPopupContainerDetail.imageAlt"
+            width="400"
+            height="400"
+            loading="lazy"
+          >
+        </div>
+
+        <h3
+          class="container-picker-detail-modal__title"
+          x-text="$store.xPopupContainerDetail.title"
+        ></h3>
+
+        <p
+          class="container-picker-detail-modal__price"
+          x-text="$store.xPopupContainerDetail.price"
+        ></p>
+
+        <a
+          class="container-picker-detail-modal__view-product"
+          :href="$store.xPopupContainerDetail.productUrl"
+          target="_blank"
+          rel="noopener"
+          x-show="$store.xPopupContainerDetail.productUrl"
+        >View Product</a>
+      </div>
+    </div>
+  </div>
+</template>
