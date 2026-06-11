@@ -13,13 +13,17 @@
 container-picker {
   --color-foreground: var(--color-foreground, var(--colors-heading, 0 0 0));
   --color-background: var(--color-background, var(--background-color, 255 255 255));
+  --container-picker-inline-padding: 11px;
   display: block;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
   margin-top: 1.6rem;
   margin-bottom: 1.6rem;
   border: 2px solid lightgray;
-  padding: 11px;
+  padding-block: 11px;
+  padding-inline: 0;
+  overflow-x: clip;
 }
 
 /* ── Header label ─────────────────────────────────────────────────── */
@@ -29,6 +33,7 @@ container-picker {
   align-items: baseline;
   gap: 0.4rem;
   margin-bottom: 0.6rem;
+  padding-inline: var(--container-picker-inline-padding);
 }
 
 .container-picker__label {
@@ -47,7 +52,9 @@ container-picker {
 /* Scoped to container-picker to override theme button resets */
 
 container-picker .container-picker__trigger {
-  width: 100%;
+  width: auto;
+  max-width: calc(100% - (var(--container-picker-inline-padding) * 2));
+  margin-inline: var(--container-picker-inline-padding);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -66,11 +73,18 @@ container-picker .container-picker__trigger {
   appearance: none;
 }
 
-container-picker .container-picker__trigger:hover {
-  border-color: rgba(var(--color-foreground), 0.55);
+container-picker .container-picker__trigger:hover,
+container-picker .container-picker__trigger:focus,
+container-picker .container-picker__trigger:focus-visible,
+container-picker .container-picker__trigger:active {
+  border: 1px solid lightgray;
 }
 
-container-picker .container-picker__trigger[aria-expanded="true"] {
+container-picker .container-picker__trigger[aria-expanded="true"],
+container-picker .container-picker__trigger[aria-expanded="true"]:hover,
+container-picker .container-picker__trigger[aria-expanded="true"]:focus,
+container-picker .container-picker__trigger[aria-expanded="true"]:focus-visible,
+container-picker .container-picker__trigger[aria-expanded="true"]:active {
   border-bottom-color: transparent;
 }
 
@@ -115,7 +129,7 @@ container-picker .container-picker__trigger[aria-expanded="true"] .container-pic
 /* ── Error message ────────────────────────────────────────────────── */
 
 .container-picker__error {
-  margin: 0.4rem 0 0;
+  margin: 0.4rem var(--container-picker-inline-padding) 0;
   padding: 0.6rem 1rem;
   font-size: 1.2rem;
   color: rgb(var(--color-error, 176 0 32));
@@ -126,7 +140,7 @@ container-picker .container-picker__trigger[aria-expanded="true"] .container-pic
 /* ── Availability hint (shown when no selection made) ───────────────── */
 
 .container-picker__availability-hint {
-  margin: 0.6rem 0 0;
+  margin: 0.6rem var(--container-picker-inline-padding) 0;
   font-size: 14px;
   color: #c44b31;
 }
@@ -140,9 +154,14 @@ container-picker .container-picker__trigger[aria-expanded="true"] .container-pic
 container-picker .container-picker__dropdown {
   border: none;
   background-color: rgb(var(--color-background));
+  width: 100%;
+  max-width: 100%;
   max-height: 42rem;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+  margin: 0;
+  padding: 0;
   /* Subtle shadow to lift the list above the page */
   box-shadow: 0 0.4rem 1.2rem rgb(0 0 0 / 0.08);
 }
@@ -151,7 +170,11 @@ container-picker .container-picker__dropdown {
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid lightgray;
+  padding-inline-start: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-block: 1px solid lightgray;
 }
 
 /* Section label when multiple container collections are configured */
@@ -178,12 +201,21 @@ container-picker .container-picker__dropdown {
 
 .container-picker__item {
   display: grid;
-  grid-template-columns: 7.2rem 1fr auto;
+  grid-template-columns: minmax(0, 7.2rem) minmax(0, 1fr) minmax(0, auto);
   align-items: center;
   gap: 1.2rem;
   padding: 1.2rem;
-  border-bottom: 1px solid lightgray;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-bottom: 4px solid lightgray;
   transition: background-color 0.1s ease;
+  overflow: hidden;
+}
+
+container-picker .container-picker__list > .container-picker__item {
+  margin-inline: 0;
 }
 
 .container-picker__item:last-child {
@@ -209,6 +241,7 @@ container-picker .container-picker__dropdown {
 .container-picker__item-image {
   width: 7.2rem;
   height: 7.2rem;
+  max-width: 100%;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -319,7 +352,7 @@ container-picker .container-picker__dropdown {
 /* ── Change button ────────────────────────────────────────────────── */
 
 .container-picker__change-btn {
-  margin-top: 0.6rem;
+  margin: 0.6rem var(--container-picker-inline-padding) 0;
   padding: 0.5rem 1.2rem;
   background: transparent;
   border: 0.1rem solid rgb(var(--color-foreground) / 0.3);
@@ -332,4 +365,95 @@ container-picker .container-picker__dropdown {
 .container-picker__change-btn:hover {
   border-color: rgb(var(--color-foreground) / 0.6);
   background-color: rgb(var(--color-foreground) / 0.04);
+}
+
+/* ── Mobile layout ─────────────────────────────────────────────────── */
+/* Stack item actions below content so title/price text has room to wrap. */
+
+@media screen and (max-width: 991px) {
+  container-picker {
+    --container-picker-inline-padding: 0.8rem;
+    padding-block: 0.8rem;
+  }
+
+  container-picker .container-picker__trigger {
+    padding: 0.8rem 1rem;
+    font-size: 13px;
+  }
+
+  .container-picker__trigger-placeholder {
+    font-size: 13px;
+  }
+
+  .container-picker__trigger-selection {
+    flex-wrap: wrap;
+    gap: 0.2rem 0.6rem;
+    font-size: 13px;
+  }
+
+  .container-picker__trigger-selection-price {
+    font-size: 12px;
+  }
+
+  .container-picker__trigger-selection-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .container-picker__item {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 0.6rem;
+    padding: 1rem;
+  }
+
+  .container-picker__item-image {
+    grid-column: 1;
+    grid-row: 1;
+    width: 9.6rem;
+    height: 9.6rem;
+    justify-self: center;
+  }
+
+  .container-picker__item-details {
+    grid-column: 1;
+    grid-row: 2;
+    min-width: 0;
+  }
+
+  .container-picker__item-title {
+    font-size: 1.2rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .container-picker__item-price {
+    font-size: 1.2rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .container-picker__item-availability {
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .container-picker__item-detail-link {
+    font-size: 1.1rem;
+  }
+
+  .container-picker__item-title,
+  .container-picker__item-price,
+  .container-picker__item-availability {
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  .container-picker__item-select-btn {
+    grid-column: 1;
+    grid-row: 3;
+    width: 100%;
+    align-self: stretch;
+    padding: 0.8rem 1rem;
+    font-size: 1.1rem;
+  }
 }
