@@ -725,6 +725,17 @@
                 {%- when 'description' -%}
                   {% render 'product-description', product: product, block: block, show_content_center: show_content_center %}
                 {%- when 'buy_buttons' -%}
+                  {%- if quick_view -%}
+                    {%- assign container_picker_blocks = section.blocks | where: 'type', 'container_picker' -%}
+                    {%- if container_picker_blocks.size == 0 -%}
+                      {%- render 'container-picker',
+                        product: product,
+                        section_id: section.id,
+                        product_form_id: product_form_id,
+                        only_available: false
+                      -%}
+                    {%- endif -%}
+                  {%- endif -%}
                   {%- unless settings.hide_cart -%}
                     {%- liquid
                       assign gift_card_recipient_active = false
