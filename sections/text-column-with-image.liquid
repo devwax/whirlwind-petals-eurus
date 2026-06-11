@@ -273,6 +273,7 @@
               {% endunless %}"
             >
               <div class="flex {% if section.settings.image_position_mobile == 'top' %}flex-col{% else %}flex-col-reverse{% endif %} {% if section.settings.image_position_desktop == 'top' %}md:flex-col{% else %}md:flex-col-reverse{% endif %} h-full{% if section.settings.secondary_background == "column" %} bg--{{ section.id }}{% endif %}{% if rounded_corners %} rounded-[10px]{% endif %}" {{ block.shopify_attributes }}>
+                {% if block.settings.image != blank %}
                 <div
                   x-intersect.once.margin.-20px.0px.-20px.0px="$el.querySelector('.animate_transition_card__image')?.classList.add('active')" 
                   class="x-block-twm-item-image overflow-hidden block h-0 relative w-full pb-[{{ section.settings.image_ratio }}] {% if section.settings.image_ratio == 'round' %} rounded-full pb-[100%]{% elsif rounded_corners %} rounded-[10px]{% endif %}{% if section.settings.image_ratio == 'natural' and block.settings.image == blank %} pb-[100%]{% endif %}"
@@ -318,6 +319,7 @@
                     </div>
                   {% endif %}
                 </div>
+                {% endif %}
                 {% if block.settings.sub_title != blank  or block.settings.title != blank or block.settings.text != blank or block.settings.button_label != blank %}
                   <div class="grow x-block-twm-content text-[rgba(var(--colors-text))]{% if check_padding_light %} md:pl-7 md:pr-7 pl-5 pr-5{% else %}{% if section.settings.full_width_mobile %} pl-5 pr-5{% else %} pl-0 pr-0{% endif %} md:pl-0 md:pr-0{% endif %}{% if check_padding_dark %} dark:md:pl-7 dark:md:pr-7 dark:pl-5 dark:pr-5{% else %}{% if section.settings.full_width_mobile %} dark:pl-5 dark:pr-5{% else %} dark:pl-0 dark:pr-0{% endif %}  dark:md:pl-0 dark:md:pr-0{% endif %} mt-4 md:pb-3 pb-2">
                     {% if block.settings.sub_title != blank %}
