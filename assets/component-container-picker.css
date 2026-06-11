@@ -14,8 +14,12 @@ container-picker {
   --color-foreground: var(--color-foreground, var(--colors-heading, 0 0 0));
   --color-background: var(--color-background, var(--background-color, 255 255 255));
   display: block;
+  width: 100%;
+  box-sizing: border-box;
   margin-top: 1.6rem;
   margin-bottom: 1.6rem;
+  border: 2px solid lightgray;
+  padding: 11px;
 }
 
 /* ── Header label ─────────────────────────────────────────────────── */
@@ -28,15 +32,15 @@ container-picker {
 }
 
 .container-picker__label {
-  font-size: 1.4rem;
+  font-size: 14px;
   font-weight: 600;
   color: rgb(var(--color-foreground));
 }
 
 .container-picker__required {
-  font-size: 1.3rem;
+  font-size: 14px;
   font-weight: 400;
-  color: rgb(var(--color-foreground) / 0.65);
+  color: gray;
 }
 
 /* ── Collapsed trigger button ─────────────────────────────────────── */
@@ -49,12 +53,13 @@ container-picker .container-picker__trigger {
   justify-content: space-between;
   gap: 0.8rem;
   padding: 1rem 1.4rem;
-  border: 0.2rem solid rgba(var(--color-foreground), 0.4);
+  border: 1px solid lightgray;
   background-color: rgb(var(--color-background));
   color: rgb(var(--color-foreground));
   cursor: pointer;
   text-align: left;
-  font-size: 1.4rem;
+  font-size: 14px;
+  font-weight: 400;
   line-height: 1.4;
   transition: border-color 0.15s ease;
   -webkit-appearance: none;
@@ -81,11 +86,13 @@ container-picker .container-picker__trigger[aria-expanded="true"] .container-pic
 
 .container-picker__trigger-placeholder {
   flex: 1;
+  font-size: 15px;
+  white-space: nowrap;
   color: rgb(var(--color-foreground) / 0.5);
 }
 
 .container-picker__trigger-selection {
-  flex: 1;
+  flex-grow: 0;
   display: flex;
   align-items: baseline;
   gap: 0.6rem;
@@ -120,7 +127,7 @@ container-picker .container-picker__trigger[aria-expanded="true"] .container-pic
 
 .container-picker__availability-hint {
   margin: 0.6rem 0 0;
-  font-size: 1.3rem;
+  font-size: 14px;
   color: #c44b31;
 }
 
