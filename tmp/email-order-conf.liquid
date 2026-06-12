@@ -341,14 +341,43 @@
           {% assign legacy_separator = true %}
 
 {% comment %} Skip child add-ons since they will be rendered under the parent line item {% endcomment %}
-{% unless line.nested_line_child? %}
+{% unless line.nested_line_child? or line.properties["_is_container"] == 'true' %}
 
   {% assign is_parent = false %}
   {% assign is_nested_line_parent = line.nested_line_parent? %}
-  {% if line.bundle_parent? or line.nested_line_parent? %}
+  {% assign has_associated_container = false %}
+  {% assign associated_container = nil %}
+  {% if line.properties["Selected Container"] != blank %}
+    {% unless line.nested_line_parent? %}
+      {% assign line_variant_id = line.variant_id | append: '' %}
+      {% for container_line in subtotal_line_items %}
+        {% if container_line.properties["_is_container"] == 'true' %}
+          {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
+          {% if container_parent_id == line_variant_id %}
+            {% assign has_associated_container = true %}
+            {% assign associated_container = container_line %}
+            {% break %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% unless has_associated_container %}
+        {% assign container_count = 0 %}
+        {% for container_line in subtotal_line_items %}
+          {% if container_line.properties["_is_container"] == 'true' %}
+            {% assign container_count = container_count | plus: 1 %}
+            {% assign associated_container = container_line %}
+          {% endif %}
+        {% endfor %}
+        {% if container_count == 1 %}
+          {% assign has_associated_container = true %}
+        {% endif %}
+      {% endunless %}
+    {% endunless %}
+  {% endif %}
+  {% if line.bundle_parent? or line.nested_line_parent? or has_associated_container %}
     {% assign is_parent = true %}
   {% endif %}
-  {% if is_nested_line_parent %}
+  {% if is_nested_line_parent or has_associated_container %}
     {% assign css_order_list_cell_nested_line_parent_class = 'order-list__parent-cell' %}
     {% assign css_order_list_parent_image_cell_nested_line_parent_class = 'order-list__nested-parent-image-cell' %}
   {% endif %}
@@ -381,7 +410,7 @@
                 </td>
               {% endif %}
             </tr>
-            {% if is_nested_line_parent %}
+            {% if is_nested_line_parent or has_associated_container %}
               <tr height="100%">
                 <td style="padding: 0px;" height="100%">
                   <table height="100%">
@@ -632,11 +661,96 @@
             <span class="order-list__item-variant">{{ child_line.selling_plan_allocation.selling_plan.name }}</span>
           {% endif %}
         </td>
+          <td class="order-list__price-cell">
+            <p class="order-list__item-price">
+              {% if child_line.final_line_price > 0 %}
+                {{ child_line.final_line_price | money }}
+              {% else %}
+                Free
+              {% endif %}
+            </p>
+          </td>
       </table>
     </td>
   </tr>
 </table>
           {% endfor %}
+        {% elsif has_associated_container %}
+          {% assign child_line = associated_container %}
+          {% assign css_class = 'order-list__deliverable-item_abandoned' %}
+          {% assign css_image_class = 'order-list__image-cell--nested-line-item' %}
+          {% assign css_description_class = 'order-list__product-description-cell--nested-line-item' %}
+          {% assign css_curved_line_cell_container_class = 'curved-line-cell-container__top-spacer-cell--show-border' %}
+          {% assign css_hide_vertical_line_class = 'vertical-line__content--hide' %}
+          {% assign css_curved_line_cell_container_cell__no_padding_class = 'curved-line-cell-container__cell--no-padding' %}
+
+<table height="100%">
+  <tr class="order-list__item">
+    <td class="{{ css_class }}" height="100%">
+      <table height="100%">
+          <td class="nested-line-item-spacer-cell"style="padding: 1px;">
+            <div class="nested-line-item-spacer"></div>
+          </td>
+          <td class="curved-line-cell-container" valign="top">
+            <div style="width: 0px;">
+              <table>
+                <tr>
+                  <td class="{{ css_curved_line_cell_container_cell__no_padding_class }}" style="mso-padding-right-alt: 10px;">
+                    <div class="curved-line-cell-container__top-spacer {{ css_curved_line_cell_container_class }}"></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="curved-line-cell-container__curvedLine-cell">
+                    <div class="curved-line-cell-container__curvedLine-cell__curvedLine"></div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </td>
+          <td class="vertical-line" height="100%">
+            <div class="vertical-line__content {{ css_hide_vertical_line_class }}"></div>
+          </td>
+          <td class="nested-line-item-spacer-cell--right">
+            <div class="nested-line-item-spacer"></div>
+          </td>
+        <td class="{{ css_image_class }}">
+          {% if child_line.image %}
+            <img src="{{ child_line | img_url: 'compact_cropped' }}" align="left" width="40" height="40" class="order-list__product-image small"/>
+          {% else %}
+            <div class="order-list__no-image-cell small">
+              <img src="{{ 'notifications/no-image.png' | shopify_asset_url }}" align="left" width="20" height="20" class="order-list__no-product-image small"/>
+            </div>
+          {% endif %}
+        </td>
+
+        <td class="{{ css_description_class }}">
+          {% if child_line.product.title %}
+            {% assign item_title = child_line.product.title %}
+          {% else %}
+            {% assign item_title = child_line.title %}
+          {% endif %}
+
+          {% assign item_display = child_line.quantity %}
+
+            <span class="order-list__item-title">{{ item_title }}&nbsp;&times;&nbsp;{{ item_display }}</span><br>
+			<span class="sku">{{child_line.sku}}</span><br>
+          {% if child_line.variant.title != 'Default Title'%}
+            <span class="order-list__item-variant">{{ child_line.variant.title }}</span><br/>
+          {% endif %}
+        </td>
+          <td class="order-list__price-cell">
+            <p class="order-list__item-price">
+              {% if child_line.final_line_price > 0 %}
+                {{ child_line.final_line_price | money }}
+              {% else %}
+                Free
+              {% endif %}
+            </p>
+          </td>
+      </table>
+    </td>
+  </tr>
+</table>
         {% endif %}
       </table>
     </td>
@@ -1040,14 +1154,43 @@
           {% if line.groups.size == 0 %}
 
 {% comment %} Skip child add-ons since they will be rendered under the parent line item {% endcomment %}
-{% unless line.nested_line_child? %}
+{% unless line.nested_line_child? or line.properties["_is_container"] == 'true' %}
 
   {% assign is_parent = false %}
   {% assign is_nested_line_parent = line.nested_line_parent? %}
-  {% if line.bundle_parent? or line.nested_line_parent? %}
+  {% assign has_associated_container = false %}
+  {% assign associated_container = nil %}
+  {% if line.properties["Selected Container"] != blank %}
+    {% unless line.nested_line_parent? %}
+      {% assign line_variant_id = line.variant_id | append: '' %}
+      {% for container_line in subtotal_line_items %}
+        {% if container_line.properties["_is_container"] == 'true' %}
+          {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
+          {% if container_parent_id == line_variant_id %}
+            {% assign has_associated_container = true %}
+            {% assign associated_container = container_line %}
+            {% break %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% unless has_associated_container %}
+        {% assign container_count = 0 %}
+        {% for container_line in subtotal_line_items %}
+          {% if container_line.properties["_is_container"] == 'true' %}
+            {% assign container_count = container_count | plus: 1 %}
+            {% assign associated_container = container_line %}
+          {% endif %}
+        {% endfor %}
+        {% if container_count == 1 %}
+          {% assign has_associated_container = true %}
+        {% endif %}
+      {% endunless %}
+    {% endunless %}
+  {% endif %}
+  {% if line.bundle_parent? or line.nested_line_parent? or has_associated_container %}
     {% assign is_parent = true %}
   {% endif %}
-  {% if is_nested_line_parent %}
+  {% if is_nested_line_parent or has_associated_container %}
     {% assign css_order_list_cell_nested_line_parent_class = 'order-list__parent-cell' %}
     {% assign css_order_list_parent_image_cell_nested_line_parent_class = 'order-list__nested-parent-image-cell' %}
   {% endif %}
@@ -1080,7 +1223,7 @@
                 </td>
               {% endif %}
             </tr>
-            {% if is_nested_line_parent %}
+            {% if is_nested_line_parent or has_associated_container %}
               <tr height="100%">
                 <td style="padding: 0px;" height="100%">
                   <table height="100%">
@@ -1332,11 +1475,96 @@
             <span class="order-list__item-variant">{{ child_line.selling_plan_allocation.selling_plan.name }}</span>
           {% endif %}
         </td>
+          <td class="order-list__price-cell">
+            <p class="order-list__item-price">
+              {% if child_line.final_line_price > 0 %}
+                {{ child_line.final_line_price | money }}
+              {% else %}
+                Free
+              {% endif %}
+            </p>
+          </td>
       </table>
     </td>
   </tr>
 </table>
           {% endfor %}
+        {% elsif has_associated_container %}
+          {% assign child_line = associated_container %}
+          {% assign css_class = 'order-list__deliverable-item_abandoned' %}
+          {% assign css_image_class = 'order-list__image-cell--nested-line-item' %}
+          {% assign css_description_class = 'order-list__product-description-cell--nested-line-item' %}
+          {% assign css_curved_line_cell_container_class = 'curved-line-cell-container__top-spacer-cell--show-border' %}
+          {% assign css_hide_vertical_line_class = 'vertical-line__content--hide' %}
+          {% assign css_curved_line_cell_container_cell__no_padding_class = 'curved-line-cell-container__cell--no-padding' %}
+
+<table height="100%">
+  <tr class="order-list__item">
+    <td class="{{ css_class }}" height="100%">
+      <table height="100%">
+          <td class="nested-line-item-spacer-cell"style="padding: 1px;">
+            <div class="nested-line-item-spacer"></div>
+          </td>
+          <td class="curved-line-cell-container" valign="top">
+            <div style="width: 0px;">
+              <table>
+                <tr>
+                  <td class="{{ css_curved_line_cell_container_cell__no_padding_class }}" style="mso-padding-right-alt: 10px;">
+                    <div class="curved-line-cell-container__top-spacer {{ css_curved_line_cell_container_class }}"></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="curved-line-cell-container__curvedLine-cell">
+                    <div class="curved-line-cell-container__curvedLine-cell__curvedLine"></div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </td>
+          <td class="vertical-line" height="100%">
+            <div class="vertical-line__content {{ css_hide_vertical_line_class }}"></div>
+          </td>
+          <td class="nested-line-item-spacer-cell--right">
+            <div class="nested-line-item-spacer"></div>
+          </td>
+        <td class="{{ css_image_class }}">
+          {% if child_line.image %}
+            <img src="{{ child_line | img_url: 'compact_cropped' }}" align="left" width="40" height="40" class="order-list__product-image small"/>
+          {% else %}
+            <div class="order-list__no-image-cell small">
+              <img src="{{ 'notifications/no-image.png' | shopify_asset_url }}" align="left" width="20" height="20" class="order-list__no-product-image small"/>
+            </div>
+          {% endif %}
+        </td>
+
+        <td class="{{ css_description_class }}">
+          {% if child_line.product.title %}
+            {% assign item_title = child_line.product.title %}
+          {% else %}
+            {% assign item_title = child_line.title %}
+          {% endif %}
+
+          {% assign item_display = child_line.quantity %}
+
+            <span class="order-list__item-title">{{ item_title }}&nbsp;&times;&nbsp;{{ item_display }}</span><br>
+				<span class="sku">{{child_line.sku}}</span><br>
+          {% if child_line.variant.title != 'Default Title'%}
+            <span class="order-list__item-variant">{{ child_line.variant.title }}</span><br/>
+          {% endif %}
+        </td>
+          <td class="order-list__price-cell">
+            <p class="order-list__item-price">
+              {% if child_line.final_line_price > 0 %}
+                {{ child_line.final_line_price | money }}
+              {% else %}
+                Free
+              {% endif %}
+            </p>
+          </td>
+      </table>
+    </td>
+  </tr>
+</table>
         {% endif %}
       </table>
     </td>
@@ -2072,7 +2300,7 @@
                 </td>
               {% endif %}
             </tr>
-            {% if is_nested_line_parent %}
+            {% if is_nested_line_parent or has_associated_container %}
               <tr height="100%">
                 <td style="padding: 0px;" height="100%">
                   <table height="100%">
@@ -2355,14 +2583,43 @@
     {% if line.groups.size == 0 %}
 
 {% comment %} Skip child add-ons since they will be rendered under the parent line item {% endcomment %}
-{% unless line.nested_line_child? %}
+{% unless line.nested_line_child? or line.properties["_is_container"] == 'true' %}
 
   {% assign is_parent = false %}
   {% assign is_nested_line_parent = line.nested_line_parent? %}
-  {% if line.bundle_parent? or line.nested_line_parent? %}
+  {% assign has_associated_container = false %}
+  {% assign associated_container = nil %}
+  {% if line.properties["Selected Container"] != blank %}
+    {% unless line.nested_line_parent? %}
+      {% assign line_variant_id = line.variant_id | append: '' %}
+      {% for container_line in subtotal_line_items %}
+        {% if container_line.properties["_is_container"] == 'true' %}
+          {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
+          {% if container_parent_id == line_variant_id %}
+            {% assign has_associated_container = true %}
+            {% assign associated_container = container_line %}
+            {% break %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% unless has_associated_container %}
+        {% assign container_count = 0 %}
+        {% for container_line in subtotal_line_items %}
+          {% if container_line.properties["_is_container"] == 'true' %}
+            {% assign container_count = container_count | plus: 1 %}
+            {% assign associated_container = container_line %}
+          {% endif %}
+        {% endfor %}
+        {% if container_count == 1 %}
+          {% assign has_associated_container = true %}
+        {% endif %}
+      {% endunless %}
+    {% endunless %}
+  {% endif %}
+  {% if line.bundle_parent? or line.nested_line_parent? or has_associated_container %}
     {% assign is_parent = true %}
   {% endif %}
-  {% if is_nested_line_parent %}
+  {% if is_nested_line_parent or has_associated_container %}
     {% assign css_order_list_cell_nested_line_parent_class = 'order-list__parent-cell' %}
     {% assign css_order_list_parent_image_cell_nested_line_parent_class = 'order-list__nested-parent-image-cell' %}
   {% endif %}
@@ -2395,7 +2652,7 @@
                 </td>
               {% endif %}
             </tr>
-            {% if is_nested_line_parent %}
+            {% if is_nested_line_parent or has_associated_container %}
               <tr height="100%">
                 <td style="padding: 0px;" height="100%">
                   <table height="100%">
@@ -2646,11 +2903,96 @@
             <span class="order-list__item-variant">{{ child_line.selling_plan_allocation.selling_plan.name }}</span>
           {% endif %}
         </td>
+          <td class="order-list__price-cell">
+            <p class="order-list__item-price">
+              {% if child_line.final_line_price > 0 %}
+                {{ child_line.final_line_price | money }}
+              {% else %}
+                Free
+              {% endif %}
+            </p>
+          </td>
       </table>
     </td>
   </tr>
 </table>
           {% endfor %}
+        {% elsif has_associated_container %}
+          {% assign child_line = associated_container %}
+          {% assign css_class = 'order-list__deliverable-item_abandoned' %}
+          {% assign css_image_class = 'order-list__image-cell--nested-line-item' %}
+          {% assign css_description_class = 'order-list__product-description-cell--nested-line-item' %}
+          {% assign css_curved_line_cell_container_class = 'curved-line-cell-container__top-spacer-cell--show-border' %}
+          {% assign css_hide_vertical_line_class = 'vertical-line__content--hide' %}
+          {% assign css_curved_line_cell_container_cell__no_padding_class = 'curved-line-cell-container__cell--no-padding' %}
+
+<table height="100%">
+  <tr class="order-list__item">
+    <td class="{{ css_class }}" height="100%">
+      <table height="100%">
+          <td class="nested-line-item-spacer-cell"style="padding: 1px;">
+            <div class="nested-line-item-spacer"></div>
+          </td>
+          <td class="curved-line-cell-container" valign="top">
+            <div style="width: 0px;">
+              <table>
+                <tr>
+                  <td class="{{ css_curved_line_cell_container_cell__no_padding_class }}" style="mso-padding-right-alt: 10px;">
+                    <div class="curved-line-cell-container__top-spacer {{ css_curved_line_cell_container_class }}"></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="curved-line-cell-container__curvedLine-cell">
+                    <div class="curved-line-cell-container__curvedLine-cell__curvedLine"></div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </td>
+          <td class="vertical-line" height="100%">
+            <div class="vertical-line__content {{ css_hide_vertical_line_class }}"></div>
+          </td>
+          <td class="nested-line-item-spacer-cell--right">
+            <div class="nested-line-item-spacer"></div>
+          </td>
+        <td class="{{ css_image_class }}">
+          {% if child_line.image %}
+            <img src="{{ child_line | img_url: 'compact_cropped' }}" align="left" width="40" height="40" class="order-list__product-image small"/>
+          {% else %}
+            <div class="order-list__no-image-cell small">
+              <img src="{{ 'notifications/no-image.png' | shopify_asset_url }}" align="left" width="20" height="20" class="order-list__no-product-image small"/>
+            </div>
+          {% endif %}
+        </td>
+
+        <td class="{{ css_description_class }}">
+          {% if child_line.product.title %}
+            {% assign item_title = child_line.product.title %}
+          {% else %}
+            {% assign item_title = child_line.title %}
+          {% endif %}
+
+          {% assign item_display = child_line.quantity %}
+
+            <span class="order-list__item-title">{{ item_title }}&nbsp;&times;&nbsp;{{ item_display }}</span><br>
+				<span class="sku">{{child_line.sku}}</span><br>
+          {% if child_line.variant.title != 'Default Title'%}
+            <span class="order-list__item-variant">{{ child_line.variant.title }}</span><br/>
+          {% endif %}
+        </td>
+          <td class="order-list__price-cell">
+            <p class="order-list__item-price">
+              {% if child_line.final_line_price > 0 %}
+                {{ child_line.final_line_price | money }}
+              {% else %}
+                Free
+              {% endif %}
+            </p>
+          </td>
+      </table>
+    </td>
+  </tr>
+</table>
         {% endif %}
       </table>
     </td>
