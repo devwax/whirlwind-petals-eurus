@@ -6,18 +6,35 @@ document.addEventListener('alpine:init', () => {
     imageUrl: '',
     imageAlt: '',
     productUrl: '',
-    show({ title, price, imageUrl, imageAlt, productUrl }) {
+    pickerId: '',
+    variantId: '',
+    available: false,
+    show({ title, price, imageUrl, imageAlt, productUrl, pickerId, variantId, available }) {
       this.title = title || '';
       this.price = price || '';
       this.imageUrl = imageUrl || '';
       this.imageAlt = imageAlt || title || '';
       this.productUrl = productUrl || '';
+      this.pickerId = pickerId || '';
+      this.variantId = variantId || '';
+      this.available = available !== 'false' && available !== false;
       this.open = true;
       Alpine.store('xPopup').open = true;
     },
     close() {
       this.open = false;
       Alpine.store('xPopup').close();
+    },
+    select() {
+      const { pickerId, variantId } = this;
+      this.close();
+      Alpine.store('xModal')?.removeFocus?.();
+      if (!pickerId || !variantId) return;
+
+      const picker = document.getElementById(pickerId);
+      if (picker && typeof picker.selectVariant === 'function') {
+        picker.selectVariant(variantId);
+      }
     },
   });
 });
@@ -92,6 +109,12 @@ class ContainerPicker extends HTMLElement {
     return this.selected !== null;
   }
 
+  selectVariant(variantId) {
+    this.items = this.querySelectorAll('.container-picker__item');
+    const item = this.querySelector(`.container-picker__item[data-variant-id="${variantId}"]`);
+    if (item) this._selectItem(item);
+  }
+
   // ── Event binding ──────────────────────────────────────────────────
 
   _bindTrigger() {
@@ -138,7 +161,7 @@ class ContainerPicker extends HTMLElement {
   _openDetailPopup(item) {
     if (!item || typeof Alpine === 'undefined') return;
 
-    const { productTitle, priceFormatted, detailImageUrl, imageUrl, imageAlt, productUrl } = item.dataset;
+    const { productTitle, priceFormatted, detailImageUrl, imageUrl, imageAlt, productUrl, variantId, available } = item.dataset;
     const store = Alpine.store('xPopupContainerDetail');
     if (!store) return;
 
@@ -148,6 +171,9 @@ class ContainerPicker extends HTMLElement {
       imageUrl: detailImageUrl || imageUrl || '',
       imageAlt: imageAlt || productTitle,
       productUrl: productUrl || '',
+      pickerId: this.id,
+      variantId,
+      available,
     });
 
     requestAnimationFrame(() => {
