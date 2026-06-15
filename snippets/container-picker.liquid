@@ -18,9 +18,10 @@
     3. Selected       — collapsed, shows selected container name + price + "Change" button
 
   Cart behavior:
-    - Main product is added with line item property "Selected Container" for order clarity.
-    - Container product is added as a separate line item with property "_container_for"
-      linking it to the main product title (for fulfillment grouping).
+    - Main product is added first with line item property "Selected Container" for order clarity.
+    - Container is added in the same cart/add.js request with parent_id referencing the main
+      variant, so Shopify nests the lines in cart, checkout, and orders. Child is removed if
+      parent is removed. Container line also carries _is_container for cart display labeling.
 
   Usage:
     {% render 'container-picker', product: product, section_id: section.id, product_form_id: product_form_id, only_available: block.settings.only_available %}
@@ -28,7 +29,7 @@
 
 {%- assign container_collections = product.metafields.custom.container_collections.value -%}
 
-{%- if container_collections != blank and container_collections.size > 0 -%}
+{%- if container_collections != blank and container_collections.count > 0 -%}
   {{- 'component-container-picker.css' | asset_url | stylesheet_tag -}}
 
   <container-picker
@@ -84,7 +85,7 @@
     >
       <ul class="container-picker__list" role="listbox" aria-label="Container options">
         {%- for coll in container_collections -%}
-          {% comment %} {%- if container_collections.size > 1 -%}
+          {% comment %} {%- if container_collections.count > 1 -%}
             <li
               class="container-picker__group-header"
               role="separator"
