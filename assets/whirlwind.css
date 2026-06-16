@@ -323,3 +323,47 @@
 @media (max-width: 800px) {
 .package_section, .guarantee_section {display: none;}
 }
+
+/*
+ * Collection banner hero — desktop only (matches petals.com BigCommerce behavior).
+ * Mobile uses the rich-text collection title block on collection.json; other templates
+ * keep the collection name without the hero image.
+ */
+@media (max-width: 767px) {
+  .x-section-collection-banner .collection-page-banner,
+  .x-section-collection-banner .image-treatment-overlay {
+    display: none !important;
+  }
+
+  .x-section-collection-banner .collection-page-container > div > .promotion {
+    height: auto !important;
+    min-height: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+
+  .x-section-collection-banner [class*="mobile-"][class*="-natural"] {
+    padding-bottom: 0 !important;
+    height: auto !important;
+  }
+
+  .x-section-collection-banner .promotion > .absolute {
+    position: relative !important;
+    inset: auto !important;
+    height: auto !important;
+  }
+
+  .x-section-collection-banner .promotion:not(:has(.collection-title)) {
+    display: none !important;
+  }
+
+  .x-section-collection-banner .promotion:has(.collection-title) .collection-title {
+    padding-top: 0 !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .x-section-collection-banner .promotion:has(.collection-title) .image-treatment-text {
+    color: rgb(var(--colors-heading)) !important;
+    text-shadow: none !important;
+  }
+}
