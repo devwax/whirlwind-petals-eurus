@@ -101,46 +101,165 @@
       {{ resolution_adjusted_size }}x{{ resolution_adjusted_size }}
     {% endcapture %}
 
+    {% comment %}
+      Group trees with their containers the same way order confirmation emails do.
+      Packing slip line items do not expose variant_id, so resolve it from order.line_items
+      and fall back to Selected Container / group title matching for multi-item orders.
+    {% endcomment %}
+    {% assign assigned_container_keys = "" %}
     {% for line_item in line_items_in_shipment %}
-      <div class="flex-line-item">
-        <div class="flex-line-item-img">
-          {% if line_item.image != blank %}
-            <div
-              class="aspect-ratio aspect-ratio-square"
-              style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;"
-            >
-              {{ line_item.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
-            </div>
-          {% endif %}
-        </div>
-        <div class="flex-line-item-description">
-          <p>
-            <span class="line-item-description-line">
-              {{ line_item.title }}
-            </span>
-            {% if line_item.variant_title != blank %}
-              <span class="line-item-description-line">
-                {{ line_item.variant_title }}
-              </span>
-            {% endif %}
-            {% if line_item.sku != blank %}
-              <span class="line-item-description-line">
-                {{ line_item.sku }}
-              </span>
-            {% endif %}
-            {% for group in line_item.groups %}
-              {% if group.deliverable? %}
-                <span class="line-item-description-line"> For: {{ group.title }} </span>
-              {% else %}
-                <span class="line-item-description-line"> Part of: {{ group.title }} </span>
+      {% unless line_item.properties["_is_container"] == 'true' %}
+        {% assign has_associated_container = false %}
+        {% assign associated_container = nil %}
+        {% if line_item.properties["Selected Container"] != blank %}
+          {% assign line_variant_id = line_item.variant_id | append: '' %}
+          {% if line_variant_id == blank and order.line_items %}
+            {% for order_line in order.line_items %}
+              {% if order_line.sku != blank and order_line.sku == line_item.sku %}
+                {% assign line_variant_id = order_line.variant_id | append: '' %}
+                {% break %}
               {% endif %}
             {% endfor %}
-          </p>
+            {% if line_variant_id == blank %}
+              {% for order_line in order.line_items %}
+                {% if order_line.title == line_item.title %}
+                  {% assign line_variant_id = order_line.variant_id | append: '' %}
+                  {% break %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          {% endif %}
+
+          {% assign selected_container_label = line_item.properties["Selected Container"] | split: ' (+ ' | first | strip %}
+
+          {% for container_line in line_items_in_shipment %}
+            {% if container_line.properties["_is_container"] == 'true' %}
+              {% assign container_key = container_line.sku | default: container_line.title | append: '||' %}
+              {% unless assigned_container_keys contains container_key %}
+                {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
+                {% assign container_matches = false %}
+
+                {% if line_variant_id != blank and container_parent_id == line_variant_id %}
+                  {% assign container_matches = true %}
+                {% elsif selected_container_label != blank and container_line.title == selected_container_label %}
+                  {% assign container_matches = true %}
+                {% elsif selected_container_label != blank and container_line.title contains selected_container_label %}
+                  {% assign container_matches = true %}
+                {% else %}
+                  {% for group in container_line.groups %}
+                    {% if group.deliverable? and group.title != blank %}
+                      {% if line_item.title == group.title or line_item.title contains group.title or group.title contains line_item.title %}
+                        {% assign container_matches = true %}
+                        {% break %}
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+
+                {% if container_matches %}
+                  {% assign has_associated_container = true %}
+                  {% assign associated_container = container_line %}
+                  {% break %}
+                {% endif %}
+              {% endunless %}
+            {% endif %}
+          {% endfor %}
+
+          {% unless has_associated_container %}
+            {% assign container_count = 0 %}
+            {% for container_line in line_items_in_shipment %}
+              {% if container_line.properties["_is_container"] == 'true' %}
+                {% assign container_key = container_line.sku | default: container_line.title | append: '||' %}
+                {% unless assigned_container_keys contains container_key %}
+                  {% assign container_count = container_count | plus: 1 %}
+                  {% assign associated_container = container_line %}
+                {% endunless %}
+              {% endif %}
+            {% endfor %}
+            {% if container_count == 1 %}
+              {% assign has_associated_container = true %}
+            {% endif %}
+          {% endunless %}
+        {% endif %}
+
+        <div class="flex-line-item{% if has_associated_container %} flex-line-item--parent{% endif %}">
+          <div class="flex-line-item-img">
+            {% if line_item.image != blank %}
+              <div
+                class="aspect-ratio aspect-ratio-square"
+                style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;"
+              >
+                {{ line_item.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
+              </div>
+            {% endif %}
+          </div>
+          <div class="flex-line-item-description">
+            <p>
+              <span class="line-item-description-line">
+                {{ line_item.title }}
+              </span>
+              {% if line_item.variant_title != blank %}
+                <span class="line-item-description-line">
+                  {{ line_item.variant_title }}
+                </span>
+              {% endif %}
+              {% if line_item.sku != blank %}
+                <span class="line-item-description-line">
+                  {{ line_item.sku }}
+                </span>
+              {% endif %}
+              {% for group in line_item.groups %}
+                {% if group.deliverable? %}
+                  <span class="line-item-description-line"> For: {{ group.title }} </span>
+                {% else %}
+                  <span class="line-item-description-line"> Part of: {{ group.title }} </span>
+                {% endif %}
+              {% endfor %}
+            </p>
+          </div>
+          <div class="flex-line-item-quantity">
+            <p class="text-align-right">{{ line_item.shipping_quantity }} of {{ line_item.quantity }}</p>
+          </div>
         </div>
-        <div class="flex-line-item-quantity">
-          <p class="text-align-right">{{ line_item.shipping_quantity }} of {{ line_item.quantity }}</p>
-        </div>
-      </div>
+
+        {% if has_associated_container %}
+          {% assign child_line = associated_container %}
+          {% assign container_key = child_line.sku | default: child_line.title | append: '||' %}
+          {% assign assigned_container_keys = assigned_container_keys | append: container_key %}
+          <div class="flex-line-item flex-line-item--nested">
+            <div class="flex-line-item-img">
+              {% if child_line.image != blank %}
+                <div
+                  class="aspect-ratio aspect-ratio-square"
+                  style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;"
+                >
+                  {{ child_line.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
+                </div>
+              {% endif %}
+            </div>
+            <div class="flex-line-item-description">
+              <p>
+                <span class="line-item-description-line">
+                  {{ child_line.title }}
+                </span>
+                {% if child_line.variant_title != blank and child_line.variant_title != 'Default Title' %}
+                  <span class="line-item-description-line">
+                    {{ child_line.variant_title }}
+                  </span>
+                {% endif %}
+                {% if child_line.sku != blank %}
+                  <span class="line-item-description-line">
+                    {{ child_line.sku }}
+                  </span>
+                {% endif %}
+              </p>
+            </div>
+            <div class="flex-line-item-quantity">
+              <p class="text-align-right">{{ child_line.shipping_quantity }} of {{ child_line.quantity }}</p>
+            </div>
+          </div>
+        {% endif %}
+      {% endunless %}
     {% endfor %}
   </div>
   {% unless includes_all_line_items_in_order %}
@@ -286,6 +405,25 @@
     align-items: center;
     margin: 1.4em 0;
     page-break-inside: avoid;
+  }
+
+  .flex-line-item--nested {
+    margin-top: -0.7em;
+    margin-bottom: 1.4em;
+    padding-left: 2.8em;
+  }
+
+  .flex-line-item--parent {
+    margin-bottom: 0.7em;
+  }
+
+  .flex-line-item--nested .flex-line-item-img .aspect-ratio {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .flex-line-item--nested .flex-line-item-img {
+    min-width: 42px;
   }
 
   .flex-line-item-img {
