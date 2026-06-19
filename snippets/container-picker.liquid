@@ -4,46 +4,45 @@
   Renders a 3-state container selector for products that have one or more
   container collections assigned via metafield.
 
-  Prerequisites (Shopify Admin setup):
-    1. Create a metafield definition on Products:
-       - Namespace & key: custom.container_collections
-       - Type: list of collection references
-    2. On the test product, set this metafield to zero, one, or more container
-       collections. With multiple collections, each group is labeled in the list.
-       (If the list is empty, the container picker is not shown.)
-
-  The 3 states:
-    1. Pre-selection  — collapsed, shows "Choose Option"
-    2. Open/Selection — expanded scrollable list with image, name, price, availability, SELECT button
-    3. Selected       — collapsed, shows selected container name + price + "Change" button
-
-  Cart behavior:
-    - Main product is added first with line item property "Selected Container" for order clarity.
-    - Container is added in the same cart/add.js request with parent_id referencing the main
-      variant, so Shopify nests the lines in cart, checkout, and orders. Child is removed if
-      parent is removed. Container line also carries _is_container for cart display labeling.
-
-  Usage:
-    {% render 'container-picker', product: product, section_id: section.id, product_form_id: product_form_id, only_available: block.settings.only_available %}
+  Parameters:
+    product: {Product} required
+    section_id: {String} required — unique id suffix
+    product_form_id: {String} optional — required for add mode
+    mode: {String} 'add' (default) or 'change'
+    only_available: {Boolean} filter unavailable containers
+    load_assets: {Boolean} load CSS/JS (default true; false when loaded globally)
 {% endcomment %}
 
 {%- assign container_collections = product.metafields.custom.container_collections.value -%}
+{%- assign picker_mode = mode | default: 'add' -%}
+{%- assign load_picker_assets = load_assets | default: true -%}
 
 {%- if container_collections != blank and container_collections.count > 0 -%}
-  {{- 'component-container-picker.css' | asset_url | stylesheet_tag -}}
+  {%- if load_picker_assets -%}
+    {{- 'component-container-picker.css' | asset_url | stylesheet_tag -}}
+  {%- endif -%}
 
   <container-picker
-    class="container-picker"
+    class="container-picker{% if picker_mode == 'change' %} container-picker--change-mode{% endif %}"
     id="ContainerPicker-{{ section_id }}"
     data-section-id="{{ section_id }}"
+    data-mode="{{ picker_mode }}"
     data-product-id="{{ product.id }}"
     data-product-title="{{ product.title | escape }}"
-    data-product-form-id="{{ product_form_id }}"
+    {% if product_form_id != blank %}data-product-form-id="{{ product_form_id }}"{% endif %}
     data-money-format="{% if settings.currency_code_enable %}{{ shop.money_with_currency_format | escape }}{% else %}{{ shop.money_format | escape }}{% endif %}"
   >
     <div class="container-picker__header">
-      <span class="container-picker__label">Container:</span>
-      <span class="container-picker__required">(Required)</span>
+      <span class="container-picker__label">
+        {%- if picker_mode == 'change' -%}
+          Select a new container:
+        {%- else -%}
+          Container:
+        {%- endif -%}
+      </span>
+      {%- unless picker_mode == 'change' -%}
+        <span class="container-picker__required">(Required)</span>
+      {%- endunless -%}
     </div>
 
     {%- comment -%} Collapsed trigger button — shows "Choose Option" or selected container {%- endcomment -%}
@@ -85,15 +84,6 @@
     >
       <ul class="container-picker__list" role="listbox" aria-label="Container options">
         {%- for coll in container_collections -%}
-          {% comment %} {%- if container_collections.count > 1 -%}
-            <li
-              class="container-picker__group-header"
-              role="separator"
-              aria-label="{{ coll.title | escape }}"
-            >
-              <span class="container-picker__group-header-text">{{ coll.title | escape }}</span>
-            </li>
-          {%- endif -%} {% endcomment %}
           {%- for container in coll.products limit: 50 -%}
             {%- render 'container-picker-item', container: container, only_available: only_available -%}
           {%- endfor -%}
@@ -113,13 +103,9 @@
     >
       Change Selection
     </button>
-
-    {%- comment -%}
-      Hidden inputs injected into the parent product form via JS.
-      These carry line item properties for order fulfillment clarity.
-    {%- endcomment -%}
-
   </container-picker>
 
-  <script src="{{ 'container-picker.js' | asset_url }}" defer="defer"></script>
+  {%- if load_picker_assets -%}
+    <script src="{{ 'container-picker.js' | asset_url }}" defer="defer"></script>
+  {%- endif -%}
 {%- endif -%}

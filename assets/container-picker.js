@@ -91,8 +91,10 @@ class ContainerPicker extends HTMLElement {
     this._bindItems();
     this._bindDetailLinks();
     this._bindChangeBtn();
-    this._interceptProductForm();
-    this._bindQuantityChange();
+    if (this.dataset.mode !== 'change') {
+      this._interceptProductForm();
+      this._bindQuantityChange();
+    }
   }
 
   disconnectedCallback() {
@@ -113,6 +115,116 @@ class ContainerPicker extends HTMLElement {
     this.items = this.querySelectorAll('.container-picker__item');
     const item = this.querySelector(`.container-picker__item[data-variant-id="${variantId}"]`);
     if (item) this._selectItem(item);
+  }
+
+  /**
+   * Swap the nested container line in cart (change mode only).
+   * Removes the old container child, adds the new one, and updates the parent property.
+   */
+  async swapContainerInCart(context) {
+    if (!this.hasSelection) {
+      throw new Error('Please select a container option.');
+    }
+
+    const {
+      parentLineKey,
+      containerLineKey,
+      parentVariantId,
+      quantity = 1,
+      currentContainerVariantId,
+    } = context;
+
+    if (String(this.selected.variantId) === String(currentContainerVariantId)) {
+      return;
+    }
+
+    const root = window.Shopify?.routes?.root || '/';
+    const sections = typeof Alpine !== 'undefined' && Alpine.store('xCartHelper')?.getSectionsToRender
+      ? Alpine.store('xCartHelper').getSectionsToRender().map((s) => s.id)
+      : [];
+    const sectionsPayload = sections.length > 0
+      ? { sections, sections_url: window.location.pathname }
+      : {};
+
+    const containerTitle = this.selected.productTitle;
+    const containerPriceFormatted = this.selected.priceFormatted;
+
+    window.updatingCart = true;
+
+    try {
+      const removeResponse = await fetch(`${root}cart/change.js`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: containerLineKey,
+          quantity: 0,
+          ...sectionsPayload,
+        }),
+      });
+
+      const removeState = await removeResponse.json().catch(() => ({}));
+      if (!removeResponse.ok || removeState.status === 422) {
+        throw new Error(removeState.description || removeState.message || 'Failed to remove current container');
+      }
+
+      const addResponse = await fetch(`${root}cart/add.js`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [
+            {
+              id: parseInt(this.selected.variantId, 10),
+              quantity: parseInt(quantity, 10) || 1,
+              parent_line_key: parentLineKey,
+              properties: {
+                _is_container: 'true',
+                _parent_variant_id: String(parentVariantId),
+              },
+            },
+          ],
+          ...sectionsPayload,
+        }),
+      });
+
+      const addState = await addResponse.json().catch(() => ({}));
+      if (!addResponse.ok || addState.status === 422) {
+        throw new Error(addState.description || addState.message || 'Failed to add new container');
+      }
+
+      const parentItem = addState.items?.find((item) => item.key === parentLineKey);
+      const existingProperties = parentItem?.properties || {};
+      const updatedProperties = {
+        ...existingProperties,
+        'Selected Container': `${containerTitle} (${containerPriceFormatted})`,
+      };
+
+      const updateResponse = await fetch(`${root}cart/change.js`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: parentLineKey,
+          quantity: parseInt(quantity, 10) || 1,
+          properties: updatedProperties,
+          ...sectionsPayload,
+        }),
+      });
+
+      const updateState = await updateResponse.json().catch(() => ({}));
+      if (!updateResponse.ok || updateState.status === 422) {
+        throw new Error(updateState.description || updateState.message || 'Failed to update container selection');
+      }
+
+      if (typeof Alpine !== 'undefined' && Alpine.store('xCartHelper')?.reRenderSections && updateState.sections) {
+        Alpine.store('xCartHelper').reRenderSections(updateState.sections);
+      }
+
+      const bubble = document.querySelector('#cart-icon-bubble span');
+      if (typeof Alpine !== 'undefined' && Alpine.store('xCartHelper') && bubble) {
+        Alpine.store('xCartHelper').currentItemCount = parseInt(bubble.innerHTML || '0', 10);
+      }
+    } finally {
+      window.updatingCart = false;
+    }
   }
 
   // ── Event binding ──────────────────────────────────────────────────

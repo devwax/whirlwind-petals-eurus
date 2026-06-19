@@ -1,0 +1,21 @@
+{% comment %}
+  Lazy-loaded section for in-cart container change modal.
+  Fetched via: /products/{handle}?section_id=cart-container-picker
+{% endcomment %}
+
+{%- if product != blank -%}
+  {%- render 'container-picker',
+    product: product,
+    section_id: 'cart-change',
+    mode: 'change',
+    only_available: false,
+    load_assets: false
+  -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Cart container picker",
+  "settings": []
+}
+{% endschema %}

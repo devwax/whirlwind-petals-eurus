@@ -1,0 +1,86 @@
+<template x-teleport="body">
+  <div
+    id="PopupCartContainerChange"
+    x-show="$store.xPopupCartContainerChange.open"
+    x-cloak
+    class="w-full h-full fixed top-0 left-0 z-[100] bg-[#acacac] bg-opacity-30"
+    @click.self="$store.xModal.removeFocus(); $store.xPopupCartContainerChange.close()"
+  >
+    <div
+      x-show="$store.xPopupCartContainerChange.open"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Change container"
+      class="cart-container-change-modal bg-[rgba(var(--background-color))] relative max-w-lg w-[calc(100%-2rem)] md:ml-auto md:mr-auto mt-[10vh] md:mt-[8vh] pl-5 pr-5 pt-10 pb-6 md:pl-10 md:pr-10 md:pt-12 md:pb-8{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+      x-transition:enter="transition-all ease-in-out duration-500"
+      x-transition:enter-start="opacity-0 transform translate-y-1/3"
+      x-transition:enter-end="opacity-100 transform translate-y-0"
+      x-transition:leave="transition-all ease-in-out duration-500"
+      x-transition:leave-end="opacity-0 transform translate-y-1/3"
+      x-intersect.full="$store.xModal.focus('PopupCartContainerChange', 'CloseCartContainerChange')"
+      @click.stop
+      @keyup.escape="$store.xModal.removeFocus(); $store.xPopupCartContainerChange.close()"
+    >
+      <button
+        id="CloseCartContainerChange"
+        type="button"
+        aria-label="Close change container dialog"
+        @click.prevent="$store.xModal.removeFocus(); $store.xPopupCartContainerChange.close()"
+        class="cursor-pointer top-0.5 md:top-4 absolute right-3 md:right-5 rtl:right-auto rtl:left-5 icon-close-container w-fit z-10 rounded-full"
+      >
+        {%- render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' -%}
+      </button>
+
+      <div class="cart-container-change-modal__content">
+        <h3
+          class="cart-container-change-modal__title h4 mb-4"
+          x-text="$store.xPopupCartContainerChange.title"
+        ></h3>
+
+        <p
+          class="cart-container-change-modal__error text-error mb-3"
+          role="alert"
+          x-show="$store.xPopupCartContainerChange.error"
+          x-text="$store.xPopupCartContainerChange.error"
+        ></p>
+
+        <div
+          class="cart-container-change-modal__loading py-8 text-center opacity-70"
+          x-show="$store.xPopupCartContainerChange.loading && !$store.xPopupCartContainerChange.pickerReady"
+        >
+          Loading container options…
+        </div>
+
+        <div
+          id="CartContainerChangePickerHost"
+          class="cart-container-change-modal__picker"
+          x-show="$store.xPopupCartContainerChange.pickerReady"
+        ></div>
+
+        <div
+          class="cart-container-change-modal__footer flex flex-wrap gap-3 mt-6 pt-4 border-t border-solid border-[rgba(var(--colors-text),0.12)]"
+          x-show="$store.xPopupCartContainerChange.pickerReady"
+        >
+          <button
+            type="button"
+            class="cart-container-change-modal__update-btn flex-1 min-w-[140px]"
+            :disabled="$store.xPopupCartContainerChange.loading"
+            :aria-busy="$store.xPopupCartContainerChange.loading ? 'true' : 'false'"
+            @click.prevent="$store.xPopupCartContainerChange.confirm()"
+          >
+            <span x-show="!$store.xPopupCartContainerChange.loading">Update container</span>
+            <span x-show="$store.xPopupCartContainerChange.loading">Updating…</span>
+          </button>
+          <button
+            type="button"
+            class="cart-container-change-modal__cancel-btn flex-1 min-w-[100px]"
+            :disabled="$store.xPopupCartContainerChange.loading"
+            @click.prevent="$store.xModal.removeFocus(); $store.xPopupCartContainerChange.close()"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
