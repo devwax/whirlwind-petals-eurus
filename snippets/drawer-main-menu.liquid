@@ -373,7 +373,36 @@
               id="menu-level-{{ start_level | plus: 1 }}"
               class="background-header w-full{% if block.settings.sub_column == '2' %} grid grid-cols-2 gap-x-4 gap-y-7 px-4{% endif %}" 
             >
-              {%- for childlink in link.links -%}
+              {%- liquid
+                assign category_menu_links = link.links
+                if start_level == 0
+                  assign category_handle = ''
+                  case link.title
+                    when 'Arrangements'
+                      assign category_handle = 'arrangements'
+                    when 'Centerpieces'
+                      assign category_handle = 'centerpieces'
+                    when 'Plants'
+                      assign category_handle = 'plants'
+                    when 'Trees'
+                      assign category_handle = 'trees'
+                    when 'Wreaths'
+                      assign category_handle = 'wreaths'
+                    when 'Stems'
+                      assign category_handle = 'stems'
+                    when 'Gifts'
+                      assign category_handle = 'gifts'
+                    when 'Best Sellers'
+                      assign category_handle = 'best-sellers'
+                    when 'Seasonal'
+                      assign category_handle = 'seasonal'
+                  endcase
+                  if category_handle != blank and linklists[category_handle].links != blank
+                    assign category_menu_links = linklists[category_handle].links
+                  endif
+                endif
+              -%}
+              {%- for childlink in category_menu_links -%}
                 {%- liquid
                   assign is_link = false
                   if childlink.links != blank
@@ -875,7 +904,36 @@
                 id="menu-level-{{ start_level | plus: 1 }}"
                 class="background-header w-full pl-6 pr-4 rtl:pl-4 rtl:pr-6" 
               >
-                {%- for childlink in link.links -%}
+                {%- liquid
+                  assign category_menu_links = link.links
+                  if start_level == 0
+                    assign category_handle = ''
+                    case link.title
+                      when 'Arrangements'
+                        assign category_handle = 'arrangements'
+                      when 'Centerpieces'
+                        assign category_handle = 'centerpieces'
+                      when 'Plants'
+                        assign category_handle = 'plants'
+                      when 'Trees'
+                        assign category_handle = 'trees'
+                      when 'Wreaths'
+                        assign category_handle = 'wreaths'
+                      when 'Stems'
+                        assign category_handle = 'stems'
+                      when 'Gifts'
+                        assign category_handle = 'gifts'
+                      when 'Best Sellers'
+                        assign category_handle = 'best-sellers'
+                      when 'Seasonal'
+                        assign category_handle = 'seasonal'
+                    endcase
+                    if category_handle != blank and linklists[category_handle].links != blank
+                      assign category_menu_links = linklists[category_handle].links
+                    endif
+                  endif
+                -%}
+                {%- for childlink in category_menu_links -%}
                   {%- liquid
                     assign is_link = false
                     if childlink.links != blank
