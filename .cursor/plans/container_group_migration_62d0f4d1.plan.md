@@ -4,22 +4,22 @@ overview: Reorganize Shopify container picker collections from 18 SKU-named grou
 todos:
   - id: ingest-matrix
     content: Normalize both CSV exports into container-group-prefixes.csv and container-group-assignments.csv
-    status: in_progress
+    status: completed
   - id: audit-shopify
     content: Export current container_collections metafield assignments and SKU-named collection usage; compare against spreadsheet targets
-    status: pending
+    status: completed
   - id: resolve-products
     content: Build prefix→product mapping for groups 1–3, 7, 8 against live Shopify catalog (group 1 validates to 12 products)
-    status: pending
+    status: completed
   - id: create-collections
     content: Create Container-group-1/2/3/7/8 collections and populate with prefix-matched container products
-    status: pending
+    status: completed
   - id: update-metafields
     content: Update 56 parent products' custom.container_collections (numbered groups + keep CT-NDL/CT-GOLD, remove SKU-named collections)
-    status: pending
+    status: completed
   - id: qa-and-cleanup
     content: QA picker on sample products, then delete 18 obsolete SKU-named collections
-    status: pending
+    status: completed
 isProject: false
 ---
 
