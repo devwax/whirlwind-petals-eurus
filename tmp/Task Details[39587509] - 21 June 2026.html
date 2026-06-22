@@ -1,0 +1,3136 @@
+
+		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+		<html>
+		<head>
+			<title>Setup container options from BC picklists (27 active trees)</title>
+
+			<style>
+			body, table {
+				font-family: 'Lucida Grande', Verdana, Arial, sans-serif;
+				font-size: 11px;
+				font-style: normal;
+				font-variant: normal;
+				font-weight: normal;
+			}
+
+			h3 {
+				border-bottom:1px solid #222;
+				color:#222;
+			}
+
+			table td.item {
+				width:150px;
+				font-weight:bold;
+				background-color:#f6f6f6 !important;
+			}
+
+			body {
+	font-family:Arial;
+	font-size:11px !important;	
+}
+
+h1 {
+	margin-top:10px;
+}
+
+body table {
+	font-family:Arial;
+	font-size:11px;	
+	background-color:#fff;	
+	margin-bottom:20px;
+	clear:both;
+}
+
+body table th {
+	text-align:left;
+	background-color:#ccc;
+	padding:5px;
+}
+
+body table td {
+	background-color:#fff;
+	font-size:11px;
+	padding:5px;
+}
+
+table, table td, table th {
+  border: solid #888;
+}
+table {
+  border-width: 1px 1px 0 0;
+}
+table td, table th {
+  border-width: 0 0 1px 1px;
+}
+			/*
+
+	Any user content such as Messages/Comments/Notebooks need to use these consistant styles
+
+*/
+
+span.bqhandle {
+	background-color:#BEBEBE;
+	clear: both;
+	text-align:center;
+	color: #fff;
+	cursor: pointer;
+	display: block;
+	font-family: Arial, sans-serif;
+	font-size: 14px;
+	font-weight:bold;
+	height: 10px;
+	line-height: 3px;
+	border-radius:2px;
+	margin-bottom: 0;
+	margin-left: 0;
+	margin-right: 0;
+	margin-top: 0;
+	outline-color: #222;
+	outline-style: none;
+	outline-width: 0;
+	padding-bottom: 0;
+	padding-left: 0;
+	padding-right: 0;
+	padding-top: 0;
+	position: relative;
+	width: 20px;
+}
+
+span.bqhandle:hover {
+	background-color:#888;
+}
+
+blockquote.bqCollapsed {
+	display:none;
+}
+
+blockquote.bqExpanded {
+	display:block;
+}
+
+/* Formatting */
+body .sectionContent div.formatted, body .sectionContent div.redactor-editor, body .sectionContent div.fr-view {
+  font-family: Helvetica, Arial, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  color: #333;  
+  word-break: break-word; 
+}
+
+body .sectionContent div.fr-wrapper span.fr-placeholder {
+  padding-left:0 !important;
+  padding-top:0 !important;
+}
+
+.generic-theme.fr-box.fr-basic .fr-wrapper .fr-placeholder {
+  top: 10px;
+  left: 10px;
+  padding:0!important;
+}
+
+.notebook-theme.fr-box.fr-basic .fr-wrapper .fr-placeholder {
+  top: 10px;
+  left: 10px;
+  padding:0 !important;
+}
+
+@-moz-document url-prefix() {
+  body .sectionContent div.formatted, body .sectionContent div.redactor-editor{        
+    
+  }
+}
+
+body .sectionContent form div.redactor-editor p, body .sectionContent form div.fr-view p {
+  font-family: Helvetica, Arial, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  color: #333 !important;   
+  margin: 0 0 15px 0;
+}
+
+body .sectionContent div.formatted a, body .sectionContent div.redactor-editor a, body .sectionContent div.fr-view a {
+  color: #4183C4;
+  text-decoration: none;
+}
+
+body .sectionContent div.formatted a:hover, body .sectionContent div.redactor-editor a:hover, body .sectionContent div.fr-view a:hover {
+  text-decoration:underline;
+}
+
+body .sectionContent div.formatted a.absent, body .sectionContent div.redactor-editor a.absent, body .sectionContent div.fr-view a.absent {
+  color: #cc0000;
+}
+
+body .sectionContent div.formatted a.anchor, body .sectionContent div.redactor-editor a.anchor, body .sectionContent div.fr-view a.anchor {
+  display: block;
+  padding-left: 30px;
+  margin-left: -30px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+}
+
+body .sectionContent div.formatted h1, body .sectionContent div.formatted h2, body .sectionContent div.formatted h3, body .sectionContent div.formatted h4, body .sectionContent div.formatted h5, body .sectionContent div.formatted h6,
+body .sectionContent div.fr-view h1, body .sectionContent div.fr-view h2, body .sectionContent div.fr-view h3, body .sectionContent div.fr-view h4, body .sectionContent div.fr-view h5, body .sectionContent div.fr-view h6,
+body .sectionContent ul.fr-dropdown-list h1, body .sectionContent ul.fr-dropdown-list h2, body .sectionContent ul.fr-dropdown-list h3, body .sectionContent ul.fr-dropdown-list h4, body .sectionContent ul.fr-dropdown-list h5, body .sectionContent ul.fr-dropdown-list h6
+ {
+  margin: 20px 0 10px !important;
+  font-weight:bold!important;
+  padding: 0 !important;
+  -webkit-font-smoothing: antialiased;
+  cursor: text;
+  position: relative;
+  font-family: Helvetica, Arial, sans-serif !important;
+  background:none !important;
+  border:none !important;
+}
+
+/* Froala editor specific */
+body .sectionContent ul.fr-dropdown-list h1 {
+  font-size: 28px!important;
+}
+
+body .sectionContent ul.fr-dropdown-list h2 {
+  font-size: 24px!important;    
+} 
+
+body .sectionContent ul.fr-dropdown-list h3 {
+  font-size: 18px!important;
+}
+
+body .sectionContent ul.fr-dropdown-list h4 {
+  font-size: 16px!important;
+} 
+
+body .sectionContent div.formatted h2:first-child, body .sectionContent div.formatted h1:first-child, body .sectionContent div.formatted h1:first-child + h2, body .sectionContent div.formatted h3:first-child, body .sectionContent div.formatted h4:first-child, body .sectionContent div.formatted h5:first-child, body .sectionContent div.formatted h6:first-child {
+  margin-top: 10px !important;
+  padding-top: 0 !important;
+}
+
+body .sectionContent div.formatted h1:hover a.anchor, body .sectionContent div.formatted h2:hover a.anchor, body .sectionContent div.formatted h3:hover a.anchor, body .sectionContent div.formatted h4:hover a.anchor, body .sectionContent div.formatted h5:hover a.anchor, body .sectionContent div.formatted h6:hover a.anchor {
+  text-decoration: none;
+}
+
+body .sectionContent div.formatted h1 tt, body .sectionContent div.formatted h1 code {
+  font-size: inherit;
+}
+
+body .sectionContent div.formatted h2 tt, body .sectionContent div.formatted h2 code {
+  font-size: inherit;
+}
+
+body .sectionContent div.formatted h3 tt, body .sectionContent div.formatted h3 code {
+  font-size: inherit;
+}
+
+body .sectionContent div.formatted h4 tt, body .sectionContent div.formatted h4 code {
+  font-size: inherit;
+}
+
+body .sectionContent div.formatted h5 tt, body .sectionContent div.formatted h5 code {
+  font-size: inherit;
+}
+
+body .sectionContent div.formatted h6 tt, body .sectionContent div.formatted h6 code {
+  font-size: inherit;
+}
+
+body .sectionContent div.formatted h1 {
+  font-size: 28px !important;
+  color: black;
+}
+
+body .sectionContent div.formatted h2 {
+  font-size: 24px !important;
+  border-bottom: 1px solid #CCC;
+  color: black !important;
+}
+
+body .sectionContent div.formatted h3 {
+  font-size: 18px !important;
+}
+
+body .sectionContent div.formatted h4 {
+  font-size: 16px !important;
+}
+
+body .sectionContent div.formatted h5 {
+  font-size: 14px !important;
+}
+
+body .sectionContent div.formatted h6 {
+  color: #777 !important;
+  font-size: 14px !important;
+}
+
+body .sectionContent div.formatted p div {
+  margin: 0 0 10px 0;  
+}
+
+body .sectionContent div.formatted p {
+  margin:10px 0px;
+  word-break: break-word;
+}
+
+
+
+body .sectionContent div.formatted hr {
+  border: 0 none;
+  background-color: #CCC;
+  height: 2px;
+  padding: 0;
+}
+
+body .sectionContent div.formatted  > h2:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+body .sectionContent div.formatted  > h1:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+body .sectionContent div.formatted  > h1:first-child + h2 {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+body .sectionContent div.formatted  > h3:first-child, body .sectionContent div.formatted  > h4:first-child, body .sectionContent div.formatted  > h5:first-child, body .sectionContent div.formatted  > h6:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+body .sectionContent div.formatted a:first-child h1, body .sectionContent div.formatted a:first-child h2, body .sectionContent div.formatted a:first-child h3, body .sectionContent div.formatted a:first-child h4, body .sectionContent div.formatted a:first-child h5, body .sectionContent div.formatted a:first-child h6 {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+body .sectionContent div.formatted h1 p, body .sectionContent div.formatted h2 p, body .sectionContent div.formatted h3 p, body .sectionContent div.formatted h4 p, body .sectionContent div.formatted h5 p, body .sectionContent div.formatted h6 p {
+  margin-top: 0;
+}
+
+body .sectionContent div.formatted li p.first {
+  display: inline-block !important;
+}
+
+body .sectionContent div.formatted ul, body .sectionContent div.formatted ol, body .sectionContent .redactor-editor ul, body .sectionContent .redactor-editor ol, body .sectionContent .fr-view ul, body .sectionContent .fr-view ol {
+  padding-left: 30px !important;
+  margin-top:10px !important;
+  margin-bottom:10px !important;
+}
+
+body .sectionContent div.formatted ol ol li {
+  list-style-type: lower-alpha;
+}
+body .sectionContent div.formatted ol ol ol li {
+  list-style-type: lower-roman;
+}
+
+body .sectionContent div.formatted ul :first-child, body .sectionContent div.formatted ol :first-child, body .sectionContent .redactor-editor ul :first-child, body .sectionContent .redactor-editor ol :first-child, body .sectionContent .fr-view ul :first-child, body .sectionContent .fr-view ol :first-child {
+  margin-top: 0 !important;
+}
+
+body .sectionContent div.formatted ul :last-child, body .sectionContent div.formatted ol :last-child, body .sectionContent .redactor-editor ul :last-child, body .sectionContent .redactor-editor ol :last-child, body .sectionContent .fr-view ul :last-child, body .sectionContent .fr-view ol :last-child {
+  margin-bottom: 10px !important;
+}
+
+body .sectionContent div.formatted ul :last-child li, body .sectionContent div.formatted ol :last-child li {
+  margin-top:5px !important;
+  margin-bottom:5px !important;
+  line-height: 1.1 !important;
+}
+
+body .sectionContent div.formatted dl {
+  padding: 0 !important;
+}
+
+body .sectionContent div.formatted dl dt {
+  font-size: 14px;
+  font-weight: bold;
+  font-style: italic;
+  padding: 0;
+  margin: 15px 0 5px;
+}
+
+body .sectionContent div.formatted dl dt:first-child {
+  padding: 0;
+}
+
+body .sectionContent div.formatted dl dt > :first-child {
+  margin-top: 0;
+}
+
+body .sectionContent div.formatted dl dt > :last-child {
+  margin-bottom: 0;
+}
+
+body .sectionContent div.formatted dl dd {
+  margin: 0 0 15px;
+  padding: 0 15px;
+}
+
+body .sectionContent div.formatted dl dd > :first-child {
+  margin-top: 0;
+}
+
+body .sectionContent div.formatted dl dd > :last-child {
+  margin-bottom: 0;
+}
+
+body .sectionContent div.formatted blockquote, body .sectionContent .redactor-editor blockquote, body .sectionContent .fr-view blockquote {
+  border-left: 4px solid #DDD;
+  padding: 5px 10px !important;
+  color: #777;
+}
+
+body .sectionContent div.formatted blockquote p, body .sectionContent .redactor-editor blockquote p, body .sectionContent .fr-view blockquote p {
+  font-size:14px !important;
+  color: #777;
+}
+
+body .sectionContent div.formatted blockquote > :first-child, body .sectionContent .redactor-editor blockquote > :first-child, body .sectionContent .fr-view blockquote > :first-child {
+  margin-top: 0;
+}
+
+body .sectionContent div.formatted blockquote > :last-child, body .sectionContent .redactor-editor blockquote > :last-child, body .sectionContent .fr-view blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+body .sectionContent div.formatted table, body .sectionContent div.formatted .fr-view table {
+  padding: 0;
+  word-break: normal; 
+}
+
+body .sectionContent div.formatted table tr, body .sectionContent div.formatted .fr-view table tr {
+  border-top: 1px solid #CCC;
+  background-color: white;
+  margin: 0;
+  padding: 0;
+}
+
+body .sectionContent div.formatted table tr:nth-child(2n), body .sectionContent div.formatted .fr-view table tr:nth-child(2n) {
+  background-color: #f8f8f8;
+}
+
+body .sectionContent div.formatted table tr th, body .sectionContent div.formatted .fr-view table tr th {
+  font-weight: bold;
+  border: 1px solid #CCC;
+  text-align: left;
+  margin: 0;
+  padding: 6px 13px;
+}
+
+body .sectionContent div.formatted table tr td, body .sectionContent div.formatted .fr-view table tr td {
+  border: 1px solid #CCC;
+  text-align: left;
+  margin: 0;
+  padding: 6px 13px;
+}
+
+body .sectionContent div.formatted table tr th :first-child, body .sectionContent div.formatted table tr td :first-child, body .sectionContent div.formatted .fr-view table tr td :first-child {
+  margin-top: 0;
+}
+
+body .sectionContent div.formatted table tr th :last-child, body .sectionContent div.formatted table tr td :last-child, body .sectionContent div.formatted .fr-view table tr td :last-child {
+  margin-bottom: 0;
+}
+
+body .sectionContent div.formatted p img, body .sectionContent div.formatted div img {
+  max-width: 100%;
+}
+
+body .sectionContent div.t_ContentContainer div.formatted img {
+  max-width: 100%;
+  width: auto;
+  height: auto;
+}
+
+body .sectionContent div.formatted span.frame {
+  display: block;
+  overflow: hidden;
+}
+
+body .sectionContent div.formatted span.frame > span {
+  border: 1px solid #DDD;
+  display: block;
+  float: left;
+  overflow: hidden;
+  margin: 13px 0 0;
+  padding: 7px;
+  width: auto;
+}
+
+body .sectionContent div.formatted span.frame span img {
+  display: block;
+  float: left;
+}
+
+body .sectionContent div.formatted span.frame span span {
+  clear: both;
+  color: #333;
+  display: block;
+  padding: 5px 0 0;
+}
+
+body .sectionContent div.formatted span.align-center {
+  display: block;
+  overflow: hidden;
+  clear: both;
+}
+
+body .sectionContent div.formatted span.align-center > span {
+  display: block;
+  overflow: hidden;
+  margin: 13px auto 0;
+  text-align: center;
+}
+
+body .sectionContent div.formatted span.align-center span img {
+  margin: 0 auto;
+  text-align: center;
+}
+
+body .sectionContent div.formatted span.align-right {
+  display: block;
+  overflow: hidden;
+  clear: both;
+}
+
+body .sectionContent div.formatted span.align-right > span {
+  display: block;
+  overflow: hidden;
+  margin: 13px 0 0;
+  text-align: right;
+}
+
+body .sectionContent div.formatted span.align-right span img {
+  margin: 0;
+  text-align: right;
+}
+
+body .sectionContent div.formatted span.float-left {
+  display: block;
+  margin-right: 13px;
+  overflow: hidden;
+  float: left;
+}
+
+span.float-left span {
+  margin: 13px 0 0;
+}
+
+body .sectionContent div.formatted span.float-right {
+  display: block;
+  margin-left: 13px;
+  overflow: hidden;
+  float: right;
+}
+
+body .sectionContent div.formatted span.float-right > span {
+  display: block;
+  overflow: hidden;
+  margin: 13px auto 0;
+  text-align: right;
+}
+
+body .sectionContent div.formatted code, body .sectionContent div.formatted tt, body .sectionContent div.redactor-editor pre, body .sectionContent .fr-view pre {
+  margin: 0 2px;
+  padding: 0 5px;
+  white-space: pre-wrap;
+  border: 1px solid #eaeaea;
+  background-color: #f8f8f8;
+  border-radius: 3px;
+}
+
+body .sectionContent div.formatted pre code, body .sectionContent div.formatted .fr-view pre code {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap;
+  border: none;
+  background: transparent;
+}
+
+body .sectionContent div.formatted pre, body .sectionContent div.formatted .fr-view pre {
+  background-color: #f8f8f8;
+  border: 1px solid #CCC;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px;
+  white-space: pre-wrap;
+}
+
+body .sectionContent div.formatted .highlight pre {
+  background-color: #f8f8f8;
+  border: 1px solid #CCC;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px;
+}
+
+body .sectionContent div.redactor-editor code, body .sectionContent div.fr-view code {
+  border: 1px solid #eaeaea !important;
+  background-color: #f8f8f8 !important;
+  border-radius: 3px !important;
+}
+
+body .sectionContent div.formatted pre code, body .sectionContent div.formatted pre tt {
+  background-color: transparent;
+  border: none;
+}
+
+nobr {
+  white-space: normal !important;
+}
+
+body .sectionContent div.formatted table.borderless, body .sectionContent div.formatted table.borderless td, body .sectionContent div.formatted table.borderless th {
+  border:none !important;
+  padding:0px !important;
+  margin:0px !important;
+  background-color:transparent !important;
+}
+
+/* Diff Classes */
+span.diff-html-changed {
+  font-family: "Andale Mono" monospace;
+  font-size:80%;
+}
+
+span.diff-html-removed {
+  font-size:100%;
+  text-decoration:line-through;
+  color:#999;
+}
+
+span.diff-html-added {
+  font-size:100%;
+  background-color: #ccffcc; /* light green */
+}
+
+span.diff-html-added img {
+  border:10px solid #ccffcc;
+}
+
+*[dir="rtl"] {
+  direction: rtl !important;
+  unicode-bidi: embed !important;  
+  text-align:right!important;
+}
+
+.atwho-inserted {
+    display: inline-block;
+    border:1px solid #DBDBDB;
+    background-color:#E1E1E1;
+    color:#444;
+    border-radius: 5px;
+    font-size:12px;
+    padding:1px 2px;
+}
+			</style>
+		</head>
+
+		<body>
+			<p>Generated for Steve Monsen at 3:36PM 06/21/2026</p>
+
+			
+				<h2>[39587509] Setup container options from BC picklists (27 active trees)</h2>
+				
+					<p><p>Example: <a rel="nofollow" href="https://petals.com/5-silk-bamboo-tree/" target="_blank">https://petals.com/5-silk-bamboo-tree/</a> (see image below)</p>
+<p>These were a particularly challenging task in BC. It includes the following:</p>
+<ul>
+<li>
+<p>Content management: since many products share the same lists, perhaps a metafield to select a collection would best fit. This way the client could create and manage each list as a collection and be confident if they updates one collection then all the products using that collection would be updated.</p>
+</li>
+<li>
+<p>Product page presentation: This exists in 3 states:</p>
+<ul>
+<li>
+<p>Pre-selection state: When you first land on the page. The dropdown is collapsed and contains the words &quot;Choose Options:</p>
+</li>
+<li>
+<p>The selection state: Dropdown is open and contains a scrollable list of the products</p>
+</li>
+<li>
+<p>The selected state: Following a selection, the drop down is collapsed and now contains the selected product with a change button</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Cart (and cart drawer) presentation: The selected container is grouped with the primary product in the shopping cart row. I believe Shopify has a native 'product grouping’ option available to support this. The customer should have a link in the cart which will allow them to change the container selection.</p>
+</li>
+<li>
+<p>Checkout presentation: Like the cart, the selected container is grouped with the primary product in the shopping cart row</p>
+</li>
+<li>
+<p>Order fulfillment: The order itself should clearly identify that the selected container belongs with the primary product so fulfillment knows how to ‘build’ the product before shipping it.</p>
+</li>
+</ul>
+<p>This may be solvable with an OTS app, or may require custom development. You should identify if you can do this with an app within the first hour of task time.</p>
+<p>This task also includes time to migrate/setup the products in Shopify with the right containers.</p>
+<p><img src="https://s3.amazonaws.com/tw-inlineimages/664974/0/0/050e02eb26a74c42a0bf5bb7e7cb1f23.png" alt="image.png" /></p>
+</p>
+				
+
+				
+
+				<h3>Details</h3>
+				<table class="timeReport" cellspacing=1 cellpadding=0 width="100%">
+					<tr>
+						<td class="item">Status</td>
+						<td>Task is active</td>
+					</tr>
+					
+					<tr>
+						<td class="item">Start date</td>
+						<td>
+							
+								Not specified
+							
+						</td>
+					</tr>
+					<tr>
+						<td class="item">Due date</td>
+						<td>
+							
+								
+									06/18/2026
+								
+							
+						</td>
+					</tr>
+					
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+					<tr>
+						<td class="item">Estimated time</td>
+						<td>8 hours</td>
+					</tr>
+					
+					
+					<tr>
+						<td class="item">Privacy</td>
+						<td>Task is not private</td>
+					</tr>
+					<tr>
+						<td class="item">Progress</td>
+						<td>0%</td>
+					</tr>
+					<tr>
+						<td class="item">Assigned to</td>
+						<td>Steve M.</td>
+					</tr>
+					<tr>
+						<td class="item">Assigned by</td>
+						<td>Mark Wexler</td>
+					</tr>
+					
+						<tr>
+							<td class="item">Date assigned</td>
+							<td>02/09/2026 7:32AM</td>
+						</tr>
+					
+					<tr>
+						<td class="item">Task list</td>
+						<td>Custom</td>
+					</tr>
+					<tr>
+						<td class="item">Project</td>
+						<td>Petals.com: Shopify Migration</td>
+					</tr>
+					<tr>
+						<td class="item">Company</td>
+						<td>OfficeScapesDirect</td>
+					</tr>
+					
+						<tr>
+							<td class="item">Last modified</td>
+							<td>06/17/2026 11:19AM</td>
+						</tr>
+					
+					
+				</table>
+
+				
+
+				
+					<h3>Comments on this task</h3>
+
+					<table width=100% cellpadding=5>
+						
+							
+
+		
+
+		
+			
+			
+				
+			
+		
+
+		
+							
+							
+							
+							
+
+							<tr>
+								<td valign=top width=50 style="border-bottom:1px solid #ddd">
+									<img src="http://s3.amazonaws.com/TWFiles/664974/userAvatar/862ee89aef1213fabdbf0d99b54e5927.jpg" width="48" height="48" alt="Steve Monsen" border="0"/>
+								</td>
+								<td valign=top style="border-bottom:1px solid #ddd">
+									<div><strong>1</strong>. <strong>Steve Monsen</strong>  <span class="commentDate">April 12, 2026 at 5:45PM</span></div>
+									<div class="formatted" style="padding:10px 10px 10px 15px;">
+										
+											
+											<p><a href="/app/people/408161" rel="noopener noreferrer nofollow" target="_blank">@MarkW</a> it looks like I don't have permissions to view the products in BC admin. I'm attempting to associate the containers with the trees that they belong to and it would be useful to be able to look at them directly in bc admin, but I can do it from the front end if necessary.<img src="https://s3.amazonaws.com/tw-inlineimages/664974/0/0/85fc3209fd2049028a079040ad78d4e0.png" alt="image.png"></p>
+										
+									</div>
+								</td>
+							</tr>
+						
+							
+
+		
+
+		
+			
+			
+				
+			
+		
+
+		
+							
+							
+							
+							
+
+							<tr>
+								<td valign=top width=50 style="border-bottom:1px solid #ddd">
+									<img src="http://s3.amazonaws.com/TWFiles/664974/userAvatar/862ee89aef1213fabdbf0d99b54e5927.jpg" width="48" height="48" alt="Steve Monsen" border="0"/>
+								</td>
+								<td valign=top style="border-bottom:1px solid #ddd">
+									<div><strong>2</strong>. <strong>Steve Monsen</strong>  <span class="commentDate">April 12, 2026 at 8:47PM</span></div>
+									<div class="formatted" style="padding:10px 10px 10px 15px;">
+										
+											
+											<p>I was able to get all of the info I needed from the Storefront GraphQL interface. I was able to query the tree products and their associated containers.</p> 
+<p>Attached are the following files that we can use to create the container collections and attach the correct containers to the correct trees after the products have been migrated to Shopify.</p> 
+<ul> 
+ <li><p>bc-tree-container-manifest.csv <em>-- List of trees and their associated container products</em></p></li> 
+ <li><p>bc-container-set-groups.csv <em>-- List of container collections and which trees they belong to</em></p></li> 
+</ul> 
+<p>Once the products are migrated over, we can either link them up by hand, or I can use a script to automatically or semi-automatically connect the relevant collections to the trees with their associated Container products.</p> 
+<p>If you can bring in a BC legacy ID (like entityD) as a metafield, it might be easier to programmatically identify them, but not necessary.</p>
+										
+									</div>
+								</td>
+							</tr>
+						
+							
+
+		
+
+		
+			
+			
+		
+
+		
+							
+							
+							
+							
+
+							<tr>
+								<td valign=top width=50 style="border-bottom:1px solid #ddd">
+									<img src="http://s3.amazonaws.com/TWFiles/664974/userAvatar/twia_8fd5b760142d1f7ad5aa07fff0c13019.png" width="48" height="48" alt="Mark Wexler" border="0"/>
+								</td>
+								<td valign=top style="border-bottom:1px solid #ddd">
+									<div><strong>3</strong>. <strong>Mark Wexler</strong>  <span class="commentDate">April 13, 2026 at 4:46AM</span></div>
+									<div class="formatted" style="padding:10px 10px 10px 15px;">
+										
+											
+											<p>yuo now have full admin access to Petals</p>
+										
+									</div>
+								</td>
+							</tr>
+						
+							
+
+		
+
+		
+			
+			
+				
+			
+		
+
+		
+							
+							
+							
+							
+
+							<tr>
+								<td valign=top width=50 style="border-bottom:1px solid #ddd">
+									<img src="http://s3.amazonaws.com/TWFiles/664974/userAvatar/862ee89aef1213fabdbf0d99b54e5927.jpg" width="48" height="48" alt="Steve Monsen" border="0"/>
+								</td>
+								<td valign=top style="border-bottom:1px solid #ddd">
+									<div><strong>4</strong>. <strong>Steve Monsen</strong>  <span class="commentDate">April 14, 2026 at 9:56AM</span></div>
+									<div class="formatted" style="padding:10px 10px 10px 15px;">
+										
+											
+											<p>I was going to attempt to pull in the containers and trees with the API, but I see that there are products being imported at the moment via Matrixify. I'll wait for those.</p> 
+<p>My concern then is overlap with the mocked-in collections and products that we already have in there. They can be deleted and recreated with the products and collections that are coming in now if necessary. I'll check it once the imports are complete and go from there. </p> 
+<p>I wasn't sure if you have a preferred approach in that situation or not (Where newly imported products get created in addition to existing products and collections.) I know that Matrixify will overwrite existing collections and products if it’s told to, but sometimes it doesn't. </p> 
+<p>Anyway, I’ll double check it once the import are complete.</p>
+										
+									</div>
+								</td>
+							</tr>
+						
+							
+
+		
+
+		
+			
+			
+		
+
+		
+							
+							
+							
+							
+
+							<tr>
+								<td valign=top width=50 style="border-bottom:1px solid #ddd">
+									<img src="http://s3.amazonaws.com/TWFiles/664974/userAvatar/twia_8fd5b760142d1f7ad5aa07fff0c13019.png" width="48" height="48" alt="Mark Wexler" border="0"/>
+								</td>
+								<td valign=top style="border-bottom:1px solid #ddd">
+									<div><strong>5</strong>. <strong>Mark Wexler</strong>  <span class="commentDate">April 15, 2026 at 5:09AM</span></div>
+									<div class="formatted" style="padding:10px 10px 10px 15px;">
+										
+											
+											<p>The import is completed.</p>
+<p>The client will send us a spreadsheet with the container groups and trees they belong to. Hold tight for that.</p>
+										
+									</div>
+								</td>
+							</tr>
+						
+							
+
+		
+
+		
+			
+			
+				
+			
+		
+
+		
+							
+							
+							
+							
+
+							<tr>
+								<td valign=top width=50 style="border-bottom:1px solid #ddd">
+									<img src="http://s3.amazonaws.com/TWFiles/664974/userAvatar/862ee89aef1213fabdbf0d99b54e5927.jpg" width="48" height="48" alt="Steve Monsen" border="0"/>
+								</td>
+								<td valign=top style="border-bottom:1px solid #ddd">
+									<div><strong>6</strong>. <strong>Steve Monsen</strong>  <span class="commentDate">April 23, 2026 at 5:22PM</span></div>
+									<div class="formatted" style="padding:10px 10px 10px 15px;">
+										
+											
+											<p>I received the container spreadsheets. I've added them both as separate sheets to this Google sheet: <a rel="noopener noreferrer nofollow" href="https://docs.google.com/spreadsheets/d/1tPouT96i1qsz57n8DsWIY5SfHBhRu3BtRi9oQXR8KGc/edit?gid=1337077216#gid=1337077216" target="_blank">https://docs.google.com/spreadsheets/d/1tPouT96i1qsz57n8DsWIY5SfHBhRu3BtRi9oQXR8KGc/edit?gid=1337077216#gid=1337077216</a></p> 
+<p></p> 
+<p>So based on the Container Matrix, it looks like we should create collections for each group, like CTB255, and then update the product metafield to support the selection of multiple groups and render them accordingly in the pick list. </p> 
+<p>I'll make the updates and post here when they are complete. Thanks.</p>
+										
+									</div>
+								</td>
+							</tr>
+						
+							
+
+		
+
+		
+			
+			
+				
+			
+		
+
+		
+							
+							
+							
+							
+
+							<tr>
+								<td valign=top width=50 style="border-bottom:1px solid #ddd">
+									<img src="http://s3.amazonaws.com/TWFiles/664974/userAvatar/862ee89aef1213fabdbf0d99b54e5927.jpg" width="48" height="48" alt="Steve Monsen" border="0"/>
+								</td>
+								<td valign=top style="border-bottom:1px solid #ddd">
+									<div><strong>7</strong>. <strong>Steve Monsen</strong>  <span class="commentDate">April 23, 2026 at 10:27PM</span></div>
+									<div class="formatted" style="padding:10px 10px 10px 15px;">
+										
+											
+											<p><strong>Update:</strong> I’ve replaced the singular collection metafield to a plural collections metafield and updated the theme accordingly.</p>
+<p>I'm about half way through <a rel="noopener noreferrer nofollow" href="https://docs.google.com/spreadsheets/d/1tPouT96i1qsz57n8DsWIY5SfHBhRu3BtRi9oQXR8KGc/edit?gid=1337077216#gid=1337077216" target="_blank">the list</a>. The rest will be complete Friday morning <em>(tomorrow)</em>. </p>
+<p>I'll test and double check everything once the data entry is complete.</p>
+										
+									</div>
+								</td>
+							</tr>
+						
+							
+
+		
+
+		
+			
+			
+				
+			
+		
+
+		
+							
+							
+							
+							
+
+							<tr>
+								<td valign=top width=50 style="border-bottom:1px solid #ddd">
+									<img src="http://s3.amazonaws.com/TWFiles/664974/userAvatar/862ee89aef1213fabdbf0d99b54e5927.jpg" width="48" height="48" alt="Steve Monsen" border="0"/>
+								</td>
+								<td valign=top style="border-bottom:1px solid #ddd">
+									<div><strong>8</strong>. <strong>Steve Monsen</strong>  <span class="commentDate">April 24, 2026 at 9:29AM</span></div>
+									<div class="formatted" style="padding:10px 10px 10px 15px;">
+										
+											
+											<p><strong>Update:</strong> I’ve finished adding the container groups and updating the metafield and frontend. Just need to double-check the groups associations to make sure they were all entered correctly and this will be done.</p>
+										
+									</div>
+								</td>
+							</tr>
+						
+							
+
+		
+
+		
+			
+			
+		
+
+		
+							
+							
+							
+							
+
+							<tr>
+								<td valign=top width=50 style="border-bottom:1px solid #ddd">
+									<img src="http://s3.amazonaws.com/TWFiles/664974/userAvatar/twia_8fd5b760142d1f7ad5aa07fff0c13019.png" width="48" height="48" alt="Mark Wexler" border="0"/>
+								</td>
+								<td valign=top style="border-bottom:1px solid #ddd">
+									<div><strong>9</strong>. <strong>Mark Wexler</strong>  <span class="commentDate">June 17, 2026 at 6:39AM</span></div>
+									<div class="formatted" style="padding:10px 10px 10px 15px;">
+										
+											
+											<p><a href="/app/people/463362" rel="noopener noreferrer nofollow" data-mention="true" target="_blank">@SteveM</a> the container groups need to be revisited.</p> 
+<p>One collection should be created for each number header in the container matrix and be titles based on the group number: Container-group-1,Container-group-2,3,7 &amp; 8.</p> 
+<p>A SKU listed in the container group could represent multiple products. Basically all products with SKUs beginning with the SKU listed should qualify. For example CTB255 qualifies all product SKUs beginning with CTB255, so both CTB255-SBK and CTB255-SIV qualify for the group.</p> 
+<p></p> 
+<p>Example: </p> 
+<p>Collection "Container-group-1" which has CTF199, CTB240,CTB245 checked in the spreadsheet should contain: CTF199-SWH,CTF199-BCP,CTF199-LGH,CTF199-SBK,CTB240-BCP,CTB240-LGH,CTB240-SBK,CTB240-SWH,CTB245-HBR,CTB245-GGY,CTB245-MBK,CTB245-SAW</p> 
+<p>Then "Container-group-1" should be assigned to products HDB200RD, HDB200-WH (along with "Container-group-7" since that's the second container group for those products)</p> 
+<p>Remove all the container groups created with the SKU as the title.</p> 
+<p>Important: LEAVE the "CONTAINER-NDL" and "CONTAINER-GOLDCOVER" in place and attached to the products they are attached to. These represent the FREE container options which were missing from the spreadsheets provided to us.<br></p>
+										
+									</div>
+								</td>
+							</tr>
+						
+					</table>
+				
+
+				
+
+			<div id="activity">
+				
+					
+
+		<div class="projectActivity">
+		<table class="overview" cellpadding="0" cellspacing="0" width=100%>
+		
+
+			
+
+			
+			
+				
+					
+				
+			
+			
+
+			
+			
+			
+
+			
+				
+			
+
+			
+				
+			
+
+			<tr class=" task">
+
+			<td style="background-color:#f6f6f6" class="date" title="17 Jun" width=100>
+
+				
+					
+						<span style="padding:2px;">Jun 17 2026</span>
+					
+				
+
+			</td>
+
+			<td class="action" style="text-align:left">
+				
+
+						
+
+								
+
+								
+								
+
+								Edited at 6:41AM by Mark W.
+							
+
+					
+			</td>
+
+			<td class="item" style="text-align:right">
+
+			
+				<span style="font-size:11px;font-weight:normal;">Custom</span>
+			
+
+			</td>
+
+			<td width=16 ></td>
+			</tr>
+		
+
+			
+
+			
+			
+				
+				
+					
+				
+			
+
+			
+			
+			
+
+			
+				
+			
+
+			
+				
+			
+
+			<tr class=" task even">
+
+			<td style="background-color:#f6f6f6" class="date" title="17 Jun" width=100>
+
+				
+					
+						<span style="padding:2px;">Jun 17 2026</span>
+					
+				
+
+			</td>
+
+			<td class="action" style="text-align:left">
+				
+
+						
+
+						
+
+						
+							
+						
+
+						
+						
+						
+
+						Reopened at 6:39AM for Mark W. by Mark W.
+					
+			</td>
+
+			<td class="item" style="text-align:right">
+
+			
+				<span style="font-size:11px;font-weight:normal;">Custom</span>
+			
+
+			</td>
+
+			<td width=16 ></td>
+			</tr>
+		
+
+			
+
+			
+			
+				
+				
+					
+				
+			
+
+			
+			
+			
+
+			
+				
+			
+
+			
+				
+			
+
+			<tr class=" task">
+
+			<td style="background-color:#f6f6f6" class="date" title="16 Jun" width=100>
+
+				
+					
+						<span style="padding:2px;">Jun 16 2026</span>
+					
+				
+
+			</td>
+
+			<td class="action" style="text-align:left">
+				
+						
+
+						
+						
+
+						Completed at 11:55AM by Mark W.
+
+					
+			</td>
+
+			<td class="item" style="text-align:right">
+
+			
+				<span style="font-size:11px;font-weight:normal;">Custom</span>
+			
+
+			</td>
+
+			<td width=16 ></td>
+			</tr>
+		
+
+			
+
+			
+			
+				
+					
+				
+			
+			
+
+			
+			
+			
+
+			
+				
+			
+
+			
+				
+			
+
+			<tr class=" task even">
+
+			<td style="background-color:#f6f6f6" class="date" title="16 Feb" width=100>
+
+				
+					
+						<span style="padding:2px;">Feb 16 2026</span>
+					
+				
+
+			</td>
+
+			<td class="action" style="text-align:left">
+				
+
+						
+
+								
+
+								
+								
+
+								Edited at 5:10PM by Mark W.
+							
+
+					
+			</td>
+
+			<td class="item" style="text-align:right">
+
+			
+				<span style="font-size:11px;font-weight:normal;">Custom</span>
+			
+
+			</td>
+
+			<td width=16 ></td>
+			</tr>
+		
+
+			
+
+			
+			
+				
+					
+				
+			
+			
+
+			
+			
+			
+
+			
+				
+			
+
+			
+				
+			
+
+			<tr class=" task">
+
+			<td style="background-color:#f6f6f6" class="date" title="16 Feb" width=100>
+
+				
+					
+						<span style="padding:2px;">Feb 16 2026</span>
+					
+				
+
+			</td>
+
+			<td class="action" style="text-align:left">
+				
+
+						
+
+								
+
+								
+								
+
+								Edited at 5:10PM by Mark W.
+							
+
+					
+			</td>
+
+			<td class="item" style="text-align:right">
+
+			
+				<span style="font-size:11px;font-weight:normal;">Custom</span>
+			
+
+			</td>
+
+			<td width=16 ></td>
+			</tr>
+		
+
+			
+
+			
+			
+				
+					
+				
+			
+			
+
+			
+			
+			
+
+			
+				
+			
+
+			
+				
+			
+
+			<tr class=" task even">
+
+			<td style="background-color:#f6f6f6" class="date" title="16 Feb" width=100>
+
+				
+					
+						<span style="padding:2px;">Feb 16 2026</span>
+					
+				
+
+			</td>
+
+			<td class="action" style="text-align:left">
+				
+
+						
+
+								
+
+								
+								
+
+								Edited at 4:54PM by Mark W.
+							
+
+					
+			</td>
+
+			<td class="item" style="text-align:right">
+
+			
+				<span style="font-size:11px;font-weight:normal;">Custom</span>
+			
+
+			</td>
+
+			<td width=16 ></td>
+			</tr>
+		
+
+			
+
+			
+			
+				
+					
+				
+			
+			
+
+			
+			
+			
+
+			
+				
+			
+
+			
+				
+			
+
+			<tr class=" task">
+
+			<td style="background-color:#f6f6f6" class="date" title="09 Feb" width=100>
+
+				
+					
+						<span style="padding:2px;">Feb 09 2026</span>
+					
+				
+
+			</td>
+
+			<td class="action" style="text-align:left">
+				
+
+						
+
+								
+
+								
+								
+
+								Edited at 7:33AM by Mark W.
+							
+
+					
+			</td>
+
+			<td class="item" style="text-align:right">
+
+			
+				<span style="font-size:11px;font-weight:normal;">Custom</span>
+			
+
+			</td>
+
+			<td width=16 ></td>
+			</tr>
+		
+
+			
+
+			
+			
+				
+					
+						
+					
+				
+			
+			
+
+			
+			
+			
+
+			
+				
+			
+
+			
+				
+			
+
+			<tr class=" task even">
+
+			<td style="background-color:#f6f6f6" class="date" title="09 Feb" width=100>
+
+				
+					
+						<span style="padding:2px;">Feb 09 2026</span>
+					
+				
+
+			</td>
+
+			<td class="action" style="text-align:left">
+				
+						
+								
+
+								
+								
+								
+
+								Created and assigned at 7:32AM by Mark W. to 
+							
+					
+			</td>
+
+			<td class="item" style="text-align:right">
+
+			
+				<span style="font-size:11px;font-weight:normal;">Custom</span>
+			
+
+			</td>
+
+			<td width=16 ></td>
+			</tr>
+		
+		</table>
+		</div>
+
+		
+				
+			</div>
+		
+
+				
+
+					<h3>Time logged on this task</h3>
+
+					<div id="taskTime">
+						
+
+		
+
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+
+		
+
+		
+
+		
+
+		
+
+		
+
+		
+
+		
+
+		
+
+		
+			
+			
+			
+			
+
+
+
+			
+				
+				
+					
+				
+				
+				
+				
+					
+					
+						
+						
+						
+					
+				
+			
+				
+				
+					
+				
+				
+				
+				
+					
+					
+						
+						
+						
+					
+				
+			
+				
+				
+					
+				
+				
+				
+				
+					
+					
+						
+						
+						
+					
+				
+			
+				
+				
+					
+				
+				
+				
+				
+					
+					
+						
+						
+						
+					
+				
+			
+				
+				
+					
+				
+				
+				
+				
+					
+					
+						
+						
+						
+					
+				
+			
+				
+				
+					
+				
+				
+				
+				
+					
+					
+						
+						
+						
+					
+				
+			
+
+
+			
+
+			
+				<div id="timeTotals" class="reportOnly" style="display:block;clear:both">
+
+					
+						
+			
+		
+					
+
+					
+						<label class="first class="reportOnly"">Total:</label>
+					
+
+					<label class="reportOnly">Logged:</label>
+					<span  class="reportOnly">5 hours 15 minutes (5.25)</span>
+					
+					
+						<label class="reportOnly">Billable:</label>
+						<span class="reportOnly">5 hours 15 minutes (5.25)</span>
+					
+					
+					
+						
+							<label class="reportOnly">Estimated:</label>
+							<span class="reportOnly">8 hours (8.00)</span>
+						
+					
+					
+				</div>
+			
+
+			<br>
+
+			
+
+				
+				
+				
+
+				
+				
+				
+
+				
+
+					
+					
+					
+					
+						
+					
+
+					
+							
+							
+
+							
+
+							
+
+							
+								
+							
+
+							
+							
+							
+						
+
+
+					
+
+						
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+								
+							
+						
+					
+
+					
+
+						
+
+						
+
+						
+							
+							<table id="CCD4BA56-F7D5-4905-89F0003A2D836864" width="100%" border="0" cellspacing=0 cellpadding=0>
+								<tr>
+									
+										<th min-width="80">Date</th>
+									
+									
+									
+										<th min-width="100">Who</th>
+									
+									
+										<th>Description</th>
+									
+									
+										<th>Type</th>
+									
+									
+										<th min-width="55">Start</th>
+									
+									
+										<th min-width="55">End</th>
+									
+									
+										<th min-width="70">Billable</th>
+									
+									
+										<th min-width="70">Billed</th>
+									
+									
+										<th min-width="70">Time</th>
+									
+									
+										<th min-width="30">Hours</th>
+									
+									
+								</tr>
+						
+
+						
+
+						
+						
+						
+						
+						
+						
+					
+
+					
+					
+						
+					
+					
+
+					
+						
+							
+							
+						
+					
+
+					
+
+					
+						
+					
+
+					
+						
+						
+						
+					
+
+					<tr class="timeEntryRow" data-id="9416110">
+						
+							<td title="Logged: 03/29/2026 1:00PM">03/29/2026</td>
+						
+						
+						
+							<td>Steve Monsen</td>
+						
+						
+							<td class="task">
+								
+									
+									
+										<hr size=0 style="padding:0px;margin:0px;border-bottom:0px;border-top:1px solid #ccc;">
+									
+								
+								
+									<p>Implementing container quantity
+synchronization in cart and
+checkout.</p>
+								
+								
+								
+									
+								
+							</td>
+						
+
+						
+							<td class="list">Current task</td>
+						
+
+						
+							<td class="time" title="Logged: 03/29/2026 1:00PM">12:29PM</td>
+						
+						
+							<td class="time" title="Logged: 03/29/2026 1:00PM">12:59PM</span></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-check.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-checkoff.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="hms" data-time="30">30 mins</td>
+						
+						
+							<td class="dec" data-time="0.50">0.50</td>
+						
+						
+					</tr>
+
+					
+
+
+				
+
+					
+					
+					
+					
+						
+					
+
+					
+							
+							
+
+							
+
+							
+
+							
+								
+							
+
+							
+							
+							
+						
+
+
+					
+
+						
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+								
+							
+						
+					
+
+					
+
+						
+
+						
+
+						
+
+						
+
+						
+						
+						
+						
+						
+						
+					
+
+					
+					
+						
+					
+					
+
+					
+						
+							
+							
+						
+					
+
+					
+
+					
+						
+					
+
+					
+						
+						
+						
+					
+
+					<tr class="timeEntryRow" data-id="9485948">
+						
+							<td title="Logged: 04/12/2026 8:47PM">04/12/2026</td>
+						
+						
+						
+							<td>Steve Monsen</td>
+						
+						
+							<td class="task">
+								
+									
+									
+								
+								
+								
+								
+									
+								
+							</td>
+						
+
+						
+							<td class="list">Current task</td>
+						
+
+						
+							<td class="time" title="Logged: 04/12/2026 8:47PM">7:02PM</td>
+						
+						
+							<td class="time" title="Logged: 04/12/2026 8:47PM">8:47PM</span></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-check.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-checkoff.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="hms" data-time="105">1 hrs 45 mins</td>
+						
+						
+							<td class="dec" data-time="1.75">1.75</td>
+						
+						
+					</tr>
+
+					
+
+
+				
+
+					
+					
+					
+					
+						
+					
+
+					
+							
+							
+
+							
+
+							
+
+							
+								
+							
+
+							
+							
+							
+						
+
+
+					
+
+						
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+								
+							
+						
+					
+
+					
+
+						
+
+						
+
+						
+
+						
+
+						
+						
+						
+						
+						
+						
+					
+
+					
+					
+						
+					
+					
+
+					
+						
+							
+							
+						
+					
+
+					
+
+					
+						
+					
+
+					
+						
+						
+						
+					
+
+					<tr class="timeEntryRow" data-id="9549579">
+						
+							<td title="Logged: 04/23/2026 5:24PM">04/23/2026</td>
+						
+						
+						
+							<td>Steve Monsen</td>
+						
+						
+							<td class="task">
+								
+									
+									
+								
+								
+								
+								
+									
+								
+							</td>
+						
+
+						
+							<td class="list">Current task</td>
+						
+
+						
+							<td class="time" title="Logged: 04/23/2026 5:24PM">5:03PM</td>
+						
+						
+							<td class="time" title="Logged: 04/23/2026 5:24PM">5:23PM</span></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-check.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-checkoff.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="hms" data-time="20">20 mins</td>
+						
+						
+							<td class="dec" data-time="0.33">0.33</td>
+						
+						
+					</tr>
+
+					
+
+
+				
+
+					
+					
+					
+					
+						
+					
+
+					
+							
+							
+
+							
+
+							
+
+							
+								
+							
+
+							
+							
+							
+						
+
+
+					
+
+						
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+								
+							
+						
+					
+
+					
+
+					
+					
+						
+					
+					
+
+					
+						
+					
+
+					
+
+					
+						
+					
+
+					
+						
+						
+						
+					
+
+					<tr class="timeEntryRow" data-id="9550318">
+						
+							<td title="Logged: 04/23/2026 10:25PM">04/23/2026</td>
+						
+						
+						
+							<td>Steve Monsen</td>
+						
+						
+							<td class="task">
+								
+									
+									
+								
+								
+								
+								
+									
+								
+							</td>
+						
+
+						
+							<td class="list">Current task</td>
+						
+
+						
+							<td class="time" title="Logged: 04/23/2026 10:25PM">8:50PM</td>
+						
+						
+							<td class="time" title="Logged: 04/23/2026 10:25PM">10:25PM</span></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-check.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-checkoff.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="hms" data-time="95">1 hrs 35 mins</td>
+						
+						
+							<td class="dec" data-time="1.58">1.58</td>
+						
+						
+					</tr>
+
+					
+
+
+				
+
+					
+					
+					
+					
+						
+					
+
+					
+							
+							
+
+							
+
+							
+
+							
+								
+							
+
+							
+							
+							
+						
+
+
+					
+
+						
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+								
+							
+						
+					
+
+					
+
+						
+
+						
+
+						
+
+						
+
+						
+						
+						
+						
+						
+						
+					
+
+					
+					
+						
+					
+					
+
+					
+						
+							
+							
+						
+					
+
+					
+
+					
+						
+					
+
+					
+						
+						
+						
+					
+
+					<tr class="timeEntryRow" data-id="9553025">
+						
+							<td title="Logged: 04/24/2026 9:29AM">04/24/2026</td>
+						
+						
+						
+							<td>Steve Monsen</td>
+						
+						
+							<td class="task">
+								
+									
+									
+								
+								
+								
+								
+									
+								
+							</td>
+						
+
+						
+							<td class="list">Current task</td>
+						
+
+						
+							<td class="time" title="Logged: 04/24/2026 9:29AM">8:44AM</td>
+						
+						
+							<td class="time" title="Logged: 04/24/2026 9:29AM">9:29AM</span></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-check.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-checkoff.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="hms" data-time="45">45 mins</td>
+						
+						
+							<td class="dec" data-time="0.75">0.75</td>
+						
+						
+					</tr>
+
+					
+
+
+				
+
+					
+					
+					
+					
+						
+					
+
+					
+							
+							
+
+							
+
+							
+
+							
+								
+							
+
+							
+							
+							
+						
+
+
+					
+
+						
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+
+		
+		
+
+		
+		
+
+		
+		
+		
+
+
+		
+		
+
+		
+		
+			
+				
+					
+					
+					
+				
+			
+		
+
+		
+		
+		
+
+		
+
+		
+		
+
+		
+		
+
+		
+		
+							
+								
+							
+						
+					
+
+					
+
+					
+					
+						
+					
+					
+
+					
+						
+					
+
+					
+
+					
+						
+							
+						
+					
+
+					
+						
+						
+						
+					
+
+					<tr class="timeEntryRow" data-id="9553274">
+						
+							<td title="Logged: 04/24/2026 10:14AM">04/24/2026</td>
+						
+						
+						
+							<td>Steve Monsen</td>
+						
+						
+							<td class="task">
+								
+									
+									
+								
+								
+								
+								
+									
+								
+							</td>
+						
+
+						
+							<td class="list">Current task</td>
+						
+
+						
+							<td class="time" title="Logged: 04/24/2026 10:14AM">9:54AM</td>
+						
+						
+							<td class="time" title="Logged: 04/24/2026 10:14AM">10:14AM</span></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-check.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="check" style="text-align:center"><img src="http://tw-workhorse2.teamworkpm.net/images/newui/print-checkoff.png" width="13" height="12" alt=""></td>
+						
+						
+							<td class="hms" data-time="20">20 mins</td>
+						
+						
+							<td class="dec" data-time="0.33">0.33</td>
+						
+						
+					</tr>
+
+					
+						</table>
+
+						
+					
+
+
+				
+
+
+
+			
+		
+					</div>
+				
+
+				
+
+				
+					
+
+	
+
+	
+
+	
+		
+					
+				
+			
+		</body>
+		</html>
+	
