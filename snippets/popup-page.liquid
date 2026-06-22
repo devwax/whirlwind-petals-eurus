@@ -1,0 +1,53 @@
+<template x-teleport="body">
+  <div
+    id="PagePopup"
+    x-show="$store.xPagePopup.open"
+    x-cloak
+    class="page-popup flex items-end md:items-center fixed top-0 left-0 right-0 bottom-0 z-[100] bg-[#acacac] bg-opacity-30"
+    @click.self="$store.xModal.removeFocus(); $store.xPagePopup.close()"
+    @keyup.escape.window="$store.xModal.removeFocus(); $store.xPagePopup.close()"
+  >
+    <div
+      x-show="$store.xPagePopup.open"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Promotion details"
+      class="page-popup__panel w-full duration-400 mx-auto md:w-3/4 lg:w-3/5 max-w-[650px] pb-5 pt-10 md:pt-14 md:pb-14 relative md:pl-2.5 md:pr-2.5 lg:ml-auto lg:mr-auto bg-[rgba(var(--background-color))]{% if settings.edges_type == 'rounded_corners' %} rounded-[10px]{% endif %}"
+      x-transition:enter="transition-all ease-in-out duration-500"
+      x-transition:enter-start="opacity-0 transform translate-y-1/3"
+      x-transition:enter-end="opacity-100 transform translate-y-0"
+      x-transition:leave="transition-all ease-in-out duration-500"
+      x-transition:leave-end="opacity-0 transform translate-y-1/3"
+      x-intersect.full="$store.xModal.focus('PagePopup', 'ClosePagePopup')"
+      @click.stop
+    >
+      <button
+        id="ClosePagePopup"
+        type="button"
+        class="absolute icon-close-container group-close-btn rounded-full cursor-pointer z-10 top-1 right-2 rtl:right-auto rtl:left-2 lg:top-3 md:right-8 rtl:md:left-8 pb-3 pt-3 pl-4 pr-4 h-10 w-10"
+        aria-label="Close promotion details"
+        @click.prevent="$store.xModal.removeFocus(); $store.xPagePopup.close()"
+      >
+        {% render 'icon-alls', icon: 'icon-close', animation_class: 'icon-close-animation' %}
+      </button>
+
+      <div
+        x-show="$store.xPagePopup.loading"
+        x-cloak
+        class="page-popup__loading flex items-center justify-center min-h-[200px]"
+      >
+        <span class="inline-block animate-spin w-8 h-8 text-[rgba(var(--colors-text))]">
+          {% render 'icon-alls', icon: 'icon-loading' %}
+        </span>
+      </div>
+
+      <div
+        x-show="!$store.xPagePopup.loading"
+        class="page-popup__scroll pl-5 pr-5 relative bg-[rgba(var(--background-color))] overflow-y-auto overflow-x-hidden scrollbar-body max-h-[calc(85vh-96px)] md:max-h-[80vh]"
+      >
+        {{ 'page.css' | asset_url | stylesheet_tag: preload: true }}
+        <div id="page-popup-content" class="page-popup__content rte page__body-container page__body pl-0 pr-0"></div>
+      </div>
+    </div>
+  </div>
+</template>
