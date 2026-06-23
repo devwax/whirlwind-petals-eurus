@@ -387,3 +387,47 @@
   max-width: 100%;
   height: auto;
 }
+
+/* Footer decorative flower — desktop background; mobile block below menus (avoids text overlap) */
+@media screen and (min-width: 768px) {
+  .background-footer > div.flex-wrap {
+    background-image: url(https://cdn.shopify.com/s/files/1/0626/3681/8505/files/footer-flower.png?v=1774386832);
+    background-repeat: no-repeat;
+    background-position: bottom right;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .footer-link-list__bottom-badges {
+    display: none;
+  }
+
+  .background-footer > div.flex-wrap {
+    background-image: none;
+  }
+
+  .background-footer {
+    overflow: hidden;
+  }
+
+  .background-footer::after {
+    content: '';
+    position: absolute;
+    right: -25%;
+    bottom: 0;
+    width: 150%;
+    height: 180px;
+    background-image: url(https://cdn.shopify.com/s/files/1/0626/3681/8505/files/footer-flower.png?v=1774386832);
+    background-repeat: no-repeat;
+    background-position: right bottom;
+    background-size: contain;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .background-footer > div.flex-wrap,
+  .background-footer > div.additional-footer {
+    position: relative;
+    z-index: 1;
+  }
+}
