@@ -84,9 +84,36 @@
     >
       <ul class="container-picker__list" role="listbox" aria-label="Container options">
         {%- for coll in container_collections -%}
-          {%- for container in coll.products limit: 50 -%}
-            {%- render 'container-picker-item', container: container, only_available: only_available -%}
-          {%- endfor -%}
+          {%- case coll.handle -%}
+            {%- when 'ct-ndl' -%}
+              {%- if settings.petals_container_ndl_variant_id != blank -%}
+                {%- render 'container-picker-pinned-item',
+                  variant_id: settings.petals_container_ndl_variant_id,
+                  handle: 'non-decorative-liner-free-0-00',
+                  title: settings.petals_container_ndl_title,
+                  price: 0,
+                  image: settings.petals_container_ndl_image,
+                  image_alt: settings.petals_container_ndl_title,
+                  product_url: '/products/non-decorative-liner-free-0-00'
+                -%}
+              {%- endif -%}
+            {%- when 'ct-gold' -%}
+              {%- if settings.petals_container_gold_variant_id != blank -%}
+                {%- render 'container-picker-pinned-item',
+                  variant_id: settings.petals_container_gold_variant_id,
+                  handle: 'gold-cover',
+                  title: settings.petals_container_gold_title,
+                  price: 0,
+                  image: settings.petals_container_gold_image,
+                  image_alt: settings.petals_container_gold_title,
+                  product_url: '/products/gold-cover'
+                -%}
+              {%- endif -%}
+            {%- else -%}
+              {%- for container in coll.products limit: 50 -%}
+                {%- render 'container-picker-item', container: container, only_available: only_available -%}
+              {%- endfor -%}
+          {%- endcase -%}
         {%- endfor -%}
       </ul>
     </div>

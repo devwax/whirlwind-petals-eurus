@@ -10,6 +10,10 @@ Hide container-only products (Gold Cover, NDL) from storefront discovery.
 Usage:
   python3 scripts/hide-container-only-products.py --dry-run
   python3 scripts/hide-container-only-products.py --apply
+
+Pinned picker metadata lives in Theme settings → Petals — container free options
+(variant IDs + images). ct-ndl / ct-gold collections use that data instead of
+collection.products so free options stay selectable when unpublished from Online Store.
 """
 
 from __future__ import annotations
