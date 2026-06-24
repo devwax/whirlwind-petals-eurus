@@ -1,0 +1,70 @@
+{%- comment -%}
+  Container picker row backed by theme settings (not collection.products).
+  Used for free options that may be unpublished from Online Store.
+{%- endcomment -%}
+{%- liquid
+  assign petals_container_only_handles = 'gold-cover,non-decorative-liner-free-0-00' | split: ','
+  assign hide_container_product_url = false
+  if petals_container_only_handles contains handle
+    assign hide_container_product_url = true
+  endif
+-%}
+<li
+  class="container-picker__item"
+  role="option"
+  aria-selected="false"
+  data-variant-id="{{ variant_id }}"
+  data-product-handle="{{ handle }}"
+  {% unless hide_container_product_url %}data-product-url="{{ product_url }}"{% endunless %}
+  data-product-title="{{ title | escape }}"
+  data-price="{{ price }}"
+  data-price-formatted="{% if price == 0 %}FREE{% else %}+ {{ price | money }}{% endif %}"
+  data-available="true"
+  {% if image != blank %}
+    data-image-url="{{ image | image_url: width: 80, height: 80, crop: 'center' }}"
+    data-detail-image-url="{{ image | image_url: width: 600, height: 600, crop: 'center' }}"
+    data-image-alt="{{ image_alt | default: title | escape }}"
+  {% endif %}
+>
+  <div class="container-picker__item-image">
+    {%- if image != blank -%}
+      <img
+        src="{{ image | image_url: width: 80, height: 80, crop: 'center' }}"
+        alt="{{ image_alt | default: title | escape }}"
+        width="80"
+        height="80"
+        loading="lazy"
+      >
+    {%- else -%}
+      <div class="container-picker__item-image-placeholder"></div>
+    {%- endif -%}
+  </div>
+
+  <div class="container-picker__item-details">
+    <p class="container-picker__item-title">{{ title }}</p>
+    <p class="container-picker__item-price">
+      {%- if price == 0 -%}
+        FREE + $0.00
+      {%- else -%}
+        + {{ price | money }}
+      {%- endif -%}
+    </p>
+    <p class="container-picker__item-availability container-picker__item-availability--in-stock">
+      Available - Est Delivery 5-10 Days
+    </p>
+    <button
+      type="button"
+      class="container-picker__item-detail-link"
+      aria-label="View details for {{ title | escape }}"
+      tabindex="-1"
+    >Detail</button>
+  </div>
+
+  <button
+    type="button"
+    class="container-picker__item-select-btn"
+    aria-label="Select {{ title | escape }}"
+  >
+    SELECT
+  </button>
+</li>
