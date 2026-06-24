@@ -381,14 +381,20 @@ class ContainerPicker extends HTMLElement {
         ? Alpine.store('xCartHelper').getSectionsToRender().map((s) => s.id)
         : [];
 
+      const mainItemProperties = {
+        'Selected Container': `${containerTitle} (${containerPriceFormatted})`,
+      };
+      const backorderMessage = form.querySelector('input[name="properties[Backorder Message]"]')?.value;
+      if (backorderMessage) {
+        mainItemProperties['Backorder Message'] = backorderMessage;
+      }
+
       const body = {
         items: [
           {
             id: parseInt(mainVariantId, 10),
             quantity: parseInt(form.querySelector('[name="quantity"]')?.value || '1', 10),
-            properties: {
-              'Selected Container': `${containerTitle} (${containerPriceFormatted})`,
-            },
+            properties: mainItemProperties,
           },
           {
             id: parseInt(this.selected.variantId, 10),
