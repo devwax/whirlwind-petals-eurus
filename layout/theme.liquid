@@ -152,6 +152,15 @@
       $dispatch('init-run'); runDispatch = false;
     }"
   >
+    {%- if template.name == 'product' and product -%}
+      {%- liquid
+        assign petals_container_only_handles = 'gold-cover,non-decorative-liner-free-0-00' | split: ','
+      -%}
+      {%- if petals_container_only_handles contains product.handle -%}
+        <meta http-equiv="refresh" content="0; url=/404">
+        <script>window.location.replace('/404');</script>
+      {%- endif -%}
+    {%- endif -%}
     {%- if settings.enable_tab_attention -%}
       {%- if settings.message_1 != blank or settings.message_2 != blank -%}
         <div

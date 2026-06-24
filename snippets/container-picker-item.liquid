@@ -2,7 +2,14 @@
   One selectable row in the container picker list.
   Expects: container (product), only_available (boolean, optional)
 {%- endcomment -%}
-{%- assign container_variant = container.selected_or_first_available_variant -%}
+{%- liquid
+  assign petals_container_only_handles = 'gold-cover,non-decorative-liner-free-0-00' | split: ','
+  assign container_variant = container.selected_or_first_available_variant
+  assign hide_container_product_url = false
+  if petals_container_only_handles contains container.handle
+    assign hide_container_product_url = true
+  endif
+-%}
 {%- assign show_item = true -%}
 {%- if only_available -%}
   {%- if container_variant.available == false or container.available == false -%}
@@ -16,7 +23,7 @@
   aria-selected="false"
   data-variant-id="{{ container_variant.id }}"
   data-product-handle="{{ container.handle }}"
-  data-product-url="{{ container.url }}"
+  {% unless hide_container_product_url %}data-product-url="{{ container.url }}"{% endunless %}
   data-product-title="{{ container.title | escape }}"
   data-price="{{ container_variant.price }}"
   data-price-formatted="{% if container_variant.price == 0 %}FREE{% else %}+ {{ container_variant.price | money }}{% endif %}"
