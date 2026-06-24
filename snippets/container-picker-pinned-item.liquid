@@ -8,6 +8,18 @@
   if petals_container_only_handles contains handle
     assign hide_container_product_url = true
   endif
+
+  assign thumb_url = ''
+  assign detail_url = ''
+  if image_url != blank
+    if image_url contains '?'
+      assign thumb_url = image_url | append: '&width=80&height=80&crop=center'
+      assign detail_url = image_url | append: '&width=600&height=600&crop=center'
+    else
+      assign thumb_url = image_url | append: '?width=80&height=80&crop=center'
+      assign detail_url = image_url | append: '?width=600&height=600&crop=center'
+    endif
+  endif
 -%}
 <li
   class="container-picker__item"
@@ -20,16 +32,16 @@
   data-price="{{ price }}"
   data-price-formatted="{% if price == 0 %}FREE{% else %}+ {{ price | money }}{% endif %}"
   data-available="true"
-  {% if image != blank %}
-    data-image-url="{{ image | image_url: width: 80, height: 80, crop: 'center' }}"
-    data-detail-image-url="{{ image | image_url: width: 600, height: 600, crop: 'center' }}"
+  {% if thumb_url != blank %}
+    data-image-url="{{ thumb_url }}"
+    data-detail-image-url="{{ detail_url }}"
     data-image-alt="{{ image_alt | default: title | escape }}"
   {% endif %}
 >
   <div class="container-picker__item-image">
-    {%- if image != blank -%}
+    {%- if thumb_url != blank -%}
       <img
-        src="{{ image | image_url: width: 80, height: 80, crop: 'center' }}"
+        src="{{ thumb_url }}"
         alt="{{ image_alt | default: title | escape }}"
         width="80"
         height="80"
