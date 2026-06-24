@@ -11,6 +11,38 @@
   var GIFT_MAX_LINES = 6;
   var GIFT_MAX_CHARS_PER_LINE = 25;
 
+  function getCursorLineInfo(textarea) {
+    var value = textarea.value || '';
+    var pos = typeof textarea.selectionStart === 'number' ? textarea.selectionStart : value.length;
+    var textBefore = value.slice(0, pos);
+    var lineIndex = textBefore.split('\n').length;
+    var lines = value ? value.split('\n') : [];
+    var currentLine = lines[lineIndex - 1] || '';
+
+    return {
+      lineIndex: lineIndex,
+      currentLine: currentLine,
+      lines: lines,
+      lineCount: lines.length
+    };
+  }
+
+  function findStatusContainer(textarea) {
+    if (textarea.id) {
+      var byId = document.getElementById(textarea.id + '-status');
+      if (byId) return byId;
+    }
+
+    var next = textarea.nextElementSibling;
+    if (next && next.matches('[data-petals-gift-message-status]')) return next;
+
+    if (textarea.parentElement) {
+      return textarea.parentElement.querySelector('[data-petals-gift-message-status]');
+    }
+
+    return null;
+  }
+
   function enforceGiftMessageLimit(textarea) {
     var lines = textarea.value.split('\n');
     var changed = false;
@@ -38,30 +70,141 @@
     }
   }
 
-  function updateGiftCounter(textarea, counterEl) {
-    if (!counterEl) return;
-    var lines = textarea.value ? textarea.value.split('\n') : [];
-    var lineCount = lines.length || 0;
-    counterEl.textContent = lineCount + ' / ' + GIFT_MAX_LINES + ' lines';
+  function showGiftMessageWarning(textarea, statusContainer, message) {
+    if (!statusContainer) return;
+    var warningEl = statusContainer.querySelector('.petals-gift-message-status__warning');
+    if (!warningEl) return;
+
+    warningEl.textContent = message;
+    warningEl.hidden = false;
+    warningEl.dataset.locked = 'true';
+    textarea.classList.add('petals-gift-message-textarea--blocked');
+
+    clearTimeout(warningEl._petalsTimeout);
+    warningEl._petalsTimeout = setTimeout(function () {
+      delete warningEl.dataset.locked;
+      textarea.classList.remove('petals-gift-message-textarea--blocked');
+      updateGiftMessageStatus(textarea, statusContainer);
+    }, 2500);
   }
 
-  function initGiftMessageTextarea(textarea, counterEl) {
-    if (!textarea) return;
+  function updateGiftMessageStatus(textarea, statusContainer) {
+    if (!statusContainer) return;
+
+    var countsEl = statusContainer.querySelector('.petals-gift-message-status__counts');
+    var warningEl = statusContainer.querySelector('.petals-gift-message-status__warning');
+    var info = getCursorLineInfo(textarea);
+    var lineCount = info.lineCount;
+    var atLineLimit = info.currentLine.length >= GIFT_MAX_CHARS_PER_LINE;
+    var atLinesLimit = lineCount >= GIFT_MAX_LINES;
+
+    if (countsEl) {
+      if (!textarea.value) {
+        countsEl.textContent = '0 / ' + GIFT_MAX_LINES + ' lines';
+      } else {
+        countsEl.textContent =
+          'Line ' +
+          info.lineIndex +
+          ': ' +
+          info.currentLine.length +
+          ' / ' +
+          GIFT_MAX_CHARS_PER_LINE +
+          ' characters · ' +
+          lineCount +
+          ' / ' +
+          GIFT_MAX_LINES +
+          ' lines';
+      }
+    }
+
+    textarea.classList.toggle('petals-gift-message-textarea--at-line-limit', atLineLimit);
+    textarea.classList.toggle('petals-gift-message-textarea--at-lines-limit', atLinesLimit);
+
+    if (warningEl && !warningEl.dataset.locked) {
+      if (atLineLimit) {
+        warningEl.textContent = 'Maximum ' + GIFT_MAX_CHARS_PER_LINE + ' characters per line.';
+        warningEl.hidden = false;
+      } else if (atLinesLimit) {
+        warningEl.textContent = 'Maximum ' + GIFT_MAX_LINES + ' lines.';
+        warningEl.hidden = false;
+      } else {
+        warningEl.textContent = '';
+        warningEl.hidden = true;
+      }
+    }
+  }
+
+  function initGiftMessageTextarea(textarea, statusContainer) {
+    if (!textarea || textarea.dataset.petalsGiftMessageInit === 'true') return;
+    textarea.dataset.petalsGiftMessageInit = 'true';
+
+    if (!statusContainer) statusContainer = findStatusContainer(textarea);
+    if (statusContainer && !statusContainer.id && textarea.id) {
+      statusContainer.id = textarea.id + '-status';
+    }
+    if (statusContainer && textarea.id) {
+      textarea.setAttribute('aria-describedby', statusContainer.id);
+    }
+
     enforceGiftMessageLimit(textarea);
-    updateGiftCounter(textarea, counterEl);
+    updateGiftMessageStatus(textarea, statusContainer);
+
     textarea.addEventListener('input', function () {
+      var before = textarea.value;
       enforceGiftMessageLimit(textarea);
-      updateGiftCounter(textarea, counterEl);
+
+      if (before !== textarea.value) {
+        showGiftMessageWarning(
+          textarea,
+          statusContainer,
+          'Maximum ' + GIFT_MAX_CHARS_PER_LINE + ' characters per line.'
+        );
+      }
+
+      updateGiftMessageStatus(textarea, statusContainer);
     });
+
     textarea.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
         var lines = textarea.value.split('\n');
         if (lines.length >= GIFT_MAX_LINES) {
           e.preventDefault();
+          showGiftMessageWarning(textarea, statusContainer, 'Maximum ' + GIFT_MAX_LINES + ' lines.');
+          updateGiftMessageStatus(textarea, statusContainer);
         }
       }
     });
+
+    textarea.addEventListener('keyup', function () {
+      updateGiftMessageStatus(textarea, statusContainer);
+    });
+
+    textarea.addEventListener('click', function () {
+      updateGiftMessageStatus(textarea, statusContainer);
+    });
   }
+
+  function initAllGiftMessageTextareas() {
+    var seen = new Set();
+
+    ['#cart-attribute-gift-message', '#x-cart-drawer-gift-message', '[data-petals-gift-message]'].forEach(function (selector) {
+      document.querySelectorAll(selector).forEach(function (textarea) {
+        if (seen.has(textarea)) return;
+        seen.add(textarea);
+        initGiftMessageTextarea(textarea, findStatusContainer(textarea));
+      });
+    });
+  }
+
+  window.PetalsGiftMessage = {
+    MAX_LINES: GIFT_MAX_LINES,
+    MAX_CHARS_PER_LINE: GIFT_MAX_CHARS_PER_LINE,
+    enforceLimit: enforceGiftMessageLimit,
+    getCursorLineInfo: getCursorLineInfo,
+    updateStatus: updateGiftMessageStatus,
+    initTextarea: initGiftMessageTextarea,
+    initAll: initAllGiftMessageTextareas
+  };
 
   /**
    * Cart drawer gift UI — must work even when Alpine.data() registered late.
@@ -78,6 +221,11 @@
     if (cb && giftEl) cb.checked = giftEl.value === 'Yes';
     var wrap = document.getElementById('petals-drawer-gift-msg-wrap');
     if (wrap && cb) wrap.classList.toggle('hidden', !cb.checked);
+    if (ta) {
+      var status = findStatusContainer(ta);
+      initGiftMessageTextarea(ta, status);
+      updateGiftMessageStatus(ta, status);
+    }
     var store = A.store('xCartHelper');
     if (!store) return;
     store.openField = store.openField === 'note' ? false : 'note';
@@ -126,7 +274,11 @@
         if (giftEl && e.detail.attributes && e.detail.attributes['Is Gift'] !== undefined) {
           giftEl.value = e.detail.attributes['Is Gift'] || '';
         }
-        if (ta && e.detail.message !== undefined) ta.value = e.detail.message || '';
+        if (ta && e.detail.message !== undefined) {
+          ta.value = e.detail.message || '';
+          var status = findStatusContainer(ta);
+          updateGiftMessageStatus(ta, status);
+        }
         if (cb && e.detail.attributes && e.detail.attributes['Is Gift'] !== undefined) {
           cb.checked = e.detail.attributes['Is Gift'] === 'Yes';
           var wrap = document.getElementById('petals-drawer-gift-msg-wrap');
@@ -213,8 +365,6 @@
     if (!isDrawer) {
       if (giftCheckbox) giftCheckbox.addEventListener('change', syncToCart);
       if (giftTextarea) {
-        var mainCounter = document.getElementById('petals-gift-message-counter');
-        initGiftMessageTextarea(giftTextarea, mainCounter);
         giftTextarea.addEventListener('input', syncToCart);
         giftTextarea.addEventListener('change', syncToCart);
       }
@@ -230,9 +380,7 @@
     document.querySelectorAll('[data-petals-cart-extras]').forEach(function (el) {
       initContainer(el);
     });
-    var drawerTa = document.getElementById('x-cart-drawer-gift-message');
-    var drawerCounter = document.getElementById('petals-drawer-gift-counter');
-    initGiftMessageTextarea(drawerTa, drawerCounter);
+    initAllGiftMessageTextareas();
   }
 
   if (document.readyState === 'loading') {

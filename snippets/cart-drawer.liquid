@@ -1961,10 +1961,19 @@
               aria-label="{{ 'sections.cart.gift_message' | t }}"
               rows="6"
               cols="50"
+              data-petals-gift-message
               class="w-full pl-4 pr-4 pt-4 pb-4 border border-solid bg-[rgba(var(--background-color),1)] text-[rgba(var(--colors-text))] focus-within:outline-none placeholder:text-current placeholder:opacity-60 resize-none{% if settings.edges_type == 'rounded_corners' %} !rounded-md{% endif %}"
               placeholder="{{ 'sections.cart.gift_message' | t }}"
             >{{- cart.note -}}</textarea>
-            <p id="petals-drawer-gift-counter" class="text-xs opacity-60 mt-1 text-right" aria-live="polite"></p>
+            <div
+              id="x-cart-drawer-gift-message-status"
+              class="petals-gift-message-status"
+              data-petals-gift-message-status
+              aria-live="polite"
+            >
+              <p class="petals-gift-message-status__counts"></p>
+              <p class="petals-gift-message-status__warning" hidden></p>
+            </div>
           </div>
           <div class="flex mt-5">
             <button
