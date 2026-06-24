@@ -67,7 +67,11 @@
       <a href="{{ item.url }}" class="text-[rgba(var(--colors-heading))] table mb-3 disable-effect hover-text-link p-break-words">
         {{ item.product.title | escape }}
       </a>
-      <span>{{item.sku }}</span>
+      {% render 'whirlwind-item-id',
+        sku: item.sku,
+        barcode: item.variant.barcode,
+        class: 'mb-2 text-small uppercase p-break-words'
+      %}
       <div class="price mb-2 md:hidden">
         {%- assign item_original_price = item.variant.compare_at_price | default: item.original_price -%}
         {%- if item_original_price > item.final_price -%}

@@ -3,7 +3,9 @@
   <div class="header">
     <div class="shop-title">
       <p class="to-uppercase">
-        {{ shop.name }}
+
+  <img src="https://cdn.shopify.com/s/files/1/0626/3681/8505/files/petals_logo.svg?v=1774379282" style="width:100px; height: auto;">
+
       </p>
     </div>
     <div class="order-title">
@@ -48,6 +50,7 @@
             <br>
             {{ shipping_address.phone }}
           {% endif %}
+        <br><br><strong class="subtitle-bold to-uppercase">Shipping Method: {{ order.shipping_method.title }}</strong>
         {% else %}
           No shipping address
         {% endif %}
@@ -205,7 +208,7 @@
               {% endif %}
               {% if line_item.sku != blank %}
                 <span class="line-item-description-line">
-                  {{ line_item.sku }}
+                  Item #: {{ line_item.sku }}
                 </span>
               {% endif %}
               {% for group in line_item.groups %}
@@ -249,7 +252,7 @@
                 {% endif %}
                 {% if child_line.sku != blank %}
                   <span class="line-item-description-line">
-                    {{ child_line.sku }}
+                    Item #: {{ child_line.sku }}
                   </span>
                 {% endif %}
               </p>
@@ -300,6 +303,7 @@
     </p>
   </div>
 </div>
+
 <style type="text/css">
   body {
     font-size: 15px;

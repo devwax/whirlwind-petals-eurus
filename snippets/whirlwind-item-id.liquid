@@ -1,0 +1,9 @@
+{%- comment -%}
+  Renders Item # and optional UPC for cart/order line items.
+  Accepts: sku (required), barcode (optional), class (optional)
+{%- endcomment -%}
+{%- if sku != blank -%}
+  <span class="whirlwind-item-id{% if class != blank %} {{ class }}{% endif %}">
+    Item #: {{ sku | escape }}{%- if barcode != blank %} | UPC {{ barcode | escape }}{%- endif -%}
+  </span>
+{%- endif -%}
