@@ -8,6 +8,61 @@
   if (!window.Eurus) window.Eurus = {};
   if (!window.Eurus.loadedScript) window.Eurus.loadedScript = new Set();
 
+  var GIFT_MAX_LINES = 6;
+  var GIFT_MAX_CHARS_PER_LINE = 25;
+
+  function enforceGiftMessageLimit(textarea) {
+    var lines = textarea.value.split('\n');
+    var changed = false;
+
+    if (lines.length > GIFT_MAX_LINES) {
+      lines = lines.slice(0, GIFT_MAX_LINES);
+      changed = true;
+    }
+
+    lines = lines.map(function (line) {
+      if (line.length > GIFT_MAX_CHARS_PER_LINE) {
+        changed = true;
+        return line.slice(0, GIFT_MAX_CHARS_PER_LINE);
+      }
+      return line;
+    });
+
+    if (changed) {
+      var start = textarea.selectionStart;
+      var end = textarea.selectionEnd;
+      textarea.value = lines.join('\n');
+      var maxPos = textarea.value.length;
+      textarea.selectionStart = Math.min(start, maxPos);
+      textarea.selectionEnd = Math.min(end, maxPos);
+    }
+  }
+
+  function updateGiftCounter(textarea, counterEl) {
+    if (!counterEl) return;
+    var lines = textarea.value ? textarea.value.split('\n') : [];
+    var lineCount = lines.length || 0;
+    counterEl.textContent = lineCount + ' / ' + GIFT_MAX_LINES + ' lines';
+  }
+
+  function initGiftMessageTextarea(textarea, counterEl) {
+    if (!textarea) return;
+    enforceGiftMessageLimit(textarea);
+    updateGiftCounter(textarea, counterEl);
+    textarea.addEventListener('input', function () {
+      enforceGiftMessageLimit(textarea);
+      updateGiftCounter(textarea, counterEl);
+    });
+    textarea.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        var lines = textarea.value.split('\n');
+        if (lines.length >= GIFT_MAX_LINES) {
+          e.preventDefault();
+        }
+      }
+    });
+  }
+
   /**
    * Cart drawer gift UI — must work even when Alpine.data() registered late.
    * Called from cart-drawer.liquid via @click (Alpine evaluates on window).
@@ -34,6 +89,7 @@
     var ta = document.getElementById('x-cart-drawer-gift-message');
     var cb = document.getElementById('petals-drawer-gift-checkbox');
     var cat = document.getElementById('petals-cart-drawer-catalog-code');
+    if (ta) enforceGiftMessageLimit(ta);
     var isGift = cb && cb.checked;
     var raw = ta ? String(ta.value).trim() : '';
     var noteVal = isGift && raw ? raw : '';
@@ -157,6 +213,8 @@
     if (!isDrawer) {
       if (giftCheckbox) giftCheckbox.addEventListener('change', syncToCart);
       if (giftTextarea) {
+        var mainCounter = document.getElementById('petals-gift-message-counter');
+        initGiftMessageTextarea(giftTextarea, mainCounter);
         giftTextarea.addEventListener('input', syncToCart);
         giftTextarea.addEventListener('change', syncToCart);
       }
@@ -172,6 +230,9 @@
     document.querySelectorAll('[data-petals-cart-extras]').forEach(function (el) {
       initContainer(el);
     });
+    var drawerTa = document.getElementById('x-cart-drawer-gift-message');
+    var drawerCounter = document.getElementById('petals-drawer-gift-counter');
+    initGiftMessageTextarea(drawerTa, drawerCounter);
   }
 
   if (document.readyState === 'loading') {
