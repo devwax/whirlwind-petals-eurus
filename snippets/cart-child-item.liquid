@@ -8,6 +8,7 @@
   Usage:
   {% render 'cart-child-item', item: line_item, ratio: ratio, is_rtl: false, is_component: false %}
 {% endcomment %} 
+{%- include 'whirlwind-backorder-property-key' -%}
 
 <tr class="{% if item.product.selected_or_first_available_variant.id == settings.gift_wrapping_product.selected_or_first_available_variant.id or item.product.selected_or_first_available_variant.id == settings.engraving_product.selected_or_first_available_variant.id %}pointer-events-none {% endif %}cart-item child-cart-item{% if is_last %} last-child{% endif %} rtl:pl-0 rtl:pr-4 lg:gap-3 grid grid-cols-4 md:table-row auto-rows-auto relative" id="CartItem-{{ item.index | plus: 1 }}">
   <td class="child-item-img-container md:w-1/12 pl-[50%] pr-0 rtl:pl-0 rtl:pr-[50%] md:pl-16 rtl:md:pl-0 rtl:md:pr-16 pt-6 pb-0 md:pt-4 md:pb-4 col-start-1 col-end-1 align-top">
@@ -124,6 +125,11 @@
           {%- assign property_first_char = property.first | slice: 0 -%}
           {% if property_first_char != name_edt %}
               {%- if property.last != blank and property_first_char != '_' -%}
+                {%- if property.first == 'Backorder Message' or property.first == whirlwind_backorder_property_key -%}
+                  <div class="product-option mt-1 text-normal opacity-70 p-break-words">
+                    <span class="p-break-words">{{ property.last }}</span>
+                  </div>
+                {%- else -%}
                 <div class="product-option mt-1 text-normal opacity-70 p-break-words">
                   <dt class="p-break-words inline">
                     {% if property.first == name_edt and is_update_date %}
@@ -150,6 +156,7 @@
                     {%- endif -%}
                   </dd>
                 </div>
+                {%- endif -%}
               {%- endif -%}
           {%- endif -%}                                  
         {%- endfor -%}

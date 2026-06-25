@@ -384,9 +384,10 @@ class ContainerPicker extends HTMLElement {
       const mainItemProperties = {
         'Selected Container': `${containerTitle} (${containerPriceFormatted})`,
       };
-      const backorderMessage = form.querySelector('input[name="properties[Backorder Message]"]')?.value;
+      const backorderPropertyKey = '\u200B';
+      const backorderMessage = form.querySelector(`input[name="properties[${backorderPropertyKey}]"]`)?.value;
       if (backorderMessage) {
-        mainItemProperties['Backorder Message'] = backorderMessage;
+        mainItemProperties[backorderPropertyKey] = backorderMessage;
       }
 
       const body = {

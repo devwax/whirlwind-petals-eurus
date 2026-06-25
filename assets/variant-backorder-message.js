@@ -1,4 +1,4 @@
-// Petals variant-backorder-message v2026-06-24.3
+// Petals variant-backorder-message v2026-06-25.1
 // If you see this version in DevTools → Sources, the latest JS is loaded (not a stale cache).
 
 if (!window.Eurus) window.Eurus = {};
@@ -7,10 +7,12 @@ if (!window.Eurus.loadedScript) window.Eurus.loadedScript = new Set();
 if (!window.Eurus.loadedScript.has('variant-backorder-message.js')) {
   window.Eurus.loadedScript.add('variant-backorder-message.js');
 
-  console.info('[Petals] variant-backorder-message v2026-06-24.3 loaded');
+  console.info('[Petals] variant-backorder-message v2026-06-25.1 loaded');
 
-  const PROPERTY_NAME = 'properties[Backorder Message]';
-  const SCRIPT_VERSION = '2026-06-24.3';
+  // Zero-width space keeps Shopify checkout from showing a "Key:" label prefix.
+  const BACKORDER_PROPERTY_KEY = '\u200B';
+  const PROPERTY_NAME = `properties[${BACKORDER_PROPERTY_KEY}]`;
+  const SCRIPT_VERSION = '2026-06-25.1';
 
   function getConfigElements() {
     return document.querySelectorAll('[data-variant-backorder-config]');

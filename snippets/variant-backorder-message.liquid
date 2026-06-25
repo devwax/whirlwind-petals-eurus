@@ -41,9 +41,10 @@
 </div>
 
 {%- if product.has_only_default_variant and display_message != blank -%}
+  {%- include 'whirlwind-backorder-property-key' -%}
   <input
     type="hidden"
-    name="properties[Backorder Message]"
+    name="properties[{{ whirlwind_backorder_property_key }}]"
     value="{{ display_message | escape }}"
     form="{{ product_form_id }}"
   >

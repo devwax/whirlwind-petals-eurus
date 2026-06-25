@@ -39,6 +39,7 @@
     assign free_shipping_codes = settings.free_shipping_code | newline_to_br | strip_newlines | split: '<br />'
   endif
 -%}
+{%- include 'whirlwind-backorder-property-key' -%}
 {% style %}
   {%- if settings.enable_featured_discount -%}
     .text-removed-discount {
@@ -1048,6 +1049,11 @@
                           {%- assign property_first_char = property.first | slice: 0 -%}
                           {% if property_first_char != name_edt %}
                               {%- if property.last != blank and property_first_char != '_' -%}
+                                {%- if property.first == 'Backorder Message' or property.first == whirlwind_backorder_property_key -%}
+                                  <div class="product-option mt-1 text-normal opacity-70 p-break-words">
+                                    <span class="p-break-words">{{ property.last }}</span>
+                                  </div>
+                                {%- else -%}
                                 <div class="product-option mt-1 text-normal opacity-70 p-break-words">
                                   <dt class="p-break-words inline">
                                     {% if property.first == name_edt and is_update_date %}
@@ -1074,6 +1080,7 @@
                                     {%- endif -%}
                                   </dd>
                                 </div>
+                                {%- endif -%}
                               {%- endif -%}
                           {%- endif -%}                                  
                         {%- endfor -%}
