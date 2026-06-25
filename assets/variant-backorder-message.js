@@ -9,8 +9,8 @@ if (!window.Eurus.loadedScript.has('variant-backorder-message.js')) {
 
   console.info('[Petals] variant-backorder-message v2026-06-25.2 loaded');
 
-  // Property key includes the colon so checkout shows "Backorder: Available - ...".
-  const BACKORDER_PROPERTY_KEY = 'Backorder:';
+  // Shopify checkout appends ": value" itself, so the key must NOT include a colon.
+  const BACKORDER_PROPERTY_KEY = 'Backorder';
   const PROPERTY_NAME = `properties[${BACKORDER_PROPERTY_KEY}]`;
   const SCRIPT_VERSION = '2026-06-25.2';
 

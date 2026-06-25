@@ -9,7 +9,7 @@
   {% render 'cart-child-item', item: line_item, ratio: ratio, is_rtl: false, is_component: false %}
 {% endcomment %}
 {%- liquid
-  assign whirlwind_backorder_property_key = 'Backorder:'
+  assign whirlwind_backorder_property_key = 'Backorder'
 -%}
 
 <tr class="{% if item.product.selected_or_first_available_variant.id == settings.gift_wrapping_product.selected_or_first_available_variant.id or item.product.selected_or_first_available_variant.id == settings.engraving_product.selected_or_first_available_variant.id %}pointer-events-none {% endif %}cart-item child-cart-item{% if is_last %} last-child{% endif %} rtl:pl-0 rtl:pr-4 lg:gap-3 grid grid-cols-4 md:table-row auto-rows-auto relative" id="CartItem-{{ item.index | plus: 1 }}">

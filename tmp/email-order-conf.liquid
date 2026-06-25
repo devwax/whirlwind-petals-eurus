@@ -1,4 +1,11 @@
 {% assign delivery_method_types = delivery_agreements | map: 'delivery_method_type' | uniq %}
+{% comment %}
+  Backorder line item property keys (legacy + current):
+  - Backorder  (current)
+  - Backorder: (legacy — key included a trailing colon)
+  - Backorder Message (original)
+  - zero-width space (U+200B) (brief transitional)
+{% endcomment %}
 {% assign has_split_cart = false %}
 {% assign non_none_count = 0 %}
 {% for type in delivery_method_types %}
@@ -454,6 +461,21 @@
           {% elsif line.variant.title != 'Default Title' and line.bundle_parent? and false == false %}
             <span class="order-list__item-variant">{{ line.variant.title }}</span><br/>
           {% endif %}
+          {% liquid
+            assign whirlwind_backorder_message = line.properties['Backorder']
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = line.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = line.properties['Backorder Message']
+            endif
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = line.properties['​']
+            endif
+          %}
+          {% if whirlwind_backorder_message != blank %}
+            <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
+          {% endif %}
 
           {% if false %}
             {% for child_line in line.bundle_components %}
@@ -848,6 +870,23 @@
                 {% if line_item_group.variant and line_item_group.variant.title != 'Default Title' %}
                   <span class="order-list__item-variant">{{ line_item_group.variant.title }}</span>
                 {% endif %}
+                {% if line_item_group.deliverable? and parent_line_item %}
+                  {% liquid
+                    assign whirlwind_backorder_message = parent_line_item.properties['Backorder']
+                    if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['Backorder:']
+                      endif
+                      if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['Backorder Message']
+                    endif
+                    if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['​']
+                    endif
+                  %}
+                  {% if whirlwind_backorder_message != blank %}
+                    <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
+                  {% endif %}
+                {% endif %}
 
                 {% if line_item_group.deliverable? %}
                   {% if parent_line_item.discount_allocations %}
@@ -949,6 +988,21 @@
         <br>
         {% if component.variant.title != 'Default Title' %}
             <span class="order-list__item-variant">{{ component.variant.title }}</span>
+        {% endif %}
+        {% liquid
+          assign whirlwind_backorder_message = component.properties['Backorder']
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder Message']
+          endif
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['​']
+          endif
+        %}
+        {% if whirlwind_backorder_message != blank %}
+          <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
         {% endif %}
 
         {% if line_item_group.deliverable? %}
@@ -1064,6 +1118,21 @@
         <br>
         {% if component.variant.title != 'Default Title' %}
             <span class="order-list__item-variant">{{ component.variant.title }}</span>
+        {% endif %}
+        {% liquid
+          assign whirlwind_backorder_message = component.properties['Backorder']
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder Message']
+          endif
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['​']
+          endif
+        %}
+        {% if whirlwind_backorder_message != blank %}
+          <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
         {% endif %}
 
         {% if line_item_group.deliverable? %}
@@ -1266,6 +1335,21 @@
             <span class="order-list__item-variant">{{ line.variant.title }}</span><br/>
           {% elsif line.variant.title != 'Default Title' and line.bundle_parent? and false == false %}
             <span class="order-list__item-variant">{{ line.variant.title }}</span><br/>
+          {% endif %}
+          {% liquid
+            assign whirlwind_backorder_message = line.properties['Backorder']
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = line.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = line.properties['Backorder Message']
+            endif
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = line.properties['​']
+            endif
+          %}
+          {% if whirlwind_backorder_message != blank %}
+            <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
           {% endif %}
 		  <span class="sku">Item #: {{ line.sku }}</span>
 
@@ -1653,6 +1737,23 @@
                 {% if line_item_group.variant and line_item_group.variant.title != 'Default Title' %}
                   <span class="order-list__item-variant">{{ line_item_group.variant.title }}</span>
                 {% endif %}
+                {% if line_item_group.deliverable? and parent_line_item %}
+                  {% liquid
+                    assign whirlwind_backorder_message = parent_line_item.properties['Backorder']
+                    if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['Backorder:']
+                      endif
+                      if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['Backorder Message']
+                    endif
+                    if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['​']
+                    endif
+                  %}
+                  {% if whirlwind_backorder_message != blank %}
+                    <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
+                  {% endif %}
+                {% endif %}
 
                 {% if line_item_group.deliverable? %}
                   {% if parent_line_item.discount_allocations %}
@@ -1754,6 +1855,21 @@
         <br>
         {% if component.variant.title != 'Default Title' %}
             <span class="order-list__item-variant">{{ component.variant.title }}</span>
+        {% endif %}
+        {% liquid
+          assign whirlwind_backorder_message = component.properties['Backorder']
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder Message']
+          endif
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['​']
+          endif
+        %}
+        {% if whirlwind_backorder_message != blank %}
+          <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
         {% endif %}
 
         {% if line_item_group.deliverable? %}
@@ -1870,6 +1986,21 @@
         <br>
         {% if component.variant.title != 'Default Title' %}
             <span class="order-list__item-variant">{{ component.variant.title }}</span>
+        {% endif %}
+        {% liquid
+          assign whirlwind_backorder_message = component.properties['Backorder']
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder Message']
+          endif
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['​']
+          endif
+        %}
+        {% if whirlwind_backorder_message != blank %}
+          <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
         {% endif %}
 
         {% if line_item_group.deliverable? %}
@@ -1994,6 +2125,23 @@
                 {% if line_item_group.variant and line_item_group.variant.title != 'Default Title' %}
                   <span class="order-list__item-variant">{{ line_item_group.variant.title }}</span>
                 {% endif %}
+                {% if line_item_group.deliverable? and parent_line_item %}
+                  {% liquid
+                    assign whirlwind_backorder_message = parent_line_item.properties['Backorder']
+                    if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['Backorder:']
+                      endif
+                      if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['Backorder Message']
+                    endif
+                    if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['​']
+                    endif
+                  %}
+                  {% if whirlwind_backorder_message != blank %}
+                    <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
+                  {% endif %}
+                {% endif %}
 
                 {% if line_item_group.deliverable? %}
                   {% if parent_line_item.discount_allocations %}
@@ -2095,6 +2243,21 @@
         <br>
         {% if component.variant.title != 'Default Title' %}
             <span class="order-list__item-variant">{{ component.variant.title }}</span>
+        {% endif %}
+        {% liquid
+          assign whirlwind_backorder_message = component.properties['Backorder']
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder Message']
+          endif
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['​']
+          endif
+        %}
+        {% if whirlwind_backorder_message != blank %}
+          <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
         {% endif %}
 
         {% if line_item_group.deliverable? %}
@@ -2210,6 +2373,21 @@
         <br>
         {% if component.variant.title != 'Default Title' %}
             <span class="order-list__item-variant">{{ component.variant.title }}</span>
+        {% endif %}
+        {% liquid
+          assign whirlwind_backorder_message = component.properties['Backorder']
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder Message']
+          endif
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['​']
+          endif
+        %}
+        {% if whirlwind_backorder_message != blank %}
+          <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
         {% endif %}
 
         {% if line_item_group.deliverable? %}
@@ -2343,6 +2521,21 @@
             <span class="order-list__item-variant">{{ component.variant.title }}</span><br/>
           {% elsif component.variant.title != 'Default Title' and component.bundle_parent? and false == false %}
             <span class="order-list__item-variant">{{ component.variant.title }}</span><br/>
+          {% endif %}
+          {% liquid
+            assign whirlwind_backorder_message = component.properties['Backorder']
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = component.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = component.properties['Backorder Message']
+            endif
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = component.properties['​']
+            endif
+          %}
+          {% if whirlwind_backorder_message != blank %}
+            <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
           {% endif %}
 
           {% if false %}
@@ -2695,6 +2888,21 @@
             <span class="order-list__item-variant">{{ line.variant.title }}</span><br/>
           {% elsif line.variant.title != 'Default Title' and line.bundle_parent? and false == false %}
             <span class="order-list__item-variant">{{ line.variant.title }}</span><br/>
+          {% endif %}
+          {% liquid
+            assign whirlwind_backorder_message = line.properties['Backorder']
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = line.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = line.properties['Backorder Message']
+            endif
+            if whirlwind_backorder_message == blank
+              assign whirlwind_backorder_message = line.properties['​']
+            endif
+          %}
+          {% if whirlwind_backorder_message != blank %}
+            <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
           {% endif %}
 
           {% if false %}
@@ -3087,6 +3295,23 @@
                 {% if line_item_group.variant and line_item_group.variant.title != 'Default Title' %}
                   <span class="order-list__item-variant">{{ line_item_group.variant.title }}</span>
                 {% endif %}
+                {% if line_item_group.deliverable? and parent_line_item %}
+                  {% liquid
+                    assign whirlwind_backorder_message = parent_line_item.properties['Backorder']
+                    if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['Backorder:']
+                      endif
+                      if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['Backorder Message']
+                    endif
+                    if whirlwind_backorder_message == blank
+                      assign whirlwind_backorder_message = parent_line_item.properties['​']
+                    endif
+                  %}
+                  {% if whirlwind_backorder_message != blank %}
+                    <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
+                  {% endif %}
+                {% endif %}
 
                 {% if line_item_group.deliverable? %}
                   {% if parent_line_item.discount_allocations %}
@@ -3188,6 +3413,21 @@
         <br>
         {% if component.variant.title != 'Default Title' %}
             <span class="order-list__item-variant">{{ component.variant.title }}</span>
+        {% endif %}
+        {% liquid
+          assign whirlwind_backorder_message = component.properties['Backorder']
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder Message']
+          endif
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['​']
+          endif
+        %}
+        {% if whirlwind_backorder_message != blank %}
+          <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
         {% endif %}
 
         {% if line_item_group.deliverable? %}
@@ -3303,6 +3543,21 @@
         <br>
         {% if component.variant.title != 'Default Title' %}
             <span class="order-list__item-variant">{{ component.variant.title }}</span>
+        {% endif %}
+        {% liquid
+          assign whirlwind_backorder_message = component.properties['Backorder']
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder:']
+            endif
+            if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['Backorder Message']
+          endif
+          if whirlwind_backorder_message == blank
+            assign whirlwind_backorder_message = component.properties['​']
+          endif
+        %}
+        {% if whirlwind_backorder_message != blank %}
+          <span class="order-list__item-variant">Backorder: {{ whirlwind_backorder_message }}</span><br/>
         {% endif %}
 
         {% if line_item_group.deliverable? %}

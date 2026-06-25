@@ -1,4 +1,11 @@
 {% comment %} https://admin.shopify.com/store/petalscom/settings/shipping/packing_slip_template {% endcomment %}
+{% comment %}
+  Backorder line item property keys (legacy + current):
+  - Backorder  (current)
+  - Backorder: (legacy — key included a trailing colon)
+  - Backorder Message (original)
+  - zero-width space (U+200B) (brief transitional)
+{% endcomment %}
 <div class="wrapper">
   <div class="header">
     <div class="shop-title">
@@ -204,6 +211,34 @@
               {% if line_item.variant_title != blank %}
                 <span class="line-item-description-line">
                   {{ line_item.variant_title }}
+                </span>
+              {% endif %}
+              {% liquid
+                assign whirlwind_backorder_message = line_item.properties['Backorder']
+                if whirlwind_backorder_message == blank
+                  assign whirlwind_backorder_message = line_item.properties['Backorder Message']
+                endif
+                if whirlwind_backorder_message == blank
+                  assign whirlwind_backorder_message = line_item.properties['​']
+                endif
+                if whirlwind_backorder_message == blank and order.line_items
+                  for order_line in order.line_items
+                    if order_line.sku != blank and order_line.sku == line_item.sku
+                      assign whirlwind_backorder_message = order_line.properties['Backorder']
+                      if whirlwind_backorder_message == blank
+                        assign whirlwind_backorder_message = order_line.properties['Backorder Message']
+                      endif
+                      if whirlwind_backorder_message == blank
+                        assign whirlwind_backorder_message = order_line.properties['​']
+                      endif
+                      break
+                    endif
+                  endfor
+                endif
+              %}
+              {% if whirlwind_backorder_message != blank %}
+                <span class="line-item-description-line">
+                  Backorder: {{ whirlwind_backorder_message }}
                 </span>
               {% endif %}
               {% if line_item.sku != blank %}
