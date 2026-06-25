@@ -9,7 +9,7 @@
   {% render 'drawer-child-item', item: line_item, ratio: ratio, is_rtl: false, is_component: false %}
 {% endcomment %}
 {%- liquid
-  assign whirlwind_backorder_property_key = '​'
+  assign whirlwind_backorder_property_key = 'Backorder:'
 -%}
 
 <div class="{% unless is_component %}{% if item.product.selected_or_first_available_variant.id == settings.gift_wrapping_product.selected_or_first_available_variant.id or item.product.selected_or_first_available_variant.id == settings.engraving_product.selected_or_first_available_variant.id %}pointer-events-none {% endif %}{% endunless %}child-item pt-3 flex relative{% if is_rtl %} justify-end{% endif %}">
@@ -130,9 +130,9 @@
           {%- for property in item.properties -%}
             {%- assign property_first_char = property.first | slice: 0 -%}
             {%- if property.last != blank and property_first_char != '_' -%}
-              {%- if property.first == 'Backorder Message' or property.first == whirlwind_backorder_property_key -%}
+              {%- if property.first == 'Backorder Message' or property.first == whirlwind_backorder_property_key or property.first == '​' -%}
                 <div class="product-option mt-1 text-normal p-break-words">
-                  <span class="p-break-words">{{ property.last }}</span>
+                  <span class="p-break-words">Backorder: {{ property.last }}</span>
                 </div>
               {%- else -%}
               <div class="product-option {% if property.first == 'id_link' %}hidden{% endif %} mt-1 text-normal p-break-words">

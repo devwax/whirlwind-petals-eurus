@@ -9,7 +9,7 @@
   {% render 'cart-child-item', item: line_item, ratio: ratio, is_rtl: false, is_component: false %}
 {% endcomment %}
 {%- liquid
-  assign whirlwind_backorder_property_key = '​'
+  assign whirlwind_backorder_property_key = 'Backorder:'
 -%}
 
 <tr class="{% if item.product.selected_or_first_available_variant.id == settings.gift_wrapping_product.selected_or_first_available_variant.id or item.product.selected_or_first_available_variant.id == settings.engraving_product.selected_or_first_available_variant.id %}pointer-events-none {% endif %}cart-item child-cart-item{% if is_last %} last-child{% endif %} rtl:pl-0 rtl:pr-4 lg:gap-3 grid grid-cols-4 md:table-row auto-rows-auto relative" id="CartItem-{{ item.index | plus: 1 }}">
@@ -127,9 +127,9 @@
           {%- assign property_first_char = property.first | slice: 0 -%}
           {% if property_first_char != name_edt %}
               {%- if property.last != blank and property_first_char != '_' -%}
-                {%- if property.first == 'Backorder Message' or property.first == whirlwind_backorder_property_key -%}
+                {%- if property.first == 'Backorder Message' or property.first == whirlwind_backorder_property_key or property.first == '​' -%}
                   <div class="product-option mt-1 text-normal opacity-70 p-break-words">
-                    <span class="p-break-words">{{ property.last }}</span>
+                    <span class="p-break-words">Backorder: {{ property.last }}</span>
                   </div>
                 {%- else -%}
                 <div class="product-option mt-1 text-normal opacity-70 p-break-words">
