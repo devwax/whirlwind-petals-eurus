@@ -1,0 +1,83 @@
+{% comment %}
+https://admin.shopify.com/store/petalscom/apps/shopify-order-printer/app/templates/cmqipu9rf01mns60ngr6mo644
+Backorder line item property keys (legacy + current):
+  - Backorder  (current)
+  - Backorder: (legacy)
+  - Backorder Message (original)
+{% endcomment %}
+<style>
+  div {font-size:14px;}
+</style>
+<div>
+
+<div class="columns">
+
+  <h1 >{{ "packing_slip_template.title" | t }}</h1>
+  <div style="width:100%; text-align:center;">
+  <img src="https://cdn.shopify.com/s/files/1/0626/3681/8505/files/petals_logo.svg?v=1774379282" style="width:100px; height: auto;">
+  </div>
+  <div class="address">
+    <p style="text-align: right; margin: 0;">
+    {{ "packing_slip_template.order_label" | t }} {{ order.order_name }}<br />
+    {% if order.po_number %}{{ "packing_slip_template.po_number_label" | t }} {{ order.po_number }}<br />{% endif %}
+    {{ order.created_at | date: "%B %e, %Y" }}
+    </p>
+  </div>
+</div>
+<div class="columns" style="margin-top: 1.5em;">
+  <div class="address">
+    <strong>{{ "packing_slip_template.from_label" | t }}</strong><br/>
+    {{ shop.name }}<br/>
+    {{ shop.address | format_address }}
+  </div>
+  {% if order.shipping_address %}
+  <div class="address">
+    <strong>{{ "packing_slip_template.ship_to_label" | t }}</strong>
+    {{ order.shipping_address | format_address  }}
+  <br><strong>{{ order.shipping_method.title }}</strong>
+   </div>
+  {% endif %}
+  {% if order.note %}
+  <div class="gift-message">
+    <strong>Gift Message</strong>
+    <br>{{order.note | newline_to_br}}
+  </div>
+    {% endif %}
+</div>
+<hr />
+<h2>{{ "packing_slip_template.order_details_title" | t }}</h2>
+<table class="table-tabular" style="margin: 1em 0 0 0;">
+  <thead>
+    <tr>
+      <th style="width: 10%; text-align: left;">{{ "packing_slip_template.column_headings.quantity" | t }}</th>
+  <th style="width: 30%; text-align: left;">SKU</th>
+      <th style="width: 60%; text-align: left;">{{ "packing_slip_template.column_headings.item" | t }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line_item in order.line_items %}
+      {% if line_item.successfully_fulfilled_quantity < line_item.quantity %}
+    <tr>
+      <td style="text-align: left;">{{ line_item.quantity | minus: line_item.successfully_fulfilled_quantity }}</td>
+      <td style="text-align: left;">{{ line_item.sku }}</td>
+    <td style="text-align: left;">
+        {{ line_item.title }}
+        {%- liquid
+          assign bo_msg = line_item.properties['Backorder']
+          if bo_msg == blank
+            assign bo_msg = line_item.properties['Backorder:']
+          endif
+          if bo_msg == blank
+            assign bo_msg = line_item.properties['Backorder Message']
+          endif
+        -%}
+        {%- if bo_msg != blank -%}
+          <br><span style="color:#555;">Backorder: {{ bo_msg }}</span>
+        {%- endif -%}
+      </td>
+    </tr>
+        {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+</div>
