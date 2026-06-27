@@ -1496,6 +1496,7 @@
                         <div id="cart-upsell-drawer" class="w-full visible flex flex-row gap-x-2 lg:gap-x-0 overflow-x-auto lg:overflow-x-hidden scrollbar-body scrollbar-horizontal scrollbar-visible lg:grid lg:gap-5 lg:pb-2">
                           {%- liquid
                             assign product_count = 0
+                            assign has_metafield_upsells = false
                             assign product_ids = cart.items | map: 'product_id' | uniq | join: ', ' | append: ","
                             assign max_items = settings.number_of_product_shown
                             for item in cart.items
@@ -1503,6 +1504,7 @@
                                 assign product_id = item.product.id
                               endif
                               if item.product.metafields.cart.upsell.value.count > 0
+                                assign has_metafield_upsells = true
                                 for prod in item.product.metafields.cart.upsell.value
                                   if prod.available
                                     assign product_id = prod.id | append: ","
@@ -1518,7 +1520,7 @@
                                 endfor
                               endif
                             endfor
-                            if product_count < max_items
+                            if product_count < max_items and has_metafield_upsells == false
                               for prod in settings.cart_upsell_product_list
                                 if prod.available
                                   assign product_id = prod.id | append: ","
@@ -1540,7 +1542,7 @@
                           assign cart_item_list = cart.items | map: 'product_id' | join: ', '
                           assign products_from_app_can_show = max_items | minus: product_count
                       -%}
-                      {% if product_count < max_items %}
+                      {% if product_count < max_items and has_metafield_upsells == false %}
                         <div x-init="show = true;" x-intersect.once.margin.200px="$store.xProductRecommendations.loadUpsell($el, '{{ routes.product_recommendations_url }}?section_id={{ section.id }}', [{{ cart_item_list }}], {{ max_items | plus: cart.items.size }}, {{ products_from_app_can_show }})" class="product-recommendations">
                           {% if recommendations.performed and recommendations.products_count > 0 %}
                             {% for recommendation in recommendations.products %}
