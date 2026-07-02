@@ -899,11 +899,35 @@
                                     update('.add_to_cart_button .main-product-price .price-compare', product_compare_at_price);
                                   }
                                 }"
-                                x-intersect.once.margin.200px="$nextTick(() => {
-                                  qty = document.getElementById('Quantity-atc-{{ section.id }}')?.value;
+                                x-init="$nextTick(() => {
+                                  const syncQtyFromInput = () => {
+                                    const inputEl = document.getElementById('Quantity-atc-{{ section.id }}');
+                                    if (!inputEl) return;
+                                    const nextQty = parseInt(inputEl.value, 10);
+                                    if (!Number.isNaN(nextQty)) {
+                                      qty = nextQty;
+                                      updatePrice();
+                                    }
+                                  };
+                                  syncQtyFromInput();
+                                  const qtyInput = document.getElementById('Quantity-atc-{{ section.id }}');
+                                  if (qtyInput) {
+                                    new MutationObserver(syncQtyFromInput).observe(qtyInput, { attributes: true, attributeFilter: ['value', 'min'] });
+                                    qtyInput.addEventListener('change', syncQtyFromInput);
+                                    [100, 500, 1500].forEach((delay) => setTimeout(syncQtyFromInput, delay));
+                                    let pollAttempts = 0;
+                                    const pollId = setInterval(() => {
+                                      syncQtyFromInput();
+                                      if (++pollAttempts >= 30) clearInterval(pollId);
+                                    }, 100);
+                                  }
                                   document.addEventListener(`eurus:product:quantity-changed-{{ section.id }}`, (e) => {
                                     qty = e.detail.quantity;
-                                  })
+                                    updatePrice();
+                                  });
+                                  document.addEventListener(`eurus:product-page-variant-select:updated:{{ section.id }}`, () => {
+                                    $nextTick(() => syncQtyFromInput());
+                                  });
                                 })"
                               >
                                 <button class="w-10 cursor-pointer pt-2.5 pb-2.5 md:pt-3.5 md:pb-3.5 bg-transparent pl-3.5 pr-3.5 select-none opacity-70" name="minus" aria-label="minus" @click.prevent="minus({{ product.selected_or_first_available_variant.quantity_rule.increment | default: 0 }})">
@@ -987,12 +1011,19 @@
                                 {% endif %}
                               {% endstyle %}
                               {% capture add_to_cart_price %}
+                                {% liquid
+                                  assign atc_initial_qty = product.selected_or_first_available_variant.quantity_rule.min | default: 1
+                                  if atc_initial_qty < 1
+                                    assign atc_initial_qty = 1
+                                  endif
+                                %}
                                 <span> - </span>
                                 {%- render 'price',
                                   product: product,
                                   use_variant: true,
                                   hide_sale_price: block.settings.hide_sale_price,
-                                  container: 'main-product-price inline-block'
+                                  container: 'main-product-price inline-block',
+                                  quantity_multiplier: atc_initial_qty
                                 -%}
                               {% endcapture %}
                             {%- endif -%}
@@ -1233,11 +1264,35 @@
                               update('.add_to_cart_button .main-product-price .price-compare', product_compare_at_price);
                             }
                           }"
-                          x-intersect.once.margin.200px="$nextTick(() => {
-                            qty = document.getElementById('Quantity-{{ section.id }}')?.value;
+                          x-init="$nextTick(() => {
+                            const syncQtyFromInput = () => {
+                              const inputEl = document.getElementById('Quantity-{{ section.id }}');
+                              if (!inputEl) return;
+                              const nextQty = parseInt(inputEl.value, 10);
+                              if (!Number.isNaN(nextQty)) {
+                                qty = nextQty;
+                                updatePrice();
+                              }
+                            };
+                            syncQtyFromInput();
+                            const qtyInput = document.getElementById('Quantity-{{ section.id }}');
+                            if (qtyInput) {
+                              new MutationObserver(syncQtyFromInput).observe(qtyInput, { attributes: true, attributeFilter: ['value', 'min'] });
+                              qtyInput.addEventListener('change', syncQtyFromInput);
+                              [100, 500, 1500].forEach((delay) => setTimeout(syncQtyFromInput, delay));
+                              let pollAttempts = 0;
+                              const pollId = setInterval(() => {
+                                syncQtyFromInput();
+                                if (++pollAttempts >= 30) clearInterval(pollId);
+                              }, 100);
+                            }
                             document.addEventListener(`eurus:product:quantity-changed-{{ section.id }}`, (e) => {
                               qty = e.detail.quantity;
-                            })
+                              updatePrice();
+                            });
+                            document.addEventListener(`eurus:product-page-variant-select:updated:{{ section.id }}`, () => {
+                              $nextTick(() => syncQtyFromInput());
+                            });
                           })"
                         >
                           <button class="w-10 cursor-pointer pt-2.5 pb-2.5 md:pt-3.5 md:pb-3.5 bg-transparent pl-3.5 pr-3.5 select-none opacity-70" name="minus" aria-label="minus" @click.prevent="minus({{ product.selected_or_first_available_variant.quantity_rule.increment | default: 0 }})">
@@ -2974,11 +3029,35 @@
                                 update('.add_to_cart_button .main-product-price .price-compare', product_compare_at_price);
                               }
                             }"
-                            x-intersect.once.margin.200px="$nextTick(() => {
-                              qty = document.getElementById('Quantity-sticky-{{ section.id }}')?.value;
+                            x-init="$nextTick(() => {
+                              const syncQtyFromInput = () => {
+                                const inputEl = document.getElementById('Quantity-sticky-{{ section.id }}');
+                                if (!inputEl) return;
+                                const nextQty = parseInt(inputEl.value, 10);
+                                if (!Number.isNaN(nextQty)) {
+                                  qty = nextQty;
+                                  updatePrice();
+                                }
+                              };
+                              syncQtyFromInput();
+                              const qtyInput = document.getElementById('Quantity-sticky-{{ section.id }}');
+                              if (qtyInput) {
+                                new MutationObserver(syncQtyFromInput).observe(qtyInput, { attributes: true, attributeFilter: ['value', 'min'] });
+                                qtyInput.addEventListener('change', syncQtyFromInput);
+                                [100, 500, 1500].forEach((delay) => setTimeout(syncQtyFromInput, delay));
+                                let pollAttempts = 0;
+                                const pollId = setInterval(() => {
+                                  syncQtyFromInput();
+                                  if (++pollAttempts >= 30) clearInterval(pollId);
+                                }, 100);
+                              }
                               document.addEventListener(`eurus:product:quantity-changed-{{ section.id }}`, (e) => {
                                 qty = e.detail.quantity;
-                              })
+                                updatePrice();
+                              });
+                              document.addEventListener(`eurus:product-page-variant-select:updated:{{ section.id }}`, () => {
+                                $nextTick(() => syncQtyFromInput());
+                              });
                             })"
                           >
                             <button class="w-8 lg:w-10 h-full cursor-pointer pt-3 pb-3 bg-transparent pl-2.5 pr-2.5 lg:pl-3.5 lg:pr-3.5 select-none opacity-70" name="minus" aria-label="minus" @click="minus(1)">

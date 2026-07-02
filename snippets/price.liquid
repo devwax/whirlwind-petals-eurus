@@ -16,6 +16,13 @@
 
   assign compare_at_price = target.compare_at_price
   assign price = target.price | default: 1999
+  assign quantity_multiplier = quantity_multiplier | default: 1
+  if quantity_multiplier > 1
+    assign price = price | times: quantity_multiplier
+    if compare_at_price
+      assign compare_at_price = compare_at_price | times: quantity_multiplier
+    endif
+  endif
   if settings.currency_code_enable
     assign money_price = price | money_with_currency
   else 
