@@ -14,6 +14,8 @@ container-picker {
   --color-foreground: var(--color-foreground, var(--colors-heading, 0 0 0));
   --color-background: var(--color-background, var(--background-color, 255 255 255));
   --container-picker-inline-padding: 11px;
+  container-type: inline-size;
+  container-name: container-picker;
   display: block;
   width: 100%;
   max-width: 100%;
@@ -469,10 +471,11 @@ container-picker .container-picker__list > .container-picker__item {
   background-color: rgb(var(--color-foreground) / 0.04);
 }
 
-/* ── Mobile layout ─────────────────────────────────────────────────── */
-/* Stack item actions below content so title/price text has room to wrap. */
+/* ── Narrow layout (container-width based) ───────────────────────── */
+/* Stack item actions below content when the picker itself is narrow,
+   regardless of viewport width (e.g. 50% product column, cart modal). */
 
-@media screen and (max-width: 991px) {
+@container container-picker (max-width: 560px) {
   container-picker {
     --container-picker-inline-padding: 0.8rem;
     padding-block: 0.8rem;
@@ -577,79 +580,6 @@ container-picker .container-picker__list > .container-picker__item {
 
 .cart-container-change-modal__picker .container-picker--change-mode {
   margin-bottom: 0;
-}
-
-/* Modal is ~32rem wide — always use stacked item layout (not viewport-based mobile breakpoint) */
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__item {
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto auto;
-  gap: 0.6rem;
-  padding: 1rem;
-}
-
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__item-image {
-  grid-column: 1;
-  grid-row: 1;
-  width: 9.6rem;
-  height: 9.6rem;
-  justify-self: center;
-}
-
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__item-details {
-  grid-column: 1;
-  grid-row: 2;
-  min-width: 0;
-}
-
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__item-title {
-  font-size: 1.2rem;
-  margin-bottom: 0.2rem;
-}
-
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__item-price {
-  font-size: 1.2rem;
-  margin-bottom: 0.2rem;
-}
-
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__item-availability {
-  font-size: 1.1rem;
-  margin-bottom: 0.2rem;
-}
-
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__item-detail-link {
-  font-size: 1.1rem;
-}
-
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__item-title,
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__item-price,
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__item-availability {
-  overflow-wrap: break-word;
-  word-break: normal;
-}
-
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__item-select-btn {
-  grid-column: 1;
-  grid-row: 3;
-  width: 100%;
-  align-self: stretch;
-  padding: 0.8rem 1rem;
-  font-size: 1.1rem;
-}
-
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__trigger-selection {
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__trigger-selection-text {
-  flex-wrap: wrap;
-  gap: 0.2rem 0.6rem;
-}
-
-.cart-container-change-modal__picker .container-picker--change-mode .container-picker__trigger-selection-name {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
 }
 
 .cart-container-change-modal__error {
