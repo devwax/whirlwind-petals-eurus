@@ -9,7 +9,11 @@
     1. Create a metafield definition on Products:
        - Namespace & key: custom.tree_size_products
        - Type: list.product_reference
-    2. On each tree product (e.g. 5 ft, 6 ft, 7 ft bamboo), set this metafield
+    2. Optional — short label for each size button (e.g. "4 ft", "5 ft"):
+       - Namespace & key: custom.tree_size_label
+       - Type: single line text
+       Set on each size product; falls back to product title when blank.
+    3. On each tree product (e.g. 5 ft, 6 ft, 7 ft bamboo), set tree_size_products
        to the list of all size variants (the product itself plus siblings).
        Example: On "5' Silk Bamboo Tree", set to [5ft product, 6ft product, 7ft product].
 
@@ -34,6 +38,7 @@
         {%- if size_product.id == product.id -%}
           {%- assign is_current = true -%}
         {%- endif -%}
+        {%- assign size_label = size_product.metafields.custom.tree_size_label.value | default: size_product.title -%}
 
         {%- if is_current -%}
           <span
@@ -41,15 +46,15 @@
             aria-current="true"
             aria-disabled="true"
           >
-            {{ size_product.title }}
+            {{ size_label }}
           </span>
         {%- else -%}
           <a
             href="{{ size_product.url }}"
             class="tree-size-picker__btn tree-size-picker__btn--link"
-            aria-label="View {{ size_product.title | escape }}"
+            aria-label="View {{ size_label | escape }}"
           >
-            {{ size_product.title }}
+            {{ size_label }}
           </a>
         {%- endif -%}
       {%- endfor -%}
