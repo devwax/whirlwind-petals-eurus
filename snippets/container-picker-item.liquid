@@ -72,6 +72,17 @@
         Currently Unavailable
       </p>
     {%- endif -%}
+  </div>
+
+  <div class="container-picker__item-actions">
+    <button
+      type="button"
+      class="container-picker__item-select-btn{% unless picker_available %} container-picker__item-select-btn--unavailable{% endunless %}"
+      aria-label="Select {{ container.title | escape }}"
+      {% unless picker_available %}disabled{% endunless %}
+    >
+      SELECT
+    </button>
     <button
       type="button"
       class="container-picker__item-detail-link"
@@ -79,14 +90,5 @@
       tabindex="-1"
     >Detail</button>
   </div>
-
-  <button
-    type="button"
-    class="container-picker__item-select-btn{% unless picker_available %} container-picker__item-select-btn--unavailable{% endunless %}"
-    aria-label="Select {{ container.title | escape }}"
-    {% unless picker_available %}disabled{% endunless %}
-  >
-    SELECT
-  </button>
 </li>
 {%- endif -%}
