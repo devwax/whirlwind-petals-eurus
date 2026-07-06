@@ -325,6 +325,7 @@
             %}
             {% comment %}theme-check-enable TranslationKeyExists{% endcomment %}
             {% comment %} Product Insurance notification {% endcomment %}
+            {%- if settings.enable_shipping_insurance -%}
             <div
               id="x-product-insurance-timer"
               x-cloak
@@ -337,6 +338,7 @@
                 <div class="w-4 h-4">{% render 'icon-alls', icon: 'icon-close' %}</div>
               </div>
             </div>
+            {%- endif -%}
             {% comment %} Cart countdown timer {% endcomment %}
             {% if settings.countdown_timer_message != blank and settings.enable_cart_timer %}
               <div
