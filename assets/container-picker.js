@@ -1,3 +1,7 @@
+(() => {
+  if (window.__containerPickerScriptLoaded) return;
+  window.__containerPickerScriptLoaded = true;
+
 document.addEventListener('alpine:init', () => {
   Alpine.store('xPopupContainerDetail', {
     open: false,
@@ -619,3 +623,5 @@ class ContainerPicker extends HTMLElement {
 }
 
 customElements.define('container-picker', ContainerPicker);
+
+})();

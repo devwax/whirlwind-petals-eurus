@@ -10,12 +10,12 @@
     product_form_id: {String} optional — required for add mode
     mode: {String} 'add' (default) or 'change'
     only_available: {Boolean} filter unavailable containers
-    load_assets: {Boolean} load CSS/JS (default true; false when loaded globally)
+    load_assets: {Boolean} load CSS/JS (default false; loaded globally in theme.liquid)
 {% endcomment %}
 
 {%- assign container_collections = product.metafields.custom.container_collections.value -%}
 {%- assign picker_mode = mode | default: 'add' -%}
-{%- assign load_picker_assets = load_assets | default: true -%}
+{%- assign load_picker_assets = load_assets | default: false -%}
 
 {%- if container_collections != blank and container_collections.count > 0 -%}
   {%- if load_picker_assets -%}
