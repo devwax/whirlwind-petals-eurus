@@ -2,18 +2,23 @@
 """
 Hide container-only products (Gold Cover, NDL) from storefront discovery.
 
-- Keeps products ACTIVE (required for container picker Liquid + cart/add.js)
-- Removes discovery tags so smart collections stop auto-including them
-- Products should remain unpublished from the Online Store sales channel
-  (onlineStoreUrl: null). Do that in Admin if write_publications scope is missing.
+Required product state (Shopify platform constraint):
+- ACTIVE status
+- Published to the Online Store sales channel
+
+Draft / unpublished products return "Cannot find variant" from /cart/add.js and
+cannot be used as container addons. Hiding is theme-only:
+- layout/theme.liquid redirects direct PDP visits to /404 by handle
+- Search excludes ct-gold / ct-ndl
+- Discovery tags removed so smart collections drop them
+- Picker omits "View Product" for these handles
 
 Usage:
   python3 scripts/hide-container-only-products.py --dry-run
   python3 scripts/hide-container-only-products.py --apply
 
 Pinned picker metadata lives in Theme settings → Petals — container free options
-(variant IDs + images). ct-ndl / ct-gold collections use that data instead of
-collection.products so free options stay selectable when unpublished from Online Store.
+(variant IDs + images). Used as a fallback display source for ct-ndl / ct-gold.
 """
 
 from __future__ import annotations
@@ -186,9 +191,10 @@ def process_product(handle: str, config: dict, *, apply: bool) -> None:
         print("  ✓ Already ACTIVE")
 
     if product["onlineStoreUrl"]:
-        print("  ! Published to Online Store — unpublish in Admin (Sales channels)")
+        print("  ✓ Published to Online Store (required for cart/add.js)")
     else:
-        print("  ✓ Not published to Online Store (onlineStoreUrl is null)")
+        print("  ! NOT published to Online Store — turn ON Online Store in Admin")
+        print("    (Draft/unpublished → 'Cannot find variant' when adding as container)")
 
     remove_tags = config.get("remove_tags", set())
     current_tags = product.get("tags") or []

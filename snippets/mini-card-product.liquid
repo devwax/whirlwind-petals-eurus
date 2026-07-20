@@ -79,7 +79,7 @@
       </div>
       <div>
         <template x-if="$store.xQuickView && $store.xQuickView.enabled">
-          {%- if card_product.has_only_default_variant -%}
+          {%- if card_product.has_only_default_variant and 1 == 0-%}
             <div x-data="xProductCart" x-show="$store.xQuickView.show_atc_button">
               {%- assign product_form_id = 'product-form-' | append: section.id -%}
                 {%- form 'product', card_product, id: product_form_id, class: 'form', novalidate: 'novalidate', data-type: 'add-to-cart-form', x-ref: 'product_form' -%}
@@ -109,7 +109,7 @@
               {%- endform -%}
             </div>
           {% endif %}
-          <div x-show="{% if card_product.has_only_default_variant %}false{% else %}true{% endif %} || !$store.xQuickView.show_atc_button">
+          <div x-show="{% if card_product.has_only_default_variant and 1 == 0%}false{% else %}true{% endif %} || !$store.xQuickView.show_atc_button">
             <div
               id="current-variant-{{ section.id }}-{{ card_product.id }}-{{ block_id }}" 
               class="current-variant hidden"
