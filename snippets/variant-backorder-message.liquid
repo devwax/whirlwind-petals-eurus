@@ -1,5 +1,5 @@
 {% comment %}
-  Renders variant-level backorder/delivery message from variant.metafields.big.mpn.
+  Renders variant-level backorder/delivery message from variant.metafields.custom.backorder_message.
 
   Accepts:
   - product: {Object} Product Liquid object
@@ -16,14 +16,14 @@
 
   if product.has_only_default_variant
     assign initial_fully_selected = true
-    assign display_message = product.selected_or_first_available_variant.metafields.big.mpn.value
+    assign display_message = product.selected_or_first_available_variant.metafields.custom.backorder_message.value
   elsif product.selected_variant or settings.default_select_available_variant
     assign initial_fully_selected = true
     assign display_variant = product.selected_or_first_available_variant
     if product.selected_variant
       assign display_variant = product.selected_variant
     endif
-    assign display_message = display_variant.metafields.big.mpn.value
+    assign display_message = display_variant.metafields.custom.backorder_message.value
   else
     assign show_placeholder = true
   endif
@@ -56,7 +56,7 @@
     {
       "id": {{ variant.id | json }},
       "options": {{ variant.options | json }},
-      "metafield": {{ variant.metafields.big.mpn.value | json }}
+      "metafield": {{ variant.metafields.custom.backorder_message.value | json }}
     }{%- unless forloop.last -%},{%- endunless -%}
   {%- endfor -%}
 ]
