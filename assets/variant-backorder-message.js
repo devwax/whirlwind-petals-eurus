@@ -1,4 +1,4 @@
-// Petals variant-backorder-message v2026-06-25.2
+// Petals variant-backorder-message v2026-07-20.1
 // If you see this version in DevTools → Sources, the latest JS is loaded (not a stale cache).
 
 if (!window.Eurus) window.Eurus = {};
@@ -7,12 +7,12 @@ if (!window.Eurus.loadedScript) window.Eurus.loadedScript = new Set();
 if (!window.Eurus.loadedScript.has('variant-backorder-message.js')) {
   window.Eurus.loadedScript.add('variant-backorder-message.js');
 
-  console.info('[Petals] variant-backorder-message v2026-06-25.2 loaded');
+  console.info('[Petals] variant-backorder-message v2026-07-20.1 loaded');
 
   // Shopify checkout appends ": value" itself, so the key must NOT include a colon.
   const BACKORDER_PROPERTY_KEY = 'Backorder';
   const PROPERTY_NAME = `properties[${BACKORDER_PROPERTY_KEY}]`;
-  const SCRIPT_VERSION = '2026-06-25.2';
+  const SCRIPT_VERSION = '2026-07-20.1';
 
   function getConfigElements() {
     return document.querySelectorAll('[data-variant-backorder-config]');
@@ -97,7 +97,21 @@ if (!window.Eurus.loadedScript.has('variant-backorder-message.js')) {
   }
 
   function getPropertyInput(form) {
-    return form?.querySelector(`input[name="${PROPERTY_NAME}"]`) || null;
+    if (!form) return null;
+
+    const fromElements = form.elements?.namedItem?.(PROPERTY_NAME);
+    if (fromElements) {
+      return Array.isArray(fromElements) || fromElements instanceof RadioNodeList
+        ? fromElements[0]
+        : fromElements;
+    }
+
+    return (
+      form.querySelector(`input[name="${PROPERTY_NAME}"]`) ||
+      (form.id
+        ? document.querySelector(`input[name="${PROPERTY_NAME}"][form="${form.id}"]`)
+        : null)
+    );
   }
 
   function setPropertyInput(form, value) {
@@ -109,6 +123,11 @@ if (!window.Eurus.loadedScript.has('variant-backorder-message.js')) {
       input.type = 'hidden';
       input.name = PROPERTY_NAME;
       form.appendChild(input);
+    } else if (input.form !== form || !form.contains(input)) {
+      // Move form-associated (form=) inputs into the form so interceptors using
+      // form.querySelector() can find them (e.g. container-picker ATC).
+      form.appendChild(input);
+      input.removeAttribute('form');
     }
 
     input.value = value;
@@ -135,7 +154,17 @@ if (!window.Eurus.loadedScript.has('variant-backorder-message.js')) {
     const dataEl = document.getElementById(`variantMetafieldData-${sectionId}`);
 
     if (!messageEl || !dataEl) return;
-    if (hasOnlyDefaultVariant) return;
+
+    // Single-variant products already render the Backorder input in Liquid (via form=).
+    // Move it into the form so ATC interceptors can find it with form.querySelector.
+    if (hasOnlyDefaultVariant) {
+      const form = getForm(formId);
+      const existingInput = getPropertyInput(form);
+      if (existingInput?.value) {
+        setPropertyInput(form, existingInput.value);
+      }
+      return;
+    }
 
     const variants = JSON.parse(dataEl.textContent);
 

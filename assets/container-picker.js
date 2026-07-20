@@ -388,8 +388,22 @@ class ContainerPicker extends HTMLElement {
       const mainItemProperties = {
         'Selected Container': `${containerTitle} (${containerPriceFormatted})`,
       };
+      // Prefer form.elements so we also catch inputs outside the form that use form="...".
+      // form.querySelector() only finds descendants and misses the default-variant Backorder input.
       const backorderPropertyKey = 'Backorder';
-      const backorderMessage = form.querySelector(`input[name="properties[${backorderPropertyKey}]"]`)?.value;
+      const backorderPropertyName = `properties[${backorderPropertyKey}]`;
+      let backorderInput = form.elements?.namedItem?.(backorderPropertyName);
+      if (backorderInput && (backorderInput instanceof RadioNodeList || backorderInput.length > 1)) {
+        backorderInput = backorderInput[0];
+      }
+      if (!backorderInput) {
+        backorderInput =
+          form.querySelector(`input[name="${backorderPropertyName}"]`) ||
+          (form.id
+            ? document.querySelector(`input[name="${backorderPropertyName}"][form="${form.id}"]`)
+            : null);
+      }
+      const backorderMessage = (backorderInput?.value || '').trim();
       if (backorderMessage) {
         mainItemProperties[backorderPropertyKey] = backorderMessage;
       }
