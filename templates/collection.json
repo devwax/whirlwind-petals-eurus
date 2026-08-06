@@ -25,7 +25,7 @@
       "block_order": [
         "heading_JtMNp7"
       ],
-      "name": "t:sections.rich-text.name",
+      "name": "H1-SEO-Rich Text",
       "settings": {
         "heading_light": "rgba(0,0,0,0)",
         "color_heading_highlight_light": "rgba(0,0,0,0)",
@@ -258,7 +258,7 @@
       "type": "custom-liquid",
       "name": "Custom Collection List",
       "settings": {
-        "custom_liquid": "<!-- nav menu {{collection.metafields.custom.navigation_menu_handle.value}} -->\n{% capture category_list %}\n{%- liquid\n  assign menu_handle = 'main-menu'\nif collection.metafields.custom.navigation_menu_handle.value != blank\nassign menu_handle = collection.metafields.custom.navigation_menu_handle.value\nendif\n  assign menu = linklists[menu_handle]\n  assign current_collection = collection\n\n  assign sel_level = 0\n\n  assign l1_link = nil\n  assign l2_link = nil\n  assign l3_link = nil\n\n  if menu != blank and current_collection != blank\n    for top_link in menu.links\n      assign found = false\n\n      comment\n        Match at L1\n      endcomment\n      if top_link.type == 'collection_link' and top_link.object.handle == current_collection.handle\n        assign sel_level = 1\n        assign l1_link = top_link\n        assign found = true\n      endif\n\n      comment\n        Search L2 / L3 under this L1\n      endcomment\n      if found == false and top_link.links.size > 0\n        for child_link in top_link.links\n          if child_link.type == 'collection_link' and child_link.object.handle == current_collection.handle\n            assign sel_level = 2\n            assign l1_link = top_link\n            assign l2_link = child_link\n            assign found = true\n            break\n          endif\n\n          if child_link.links.size > 0\n            for grandchild_link in child_link.links\n              if grandchild_link.type == 'collection_link' and grandchild_link.object.handle == current_collection.handle\n                assign sel_level = 3\n                assign l1_link = top_link\n                assign l2_link = child_link\n                assign l3_link = grandchild_link\n                assign found = true\n                break\n              endif\n            endfor\n          endif\n\n          if found\n            break\n          endif\n        endfor\n      endif\n\n      if found\n        break\n      endif\n    endfor\n  endif\n\n  comment\n    Decide what to render:\n      header_link: link object used for heading/title\n      list_links: array of link objects to list\n      bold_selected_url: url that should be bolded in list (optional)\n  endcomment\n\n  assign header_title = blank\n  assign header_url = blank\n  assign list_links = nil\n  assign bold_selected_url = blank\n  if sel_level == 1 and l1_link != nil\n    comment\n      Case 1: selected L1 => list L2 children; include selected L1 as header AND also show it as first list item\n    endcomment\n    assign header_title = l1_link.title\n    assign header_url = l1_link.url\n    assign list_links = l1_link.links\n\n  elsif sel_level == 2 and l2_link != nil\n    if l2_link.links.size > 0\n      comment\n        Case 2: selected L2 with children => header is L2; list is L3 children\n      endcomment\n      assign header_title = l2_link.title\n      assign header_url = l2_link.url\n      assign list_links = l2_link.links\n    else\n      comment\n        Case 3: selected L2 without children => header is L1; list is L2 siblings; bold selected L2\n      endcomment\n      assign header_title = l1_link.title\n      assign header_url = l1_link.url\n      assign list_links = l1_link.links\n      assign bold_selected_url = l2_link.url\n    endif\n\n  elsif sel_level == 3 and l3_link != nil\n    comment\n      Case 4: selected L3 => header is L2 parent; list is L3 siblings; bold selected L3\n    endcomment\n    assign header_title = l2_link.title\n    assign header_url = l2_link.url\n    assign list_links = l2_link.links\n    assign bold_selected_url = l3_link.url\n  endif\n-%}\n\n{%- if header_title != blank and list_links != nil and list_links.size > 0 -%}\n  <nav class=\"collection-menu-siblings\" aria-label=\"{{ header_title | escape }}\">\n    <div class=\"menu-context-list__header\">\n      <a class=\"menu-context-list__header-link\" href=\"{{ header_url }}\">\n        {{ header_title }}\n      </a>\n    </div>\n\n    <ul class=\"collection-menu-siblings__list\" role=\"list\">\n      {%- comment -%}\n        Use case 1 requires showing the selected L1 item AND its L2 children.\n        We'll inject L1 as the first item when sel_level == 1.\n      {%- endcomment -%}\n{% comment %}\n      {%- if sel_level == 1 and l1_link != nil -%}\n        <li class=\"collection-menu-siblings__item\">\n          <a class=\"collection-menu-siblings__link\" href=\"{{ l1_link.url }}\">\n            <strong>{{ l1_link.title }}</strong>\n          </a>\n        </li>\n      {%- endif -%}\n{% endcomment %}\n      {%- for item in list_links -%}\n        {%- assign is_bold = false -%}\n        {%- if bold_selected_url != blank and item.url == bold_selected_url -%}\n          {%- assign is_bold = true -%}\n        {%- endif -%}\n\n        <li class=\"collection-menu-siblings__item\">\n          <a class=\"collection-menu-siblings__link\" href=\"{{ item.url }}\"\n             {% if item.type == 'collection_link' and item.object.handle == current_collection.handle %}aria-current=\"page\"{% endif %}>\n            {%- if is_bold -%}\n              <strong>{{ item.title }}</strong>\n            {%- else -%}\n              {{ item.title }}\n            {%- endif -%}\n          </a>\n        </li>\n      {%- endfor -%}\n    </ul>\n  </nav>\n{%- endif -%}\n{% endcapture %}\n<script>\nconsole.log('start');\ndocument.addEventListener('DOMContentLoaded', function() {\n\tconsole.log('loaded');\n        function loadCatList(){\n\t\t\tconsole.log('loadCatList');\n            if (!document.querySelector('.sidebar-collection-list')) {\n\t\t\t\tconsole.log('section not set');\n                var elem = document.createElement('div');\n                elem.innerHTML = '{{category_list | strip_newlines | replace: \"'\", \"`\"}}';\n                elem.classList.add('sidebar-collection-list');\n\t\t\t\tvar elemClone = elem.cloneNode(true);\n                var target = document.querySelector('#active-filter-tag'); // desktop target\n\t\t\t\tconsole.log('target',target);\n\t\t\t\tconsole.log('elem',elem);\n                target.after(elem);\n\t\t\t\tvar targetMobile = document.querySelector('[data-index=\"drawer-1\"]'); // mobile target\n\t\t\t\tconsole.log('mobile target', target);\n\t\t\t\tconsole.log('cloneNode',elemClone);\n\t\t\t\ttargetMobile.before(elemClone);\n\t\t\t\t\n            }\n        };\n       loadCatList();\n});\n\n</script>\n<style>\n.menu-context-list__header {font-weight: bold; margin-bottom: 15px !important;}\n.collection-menu-siblings {margin-bottom: 30px;}\n.collection-menu-siblings li {\n    margin-bottom: 10px !important;}\n.collection-menu-siblings li strong {font-weight: 800;\n    display: block;}\n.snize-modal-content .collection-menu-siblings {\n    padding-left: 30px;\n    padding-top: 60px;\n}\n</style>",
+        "custom_liquid": "<!-- nav menu {{collection.metafields.custom.navigation_menu_handle.value}} -->\n{% capture category_list %}\n{%- liquid\n  assign menu_handle = 'main-menu'\nif collection.metafields.custom.navigation_menu_handle.value != blank\nassign menu_handle = collection.metafields.custom.navigation_menu_handle.value\nendif\n  assign menu = linklists[menu_handle]\n  assign current_collection = collection\n\n  assign sel_level = 0\n\n  assign l1_link = nil\n  assign l2_link = nil\n  assign l3_link = nil\n  if menu != blank and current_collection != blank\n    for top_link in menu.links\n      assign found = false\n\n      comment\n        Match at L1\n      endcomment\n      if top_link.type == 'collection_link' and top_link.object.handle == current_collection.handle\n        assign sel_level = 1\n        assign l1_link = top_link\n        assign found = true\n      endif\n\n      comment\n        Search L2 / L3 under this L1\n      endcomment\n      if found == false and top_link.links.size > 0\n        for child_link in top_link.links\n          if child_link.type == 'collection_link' and child_link.object.handle == current_collection.handle\n            assign sel_level = 2\n            assign l1_link = top_link\n            assign l2_link = child_link\n            assign found = true\n            break\n          endif\n\n          if child_link.links.size > 0\n            for grandchild_link in child_link.links\n              if grandchild_link.type == 'collection_link' and grandchild_link.object.handle == current_collection.handle\n                assign sel_level = 3\n                assign l1_link = top_link\n                assign l2_link = child_link\n                assign l3_link = grandchild_link\n                assign found = true\n                break\n              endif\n            endfor\n          endif\n\n          if found\n            break\n          endif\n        endfor\n      endif\n\n      if found\n        break\n      endif\n    endfor\n  endif\n\n  comment\n    Decide what to render:\n      header_link: link object used for heading/title\n      list_links: array of link objects to list\n      bold_selected_url: url that should be bolded in list (optional)\n  endcomment\n\n  assign header_title = blank\n  assign header_url = blank\n  assign list_links = nil\n  assign bold_selected_url = blank\n  if sel_level == 1 and l1_link != nil\n    comment\n      Case 1: selected L1 => list L2 children; include selected L1 as header AND also show it as first list item\n    endcomment\n    assign header_title = l1_link.title\n    assign header_url = l1_link.url\n    assign list_links = l1_link.links\n\n  elsif sel_level == 2 and l2_link != nil\n    if l2_link.links.size > 0\n      comment\n        Case 2: selected L2 with children => header is L2; list is L3 children\n      endcomment\n      assign header_title = l2_link.title\n      assign header_url = l2_link.url\n      assign list_links = l2_link.links\n    else\n      comment\n        Case 3: selected L2 without children => header is L1; list is L2 siblings; bold selected L2\n      endcomment\n      assign header_title = l1_link.title\n      assign header_url = l1_link.url\n      assign list_links = l1_link.links\n      assign bold_selected_url = l2_link.url\n    endif\n\n  elsif sel_level == 3 and l3_link != nil\n    comment\n      Case 4: selected L3 => header is L2 parent; list is L3 siblings; bold selected L3\n    endcomment\n    assign header_title = l2_link.title\n    assign header_url = l2_link.url\n    assign list_links = l2_link.links\n    assign bold_selected_url = l3_link.url\n  endif\n-%}\n\n{%- if header_title != blank and list_links != nil and list_links.size > 0 -%}\n  <nav class=\"collection-menu-siblings\" aria-label=\"{{ header_title | escape }}\">\n    <div class=\"menu-context-list__header\">\n      <a class=\"menu-context-list__header-link\" href=\"{{ header_url }}\">\n        {{ header_title }}\n      </a>\n    </div>\n\n    <ul class=\"collection-menu-siblings__list\" role=\"list\">\n      {%- comment -%}\n        Use case 1 requires showing the selected L1 item AND its L2 children.\n        We'll inject L1 as the first item when sel_level == 1.\n      {%- endcomment -%}\n{% comment %}\n      {%- if sel_level == 1 and l1_link != nil -%}\n        <li class=\"collection-menu-siblings__item\">\n          <a class=\"collection-menu-siblings__link\" href=\"{{ l1_link.url }}\">\n            <strong>{{ l1_link.title }}</strong>\n          </a>\n        </li>\n      {%- endif -%}\n{% endcomment %}\n      {%- for item in list_links -%}\n        {%- assign is_bold = false -%}\n        {%- if bold_selected_url != blank and item.url == bold_selected_url -%}\n          {%- assign is_bold = true -%}\n        {%- endif -%}\n\n        <li class=\"collection-menu-siblings__item\">\n          <a class=\"collection-menu-siblings__link\" href=\"{{ item.url }}\"\n             {% if item.type == 'collection_link' and item.object.handle == current_collection.handle %}aria-current=\"page\"{% endif %}>\n            {%- if is_bold -%}\n              <strong>{{ item.title }}</strong>\n            {%- else -%}\n              {{ item.title }}\n            {%- endif -%}\n          </a>\n        </li>\n      {%- endfor -%}\n    </ul>\n  </nav>\n{%- endif -%}\n{% endcapture %}\n<script>\nconsole.log('start');\ndocument.addEventListener('DOMContentLoaded', function() {\n\tconsole.log('loaded');\n        function loadCatList(){\n\t\t\tconsole.log('loadCatList');\n            if (!document.querySelector('.sidebar-collection-list')) {\n\t\t\t\tconsole.log('section not set');\n                var elem = document.createElement('div');\n                elem.innerHTML = '{{category_list | strip_newlines | replace: \"'\", \"`\"}}';\n                elem.classList.add('sidebar-collection-list');\n\t\t\t\tvar elemClone = elem.cloneNode(true);\n                var target = document.querySelector('#active-filter-tag'); // desktop target\n\t\t\t\tconsole.log('target',target);\n\t\t\t\tconsole.log('elem',elem);\n                target.after(elem);\n\t\t\t\tvar targetMobile = document.querySelector('[data-index=\"drawer-1\"]'); // mobile target\n\t\t\t\tconsole.log('mobile target', target);\n\t\t\t\tconsole.log('cloneNode',elemClone);\n\t\t\t\ttargetMobile.before(elemClone);\n\t\t\t\t\n            }\n        };\n       loadCatList();\n});\n\n</script>\n<style>\n.menu-context-list__header {font-weight: bold; margin-bottom: 15px !important;}\n.collection-menu-siblings {margin-bottom: 30px;}\n.collection-menu-siblings li {\n    margin-bottom: 10px !important;}\n.collection-menu-siblings li strong {font-weight: 800;\n    display: block;}\n.snize-modal-content .collection-menu-siblings {\n    padding-left: 30px;\n    padding-top: 60px;\n}\n</style>",
         "full_width": false,
         "show_section_divider": false,
         "padding_top": 0,
@@ -1319,6 +1319,90 @@
         "padding_top_mobile": 48,
         "padding_bottom_mobile": 0
       }
+    },
+    "slideshow_79zWdJ": {
+      "type": "slideshow",
+      "blocks": {
+        "slide_T4aCcc": {
+          "type": "slide",
+          "settings": {
+            "image_link": "",
+            "open_new_window_image": false,
+            "overlay_opacity": 0,
+            "video_url": "",
+            "video_alt_text": "",
+            "show_sound_control": false,
+            "enable_video_autoplay": false,
+            "mobile_video_url": "",
+            "enable_bakground": false,
+            "subheading": "",
+            "subheading_size": 100,
+            "heading": "Slide title",
+            "highlight_type": "underline",
+            "heading_size": 170,
+            "heading_tag": "h2",
+            "text": "<p>Tell your brand's story through images</p>",
+            "button_label_1": "Button label",
+            "button_link_1": "",
+            "open_new_window_button": false,
+            "show_button_style_1": "primary",
+            "button_label_2": "Button label",
+            "button_link_2": "",
+            "open_new_window_button_2": false,
+            "show_button_style_2": "primary",
+            "content_alignment": "middle-center",
+            "custom_horizontal": 50,
+            "custom_vertical": 50,
+            "alignment": "center",
+            "text_product": "Check out our products:",
+            "list_products": [],
+            "show_rating": false,
+            "open_new_window_product": false,
+            "content_background_color": "rgba(0,0,0,0)",
+            "color_text": "rgba(0,0,0,0)",
+            "color_button": "rgba(0,0,0,0)",
+            "color_text_button": "rgba(0,0,0,0)",
+            "color_button_hover": "rgba(0,0,0,0)",
+            "color_text_button_hover": "rgba(0,0,0,0)",
+            "color_button_secondary": "rgba(0,0,0,0)",
+            "secondary_button_text": "rgba(0,0,0,0)",
+            "colors_text_link": "rgba(0,0,0,0)",
+            "color_heading_highlight_light": "rgba(0,0,0,0)",
+            "color_product_card_background": "rgba(0,0,0,0)",
+            "color_product_card_text": "rgba(0,0,0,0)"
+          }
+        }
+      },
+      "block_order": [
+        "slide_T4aCcc"
+      ],
+      "disabled": true,
+      "name": "t:sections.slideshow.name",
+      "settings": {
+        "show_hero": true,
+        "auto_play": false,
+        "change_slides_speed": 5,
+        "pause_hover": false,
+        "slider_visual": "none",
+        "show_arrow": false,
+        "image_pagination_background": "rgba(0,0,0,0)",
+        "image_pagination_text": "rgba(0,0,0,0)",
+        "transition_style": "fade",
+        "full_width": false,
+        "padding_full_width": false,
+        "adapt_corners_desktop": false,
+        "rounded_corner_image": false,
+        "desktop_height": "natural",
+        "padding_top": 0,
+        "padding_bottom": 28,
+        "full_width_mobile": true,
+        "adapt_corners_mobile": true,
+        "rounded_corner_image_mobile": false,
+        "show_content_below_image": false,
+        "mobile_height": "250",
+        "padding_top_mobile": 0,
+        "padding_bottom_mobile": 20
+      }
     }
   },
   "order": [
@@ -1335,6 +1419,7 @@
     "collage_bQj3RW",
     "multicolumn_M3Rbqp",
     "media_gallery_chyViy",
-    "featured_collection_z9r7qr"
+    "featured_collection_z9r7qr",
+    "slideshow_79zWdJ"
   ]
 }

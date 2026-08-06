@@ -1,0 +1,185 @@
+{%- liquid
+  if section.settings.enable == false or section.settings.show_only_on_homepage and template.name != 'index'
+    assign show = false
+  else
+    assign show = true
+  endif
+
+  assign check_text_color = section.settings.text_color | color_extract: 'alpha'
+  assign check_text_color_dark = section.settings.text_color_dark | color_extract: 'alpha'
+  assign check_background_color = section.settings.background_color | color_extract: 'alpha'
+  assign check_background_color_dark = section.settings.background_color_dark | color_extract: 'alpha'
+  assign base_size = settings.text_base_size | times: section.settings.text_size | times: 0.0000875
+-%}
+
+{%- style -%}
+  .petals-promo-link--{{ section.id }} {
+    {% if section.settings.background_color != blank and check_background_color and check_background_color != 0.0 %}
+      background: {{ section.settings.background_color }};
+    {% else %}
+      background: rgba(var(--colors-background-secondary));
+    {% endif %}
+  }
+
+  .dark .petals-promo-link--{{ section.id }} {
+    {% if section.settings.background_color_dark != blank and check_background_color_dark and check_background_color_dark != 0.0 %}
+      background: {{ section.settings.background_color_dark }};
+    {% else %}
+      background: rgba(var(--colors-background-secondary));
+    {% endif %}
+  }
+
+  .petals-promo-link__message--{{ section.id }} {
+    display: block;
+    width: 100%;
+    font-size: {{ base_size | times: 0.9 }}rem;
+    text-decoration: none;
+
+    {% if section.settings.text_color != blank and check_text_color and check_text_color != 0.0 %}
+      color: {{ section.settings.text_color }};
+    {% else %}
+      color: rgb(var(--colors-text));
+    {% endif %}
+  }
+
+  .dark .petals-promo-link__message--{{ section.id }} {
+    {% if section.settings.text_color_dark != blank and check_text_color_dark and check_text_color_dark != 0.0 %}
+      color: {{ section.settings.text_color_dark }};
+    {% else %}
+      color: rgb(var(--colors-text));
+    {% endif %}
+  }
+
+  @media screen and (min-width: 768px) {
+    .petals-promo-link__message--{{ section.id }} {
+      font-size: {{ base_size }}rem;
+    }
+  }
+
+  {% if section.settings.enable_sticky_bar %}
+    #shopify-section-{{ section.id }} {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+  {% endif %}
+{%- endstyle -%}
+
+{%- if show and section.settings.text != blank -%}
+  <div
+    id="x-announcement"
+    class="petals-promo-link petals-promo-link--{{ section.id }} ltr mx-auto flex items-center justify-center lg:pl-5 lg:pr-5"
+    {% if section.settings.enable_sticky_bar %}
+      data-is-sticky="true"
+      x-init='$store.xHeaderMenu.setVariableHeightHeader(true);document.documentElement.style.setProperty("--top-cart-noti", $el.offsetHeight + "px"); {% if request.design_mode %}window.dispatchEvent(new CustomEvent("announcement:sticky-change"));{% endif %}'
+    {% endif %}
+  >
+    {%- if section.settings.link != blank -%}
+      <a
+        href="{{ section.settings.link }}"
+        class="petals-promo-link__message petals-promo-link__message--{{ section.id }} text-center py-2 px-4 w-full leading-snug"
+        {% if section.settings.open_new_window %}
+          target="_blank"
+          rel="noopener"
+        {% endif %}
+        aria-label="Shop the current promotion"
+      >
+        {{ section.settings.text }}
+      </a>
+    {%- else -%}
+      <div class="petals-promo-link__message petals-promo-link__message--{{ section.id }} text-center py-2 px-4 w-full leading-snug">
+        {{ section.settings.text }}
+      </div>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Petals promo link bar",
+  "tag": "section",
+  "class": "section section-petals-promo-link",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable",
+      "label": "Enable promo bar",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_only_on_homepage",
+      "label": "Show only on homepage",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sticky_bar",
+      "label": "Enable sticky bar",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "html",
+      "id": "text",
+      "label": "Promo message",
+      "default": "POINSETTIA FLASH SALE • <strong>25% OFF</strong> SELECT STYLES • ENDS AUGUST 2 • SHOP NOW"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "Promo link"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_new_window",
+      "label": "Open link in new window",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "text_size",
+      "min": 50,
+      "max": 200,
+      "step": 10,
+      "unit": "%",
+      "label": "Text size",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#A31B2C"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "background_color_dark",
+      "label": "Background (dark mode)"
+    },
+    {
+      "type": "color",
+      "id": "text_color_dark",
+      "label": "Text (dark mode)"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Petals promo link bar"
+    }
+  ]
+}
+{% endschema %}
