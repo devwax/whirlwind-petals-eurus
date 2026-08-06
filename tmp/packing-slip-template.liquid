@@ -113,40 +113,56 @@
 
     {% comment %}
       Group trees with their containers the same way order confirmation emails do.
-      Packing slip line items do not expose variant_id, so resolve it from order.line_items
+      Packing slip line items often lack variant_id, so resolve it from order.line_items
       and fall back to Selected Container / group title matching for multi-item orders.
+
+      IMPORTANT: container identity must NOT use SKU alone. Free NDL / Gold Cover lines
+      share the same SKU, so two containers in one shipment would collide and only the
+      first would render. Prefer _parent_variant_id; fall back to shipment index.
     {% endcomment %}
     {% assign assigned_container_keys = "" %}
     {% for line_item in line_items_in_shipment %}
       {% unless line_item.properties["_is_container"] == 'true' %}
         {% assign has_associated_container = false %}
         {% assign associated_container = nil %}
+        {% assign associated_container_key = "" %}
         {% if line_item.properties["Selected Container"] != blank %}
           {% assign line_variant_id = line_item.variant_id | append: '' %}
           {% if line_variant_id == blank and order.line_items %}
             {% for order_line in order.line_items %}
-              {% if order_line.sku != blank and order_line.sku == line_item.sku %}
-                {% assign line_variant_id = order_line.variant_id | append: '' %}
-                {% break %}
-              {% endif %}
-            {% endfor %}
-            {% if line_variant_id == blank %}
-              {% for order_line in order.line_items %}
-                {% if order_line.title == line_item.title %}
+              {% unless order_line.properties["_is_container"] == 'true' %}
+                {% if order_line.sku != blank and order_line.sku == line_item.sku %}
                   {% assign line_variant_id = order_line.variant_id | append: '' %}
                   {% break %}
                 {% endif %}
+              {% endunless %}
+            {% endfor %}
+            {% if line_variant_id == blank %}
+              {% for order_line in order.line_items %}
+                {% unless order_line.properties["_is_container"] == 'true' %}
+                  {% if order_line.title == line_item.title %}
+                    {% assign line_variant_id = order_line.variant_id | append: '' %}
+                    {% break %}
+                  {% endif %}
+                {% endunless %}
               {% endfor %}
             {% endif %}
           {% endif %}
 
           {% assign selected_container_label = line_item.properties["Selected Container"] | split: ' (+ ' | first | strip %}
+          {% if selected_container_label == line_item.properties["Selected Container"] %}
+            {% assign selected_container_label = line_item.properties["Selected Container"] | split: ' + $' | first | strip %}
+          {% endif %}
 
           {% for container_line in line_items_in_shipment %}
             {% if container_line.properties["_is_container"] == 'true' %}
-              {% assign container_key = container_line.sku | default: container_line.title | append: '||' %}
+              {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
+              {% if container_parent_id != blank %}
+                {% assign container_key = 'pv:' | append: container_parent_id | append: '||' %}
+              {% else %}
+                {% assign container_key = 'idx:' | append: forloop.index | append: '||' %}
+              {% endif %}
               {% unless assigned_container_keys contains container_key %}
-                {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
                 {% assign container_matches = false %}
 
                 {% if line_variant_id != blank and container_parent_id == line_variant_id %}
@@ -169,6 +185,7 @@
                 {% if container_matches %}
                   {% assign has_associated_container = true %}
                   {% assign associated_container = container_line %}
+                  {% assign associated_container_key = container_key %}
                   {% break %}
                 {% endif %}
               {% endunless %}
@@ -179,10 +196,16 @@
             {% assign container_count = 0 %}
             {% for container_line in line_items_in_shipment %}
               {% if container_line.properties["_is_container"] == 'true' %}
-                {% assign container_key = container_line.sku | default: container_line.title | append: '||' %}
+                {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
+                {% if container_parent_id != blank %}
+                  {% assign container_key = 'pv:' | append: container_parent_id | append: '||' %}
+                {% else %}
+                  {% assign container_key = 'idx:' | append: forloop.index | append: '||' %}
+                {% endif %}
                 {% unless assigned_container_keys contains container_key %}
                   {% assign container_count = container_count | plus: 1 %}
                   {% assign associated_container = container_line %}
+                  {% assign associated_container_key = container_key %}
                 {% endunless %}
               {% endif %}
             {% endfor %}
@@ -193,7 +216,7 @@
         {% endif %}
 
         <div class="flex-line-item{% if has_associated_container %} flex-line-item--parent{% endif %}">
-          <div class="flex-line-item-img">
+          <!--<div class="flex-line-item-img">
             {% if line_item.image != blank %}
               <div
                 class="aspect-ratio aspect-ratio-square"
@@ -202,17 +225,20 @@
                 {{ line_item.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
               </div>
             {% endif %}
-          </div>
+          </div>-->
           <div class="flex-line-item-description">
             <p>
               <span class="line-item-description-line">
-                {{ line_item.title }}
+                {{ line_item.sku }} {{ line_item.title }} {{ line_item.variant_title }}
               </span>
+              <!--
               {% if line_item.variant_title != blank %}
                 <span class="line-item-description-line">
                   {{ line_item.variant_title }}
                 </span>
               {% endif %}
+              -->
+              {% comment %}
               {% liquid
                 assign whirlwind_backorder_message = line_item.properties['Backorder']
                 if whirlwind_backorder_message == blank
@@ -241,16 +267,17 @@
                   Backorder: {{ whirlwind_backorder_message }}
                 </span>
               {% endif %}
-              {% if line_item.sku != blank %}
+              {% endcomment %}
+              <!--{% if line_item.sku != blank %}
                 <span class="line-item-description-line">
                   Item #: {{ line_item.sku }}
                 </span>
-              {% endif %}
+              {% endif %}-->
               {% for group in line_item.groups %}
                 {% if group.deliverable? %}
-                  <span class="line-item-description-line"> For: {{ group.title }} </span>
+                  <span class="line-item-description-line line-item-description-line-group"> For: {{ group.title }} </span>
                 {% else %}
-                  <span class="line-item-description-line"> Part of: {{ group.title }} </span>
+                  <span class="line-item-description-line line-item-description-line-group"> Part of: {{ group.title }} </span>
                 {% endif %}
               {% endfor %}
             </p>
@@ -262,10 +289,9 @@
 
         {% if has_associated_container %}
           {% assign child_line = associated_container %}
-          {% assign container_key = child_line.sku | default: child_line.title | append: '||' %}
-          {% assign assigned_container_keys = assigned_container_keys | append: container_key %}
+          {% assign assigned_container_keys = assigned_container_keys | append: associated_container_key %}
           <div class="flex-line-item flex-line-item--nested">
-            <div class="flex-line-item-img">
+            <!--<div class="flex-line-item-img">
               {% if child_line.image != blank %}
                 <div
                   class="aspect-ratio aspect-ratio-square"
@@ -275,24 +301,28 @@
                 </div>
               {% endif %}
             </div>
+            -->
             <div class="flex-line-item-description">
               <p>
                 <span class="line-item-description-line">
-                  {{ child_line.title }}
+                  {{ child_line.sku }} {{ child_line.title }} {{ child_line.variant_title }}
                 </span>
+                <!--
                 {% if child_line.variant_title != blank and child_line.variant_title != 'Default Title' %}
                   <span class="line-item-description-line">
                     {{ child_line.variant_title }}
                   </span>
                 {% endif %}
+                -->
+                <!--
                 {% if child_line.sku != blank %}
                   <span class="line-item-description-line">
                     Item #: {{ child_line.sku }}
                   </span>
-                {% endif %}
+                {% endif %}-->
               </p>
             </div>
-            <div class="flex-line-item-quantity">
+            <div class="flex-line-item-quantity flex-line-item-quantity-child">
               <p class="text-align-right">{{ child_line.shipping_quantity }} of {{ child_line.quantity }}</p>
             </div>
           </div>
@@ -332,7 +362,9 @@
       <br>
       {{ shop_address.summary }}
       <br>
-      {{ shop.email }}
+      <strong>Customer Service, Returns or Exchange:</strong>
+      <br>
+      Call 1-800-783-9966 (M-F 8AM-7PM ET) or email us <a href="mailto:service@petals.com">service@petals.com</a>
       <br>
       {{ shop.domain }}
     </p>
@@ -341,12 +373,14 @@
 
 <style type="text/css">
   body {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   * {
     box-sizing: border-box;
   }
+
+  strong {font-weight: 800;}
 
   .wrapper {
     width: 831px;
@@ -384,7 +418,8 @@
 
   .customer-addresses {
     width: 100%;
-    display: inline-block;
+    display: flex;
+    gap: 10px;
     margin: 2em 0;
   }
 
@@ -408,18 +443,20 @@
   }
 
   .shipping-address {
-    float: left;
     min-width: 18em;
-    max-width: 50%;
+    flex-grow: 1;
   }
 
   .billing-address {
-    padding-left: 20em;
-    min-width: 18em;
+    /*padding-left: 20em;
+    min-width: 18em;*/
+    white-space: nowrap;
   }
+
 
   .order-container {
     padding: 0 0.7em;
+    margin-bottom: 10px;
   }
 
   .order-container-header {
@@ -441,19 +478,26 @@
     display: -webkit-flex;
     display: flex;
     flex-direction: row;
-    align-items: center;
-    margin: 1.4em 0;
+    align-items: flex-start; /*center; */
+    margin: .5em 0;/*1.4em 0;*/
+    padding-top: .5em;
     page-break-inside: avoid;
   }
 
+  .flex-line-item:not(.flex-line-item--nested){
+        border-top: 1px dotted #ccc;
+  }
+
   .flex-line-item--nested {
-    margin-top: -0.7em;
-    margin-bottom: 1.4em;
+    margin-top: 0px;
+    margin-bottom: 0px; /*1.4em;*/
     padding-left: 2.8em;
+
   }
 
   .flex-line-item--parent {
-    margin-bottom: 0.7em;
+    margin-bottom: 0px; /* 0.7em; */
+
   }
 
   .flex-line-item--nested .flex-line-item-img .aspect-ratio {
@@ -471,25 +515,33 @@
   }
 
   .flex-line-item-description {
-    -webkit-box-flex: 7;
-    -webkit-flex: 7;
-    flex: 7;
+    -webkit-box-flex: 9;
+    -webkit-flex: 9;
+    flex: 9;
+
   }
 
   .line-item-description-line {
     display: block;
+    width: 100%;
   }
+
+
+
 
   .flex-line-item-description p {
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.25; /* 1.5; */
+
   }
 
   .flex-line-item-quantity {
-    -webkit-box-flex: 3;
-    -webkit-flex: 3;
-    flex: 3;
+    -webkit-box-flex: 1;
+    -webkit-flex: 1;
+    flex: 1;
   }
+
+    .flex-line-item-quantity p {margin: 0px;}
 
   .subdued-separator {
     height: 0.07em;
