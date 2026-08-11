@@ -18,6 +18,7 @@
         class="product-form__input pl-0 flex flex-wrap{% unless section.settings.quick_view_type == 'drawer' and block.settings.show_variant_option and block.settings.show_option_in_tab %} quick-view:pb-2 pb-5{% endunless %} eurus gap-x-2.5{% if show_content_center %} text-center justify-center{% endif %}"
         data-option-name="{{ option.name | handle }}"
         data-option-index="{{ forloop.index | minus: 1 }}"
+        {% if settings.color_option_name contains option.name or product.options_with_values.size == 1 %}data-media-linked-option="true"{% endif %}
       >
         {% if section.settings.quick_view_type == 'drawer' and block.settings.show_variant_option and block.settings.show_option_in_tab %}
           <div x-data="{open: true}" class="w-full border-t">
@@ -72,6 +73,7 @@
       <div 
         data-option-name="{{ option.name | handle }}"
         data-option-index="{{ forloop.index | minus: 1 }}"
+        {% if settings.color_option_name contains option.name or product.options_with_values.size == 1 %}data-media-linked-option="true"{% endif %}
       >
         {%- if block.settings.show_variant_option -%}
           <label class="mt-1 mb-1 font-medium" for="Option-{{ section.id }}-{{ forloop.index0 }}">

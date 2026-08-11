@@ -1389,6 +1389,85 @@ document.addEventListener('alpine:init', () => {
           }, 0)
         })
       });
+      this._initThumbnailVariantSync();
+    },
+    _initThumbnailVariantSync() {
+      const thumbsRoot = document.getElementById(`x-product-thumbnail-${sectionId}`);
+      if (!thumbsRoot || thumbsRoot.dataset.variantSyncBound === 'true') return;
+      thumbsRoot.dataset.variantSyncBound = 'true';
+      thumbsRoot.addEventListener('click', (e) => {
+        const thumb = e.target.closest('.x-thumbnail[data-media-id]');
+        if (!thumb || !thumbsRoot.contains(thumb)) return;
+        const mediaId = this._mediaIdFromThumb(thumb);
+        if (!mediaId) return;
+        this._selectVariantFromMedia(mediaId);
+      });
+    },
+    _mediaIdFromThumb(thumb) {
+      const mediaIdAttr = thumb.dataset.mediaId || '';
+      const prefix = `${sectionId}-`;
+      if (mediaIdAttr.startsWith(prefix)) {
+        return mediaIdAttr.slice(prefix.length);
+      }
+      return mediaIdAttr || null;
+    },
+    _variantFeaturedMediaMatches(resourceId, mediaId) {
+      const variantDataEl = this._getVariantDataElement(resourceId);
+      if (!variantDataEl) return false;
+      try {
+        const variant = JSON.parse(variantDataEl.textContent);
+        return String(variant?.featured_media?.id) === String(mediaId);
+      } catch (err) {
+        return false;
+      }
+    },
+    _selectVariantFromMedia(mediaId) {
+      const mediaLinkedOptions = element.querySelectorAll('[data-media-linked-option="true"]');
+      if (!mediaLinkedOptions.length) return;
+
+      let matchedInput = null;
+      let matchedSelectOption = null;
+      let matchedSelect = null;
+
+      mediaLinkedOptions.forEach((optionEl) => {
+        if (matchedInput || matchedSelectOption) return;
+
+        const radio = Array.from(optionEl.querySelectorAll('input[type="radio"]')).find((input) =>
+          this._variantFeaturedMediaMatches(input.id, mediaId)
+        );
+
+        if (radio) {
+          matchedInput = radio;
+          return;
+        }
+
+        const select = optionEl.querySelector('select');
+        if (!select) return;
+        const option = Array.from(select.options).find((opt) => {
+          if (!opt.id) return false;
+          const resourceId = opt.id.replace(/^fbt-/, '');
+          return this._variantFeaturedMediaMatches(resourceId, mediaId);
+        });
+        if (option) {
+          matchedSelect = select;
+          matchedSelectOption = option;
+        }
+      });
+
+      if (matchedInput) {
+        if (matchedInput.checked) return;
+        matchedInput.checked = true;
+        matchedInput.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+
+      if (matchedSelect && matchedSelectOption) {
+        if (matchedSelectOption.selected) return;
+        Array.from(matchedSelect.options).forEach((option) => { option.removeAttribute('selected'); });
+        matchedSelectOption.setAttribute('selected', 'selected');
+        matchedSelect.value = matchedSelectOption.value;
+        matchedSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     },
     _dispatchVariantSelected(html) {
       document.dispatchEvent(new CustomEvent(`eurus:product-page-variant-select:updated:${sectionId}`, {
