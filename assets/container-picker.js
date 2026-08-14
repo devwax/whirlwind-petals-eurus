@@ -115,6 +115,10 @@ class ContainerPicker extends HTMLElement {
     return this.selected !== null;
   }
 
+  get isOptional() {
+    return this.dataset.optional === 'true';
+  }
+
   selectVariant(variantId) {
     this.items = this.querySelectorAll('.container-picker__item');
     const item = this.querySelector(`.container-picker__item[data-variant-id="${variantId}"]`);
@@ -311,9 +315,9 @@ class ContainerPicker extends HTMLElement {
 
   /**
    * Intercepts the parent product form so we can:
-   *   1. Validate that a container has been chosen.
-   *   2. Use the Cart AJAX API to add both the main product and the container
-   *      as linked line items instead of just the main product.
+   *   1. Validate that a container has been chosen when the picker is required.
+   *   2. Use the Cart AJAX API to add the main product, and the container when
+   *      one is selected, as linked line items.
    *
    * The container-picker block is rendered outside the <form> in Eurus's block
    * system, so we locate the form via data-product-form-id rather than DOM
@@ -350,27 +354,23 @@ class ContainerPicker extends HTMLElement {
   }
 
   async _onFormSubmit(e, form) {
-    // Container is required — block submission if nothing is selected.
-    if (!this.hasSelection) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      this._showError('Please select a container option before adding to cart.');
-      this._openDropdown();
-      return;
-    }
-
-    // We have a selection → take over the entire cart-add flow.
     e.preventDefault();
     e.stopImmediatePropagation();
+
+    // Required pickers must have a container. Optional pickers (no NDL/gold
+    // collection) may add the parent alone — warehouse assumes gold liner.
+    if (!this.hasSelection) {
+      if (!this.isOptional) {
+        this._showError('Please select a container option before adding to cart.');
+        this._openDropdown();
+        return;
+      }
+    }
 
     this._clearError();
 
     const mainVariantId = form.querySelector('[name="id"]')?.value;
     if (!mainVariantId) return;
-
-    const mainProductTitle = this.dataset.productTitle || 'Product';
-    const containerTitle = this.selected.productTitle;
-    const containerPriceFormatted = this.selected.priceFormatted;
 
     const submitBtn = form.querySelector('[type="submit"]');
     this._setLoading(submitBtn, true);
@@ -385,9 +385,12 @@ class ContainerPicker extends HTMLElement {
         ? Alpine.store('xCartHelper').getSectionsToRender().map((s) => s.id)
         : [];
 
-      const mainItemProperties = {
-        'Selected Container': `${containerTitle} (${containerPriceFormatted})`,
-      };
+      const mainItemProperties = {};
+      if (this.hasSelection) {
+        const containerTitle = this.selected.productTitle;
+        const containerPriceFormatted = this.selected.priceFormatted;
+        mainItemProperties['Selected Container'] = `${containerTitle} (${containerPriceFormatted})`;
+      }
       // Prefer form.elements so we also catch inputs outside the form that use form="...".
       // form.querySelector() only finds descendants and misses the default-variant Backorder input.
       const backorderPropertyKey = 'Item Status';
@@ -408,24 +411,29 @@ class ContainerPicker extends HTMLElement {
         mainItemProperties[backorderPropertyKey] = backorderMessage;
       }
 
-      const body = {
-        items: [
-          {
-            id: parseInt(mainVariantId, 10),
-            quantity: parseInt(form.querySelector('[name="quantity"]')?.value || '1', 10),
-            properties: mainItemProperties,
-          },
-          {
-            id: parseInt(this.selected.variantId, 10),
-            quantity: parseInt(form.querySelector('[name="quantity"]')?.value || '1', 10),
-            parent_id: parseInt(mainVariantId, 10),
-            properties: {
-              _is_container: 'true',
-              _parent_variant_id: mainVariantId,
-            },
-          },
-        ],
+      const quantity = parseInt(form.querySelector('[name="quantity"]')?.value || '1', 10);
+      const mainItem = {
+        id: parseInt(mainVariantId, 10),
+        quantity,
       };
+      if (Object.keys(mainItemProperties).length > 0) {
+        mainItem.properties = mainItemProperties;
+      }
+
+      const items = [mainItem];
+      if (this.hasSelection) {
+        items.push({
+          id: parseInt(this.selected.variantId, 10),
+          quantity,
+          parent_id: parseInt(mainVariantId, 10),
+          properties: {
+            _is_container: 'true',
+            _parent_variant_id: mainVariantId,
+          },
+        });
+      }
+
+      const body = { items };
       if (sections.length > 0) {
         body.sections = sections;
         body.sections_url = window.location.pathname;

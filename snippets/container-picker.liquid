@@ -16,6 +16,16 @@
 {%- assign container_collections = product.metafields.custom.container_collections.value -%}
 {%- assign picker_mode = mode | default: 'add' -%}
 {%- assign load_picker_assets = load_assets | default: false -%}
+{%- comment -%}
+  Optional when no free liner (ct-ndl / ct-gold) is assigned. Paid decorative
+  containers stay available; warehouse assumes gold liner if nothing is selected.
+{%- endcomment -%}
+{%- assign container_optional = true -%}
+{%- for coll in container_collections -%}
+  {%- if coll.handle == 'ct-ndl' or coll.handle == 'ct-gold' -%}
+    {%- assign container_optional = false -%}
+  {%- endif -%}
+{%- endfor -%}
 
 {%- if container_collections != blank and container_collections.count > 0 -%}
   {%- if load_picker_assets -%}
@@ -29,6 +39,7 @@
     data-mode="{{ picker_mode }}"
     data-product-id="{{ product.id }}"
     data-product-title="{{ product.title | escape }}"
+    {% if container_optional %}data-optional="true"{% endif %}
     {% if product_form_id != blank %}data-product-form-id="{{ product_form_id }}"{% endif %}
     data-money-format="{% if settings.currency_code_enable %}{{ shop.money_with_currency_format | escape }}{% else %}{{ shop.money_format | escape }}{% endif %}"
   >
@@ -41,7 +52,11 @@
         {%- endif -%}
       </span>
       {%- unless picker_mode == 'change' -%}
-        <span class="container-picker__required">(Required)</span>
+        {%- if container_optional -%}
+          <span class="container-picker__optional">(Optional)</span>
+        {%- else -%}
+          <span class="container-picker__required">(Required)</span>
+        {%- endif -%}
       {%- endunless -%}
     </div>
 
