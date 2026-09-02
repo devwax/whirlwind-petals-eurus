@@ -329,6 +329,44 @@
         {% endif %}
       {% endunless %}
     {% endfor %}
+
+    {% comment %}
+      Container-only shipments (leftover Ohio box after the plant already shipped)
+      are skipped by the parent loop. Print any _is_container line that was not
+      nested under a parent in this shipment.
+    {% endcomment %}
+    {% for leftover_line in line_items_in_shipment %}
+      {% if leftover_line.properties["_is_container"] == 'true' %}
+        {% assign leftover_parent_id = leftover_line.properties["_parent_variant_id"] | append: '' %}
+        {% if leftover_parent_id != blank %}
+          {% assign leftover_key = 'pv:' | append: leftover_parent_id | append: '||' %}
+        {% else %}
+          {% assign leftover_key = 'idx:' | append: forloop.index | append: '||' %}
+        {% endif %}
+        {% unless assigned_container_keys contains leftover_key %}
+          <div class="flex-line-item">
+            <div class="flex-line-item-description">
+              <p>
+                <span class="line-item-description-line">
+                  {{ leftover_line.sku }} {{ leftover_line.title }} {{ leftover_line.variant_title }}
+                </span>
+                {% for group in leftover_line.groups %}
+                  {% if group.deliverable? %}
+                    <span class="line-item-description-line line-item-description-line-group"> For: {{ group.title }} </span>
+                  {% else %}
+                    <span class="line-item-description-line line-item-description-line-group"> Part of: {{ group.title }} </span>
+                  {% endif %}
+                {% endfor %}
+              </p>
+            </div>
+            <div class="flex-line-item-quantity">
+              <p class="text-align-right">{{ leftover_line.shipping_quantity }} of {{ leftover_line.quantity }}</p>
+            </div>
+          </div>
+          {% assign assigned_container_keys = assigned_container_keys | append: leftover_key %}
+        {% endunless %}
+      {% endif %}
+    {% endfor %}
   </div>
   {% unless includes_all_line_items_in_order %}
     <hr class="subdued-separator">
