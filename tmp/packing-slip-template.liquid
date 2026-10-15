@@ -112,13 +112,18 @@
     {% endcapture %}
 
     {% comment %}
-      Group trees with their containers the same way order confirmation emails do.
-      Packing slip line items often lack variant_id, so resolve it from order.line_items
-      and fall back to Selected Container / group title matching for multi-item orders.
+      Nest each container under the plant that selected it.
 
-      IMPORTANT: container identity must NOT use SKU alone. Free NDL / Gold Cover lines
-      share the same SKU, so two containers in one shipment would collide and only the
-      first would render. Prefer _parent_variant_id; fall back to shipment index.
+      Two of the same variant (two Large poinsettias) store the same
+      _parent_variant_id on each pot, so that id is not a unique key.
+      When more than one unassigned container has the parent's variant,
+      pick the one whose title equals Selected Container. When exactly
+      one does, use it. Key each container by its position in this
+      shipment so the second pot is not treated as already printed.
+
+      Packing slip lines often lack variant_id; resolve it from the order
+      by SKU, then title. Do not match on title/group "contains", and do
+      not attach whatever container is the only one left in the shipment.
     {% endcomment %}
     {% assign assigned_container_keys = "" %}
     {% for line_item in line_items_in_shipment %}
@@ -127,12 +132,12 @@
         {% assign associated_container = nil %}
         {% assign associated_container_key = "" %}
         {% if line_item.properties["Selected Container"] != blank %}
-          {% assign line_variant_id = line_item.variant_id | append: '' %}
+          {% assign line_variant_id = line_item.variant_id | append: '' | strip %}
           {% if line_variant_id == blank and order.line_items %}
             {% for order_line in order.line_items %}
               {% unless order_line.properties["_is_container"] == 'true' %}
                 {% if order_line.sku != blank and order_line.sku == line_item.sku %}
-                  {% assign line_variant_id = order_line.variant_id | append: '' %}
+                  {% assign line_variant_id = order_line.variant_id | append: '' | strip %}
                   {% break %}
                 {% endif %}
               {% endunless %}
@@ -141,7 +146,7 @@
               {% for order_line in order.line_items %}
                 {% unless order_line.properties["_is_container"] == 'true' %}
                   {% if order_line.title == line_item.title %}
-                    {% assign line_variant_id = order_line.variant_id | append: '' %}
+                    {% assign line_variant_id = order_line.variant_id | append: '' | strip %}
                     {% break %}
                   {% endif %}
                 {% endunless %}
@@ -150,69 +155,62 @@
           {% endif %}
 
           {% assign selected_container_label = line_item.properties["Selected Container"] | split: ' (+ ' | first | strip %}
-          {% if selected_container_label == line_item.properties["Selected Container"] %}
-            {% assign selected_container_label = line_item.properties["Selected Container"] | split: ' + $' | first | strip %}
-          {% endif %}
+          {% assign selected_container_label = selected_container_label | split: ' + $' | first | strip %}
+          {% assign selected_container_label = selected_container_label | split: ' (FREE)' | first | strip %}
+
+          {% assign parent_pool_count = 0 %}
+          {% assign title_match_index = 0 %}
+          {% assign only_pool_index = 0 %}
 
           {% for container_line in line_items_in_shipment %}
             {% if container_line.properties["_is_container"] == 'true' %}
-              {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
-              {% if container_parent_id != blank %}
-                {% assign container_key = 'pv:' | append: container_parent_id | append: '||' %}
-              {% else %}
-                {% assign container_key = 'idx:' | append: forloop.index | append: '||' %}
-              {% endif %}
+              {% assign container_key = '|L' | append: forloop.index | append: '|' %}
               {% unless assigned_container_keys contains container_key %}
-                {% assign container_matches = false %}
-
+                {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' | strip %}
                 {% if line_variant_id != blank and container_parent_id == line_variant_id %}
-                  {% assign container_matches = true %}
-                {% elsif selected_container_label != blank and container_line.title == selected_container_label %}
-                  {% assign container_matches = true %}
-                {% elsif selected_container_label != blank and container_line.title contains selected_container_label %}
-                  {% assign container_matches = true %}
-                {% else %}
-                  {% for group in container_line.groups %}
-                    {% if group.deliverable? and group.title != blank %}
-                      {% if line_item.title == group.title or line_item.title contains group.title or group.title contains line_item.title %}
-                        {% assign container_matches = true %}
-                        {% break %}
-                      {% endif %}
-                    {% endif %}
-                  {% endfor %}
-                {% endif %}
-
-                {% if container_matches %}
-                  {% assign has_associated_container = true %}
-                  {% assign associated_container = container_line %}
-                  {% assign associated_container_key = container_key %}
-                  {% break %}
+                  {% assign parent_pool_count = parent_pool_count | plus: 1 %}
+                  {% assign only_pool_index = forloop.index %}
+                  {% assign container_title = container_line.title | strip %}
+                  {% if title_match_index == 0 and selected_container_label != blank and container_title == selected_container_label %}
+                    {% assign title_match_index = forloop.index %}
+                  {% endif %}
                 {% endif %}
               {% endunless %}
             {% endif %}
           {% endfor %}
 
-          {% unless has_associated_container %}
-            {% assign container_count = 0 %}
+          {% assign matched_index = 0 %}
+          {% if title_match_index > 0 %}
+            {% assign matched_index = title_match_index %}
+          {% elsif parent_pool_count == 1 %}
+            {% assign matched_index = only_pool_index %}
+          {% endif %}
+
+          {% if matched_index > 0 %}
+            {% for container_line in line_items_in_shipment %}
+              {% if forloop.index == matched_index %}
+                {% assign has_associated_container = true %}
+                {% assign associated_container = container_line %}
+                {% assign associated_container_key = '|L' | append: forloop.index | append: '|' %}
+                {% break %}
+              {% endif %}
+            {% endfor %}
+          {% elsif line_variant_id == blank and selected_container_label != blank %}
             {% for container_line in line_items_in_shipment %}
               {% if container_line.properties["_is_container"] == 'true' %}
-                {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
-                {% if container_parent_id != blank %}
-                  {% assign container_key = 'pv:' | append: container_parent_id | append: '||' %}
-                {% else %}
-                  {% assign container_key = 'idx:' | append: forloop.index | append: '||' %}
-                {% endif %}
+                {% assign container_key = '|L' | append: forloop.index | append: '|' %}
                 {% unless assigned_container_keys contains container_key %}
-                  {% assign container_count = container_count | plus: 1 %}
-                  {% assign associated_container = container_line %}
-                  {% assign associated_container_key = container_key %}
+                  {% assign container_title = container_line.title | strip %}
+                  {% if container_title == selected_container_label %}
+                    {% assign has_associated_container = true %}
+                    {% assign associated_container = container_line %}
+                    {% assign associated_container_key = container_key %}
+                    {% break %}
+                  {% endif %}
                 {% endunless %}
               {% endif %}
             {% endfor %}
-            {% if container_count == 1 %}
-              {% assign has_associated_container = true %}
-            {% endif %}
-          {% endunless %}
+          {% endif %}
         {% endif %}
 
         <div class="flex-line-item{% if has_associated_container %} flex-line-item--parent{% endif %}">
@@ -337,12 +335,7 @@
     {% endcomment %}
     {% for leftover_line in line_items_in_shipment %}
       {% if leftover_line.properties["_is_container"] == 'true' %}
-        {% assign leftover_parent_id = leftover_line.properties["_parent_variant_id"] | append: '' %}
-        {% if leftover_parent_id != blank %}
-          {% assign leftover_key = 'pv:' | append: leftover_parent_id | append: '||' %}
-        {% else %}
-          {% assign leftover_key = 'idx:' | append: forloop.index | append: '||' %}
-        {% endif %}
+        {% assign leftover_key = '|L' | append: forloop.index | append: '|' %}
         {% unless assigned_container_keys contains leftover_key %}
           <div class="flex-line-item">
             <div class="flex-line-item-description">
