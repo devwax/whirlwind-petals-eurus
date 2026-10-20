@@ -529,10 +529,16 @@ requestAnimationFrame(() => {
         const parentItem = parsedState.items.find(item => item.key === parentKey);
         if (!parentItem) return;
 
+        const parentBundleId = parentItem.properties && parentItem.properties._bundle_id;
         const containerItem = parsedState.items.find(item => {
+          const rel = item.parent_relationship;
+          if (rel && (rel.parent_key === parentKey || (rel.parent && rel.parent.key === parentKey))) {
+            return true;
+          }
           const props = item.properties || {};
           return props._is_container === 'true' &&
-            String(props._parent_variant_id) === String(parentItem.variant_id);
+            parentBundleId &&
+            props._bundle_id === parentBundleId;
         });
 
         if (!containerItem || containerItem.quantity === newQty) return;

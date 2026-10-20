@@ -56,9 +56,10 @@ document.addEventListener('alpine:init', () => {
  *   with the main product in cart, checkout, and order. Shopify renders the
  *   relationship automatically; child is removed if parent is removed.
  *
- *   Main product: added first with "Selected Container" property for fulfillment.
- *   Container: added second with parent_id referencing the main product variant,
- *   plus _is_container: 'true' for cart display labeling.
+ *   Main product: added first with "Selected Container", _bundle_id, and
+ *   _container_sku. Container: added in the same request with parent_id,
+ *   the same _bundle_id, _is_container, and _parent_variant_id.
+ *   _bundle_id is unique per add, so two lines of the same variant stay distinct.
  *
  * Eurus integration:
  *   Uses Alpine.store('xCartHelper') for section re-rendering and
@@ -84,7 +85,7 @@ class ContainerPicker extends HTMLElement {
     this.items = this.querySelectorAll('.container-picker__item');
 
     // ── State ─────────────────────────────────────────────────────────
-    this.selected = null; // { variantId, productHandle, productTitle, priceFormatted, price, available, imageUrl, imageAlt }
+    this.selected = null; // { variantId, sku, productHandle, productTitle, priceFormatted, price, available, imageUrl, imageAlt }
 
     this._boundCloseOnOutsideClick = this._closeOnOutsideClick.bind(this);
   }
@@ -160,6 +161,11 @@ class ContainerPicker extends HTMLElement {
     window.updatingCart = true;
 
     try {
+      const cartResponse = await fetch(`${root}cart.js`);
+      const cartState = await cartResponse.json().catch(() => ({}));
+      const existingParent = cartState.items?.find((item) => item.key === parentLineKey);
+      const bundleId = existingParent?.properties?._bundle_id || this._newBundleId();
+
       const removeResponse = await fetch(`${root}cart/change.js`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -187,6 +193,7 @@ class ContainerPicker extends HTMLElement {
               properties: {
                 _is_container: 'true',
                 _parent_variant_id: String(parentVariantId),
+                _bundle_id: bundleId,
               },
             },
           ],
@@ -204,7 +211,11 @@ class ContainerPicker extends HTMLElement {
       const updatedProperties = {
         ...existingProperties,
         'Selected Container': `${containerTitle} (${containerPriceFormatted})`,
+        _bundle_id: bundleId,
       };
+      if (this.selected.sku) {
+        updatedProperties._container_sku = this.selected.sku;
+      }
 
       const updateResponse = await fetch(`${root}cart/change.js`, {
         method: 'POST',
@@ -386,10 +397,15 @@ class ContainerPicker extends HTMLElement {
         : [];
 
       const mainItemProperties = {};
+      const bundleId = this.hasSelection ? this._newBundleId() : '';
       if (this.hasSelection) {
         const containerTitle = this.selected.productTitle;
         const containerPriceFormatted = this.selected.priceFormatted;
         mainItemProperties['Selected Container'] = `${containerTitle} (${containerPriceFormatted})`;
+        mainItemProperties._bundle_id = bundleId;
+        if (this.selected.sku) {
+          mainItemProperties._container_sku = this.selected.sku;
+        }
       }
       // Prefer form.elements so we also catch inputs outside the form that use form="...".
       // form.querySelector() only finds descendants and misses the default-variant Backorder input.
@@ -429,6 +445,7 @@ class ContainerPicker extends HTMLElement {
           properties: {
             _is_container: 'true',
             _parent_variant_id: mainVariantId,
+            _bundle_id: bundleId,
           },
         });
       }
@@ -503,15 +520,21 @@ class ContainerPicker extends HTMLElement {
     }
   }
 
+  _newBundleId() {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    return `b-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
   // ── Selection ──────────────────────────────────────────────────────
 
   _selectItem(item) {
     if (item.dataset.available === 'false') return; // Don't allow selecting unavailable containers
 
-    const { variantId, productHandle, productTitle, priceFormatted, price, available, imageUrl, imageAlt } = item.dataset;
+    const { variantId, sku, productHandle, productTitle, priceFormatted, price, available, imageUrl, imageAlt } = item.dataset;
 
     this.selected = {
       variantId,
+      sku: sku || '',
       productHandle,
       productTitle,
       priceFormatted,

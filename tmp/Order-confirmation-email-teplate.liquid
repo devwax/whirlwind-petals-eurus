@@ -350,27 +350,70 @@
   {% assign associated_container = nil %}
   {% if line.properties["Selected Container"] != blank %}
     {% unless line.nested_line_parent? %}
-      {% assign line_variant_id = line.variant_id | append: '' %}
+      {% assign line_bundle_id = line.properties["_bundle_id"] | append: '' | strip %}
+      {% assign line_container_sku = line.properties["_container_sku"] | append: '' | strip %}
+      {% assign line_variant_id = line.variant_id | append: '' | strip %}
+      {% assign selected_container_label = line.properties["Selected Container"] | split: ' (+ ' | first | strip %}
+      {% assign selected_container_label = selected_container_label | split: ' + $' | first | strip %}
+      {% assign selected_container_label = selected_container_label | split: ' (FREE)' | first | strip %}
+      {% assign selected_container_key = selected_container_label | replace: '&amp;', '&' | replace: '&quot;', '"' | replace: '&#34;', '"' | replace: '&#39;', "'" | replace: '&apos;', "'" %}
+      {% assign selected_container_key = selected_container_key | downcase | replace: ' ', '' | replace: '"', '' | replace: "'", '' %}
+      {% assign plant_qty = line.quantity | plus: 0 %}
+      {% assign parent_pool_count = 0 %}
+      {% assign only_pool_line = nil %}
+      {% assign title_match_count = 0 %}
+      {% assign title_match_line = nil %}
+      {% assign qty_match_count = 0 %}
+      {% assign qty_match_line = nil %}
+      {% assign sku_match_count = 0 %}
+      {% assign sku_match_line = nil %}
       {% for container_line in subtotal_line_items %}
         {% if container_line.properties["_is_container"] == 'true' %}
-          {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
-          {% if container_parent_id == line_variant_id %}
+          {% assign container_bundle_id = container_line.properties["_bundle_id"] | append: '' | strip %}
+          {% if line_bundle_id != blank and container_bundle_id == line_bundle_id %}
             {% assign has_associated_container = true %}
             {% assign associated_container = container_line %}
             {% break %}
           {% endif %}
+          {% if line_container_sku != blank and container_line.sku == line_container_sku %}
+            {% assign sku_match_count = sku_match_count | plus: 1 %}
+            {% assign sku_match_line = container_line %}
+          {% endif %}
+          {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' | strip %}
+          {% if line_variant_id != blank and container_parent_id == line_variant_id %}
+            {% assign parent_pool_count = parent_pool_count | plus: 1 %}
+            {% assign only_pool_line = container_line %}
+            {% assign container_title_key = container_line.title | strip | replace: '&amp;', '&' | replace: '&quot;', '"' | replace: '&#34;', '"' | replace: '&#39;', "'" | replace: '&apos;', "'" %}
+            {% assign container_title_key = container_title_key | downcase | replace: ' ', '' | replace: '"', '' | replace: "'", '' %}
+            {% if selected_container_key != blank and container_title_key == selected_container_key %}
+              {% assign title_match_count = title_match_count | plus: 1 %}
+              {% if title_match_line == nil %}
+                {% assign title_match_line = container_line %}
+              {% endif %}
+            {% endif %}
+            {% assign pot_qty = container_line.quantity | plus: 0 %}
+            {% if plant_qty > 0 and pot_qty == plant_qty %}
+              {% assign qty_match_count = qty_match_count | plus: 1 %}
+              {% if qty_match_line == nil %}
+                {% assign qty_match_line = container_line %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
         {% endif %}
       {% endfor %}
       {% unless has_associated_container %}
-        {% assign container_count = 0 %}
-        {% for container_line in subtotal_line_items %}
-          {% if container_line.properties["_is_container"] == 'true' %}
-            {% assign container_count = container_count | plus: 1 %}
-            {% assign associated_container = container_line %}
-          {% endif %}
-        {% endfor %}
-        {% if container_count == 1 %}
+        {% if line_container_sku != blank and sku_match_count == 1 %}
           {% assign has_associated_container = true %}
+          {% assign associated_container = sku_match_line %}
+        {% elsif parent_pool_count == 1 %}
+          {% assign has_associated_container = true %}
+          {% assign associated_container = only_pool_line %}
+        {% elsif title_match_count == 1 %}
+          {% assign has_associated_container = true %}
+          {% assign associated_container = title_match_line %}
+        {% elsif qty_match_count == 1 %}
+          {% assign has_associated_container = true %}
+          {% assign associated_container = qty_match_line %}
         {% endif %}
       {% endunless %}
     {% endunless %}
@@ -1163,27 +1206,70 @@
   {% assign associated_container = nil %}
   {% if line.properties["Selected Container"] != blank %}
     {% unless line.nested_line_parent? %}
-      {% assign line_variant_id = line.variant_id | append: '' %}
+      {% assign line_bundle_id = line.properties["_bundle_id"] | append: '' | strip %}
+      {% assign line_container_sku = line.properties["_container_sku"] | append: '' | strip %}
+      {% assign line_variant_id = line.variant_id | append: '' | strip %}
+      {% assign selected_container_label = line.properties["Selected Container"] | split: ' (+ ' | first | strip %}
+      {% assign selected_container_label = selected_container_label | split: ' + $' | first | strip %}
+      {% assign selected_container_label = selected_container_label | split: ' (FREE)' | first | strip %}
+      {% assign selected_container_key = selected_container_label | replace: '&amp;', '&' | replace: '&quot;', '"' | replace: '&#34;', '"' | replace: '&#39;', "'" | replace: '&apos;', "'" %}
+      {% assign selected_container_key = selected_container_key | downcase | replace: ' ', '' | replace: '"', '' | replace: "'", '' %}
+      {% assign plant_qty = line.quantity | plus: 0 %}
+      {% assign parent_pool_count = 0 %}
+      {% assign only_pool_line = nil %}
+      {% assign title_match_count = 0 %}
+      {% assign title_match_line = nil %}
+      {% assign qty_match_count = 0 %}
+      {% assign qty_match_line = nil %}
+      {% assign sku_match_count = 0 %}
+      {% assign sku_match_line = nil %}
       {% for container_line in subtotal_line_items %}
         {% if container_line.properties["_is_container"] == 'true' %}
-          {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
-          {% if container_parent_id == line_variant_id %}
+          {% assign container_bundle_id = container_line.properties["_bundle_id"] | append: '' | strip %}
+          {% if line_bundle_id != blank and container_bundle_id == line_bundle_id %}
             {% assign has_associated_container = true %}
             {% assign associated_container = container_line %}
             {% break %}
           {% endif %}
+          {% if line_container_sku != blank and container_line.sku == line_container_sku %}
+            {% assign sku_match_count = sku_match_count | plus: 1 %}
+            {% assign sku_match_line = container_line %}
+          {% endif %}
+          {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' | strip %}
+          {% if line_variant_id != blank and container_parent_id == line_variant_id %}
+            {% assign parent_pool_count = parent_pool_count | plus: 1 %}
+            {% assign only_pool_line = container_line %}
+            {% assign container_title_key = container_line.title | strip | replace: '&amp;', '&' | replace: '&quot;', '"' | replace: '&#34;', '"' | replace: '&#39;', "'" | replace: '&apos;', "'" %}
+            {% assign container_title_key = container_title_key | downcase | replace: ' ', '' | replace: '"', '' | replace: "'", '' %}
+            {% if selected_container_key != blank and container_title_key == selected_container_key %}
+              {% assign title_match_count = title_match_count | plus: 1 %}
+              {% if title_match_line == nil %}
+                {% assign title_match_line = container_line %}
+              {% endif %}
+            {% endif %}
+            {% assign pot_qty = container_line.quantity | plus: 0 %}
+            {% if plant_qty > 0 and pot_qty == plant_qty %}
+              {% assign qty_match_count = qty_match_count | plus: 1 %}
+              {% if qty_match_line == nil %}
+                {% assign qty_match_line = container_line %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
         {% endif %}
       {% endfor %}
       {% unless has_associated_container %}
-        {% assign container_count = 0 %}
-        {% for container_line in subtotal_line_items %}
-          {% if container_line.properties["_is_container"] == 'true' %}
-            {% assign container_count = container_count | plus: 1 %}
-            {% assign associated_container = container_line %}
-          {% endif %}
-        {% endfor %}
-        {% if container_count == 1 %}
+        {% if line_container_sku != blank and sku_match_count == 1 %}
           {% assign has_associated_container = true %}
+          {% assign associated_container = sku_match_line %}
+        {% elsif parent_pool_count == 1 %}
+          {% assign has_associated_container = true %}
+          {% assign associated_container = only_pool_line %}
+        {% elsif title_match_count == 1 %}
+          {% assign has_associated_container = true %}
+          {% assign associated_container = title_match_line %}
+        {% elsif qty_match_count == 1 %}
+          {% assign has_associated_container = true %}
+          {% assign associated_container = qty_match_line %}
         {% endif %}
       {% endunless %}
     {% endunless %}
@@ -2592,27 +2678,70 @@
   {% assign associated_container = nil %}
   {% if line.properties["Selected Container"] != blank %}
     {% unless line.nested_line_parent? %}
-      {% assign line_variant_id = line.variant_id | append: '' %}
+      {% assign line_bundle_id = line.properties["_bundle_id"] | append: '' | strip %}
+      {% assign line_container_sku = line.properties["_container_sku"] | append: '' | strip %}
+      {% assign line_variant_id = line.variant_id | append: '' | strip %}
+      {% assign selected_container_label = line.properties["Selected Container"] | split: ' (+ ' | first | strip %}
+      {% assign selected_container_label = selected_container_label | split: ' + $' | first | strip %}
+      {% assign selected_container_label = selected_container_label | split: ' (FREE)' | first | strip %}
+      {% assign selected_container_key = selected_container_label | replace: '&amp;', '&' | replace: '&quot;', '"' | replace: '&#34;', '"' | replace: '&#39;', "'" | replace: '&apos;', "'" %}
+      {% assign selected_container_key = selected_container_key | downcase | replace: ' ', '' | replace: '"', '' | replace: "'", '' %}
+      {% assign plant_qty = line.quantity | plus: 0 %}
+      {% assign parent_pool_count = 0 %}
+      {% assign only_pool_line = nil %}
+      {% assign title_match_count = 0 %}
+      {% assign title_match_line = nil %}
+      {% assign qty_match_count = 0 %}
+      {% assign qty_match_line = nil %}
+      {% assign sku_match_count = 0 %}
+      {% assign sku_match_line = nil %}
       {% for container_line in subtotal_line_items %}
         {% if container_line.properties["_is_container"] == 'true' %}
-          {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' %}
-          {% if container_parent_id == line_variant_id %}
+          {% assign container_bundle_id = container_line.properties["_bundle_id"] | append: '' | strip %}
+          {% if line_bundle_id != blank and container_bundle_id == line_bundle_id %}
             {% assign has_associated_container = true %}
             {% assign associated_container = container_line %}
             {% break %}
           {% endif %}
+          {% if line_container_sku != blank and container_line.sku == line_container_sku %}
+            {% assign sku_match_count = sku_match_count | plus: 1 %}
+            {% assign sku_match_line = container_line %}
+          {% endif %}
+          {% assign container_parent_id = container_line.properties["_parent_variant_id"] | append: '' | strip %}
+          {% if line_variant_id != blank and container_parent_id == line_variant_id %}
+            {% assign parent_pool_count = parent_pool_count | plus: 1 %}
+            {% assign only_pool_line = container_line %}
+            {% assign container_title_key = container_line.title | strip | replace: '&amp;', '&' | replace: '&quot;', '"' | replace: '&#34;', '"' | replace: '&#39;', "'" | replace: '&apos;', "'" %}
+            {% assign container_title_key = container_title_key | downcase | replace: ' ', '' | replace: '"', '' | replace: "'", '' %}
+            {% if selected_container_key != blank and container_title_key == selected_container_key %}
+              {% assign title_match_count = title_match_count | plus: 1 %}
+              {% if title_match_line == nil %}
+                {% assign title_match_line = container_line %}
+              {% endif %}
+            {% endif %}
+            {% assign pot_qty = container_line.quantity | plus: 0 %}
+            {% if plant_qty > 0 and pot_qty == plant_qty %}
+              {% assign qty_match_count = qty_match_count | plus: 1 %}
+              {% if qty_match_line == nil %}
+                {% assign qty_match_line = container_line %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
         {% endif %}
       {% endfor %}
       {% unless has_associated_container %}
-        {% assign container_count = 0 %}
-        {% for container_line in subtotal_line_items %}
-          {% if container_line.properties["_is_container"] == 'true' %}
-            {% assign container_count = container_count | plus: 1 %}
-            {% assign associated_container = container_line %}
-          {% endif %}
-        {% endfor %}
-        {% if container_count == 1 %}
+        {% if line_container_sku != blank and sku_match_count == 1 %}
           {% assign has_associated_container = true %}
+          {% assign associated_container = sku_match_line %}
+        {% elsif parent_pool_count == 1 %}
+          {% assign has_associated_container = true %}
+          {% assign associated_container = only_pool_line %}
+        {% elsif title_match_count == 1 %}
+          {% assign has_associated_container = true %}
+          {% assign associated_container = title_match_line %}
+        {% elsif qty_match_count == 1 %}
+          {% assign has_associated_container = true %}
+          {% assign associated_container = qty_match_line %}
         {% endif %}
       {% endunless %}
     {% endunless %}
