@@ -249,7 +249,7 @@
                     assign md_desktop_width = 100
                   endif
                 %}
-                {% capture 'sizes' %}
+                {% capture sizes %}
                   (min-width: {{ settings.page_width }}px) {% unless full_width %}calc(({{ page_width }}px - ({{ spacing_desktop }}px * {{ columns_desktop | minus: 1 }})) / {{ columns_desktop }}){% else %}calc(({{ lg_desktop_width }}vw - ({{ spacing_desktop }}px * {{ columns_desktop | minus: 1 }})) / {{ columns_desktop }}){% endunless %},
                   {% if settings.page_width > 1024 %}(min-width: 1024px) calc(({{ lg_desktop_width }}vw - ({{ spacing_desktop }}px * {{ columns_desktop | minus: 1 }})) / {{ columns_desktop }}),{% endif %}
                   (min-width: 768px) calc(({{ md_desktop_width }}vw - ({{ spacing_desktop }}px * {{ columns_desktop | minus: 1 }})) / {{ columns_desktop }}),
@@ -827,3 +827,13 @@
     </div>
   </div>
 {% endif %}
+{% comment %}
+
+This file has been rewritten to preserve the original behavior.
+
+---
+Changes:
+- from: "{% capture 'sizes' %}"
+  to: "{% capture sizes %}"
+  position: 13538..13557
+{% endcomment %}

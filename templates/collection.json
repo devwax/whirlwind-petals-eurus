@@ -46,49 +46,6 @@
         "padding_bottom_mobile": 28
       }
     },
-    "banner": {
-      "type": "main-collection-banner",
-      "blocks": {
-        "description_CbYmnn": {
-          "type": "description",
-          "disabled": true,
-          "settings": {
-            "number_of_lines_shown": "none",
-            "read_more_label": "Read more",
-            "see_less_label": "See less",
-            "full_width": false,
-            "desktop_content_alignment": "text-left",
-            "mobile_content_alignment": "text-left",
-            "background_color_light": "rgba(0,0,0,0)",
-            "text_color_light": "rgba(0,0,0,0)",
-            "background_color_dark": "rgba(0,0,0,0)",
-            "text_color_dark": "rgba(0,0,0,0)",
-            "padding_top": 28,
-            "padding_bottom": 28
-          }
-        }
-      },
-      "block_order": [
-        "description_CbYmnn"
-      ],
-      "settings": {
-        "show_collection_image": true,
-        "image_overlay_opacity": 0,
-        "show_collection_name": false,
-        "title_position": "text-center",
-        "size_title": 120,
-        "heading_tag": "h1",
-        "full_width_title": false,
-        "desktop_height": "auto",
-        "full_width": false,
-        "padding_top": 0,
-        "padding_bottom": 4,
-        "mobile_height": "250px",
-        "full_width_mobile": true,
-        "padding_top_mobile": 0,
-        "padding_bottom_mobile": 0
-      }
-    },
     "collection_breadcrumbs": {
       "type": "collection-breadcrumbs",
       "settings": {
@@ -102,6 +59,126 @@
         "background_color_dark": "rgba(0,0,0,0)",
         "text_color_dark": "rgba(0,0,0,0)",
         "textlink_color_dark": "rgba(0,0,0,0)"
+      }
+    },
+    "custom_liquid_dbbKPx": {
+      "type": "custom-liquid",
+      "name": "COL-HERO – Dynamic",
+      "settings": {
+        "custom_liquid": "{% assign hero_image = collection.metafields.custom.collection_hero_image.value %}\n{% assign hero_eyebrow = collection.metafields.custom.collection_hero_eyebrow.value %}\n{% assign hero_heading = collection.metafields.custom.collection_hero_heading.value %}\n{% assign hero_copy = collection.metafields.custom.collection_hero_copy.value %}\n{% assign hero_cta_label = collection.metafields.custom.collection_hero_cta_label.value %}\n{% assign hero_cta_link = collection.metafields.custom.collection_hero_cta_link.value %}\n\n{% assign hero_position = collection.metafields.custom.collection_hero_text_position.value | default: 'left' | strip | downcase %}\n{% assign hero_background = collection.metafields.custom.collection_hero_text_background.value | default: 'none' | strip | downcase %}\n{% assign hero_accent = collection.metafields.custom.collection_hero_accent.value | default: 'default' | strip | downcase %}\n\n{% if hero_image != blank %}\n\n  <section class=\"petals-collection-hero petals-collection-hero--{{ hero_position }} petals-collection-hero--bg-{{ hero_background }} petals-collection-hero--accent-{{ hero_accent }}\">\n\n    <div class=\"petals-collection-hero__media\">\n      {{\n        hero_image\n        | image_url: width: 2400\n        | image_tag:\n          loading: 'eager',\n          widths: '750, 1100, 1500, 1800, 2000, 2400',\n          sizes: '100vw',\n          class: 'petals-collection-hero__image',\n          alt: collection.title\n      }}\n    </div>\n\n    {% if hero_eyebrow != blank or hero_heading != blank or hero_copy != blank %}\n      <div class=\"petals-collection-hero__content\">\n\n        <div class=\"petals-collection-hero__content-inner\">\n\n          {% if hero_eyebrow != blank %}\n            <p class=\"petals-collection-hero__eyebrow\">\n              {{ hero_eyebrow }}\n            </p>\n          {% endif %}\n\n          {% if hero_heading != blank %}\n            <h2 class=\"petals-collection-hero__heading\">\n              {{ hero_heading }}\n            </h2>\n          {% endif %}\n\n          {% if hero_copy != blank %}\n            <div class=\"petals-collection-hero__copy\">\n              {{ hero_copy | newline_to_br }}\n            </div>\n          {% endif %}\n\n          {% if hero_cta_label != blank and hero_cta_link != blank %}\n            <a\n              class=\"petals-collection-hero__button\"\n              href=\"{{ hero_cta_link }}\"\n            >\n              {{ hero_cta_label }}\n            </a>\n          {% endif %}\n\n        </div>\n\n      </div>\n    {% endif %}\n\n  </section>\n\n{% endif %}\n\n\n<style>\n\n/* ==================================================\n   COLLECTION HERO\n================================================== */\n\n.petals-collection-hero {\n  position: relative;\n  width: 100%;\n  height: 250px;\n  overflow: hidden;\n  background: #f7f4f1;\n}\n\n\n/* ==================================================\n   IMAGE\n================================================== */\n\n.petals-collection-hero__media {\n  position: absolute;\n  inset: 0;\n  width: 100%;\n  height: 100%;\n}\n\n.petals-collection-hero__image {\n  display: block;\n  width: 100%;\n  height: 100%;\n  object-fit: cover;\n  object-position: center;\n}\n\n\n/* ==================================================\n   CONTENT\n================================================== */\n\n.petals-collection-hero__content {\n  position: relative;\n  z-index: 2;\n\n  display: flex;\n  align-items: center;\n\n  width: 100%;\n  height: 100%;\n\n  box-sizing: border-box;\n  padding: 20px 8%;\n}\n\n.petals-collection-hero__content-inner {\n  width: min(40%, 520px);\n  box-sizing: border-box;\n}\n\n\n/* ==================================================\n   TEXT POSITION\n================================================== */\n\n.petals-collection-hero--left\n.petals-collection-hero__content {\n  justify-content: flex-start;\n  text-align: left;\n}\n\n.petals-collection-hero--center\n.petals-collection-hero__content {\n  justify-content: center;\n  text-align: center;\n}\n\n.petals-collection-hero--center\n.petals-collection-hero__content-inner {\n  width: min(48%, 620px);\n}\n\n.petals-collection-hero--right\n.petals-collection-hero__content {\n  justify-content: flex-end;\n  text-align: right;\n}\n\n\n/* ==================================================\n   TEXT BACKGROUNDS\n================================================== */\n\n/* NONE = no panel */\n\n\n/* LIGHT */\n\n.petals-collection-hero--bg-light\n.petals-collection-hero__content-inner {\n  background: rgba(255, 255, 255, 0.90);\n  padding: 20px 34px 22px;\n\n  backdrop-filter: blur(2px);\n  -webkit-backdrop-filter: blur(2px);\n}\n\n\n/* SOFT */\n\n.petals-collection-hero--bg-soft\n.petals-collection-hero__content-inner {\n  background: rgba(248, 246, 240, 0.84);\n  padding: 18px 26px 20px;\n\n  backdrop-filter: blur(2px);\n  -webkit-backdrop-filter: blur(2px);\n}\n\n\n/* CENTER PANEL WIDTH */\n\n.petals-collection-hero--center\n.petals-collection-hero__content-inner {\n  width: min(46%, 560px);\n}\n\n\n/* ==================================================\n   EYEBROW\n================================================== */\n\n.petals-collection-hero__eyebrow {\n  margin: 0 0 8px;\n\n  font-family: \"Inter\", \"Helvetica Neue\", Arial, sans-serif;\n  font-size: 12px;\n  line-height: 1.3;\n  font-weight: 500;\n\n  letter-spacing: 0.16em;\n  text-transform: uppercase;\n}\n\n\n/* ==================================================\n   HEADING — DEFAULT\n================================================== */\n\n.petals-collection-hero__heading {\n  margin: 0 0 12px;\n\n  font-family: \"Playfair Display\", Georgia, serif;\n  font-size: clamp(32px, 2.8vw, 44px);\n  line-height: 1.02;\n  font-weight: 500;\n\n  color: inherit;\n}\n\n\n/* ==================================================\n   ACCENT — SAGE\n   Editorial treatment\n================================================== */\n\n.petals-collection-hero--accent-sage\n.petals-collection-hero__heading {\n  margin-bottom: 10px;\n\n  font-family: \"Playfair Display\", Georgia, serif !important;\n  font-size: clamp(38px, 3vw, 46px) !important;\n  line-height: 1 !important;\n  font-weight: 500 !important;\n  font-style: italic !important;\n\n  color: #768165 !important;\n}\n\n\n/* ==================================================\n   ACCENT — SALE\n   Promotional treatment\n================================================== */\n\n.petals-collection-hero--accent-sale\n.petals-collection-hero__heading {\n  margin-bottom: 10px;\n\n  font-family: \"Playfair Display\", Georgia, serif !important;\n  font-size: clamp(38px, 3vw, 46px) !important;\n  line-height: 1 !important;\n  font-weight: 500 !important;\n  font-style: italic !important;\n\n  color: #E74C3C !important;\n}\n\n\n/* ==================================================\n   ACCENT — SEASONAL RED\n   Classic red editorial treatment\n   Holiday, Valentine's Day & seasonal collections\n================================================== */\n\n.petals-collection-hero--accent-seasonal-red\n.petals-collection-hero__heading {\n  margin-bottom: 10px;\n\n  font-family: \"Playfair Display\", Georgia, serif !important;\n  font-size: clamp(38px, 3vw, 46px) !important;\n  line-height: 1 !important;\n  font-weight: 500 !important;\n  font-style: italic !important;\n\n  color: #B13B3B !important;\n}\n\n/* ==================================================\n   BODY COPY\n================================================== */\n\n.petals-collection-hero__copy {\n  max-width: 460px;\n\n  margin-left: auto;\n  margin-right: auto;\n\n  font-family: \"Inter\", \"Helvetica Neue\", Arial, sans-serif;\n  font-size: 15px;\n  line-height: 1.5;\n}\n\n.petals-collection-hero--left\n.petals-collection-hero__copy {\n  margin-left: 0;\n  margin-right: 0;\n}\n\n.petals-collection-hero--right\n.petals-collection-hero__copy {\n  margin-left: auto;\n  margin-right: 0;\n}\n\n\n/* ==================================================\n   SALE REFINEMENT\n================================================== */\n\n.petals-collection-hero--accent-sale\n.petals-collection-hero__eyebrow {\n  margin-bottom: 7px;\n  font-size: 11px;\n  letter-spacing: 0.17em;\n}\n\n.petals-collection-hero--accent-sale\n.petals-collection-hero__copy {\n  max-width: 430px;\n  font-size: 14px;\n  line-height: 1.45;\n}\n\n\n/* ==================================================\n   OPTIONAL CTA\n================================================== */\n\n.petals-collection-hero__button {\n  display: inline-block;\n\n  margin-top: 14px;\n  padding: 10px 20px;\n\n  background: #768165;\n  color: #ffffff;\n\n  font-family: \"Inter\", \"Helvetica Neue\", Arial, sans-serif;\n  font-size: 12px;\n  line-height: 1;\n  font-weight: 500;\n\n  letter-spacing: 0.12em;\n  text-transform: uppercase;\n  text-decoration: none;\n}\n\n\n/* ==================================================\n   TABLET\n================================================== */\n\n@media screen and (min-width: 768px) and (max-width: 1023px) {\n\n  .petals-collection-hero {\n    height: 225px;\n  }\n\n  .petals-collection-hero__content-inner {\n    width: min(48%, 480px);\n  }\n\n  .petals-collection-hero--center\n  .petals-collection-hero__content-inner {\n    width: min(58%, 560px);\n  }\n\n}\n\n\n/* ==================================================\n   MOBILE\n================================================== */\n\n@media screen and (max-width: 767px) {\n\n  .petals-collection-hero {\n    height: 200px;\n  }\n\n  .petals-collection-hero__content {\n    padding: 16px 24px;\n  }\n\n  .petals-collection-hero__content-inner,\n  .petals-collection-hero--center\n  .petals-collection-hero__content-inner {\n    width: min(78%, 380px);\n  }\n\n  .petals-collection-hero__eyebrow {\n    font-size: 11px;\n  }\n\n  .petals-collection-hero__heading {\n    font-size: 28px;\n  }\n\n\n.petals-collection-hero--accent-sage\n.petals-collection-hero__heading,\n\n.petals-collection-hero--accent-sale\n.petals-collection-hero__heading,\n\n.petals-collection-hero--accent-seasonal-red\n.petals-collection-hero__heading {\n  font-size: 28px !important;\n}\n  .petals-collection-hero__copy {\n    font-size: 13px;\n    line-height: 1.4;\n  }\n\n  .petals-collection-hero--bg-light\n  .petals-collection-hero__content-inner,\n\n  .petals-collection-hero--bg-soft\n  .petals-collection-hero__content-inner {\n    padding: 14px 18px 16px;\n  }\n\n}\n\n</style>",
+        "full_width": false,
+        "show_section_divider": false,
+        "padding_top": 28,
+        "padding_bottom": 28,
+        "full_width_mobile": false,
+        "show_section_divider_mobile": false,
+        "padding_top_mobile": 28,
+        "padding_bottom_mobile": 28
+      }
+    },
+    "featured_collection_z9r7qr": {
+      "type": "featured-collection",
+      "blocks": {
+        "collection_zaYYJA": {
+          "type": "collection",
+          "settings": {
+            "collection": "",
+            "show_description": false,
+            "description": "",
+            "number_of_lines_shown": "none",
+            "read_more_label": "Read more",
+            "see_less_label": "See less",
+            "show_vendor": false,
+            "show_rating": false,
+            "show_highlighted_features": true,
+            "show_highlighted_attributes": true,
+            "show_quickview": true,
+            "show_promotion": false,
+            "promotion_position": "left",
+            "card_link": "",
+            "open_new_window": false,
+            "heading": "Featured collection",
+            "highlight_type": "underline",
+            "heading_size": 70,
+            "content": "<p>10% OFF</p>",
+            "text_size": 100,
+            "content_alignment": "center",
+            "content_position": "bottom",
+            "button_label": "See more",
+            "button_link": "",
+            "open_new_window_button": false,
+            "show_button_style": "primary",
+            "enable_text_overlay": false,
+            "overlay_opacity": 0,
+            "image_ratio": "100",
+            "background_color": "rgba(0,0,0,0)",
+            "color_text": "rgba(0,0,0,0)",
+            "color_heading_highlight_light": "rgba(0,0,0,0)",
+            "color_button": "rgba(0,0,0,0)",
+            "color_text_button": "rgba(0,0,0,0)",
+            "color_button_hover": "rgba(0,0,0,0)",
+            "color_text_button_hover": "rgba(0,0,0,0)",
+            "color_button_secondary": "rgba(0,0,0,0)",
+            "secondary_button_text": "rgba(0,0,0,0)",
+            "colors_text_link": "rgba(0,0,0,0)",
+            "show_sound_control": false,
+            "video_url": "",
+            "enable_video_autoplay": false,
+            "video_alt_text": "",
+            "product_card": ""
+          }
+        }
+      },
+      "block_order": [
+        "collection_zaYYJA"
+      ],
+      "disabled": true,
+      "settings": {
+        "title": "Subcribe & save 10%",
+        "highlight_type": "underline",
+        "heading_size": 100,
+        "heading_tag": "h2",
+        "heading_alignment": "center",
+        "subheading": "EXPLORE OUR BESTSELLERS",
+        "text": "",
+        "show_view_all": false,
+        "view_all_position": "top",
+        "view_all_button_style": "text-link",
+        "title_size": 120,
+        "title_style": "none",
+        "title_position": "under",
+        "tab_button_style": "label",
+        "color_background": "rgba(0,0,0,0)",
+        "color_text": "rgba(0,0,0,0)",
+        "color_background_secondary": "rgba(0,0,0,0)",
+        "color_text_secondary": "rgba(0,0,0,0)",
+        "color_background_hover": "rgba(0,0,0,0)",
+        "color_text_hover": "rgba(0,0,0,0)",
+        "color_background_dark": "rgba(0,0,0,0)",
+        "color_text_dark": "rgba(0,0,0,0)",
+        "color_background_secondary_dark": "rgba(0,0,0,0)",
+        "color_text_secondary_dark": "rgba(0,0,0,0)",
+        "color_background_hover_dark": "rgba(0,0,0,0)",
+        "color_text_hover_dark": "rgba(0,0,0,0)",
+        "enable_desktop_slider": false,
+        "slider_style": "horizontal",
+        "swiper_on_mobile": false,
+        "enable_arrow_mobile": false,
+        "auto_play": false,
+        "change_slides_speed": 5,
+        "columns_desktop": 4,
+        "rows_desktop": 1,
+        "spacing": 28,
+        "full_width": false,
+        "show_section_divider": false,
+        "padding_top": 20,
+        "padding_bottom": 60,
+        "columns_mobile": "2",
+        "spacing_mobile": 16,
+        "full_width_mobile": false,
+        "show_section_divider_mobile": false,
+        "padding_top_mobile": 48,
+        "padding_bottom_mobile": 0
       }
     },
     "slideshow_79zWdJ": {
@@ -365,15 +442,6 @@
     },
     "177594370756f72b8d": {
       "type": "apps",
-      "blocks": {
-        "searchanise_search_filter_app_block_pz7JCE": {
-          "type": "shopify://apps/searchanise-search-filter/blocks/app-block/d8f24ada-02b1-458a-bbeb-5bf16d5c921e",
-          "settings": {}
-        }
-      },
-      "block_order": [
-        "searchanise_search_filter_app_block_pz7JCE"
-      ],
       "disabled": true,
       "settings": {
         "include_margins": true
@@ -1299,117 +1367,13 @@
         "padding_top_mobile": 48,
         "padding_bottom_mobile": 20
       }
-    },
-    "featured_collection_z9r7qr": {
-      "type": "featured-collection",
-      "blocks": {
-        "collection_zaYYJA": {
-          "type": "collection",
-          "settings": {
-            "collection": "",
-            "show_description": false,
-            "description": "",
-            "number_of_lines_shown": "none",
-            "read_more_label": "Read more",
-            "see_less_label": "See less",
-            "show_vendor": false,
-            "show_rating": false,
-            "show_highlighted_features": true,
-            "show_highlighted_attributes": true,
-            "show_quickview": true,
-            "show_promotion": false,
-            "promotion_position": "left",
-            "card_link": "",
-            "open_new_window": false,
-            "heading": "Featured collection",
-            "highlight_type": "underline",
-            "heading_size": 70,
-            "content": "<p>10% OFF</p>",
-            "text_size": 100,
-            "content_alignment": "center",
-            "content_position": "bottom",
-            "button_label": "See more",
-            "button_link": "",
-            "open_new_window_button": false,
-            "show_button_style": "primary",
-            "enable_text_overlay": false,
-            "overlay_opacity": 0,
-            "image_ratio": "100",
-            "background_color": "rgba(0,0,0,0)",
-            "color_text": "rgba(0,0,0,0)",
-            "color_heading_highlight_light": "rgba(0,0,0,0)",
-            "color_button": "rgba(0,0,0,0)",
-            "color_text_button": "rgba(0,0,0,0)",
-            "color_button_hover": "rgba(0,0,0,0)",
-            "color_text_button_hover": "rgba(0,0,0,0)",
-            "color_button_secondary": "rgba(0,0,0,0)",
-            "secondary_button_text": "rgba(0,0,0,0)",
-            "colors_text_link": "rgba(0,0,0,0)",
-            "show_sound_control": false,
-            "video_url": "",
-            "enable_video_autoplay": false,
-            "video_alt_text": "",
-            "product_card": ""
-          }
-        }
-      },
-      "block_order": [
-        "collection_zaYYJA"
-      ],
-      "disabled": true,
-      "settings": {
-        "title": "Subcribe & save 10%",
-        "highlight_type": "underline",
-        "heading_size": 100,
-        "heading_tag": "h2",
-        "heading_alignment": "center",
-        "subheading": "EXPLORE OUR BESTSELLERS",
-        "text": "",
-        "show_view_all": false,
-        "view_all_position": "top",
-        "view_all_button_style": "text-link",
-        "title_size": 120,
-        "title_style": "none",
-        "title_position": "under",
-        "tab_button_style": "label",
-        "color_background": "rgba(0,0,0,0)",
-        "color_text": "rgba(0,0,0,0)",
-        "color_background_secondary": "rgba(0,0,0,0)",
-        "color_text_secondary": "rgba(0,0,0,0)",
-        "color_background_hover": "rgba(0,0,0,0)",
-        "color_text_hover": "rgba(0,0,0,0)",
-        "color_background_dark": "rgba(0,0,0,0)",
-        "color_text_dark": "rgba(0,0,0,0)",
-        "color_background_secondary_dark": "rgba(0,0,0,0)",
-        "color_text_secondary_dark": "rgba(0,0,0,0)",
-        "color_background_hover_dark": "rgba(0,0,0,0)",
-        "color_text_hover_dark": "rgba(0,0,0,0)",
-        "enable_desktop_slider": false,
-        "slider_style": "horizontal",
-        "swiper_on_mobile": false,
-        "enable_arrow_mobile": false,
-        "auto_play": false,
-        "change_slides_speed": 5,
-        "columns_desktop": 4,
-        "rows_desktop": 1,
-        "spacing": 28,
-        "full_width": false,
-        "show_section_divider": false,
-        "padding_top": 20,
-        "padding_bottom": 60,
-        "columns_mobile": "2",
-        "spacing_mobile": 16,
-        "full_width_mobile": false,
-        "show_section_divider_mobile": false,
-        "padding_top_mobile": 48,
-        "padding_bottom_mobile": 0
-      }
     }
   },
   "order": [
     "rich_text_zMchHQ",
-    "banner",
     "collection_breadcrumbs",
+    "custom_liquid_dbbKPx",
+    "featured_collection_z9r7qr",
     "slideshow_79zWdJ",
     "petals_mday_deadline_EgawH6",
     "flash_sale_Jtr9dy",
@@ -1421,7 +1385,6 @@
     "related_collections_WxWAqB",
     "collage_bQj3RW",
     "multicolumn_M3Rbqp",
-    "media_gallery_chyViy",
-    "featured_collection_z9r7qr"
+    "media_gallery_chyViy"
   ]
 }

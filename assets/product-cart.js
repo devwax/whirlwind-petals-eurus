@@ -175,6 +175,8 @@ if (!window.Eurus.loadedScript.has('product-cart.js')) {
               }
             }
 
+            productForm.querySelector('input[name=quantity]').value = 1; // Petals requirement: change quantity back to 1 after adding to cart
+
             let resProductId;
             let productUrl;
 
