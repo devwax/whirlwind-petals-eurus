@@ -20,8 +20,37 @@
     Usage:
     {% render 'card-product', show_vendor: section.settings.show_vendor %}
 {% endcomment %}
+
+
+
 {%- liquid
   assign card_product_id  = card_product.id
+
+  # --- Filtered color variant (see snippets/filtered-color-variant.liquid) ---
+  capture fv_id
+    render 'filtered-color-variant', product: card_product
+  endcapture
+  assign fv_id = fv_id | strip | plus: 0
+  assign filtered_variant = nil
+  if fv_id > 0
+    for fv in card_product.variants
+      if fv.id == fv_id
+        assign filtered_variant = fv
+        break
+      endif
+    endfor
+  endif
+  assign card_variant = card_product.selected_or_first_available_variant
+  assign card_featured_media = card_product.featured_media
+  assign card_second_media = card_product.media[1]
+  assign card_url = card_product.url | within: collection
+  if filtered_variant
+    assign card_variant = filtered_variant
+    assign card_featured_media = filtered_variant.featured_media
+    assign card_second_media = nil
+    assign card_url = card_url | append: '?variant=' | append: filtered_variant.id
+  endif
+  # --- end filtered color variant ---
   if settings.lang_direction contains request.locale.iso_code
     assign is_rtl = true
   else
@@ -61,7 +90,7 @@
   endif
 
   assign can_show_preorder = false
-  if settings.preorder_show == 'yes' or settings.preorder_show == 'on_backordered' and card_product.selected_or_first_available_variant.inventory_policy == 'continue' and card_product.selected_or_first_available_variant.inventory_quantity < 1 and card_product.selected_or_first_available_variant.inventory_management != nil
+  if settings.preorder_show == 'yes' or settings.preorder_show == 'on_backordered' and card_variant.inventory_policy == 'continue' and card_variant.inventory_quantity < 1 and card_variant.inventory_management != nil
     if settings.applied_products_preorder == blank and settings.applied_collections_preorder == blank
       assign can_show_preorder = true
     else 
@@ -118,7 +147,7 @@
     endfor
   endif
 
-  assign variant_available = card_product.selected_or_first_available_variant.available
+  assign variant_available = card_variant.available
   assign only_default_variant = card_product.has_only_default_variant
   assign swatch_enabled = settings.products_color_swatches_enable_on_collection_page
 -%}
@@ -137,7 +166,7 @@
 {%- unless disable_badges -%}
   {%- capture data_for_label -%}
     [
-    {% assign variant = card_product.selected_or_first_available_variant %}
+    {% assign variant = card_variant %}
     {%- liquid
       assign list_metafield_label = ''
       if settings.metafield_label != blank
@@ -241,10 +270,10 @@
     {% style %}
       {% if mediaGallery %}
         .media-gallery-{{ block_id }} {
-          {% if media_aspect_ratio == "natural" and card_product.featured_media and card_product.featured_media.media_type != "model" %}
+          {% if media_aspect_ratio == "natural" and card_featured_media and card_featured_media.media_type != "model" %}
             {% if image_ratio_setting != 'fit_grid_layout' %}
               height: 0;
-              padding-bottom: {{ 1 | divided_by: card_product.featured_media.aspect_ratio | times: 100 }}%;
+              padding-bottom: {{ 1 | divided_by: card_featured_media.aspect_ratio | times: 100 }}%;
             {% endif %}
           {% endif %}
         }
@@ -254,7 +283,7 @@
       {% unless loading == 'eager' %}
         x-intersect.once.margin.-20px.0px.-20px.0px="$el.querySelector('.animate_transition_card__image')?.classList.add('active', 'lazy_active')"
       {% endunless %}
-      href="{{ card_product.url | within: collection }}"
+      href="{{ card_url }}"
       {% unless disable_badges %} 
         x-data="{ lastWindowWidth: 0 }"
         x-intersect.once.margin.200px='$nextTick(() => { $store.xBadges && $store.xBadges.load($el, () => {}, null, true); })'
@@ -267,10 +296,10 @@
       {%- if show_rounded_image %} {% if product_complementary %}rounded-[6px]{% else %}rounded-[10px]{% endif %}{% endif -%}
       {%- if image_ratio_setting == 'fit_grid_layout' %} md:h-full h-full pb-0{% else -%}
       {%- if mediaGallery %} h-full pb-0 md:h-auto media-gallery-{{ block_id }}{% endif -%}
-      {%- if media_aspect_ratio == "natural" %}{% if card_product.featured_media.media_type == "model" or card_product.featured_media == blank %} md:pb-[100%]{% endif %}{% else %} pb-[{{ ratio | times: 100 | round }}%]{% endif -%}
+      {%- if media_aspect_ratio == "natural" %}{% if card_featured_media.media_type == "model" or card_featured_media == blank %} md:pb-[100%]{% endif %}{% else %} pb-[{{ ratio | times: 100 | round }}%]{% endif -%}
       {%- endif -%}
       {%- if settings.product_image_type == "slide_img" and count_media > 1 and class_slide != 'recommendations' and settings.show_arrow == false %} disable-label-hover{% endif -%}"
-      {%- unless mediaGallery %}{% if media_aspect_ratio == "natural" and card_product.featured_media and card_product.featured_media.media_type != "model" %} style="height: 0; padding-bottom: {{ 1 | divided_by: card_product.featured_media.aspect_ratio | times: 100 }}%;"{% endif %}{% endunless -%}>
+      {%- unless mediaGallery %}{% if media_aspect_ratio == "natural" and card_featured_media and card_featured_media.media_type != "model" %} style="height: 0; padding-bottom: {{ 1 | divided_by: card_featured_media.aspect_ratio | times: 100 }}%;"{% endif %}{% endunless -%}>
       <div class="w-full h-full z-0 overflow-hidden absolute top-0 left-0{% if animation_loading and loading != 'eager' %} animate_transition_card__image{% endif %}">
         <div
           id="x-slideshow-card-product-{{ section_id }}-{{ product_card_id }}-{{ index | minus: 1 }}{% if product_id and is_cart_upsell %}-{{ product_id }}{% endif %}"
@@ -364,6 +393,10 @@
                   if product_featured_image_mtf != blank and card_product.metafields.custom[product_featured_image_mtf]
                     assign product_featured_image = card_product.metafields.custom[product_featured_image_mtf]
                   endif
+                  # Filtered color variant image wins over the default/metafield image
+                  if filtered_variant
+                    assign product_featured_image = card_featured_media
+                  endif
                 endif
               %}
               {%- if loading == 'eager' -%}
@@ -394,20 +427,20 @@
                     src="{{ product_featured_image | image_url: width: 1500 }}"
                     sizes="{{ sizes }}"
                     alt="{{ product_featured_image.alt | split: "#" | first | escape }}"
-                    class="w-full {% unless product_featured_image_mtf != blank and card_product.metafields.custom[product_featured_image_mtf] %} preview-img{% endunless %} motion-reduce aspect-{{ media_aspect_ratio }} relative animate-Xpulse skeleton-image object-cover
+                    class="w-full {% unless filtered_variant == blank and product_featured_image_mtf != blank and card_product.metafields.custom[product_featured_image_mtf] %} preview-img{% endunless %} motion-reduce aspect-{{ media_aspect_ratio }} relative animate-Xpulse skeleton-image object-cover
                       {%- if image_ratio_setting == 'fit_grid_layout' %} md:h-full md:min-h-full h-full min-h-full
                         {%- else -%} 
                         {%- if media_aspect_ratio != "natural" %} h-full min-h-full{% endif -%}
                       {%- endif -%}
-                      {%- if card_product.media[1] != nil and settings.product_image_type == 'hover_to_reveal_second_image' and settings.product_card_effect_reveal_image != 'slide' and class_slide != 'recommendations' %} image-first-hover lg:group-hover:opacity-0
-                        {%- elsif card_product.media[1] != nil and settings.product_image_type == 'hover_to_reveal_second_image' and settings.product_card_effect_reveal_image == 'slide' and class_slide != 'recommendations' %} image-first-slide-anm lg:group-hover:opacity-0 transition-opacity duration-500
+                      {%- if card_second_media != nil and settings.product_image_type == 'hover_to_reveal_second_image' and settings.product_card_effect_reveal_image != 'slide' and class_slide != 'recommendations' %} image-first-hover lg:group-hover:opacity-0
+                        {%- elsif card_second_media != nil and settings.product_image_type == 'hover_to_reveal_second_image' and settings.product_card_effect_reveal_image == 'slide' and class_slide != 'recommendations' %} image-first-slide-anm lg:group-hover:opacity-0 transition-opacity duration-500
                         {%- elsif settings.product_image_type != 'slide_img' %} image-hover
                       {%- endif -%}
                       {%- if animation_loading and loading != 'eager' %} animate_transition_image{% endif -%}
                     "
                     loading="{{ loading | default: 'lazy' }}"
-                    width="{% if product_featured_image_mtf != blank and card_product.metafields.custom[product_featured_image_mtf] %}{{ product_featured_image.width }}{% else %}{{ product_featured_image.preview_image.width }}{% endif %}"
-                    height="{% if product_featured_image_mtf != blank and card_product.metafields.custom[product_featured_image_mtf] %}{{ product_featured_image.height }}{% else %}{{ product_featured_image.preview_image.height }}{% endif %}"
+                    width="{% if filtered_variant == blank and product_featured_image_mtf != blank and card_product.metafields.custom[product_featured_image_mtf] %}{{ product_featured_image.width }}{% else %}{{ product_featured_image.preview_image.width }}{% endif %}"
+                    height="{% if filtered_variant == blank and product_featured_image_mtf != blank and card_product.metafields.custom[product_featured_image_mtf] %}{{ product_featured_image.height }}{% else %}{{ product_featured_image.preview_image.height }}{% endif %}"
                     onload="{% if animation_loading and loading != 'eager' %}this?.classList.add('active');{% endif -%}
                       this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');
                       setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);"
@@ -415,7 +448,7 @@
                 </picture>
                 {% # theme-check-enable ImgLazyLoading %}
               </div>
-              {%- if card_product.media[1] != nil -%}
+              {%- if card_second_media != nil -%}
                 {%- if settings.product_image_type == "hover_to_reveal_second_image" and class_slide != 'recommendations' -%}
                   {% style %}
                     #image-product-{{ section_id }}-{{ product_card_id }}-{{ index | minus: 1 }}{% if product_id and is_cart_upsell %}-{{ product_id }}{% endif %} .media-slide:not(:first-child) {
@@ -426,17 +459,17 @@
                     {% # theme-check-disable ImgLazyLoading %}
                     <picture>
                       <img
-                        srcset="{{ card_product.media[1] | image_url: width: 250 }} 250w,
-                          {{ card_product.media[1] | image_url: width: 350 }} 350w,
-                          {{ card_product.media[1] | image_url: width: 450 }} 450w,
-                          {{ card_product.media[1] | image_url: width: 750 }} 750w,
-                          {{ card_product.media[1] | image_url: width: 900 }} 900w,
-                          {{ card_product.media[1] | image_url: width: 1100 }} 1100w,
-                          {{ card_product.media[1] | image_url: width: 1500 }} 1500w
-                          {%- if card_product.media[1].width %},{{ card_product.media[1] | image_url }} {{ card_product.media[1].width }}w{% endif %}"
-                        src="{{ card_product.media[1] | image_url: width: 1500 }}"
+                        srcset="{{ card_second_media | image_url: width: 250 }} 250w,
+                          {{ card_second_media | image_url: width: 350 }} 350w,
+                          {{ card_second_media | image_url: width: 450 }} 450w,
+                          {{ card_second_media | image_url: width: 750 }} 750w,
+                          {{ card_second_media | image_url: width: 900 }} 900w,
+                          {{ card_second_media | image_url: width: 1100 }} 1100w,
+                          {{ card_second_media | image_url: width: 1500 }} 1500w
+                          {%- if card_second_media.width %},{{ card_second_media | image_url }} {{ card_second_media.width }}w{% endif %}"
+                        src="{{ card_second_media | image_url: width: 1500 }}"
                         sizes="{{ sizes }}"
-                        alt="{{ card_product.media[1].alt | split: "#" | first | escape }}"
+                        alt="{{ card_second_media.alt | split: "#" | first | escape }}"
                         class="motion-reduce min-w-full h-full object-cover group-hover:cursor-pointer
                           {%- if media_aspect_ratio == "natural" %} aspect-auto{% endif -%}
                           {%- if settings.product_image_type == 'slide_img' -%} animate-Xpulse skeleton-image{% endif -%}
@@ -444,8 +477,8 @@
                           {%- if settings.product_card_effect_reveal_image == 'slide' %} image-first-hover-slide-anm absolute top-0 lg:-right-[101%]{% endif -%}
                         "
                         {% if settings.enable_lazy_loading_image %}loading="lazy"{% else %}loading="eager"{% endif %}
-                        width="{{ card_product.media[1].width }}"
-                        height="{{ card_product.media[1].height }}"
+                        width="{{ card_second_media.width }}"
+                        height="{{ card_second_media.height }}"
                         onload="this.closest('.skeleton-image')?.classList.remove('animate-Xpulse', 'skeleton-image');
                           setTimeout(() => { this.closest('.animate_transition_card__image')?.classList.add('lazy_active', 'active'); }, 250);"
                       />
@@ -554,7 +587,7 @@
                 {% if card_product.options_with_values.size == swatch_count or only_default_variant %}
                   {%- assign product_form_id = 'product-form-choose-option' | append: card_product_id | append: index_param -%}
                   {%- form 'product', card_product, id: product_form_id, class: 'form A h-full', novalidate: 'novalidate', data-type: 'add-to-cart-form', x-ref: 'product_form' -%}
-                    <input type="hidden" aria-hidden="true" name="id" value="{{ card_product.selected_or_first_available_variant.id }}">
+                    <input type="hidden" aria-hidden="true" name="id" value="{{ card_variant.id }}">
                     {% if settings.show_in_cart_items != 'none' %}
                       {% render 'estimate-shipping-cart', product: card_product, message: settings.message_estimate_cart, disable_cart_edt: disable_cart_edt %}
                     {% endif %}
@@ -782,7 +815,7 @@
             <div class="{% if product_complementary %}mb-2{% else %}mb-2.5{% endif %} uppercase tracking-widest {% if mediaGallery %}card-product-vendor-text-{{ block_id }}{% endif %} p-break-words">{{ card_product.vendor }}</div>
           {%- endif -%}
           <{% if product_complementary or list_layout %}p{% else %}h3{% endif %} class="card__heading h5 no-collage:mb-2 {% if product_complementary %}mb-2{% else %}mb-2.5{% endif %} leading-tight"{% if card_product.featured_media %} id="title-{{ section_id }}-{{ card_product_id }}"{% endif %}>
-            <a href="{{ card_product.url | within: collection }}"
+            <a href="{{ card_url }}"
               class="x-card-title full-unstyled-link link-product-variant {% if mediaGallery %}card-product-title-text-{{ block_id }}{% endif %} text-[rgba(var(--colors-heading))] hover:text-[rgba(var(--colors-text-link))] cursor-pointer duration-200 p-break-words"
               @click='$store.xCustomerEvent.fire("product_selected", $el)'
               x-customer-event-data="{{ data_for_customer_event | escape }}"
@@ -834,7 +867,7 @@
             <div x-data="xProductCart" x-show="$store.xQuickView.show_atc_button">
               {%- assign product_form_id = 'product-form-choose-option' | append: card_product_id | append: index_param -%}
               {%- form 'product', card_product, id: product_form_id, class: 'form B', novalidate: 'novalidate', data-type: 'add-to-cart-form', x-ref: 'product_form' -%}
-                <input type="hidden" aria-hidden="true" name="id" value="{{ card_product.selected_or_first_available_variant.id }}">
+                <input type="hidden" aria-hidden="true" name="id" value="{{ card_variant.id }}">
                 {% if settings.show_in_cart_items != 'none' %}
                   {% render 'estimate-shipping-cart', product: card_product, message: settings.message_estimate_cart, disable_cart_edt: disable_cart_edt %}
                 {% endif %}
@@ -947,7 +980,7 @@
             class="x-variants-data hover-option-value x-variants-data-js pt-3 x-variants-separator x-variants-separator-{{ section.id }}-{{ card_product.id }} relative mt-3"
             x-data='xVariantSelectCard($el,"{{ section_id }}-{{ product_card_id }}", "{{ card_product.id }}", "{{ card_product.url }}", false, false, false, "", "", "", "{{ section.id }}")'
             {% for option in card_product.options_with_values %}
-              data-option{{ forloop.index }}="{{ option.selected_value | escape }}"
+              data-option{{ forloop.index }}="{% if filtered_variant %}{{ filtered_variant.options[forloop.index0] | escape }}{% else %}{{ option.selected_value | escape }}{% endif %}"
             {% endfor %}  
             data-url="{{ card_product.url }}"
             x-intersect.margin.200px="if ($el.querySelector('#variant-update-{{ section_id }}-{{ product_card_id }}').innerHTML.trim() == '') $el.classList.add('hidden');"
@@ -956,7 +989,7 @@
               id="current-variant-{{ section_id }}-{{ card_product_id }}-{{ block_id }}" 
               class="current-variant hidden"
             >
-              {{ card_product.selected_or_first_available_variant.id }}
+              {{ card_variant.id }}
             </div>
             <div
               id="variant-update-{{ section_id }}-{{ product_card_id }}"
@@ -965,6 +998,13 @@
               {% assign show_border = false %}
               {%- for option in card_product.options_with_values -%}
                 {%- assign variant_key = 'option' | append: option.position -%}
+                {%- liquid
+                  assign card_selected_value = option.selected_value
+                  if filtered_variant
+                    assign card_option_index = option.position | minus: 1
+                    assign card_selected_value = filtered_variant.options[card_option_index]
+                  endif
+                -%}
                 {% liquid
                   assign show_swatch = false
                   assign show_color_swatch = false
@@ -1123,7 +1163,7 @@
                                 updateProductCard('{{ swatch_count }}', '{{ value.product_url }}');
                                 loadingEls = '{{ section_id }}-{{ product_card_id }}-{{ option.position }}-{{ forloop.index0 }}-{{ card_product_id }}';
                               }, 0)"
-                              {% if settings.default_select_available_variant and value == option.selected_value %}
+                              {% if value == card_selected_value and settings.default_select_available_variant or value == card_selected_value and filtered_variant %}
                                 checked
                               {% endif %}
                             >
@@ -1332,7 +1372,7 @@
             id="current-variant-{{ section_id }}-{{ card_product_id }}-{{ block_id }}" 
             class="current-variant hidden"
           >
-            {{ card_product.selected_or_first_available_variant.id }}
+            {{ card_variant.id }}
           </div>
         {% endunless %}
       {% else %}
@@ -1343,7 +1383,7 @@
           id="current-variant-{{ section_id }}-{{ card_product_id }}-{{ block_id }}" 
           class="current-variant hidden"
         >
-          {{ card_product.selected_or_first_available_variant.id }}
+          {{ card_variant.id }}
         </div>
       {%- endif -%}
     {% endunless %}
@@ -1364,7 +1404,7 @@
             {% if card_product.options_with_values.size == swatch_count or only_default_variant %}
               {%- assign product_form_id = 'product-form-choose-option' | append: card_product_id | append: index_param -%}
               {%- form 'product', card_product, id: product_form_id, class: 'form C h-full', novalidate: 'novalidate', data-type: 'add-to-cart-form', x-ref: 'product_form' -%}
-                <input type="hidden" aria-hidden="true" name="id" value="{{ card_product.selected_or_first_available_variant.id }}">
+                <input type="hidden" aria-hidden="true" name="id" value="{{ card_variant.id }}">
                 {% if settings.show_in_cart_items != 'none' %}
                   {% render 'estimate-shipping-cart', product: card_product, message: settings.message_estimate_cart, disable_cart_edt: disable_cart_edt %}
                 {% endif %}
@@ -1493,7 +1533,7 @@
               {% if card_product.options_with_values.size == swatch_count or only_default_variant %}
                 {%- assign product_form_id = 'product-form-choose-option' | append: card_product_id | append: index_param -%}
                 {%- form 'product', card_product, id: product_form_id, class: 'form D h-full', novalidate: 'novalidate', data-type: 'add-to-cart-form', x-ref: 'product_form' -%}
-                  <input type="hidden" aria-hidden="true" name="id" value="{{ card_product.selected_or_first_available_variant.id }}">
+                  <input type="hidden" aria-hidden="true" name="id" value="{{ card_variant.id }}">
                   {% if settings.show_in_cart_items != 'none' %}
                     {% render 'estimate-shipping-cart', product: card_product, message: settings.message_estimate_cart, disable_cart_edt: disable_cart_edt %}
                   {% endif %}

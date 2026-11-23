@@ -81,7 +81,20 @@ Run against the ladder above, using the strings from the 329131 preview:
 | Shipment that is only a pot (order 321809, CTB240-SWH) | The pot prints as its own row |
 | One unrelated pot | It is not attached to the plant |
 
-Still to do on a preview theme after the theme files are pushed, and after the slip and email are pasted into Admin:
+Reprinted 2026-10-20 from the live packing slip (published theme Eurus, id 187432927305):
+
+| Order | Printed result |
+| --- | --- |
+| 329131 | Each pot is indented under its plant. PLA381 qty 1 has CTD137-GLD. PLA381 qty 3 has CTA241-LGH. No "Part of" leftovers |
+| 318947 | Each shipment nests its own NDL under a different plant |
+| 321809 | CTB240-SWH prints on the pot-only shipment, with "Part of" because the plant is in another shipment |
+| 326471 | CTB240-SWH and CTA241-SWH each print on their own shipment. The Extra Large pot stays labeled for the Extra Large poinsettia. Plant and pot are not in the same shipment, so the shared-variant title match is not exercised here |
+
+The published theme's `container-picker.js` and `theme.js` include `_bundle_id`. The unpublished preview "Eurus ADA contrast" does not.
+
+The live Order confirmation template matches `tmp/email-order-conf.liquid` (checked 2026-10-20). It uses the container ladder and the backorder text, and the single-container catch-all is gone. `tmp/Order-confirmation-email-teplate.liquid` is an older copy of that same notification and is not in Admin.
+
+Still to do, on a new order placed on the published theme:
 
 - One plant, one pot
 - The same plant twice with the same pot, and twice with different pots at qty 1 and qty 3
@@ -91,5 +104,4 @@ Still to do on a preview theme after the theme files are pushed, and after the s
 - Remove the plant and confirm the pot leaves with it
 - No container, a free liner, and a paid cover
 - A split shipment
-
-Reprint 321809, 326471, 318947, and 329131 after the slip is pasted. 326471 is the two Large poinsettias that share a variant.
+- Read the order confirmation email after the current template is saved

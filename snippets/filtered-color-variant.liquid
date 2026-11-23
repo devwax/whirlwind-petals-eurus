@@ -1,0 +1,121 @@
+{%- comment -%}
+  ============================================================================
+  snippets/filtered-color-variant.liquid
+  ----------------------------------------------------------------------------
+  Outputs the ID of the first variant of `product` whose SKU color code
+  matches the currently active color filter. Outputs nothing when no color
+  filter is active or nothing matches.
+
+  SKU format assumed:  STYLE-CODE   e.g. FLB602-OR, FLB602-WH, FLB602-EGP
+  (the color code is whatever comes after the LAST hyphen)
+
+  Usage (inside the product card snippet):
+    {%- capture fv_id -%}{% render 'filtered-color-variant', product: card_product %}{%- endcapture -%}
+  ============================================================================
+{%- endcomment -%}
+
+{%- liquid
+  # --------------------------------------------------------------------------
+  # COLOR MAP: filter value (handleized) : SKU codes, separated by |
+  # The key is the filter value label run through `handleize`
+  # ("Lavender-Blue-Purple" -> lavender-blue-purple). Add every grouped
+  # filter value and every SKU code that belongs to it.
+  # --------------------------------------------------------------------------
+  assign color_map = 'cream-white:WHT,WH,CRW,CRWH,CLTB|gold-silver:SLV,GLD|green-brown-beige:GR,LTG,CLTB|lavender-blue-purple:LV,BL,PU,EGP|mixed pastel:MS,MP|mixed pastels:MS,MP|mixed primary:MS,MP|peach-coral-orange:PC,CR,OR,YEOR|pink-fuchsia-beauty:PKBY,PK,BY,FU|red-burgundy:RD,BGOR,BU|yellow-gold:YE,GLD,LTY'
+
+
+  # Collection pages use collection.filters; search results use search.filters
+  assign active_filters = collection.filters
+  if active_filters == blank
+    assign active_filters = search.filters
+  endif
+
+  assign pairs = color_map | split: '|'
+  assign codes = ','
+
+  for filter in active_filters
+    # Only look at the color filter (label "Color", "Colour", "Color family", etc.)
+    assign filter_label = filter.label | downcase
+    unless filter_label contains 'colo'
+      continue
+    endunless
+
+    for value in filter.active_values
+      assign value_key = value.label | handleize
+      for pair in pairs
+        assign pair_key = pair | split: ':' | first | strip
+        if pair_key == value_key
+          assign pair_codes = pair | split: ':' | last | strip | upcase | remove: ' '
+          assign codes = codes | append: pair_codes | append: ','
+        endif
+      endfor
+    endfor
+  endfor
+
+  # Prefer an in-stock matching variant; fall back to a sold-out one so the
+  # image still matches the filter.
+  assign match_available = ''
+  assign match_any = ''
+  if codes != ','
+    for variant in product.variants
+      assign sku_code = variant.sku | split: '-' | last | strip | upcase
+      assign sku_token = ',' | append: sku_code | append: ','
+      if sku_code != blank and codes contains sku_token and variant.featured_media
+        if match_any == ''
+          assign match_any = variant.id
+        endif
+        if variant.available
+          assign match_available = variant.id
+          break
+        endif
+      endif
+    endfor
+  endif
+  if match_available != ''
+    echo match_available
+  else
+    echo match_any
+  endif
+-%}
+
+{%- comment -%}
+  ============================================================================
+  CARD INTEGRATION - paste into the product card snippet
+  (in Eurus: snippets/card-product.liquid; the product variable there is
+  usually `card_product` - adjust if your copy uses a different name)
+  ============================================================================
+
+  1) Near the top of the card, after card_product is available:
+
+  {%- capture fv_id -%}{% render 'filtered-color-variant', product: card_product %}{%- endcapture -%}
+  {%- liquid
+    assign fv_id = fv_id | strip | plus: 0
+    assign card_media = card_product.featured_media
+    assign card_url = card_product.url
+    assign filtered_variant = nil
+    if fv_id > 0
+      for v in card_product.variants
+        if v.id == fv_id
+          assign filtered_variant = v
+          assign card_media = v.featured_media
+          assign card_url = v.url
+          break
+        endif
+      endfor
+    endif
+  -%}
+
+  2) Where the card renders its main image, replace
+       card_product.featured_media   ->  card_media
+     and where it builds the product link, replace
+       card_product.url              ->  card_url
+     (so clicking opens the PDP with that color preselected)
+
+  3) Optional - hover/second image: if the card shows card_product.media[1]
+     on hover, wrap it so it is skipped when a color is filtered:
+       {%- unless filtered_variant -%} ...hover image... {%- endunless -%}
+
+  4) Optional - swatch state: where the card marks the selected swatch
+     (usually comparing to card_product.selected_or_first_available_variant),
+     compare to filtered_variant when it exists instead.
+{%- endcomment -%}

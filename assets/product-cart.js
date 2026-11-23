@@ -180,6 +180,8 @@ if (!window.Eurus.loadedScript.has('product-cart.js')) {
             let resProductId;
             let productUrl;
 
+            console.log('newFormData',newFormData);
+
             await fetch(`${Eurus.cart_add_url}`, {
               method:'POST',
               headers: { Accept: 'application/javascript', 'X-Requested-With': 'XMLHttpRequest' },
@@ -208,6 +210,7 @@ if (!window.Eurus.loadedScript.has('product-cart.js')) {
                   document.dispatchEvent(new CustomEvent("eurus:cart:items-changed"));
                 }
               } else {  
+                console.log(response);
                 resProductId = response.product_id;
                 productUrl = response.url.split("?")[0];
 
